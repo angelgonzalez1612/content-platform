@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-brand: #ff5a00;
+  --color-brand-pressed: #e04f00;
+  --color-ink: #191512;
+  --color-ink-soft: #6b6058;
+  --color-border: #e5e0da;
+  --color-card: #ffffff;
+  --color-background: #f7f5f2;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-ink;
+  }
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}
