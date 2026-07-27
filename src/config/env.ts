@@ -7,7 +7,12 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
   DATABASE_URL: z.url(),
   REDIS_URL: z.url().optional(),
-  CORS_ORIGIN: z.string().default('http://localhost:3000'),
+  // Comma-separated list — the API is shared between planazo_fronted and planazo_cms.
+  CORS_ORIGIN: z.string().default('http://localhost:3000,http://localhost:3002'),
+  JWT_SECRET: z.string().min(16),
+  SEED_ADMIN_EMAIL: z.string().email().optional(),
+  SEED_ADMIN_PASSWORD: z.string().min(8).optional(),
+  SEED_ADMIN_NAME: z.string().default('Admin'),
 });
 
 export type Env = z.infer<typeof envSchema>;

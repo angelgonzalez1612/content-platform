@@ -8,6 +8,13 @@
       "when": 1785167137184,
       "tag": "0000_wise_shriek",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785193115840,
+      "tag": "0001_yummy_wild_pack",
+      "breakpoints": true
     }
   ]
 }

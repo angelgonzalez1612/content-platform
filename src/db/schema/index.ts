@@ -5,3 +5,4 @@ export * from './articles';
 export * from './events';
 export * from './rankings';
 export * from './relations';
+export * from './users';
