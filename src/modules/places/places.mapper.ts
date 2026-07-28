@@ -11,10 +11,14 @@ interface PlaceRow {
   slug: string;
   name: string;
   description: string | null;
+  zone: string | null;
   latitude: string | null;
   longitude: string | null;
   address: string | null;
   priceLevel: number | null;
+  price: number | null;
+  rating: number | null;
+  reviewCount: number;
   phone: string | null;
   website: string | null;
   status: Place['status'];
@@ -72,10 +76,14 @@ export function toPlaceSummary(row: PlaceRow): Place {
     slug: row.slug,
     name: row.name,
     description: row.description,
+    zone: row.zone,
     latitude: row.latitude,
     longitude: row.longitude,
     address: row.address,
     priceLevel: row.priceLevel,
+    price: row.price,
+    rating: row.rating,
+    reviewCount: row.reviewCount,
     phone: row.phone,
     website: row.website,
     status: row.status,

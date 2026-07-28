@@ -115,6 +115,11 @@ export class PlacesService {
         slug,
         name: dto.name,
         description: dto.description ?? null,
+        zone: dto.zone ?? null,
+        address: dto.address ?? null,
+        priceLevel: dto.priceLevel ?? null,
+        price: dto.price ?? null,
+        rating: dto.rating ?? null,
         status: dto.status,
       })
       .returning({ id: places.id });

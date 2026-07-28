@@ -18,10 +18,16 @@ export const places = pgTable('places', {
   slug: text('slug').notNull().unique(),
   name: text('name').notNull(),
   description: text('description'),
+  /** Neighborhood/colonia — distinct from the full street address. */
+  zone: text('zone'),
   latitude: numeric('latitude', { precision: 9, scale: 6 }),
   longitude: numeric('longitude', { precision: 9, scale: 6 }),
   address: text('address'),
   priceLevel: smallint('price_level'),
+  /** Actual MXN amount, when known — priceLevel alone ($/$$/$$$) isn't enough for the site's price label. */
+  price: integer('price'),
+  rating: numeric('rating', { precision: 2, scale: 1, mode: 'number' }),
+  reviewCount: integer('review_count').default(0).notNull(),
   phone: text('phone'),
   website: text('website'),
   status: contentStatusEnum('status').default('draft').notNull(),

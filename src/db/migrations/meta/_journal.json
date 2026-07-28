@@ -15,6 +15,13 @@
       "when": 1785193115840,
       "tag": "0001_yummy_wild_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785202054900,
+      "tag": "0002_faulty_captain_universe",
+      "breakpoints": true
     }
   ]
 }
