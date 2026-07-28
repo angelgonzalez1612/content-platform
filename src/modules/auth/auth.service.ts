@@ -30,6 +30,7 @@ export class AuthService {
       email: row.email,
       name: row.name,
       role: row.role,
+      createdAt: row.createdAt.toISOString(),
     };
 
     const token = signSession(
@@ -43,6 +44,6 @@ export class AuthService {
   async findById(id: string): Promise<AuthUser | undefined> {
     const row = await this.db.query.users.findFirst({ where: eq(users.id, id) });
     if (!row) return undefined;
-    return { id: row.id, email: row.email, name: row.name, role: row.role };
+    return { id: row.id, email: row.email, name: row.name, role: row.role, createdAt: row.createdAt.toISOString() };
   }
 }
