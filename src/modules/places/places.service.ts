@@ -4,6 +4,7 @@ import type { Place, PlaceDetail } from '@planazo/types';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
 import { places } from '../../db/schema';
 import { QueryPlacesDto } from './dto/query-places.dto';
+import { UpdatePlaceDto } from './dto/update-place.dto';
 import { toPlaceSummary, toPlaceDetail } from './places.mapper';
 
 @Injectable()
@@ -46,5 +47,55 @@ export class PlacesService {
     }
 
     return toPlaceDetail(row);
+  }
+
+  /** CMS: every place regardless of status — editors need to see drafts too. */
+  async findAllForCms(): Promise<Place[]> {
+    const rows = await this.db.query.places.findMany({
+      with: {
+        photos: true,
+        placeCategories: { with: { category: true } },
+        placeTags: { with: { tag: true } },
+      },
+      orderBy: (p, { desc }) => [desc(p.updatedAt)],
+    });
+
+    return rows.map(toPlaceSummary);
+  }
+
+  async findByIdForCms(id: string): Promise<PlaceDetail> {
+    const row = await this.db.query.places.findFirst({
+      where: eq(places.id, id),
+      with: {
+        photos: true,
+        socialLinks: true,
+        openingHours: true,
+        placeCategories: { with: { category: true } },
+        placeTags: { with: { tag: true } },
+        placeServices: { with: { service: true } },
+        promotions: true,
+        articlePlaces: { with: { article: true } },
+      },
+    });
+
+    if (!row) {
+      throw new NotFoundException(`Place "${id}" not found`);
+    }
+
+    return toPlaceDetail(row);
+  }
+
+  async update(id: string, patch: UpdatePlaceDto): Promise<PlaceDetail> {
+    const existing = await this.db.query.places.findFirst({ where: eq(places.id, id) });
+    if (!existing) {
+      throw new NotFoundException(`Place "${id}" not found`);
+    }
+
+    await this.db
+      .update(places)
+      .set({ ...patch, updatedAt: new Date() })
+      .where(eq(places.id, id));
+
+    return this.findByIdForCms(id);
   }
 }

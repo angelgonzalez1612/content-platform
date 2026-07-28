@@ -23,6 +23,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "ts-node -r tsconfig-paths/register src/db/seed.ts",
+    "db:seed:places": "ts-node -r tsconfig-paths/register src/db/seed-places.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
