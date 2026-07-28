@@ -7,7 +7,7 @@ import type { AuthUser } from "@planazo/types";
 import { NAV_GROUPS } from "@/data/dashboard";
 import { Icon } from "@/components/icon";
 
-const ROUTES: Record<string, string> = { dashboard: "/" };
+const ROUTES: Record<string, string> = { dashboard: "/", contenido: "/contenido" };
 
 export function Sidebar({ user, onOpenCommand }: { user: AuthUser; onOpenCommand: () => void }) {
   const pathname = usePathname();
@@ -48,7 +48,7 @@ export function Sidebar({ user, onOpenCommand }: { user: AuthUser; onOpenCommand
             </div>
             {group.items.map((item) => {
               const href = ROUTES[item.id];
-              const active = href ? pathname === href : false;
+              const active = href ? (href === "/" ? pathname === "/" : pathname.startsWith(href)) : false;
               const className = `flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[6.5px] text-left text-[13px] transition-colors ${
                 active ? "bg-accent font-semibold text-accent-fg" : "text-ink hover:bg-[#F5F3F0]"
               } ${!href ? "cursor-default opacity-55" : ""}`;
