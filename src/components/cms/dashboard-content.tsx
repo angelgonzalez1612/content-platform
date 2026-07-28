@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { AuthUser } from "@planazo/types";
 import {
   getAlerts,
@@ -44,14 +45,13 @@ export function DashboardContent({ user }: { user: AuthUser }) {
           </p>
         </div>
         <div className="flex-1" />
-        <button
-          type="button"
-          title="Próximamente"
+        <Link
+          href="/centro-ia"
           className="flex items-center gap-2 rounded-[10px] bg-brand px-[15px] py-2.5 font-sans text-[13px] font-semibold text-white shadow-[0_1px_2px_rgba(253,105,13,.35)] transition-colors hover:bg-brand-pressed"
         >
           <Icon d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z" size={15} strokeWidth={1.8} />
           Nuevo con IA
-        </button>
+        </Link>
       </div>
 
       <div className="mb-[18px] grid grid-cols-[repeat(auto-fit,minmax(196px,1fr))] gap-px overflow-hidden rounded-[14px] border border-border bg-border">

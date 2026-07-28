@@ -7,7 +7,7 @@ import type { AuthUser } from "@planazo/types";
 import { NAV_GROUPS } from "@/data/dashboard";
 import { Icon } from "@/components/icon";
 
-const ROUTES: Record<string, string> = { dashboard: "/", contenido: "/contenido" };
+const ROUTES: Record<string, string> = { dashboard: "/", ia: "/centro-ia", contenido: "/contenido" };
 
 export function Sidebar({ user, onOpenCommand }: { user: AuthUser; onOpenCommand: () => void }) {
   const pathname = usePathname();
