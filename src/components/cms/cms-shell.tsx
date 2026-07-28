@@ -50,7 +50,12 @@ export function CmsShell({
 
         <div className="flex min-h-0 flex-1">
           <div className="min-w-0 flex-1 overflow-y-auto bg-background">{children}</div>
-          {copilotOpen && <CopilotPanel screenTitle={title} onClose={() => setCopilotOpen(false)} />}
+          <div
+            inert={!copilotOpen}
+            className={`flex-none overflow-hidden transition-[width] duration-200 ease-out ${copilotOpen ? "w-[326px]" : "w-0"}`}
+          >
+            <CopilotPanel screenTitle={title} onClose={() => setCopilotOpen(false)} />
+          </div>
         </div>
       </main>
 
