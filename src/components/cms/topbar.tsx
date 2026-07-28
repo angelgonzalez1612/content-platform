@@ -1,13 +1,16 @@
 "use client";
 
+import type { AuthUser } from "@planazo/types";
 import { Icon } from "@/components/icon";
-import { LogoutButton } from "@/components/logout-button";
+import { UserMenu } from "@/components/cms/user-menu";
 
 export function Topbar({
+  user,
   title,
   copilotOpen,
   onToggleCopilot,
 }: {
+  user: AuthUser;
   title: string;
   copilotOpen: boolean;
   onToggleCopilot: () => void;
@@ -43,7 +46,8 @@ export function Topbar({
           <Icon d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z" size={14} strokeWidth={1.6} />
           Copiloto
         </button>
-        <LogoutButton />
+        <div className="mx-1 h-6 w-px bg-border-soft" />
+        <UserMenu user={user} />
       </div>
     </header>
   );

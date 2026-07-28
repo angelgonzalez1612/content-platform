@@ -18,8 +18,11 @@ export function CmsShell({
 }) {
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
+    if (window.localStorage.getItem("planazo-cms-sidebar-collapsed") === "1") setSidebarCollapsed(true);
+
     function onKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
@@ -30,12 +33,20 @@ export function CmsShell({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  function toggleSidebarCollapsed() {
+    setSidebarCollapsed((v) => {
+      const next = !v;
+      window.localStorage.setItem("planazo-cms-sidebar-collapsed", next ? "1" : "0");
+      return next;
+    });
+  }
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
-      <Sidebar user={user} onOpenCommand={() => setCommandOpen(true)} />
+      <Sidebar collapsed={sidebarCollapsed} onToggleCollapsed={toggleSidebarCollapsed} onOpenCommand={() => setCommandOpen(true)} />
 
       <main className="flex h-full min-w-0 flex-1 flex-col">
-        <Topbar title={title} copilotOpen={copilotOpen} onToggleCopilot={() => setCopilotOpen((v) => !v)} />
+        <Topbar user={user} title={title} copilotOpen={copilotOpen} onToggleCopilot={() => setCopilotOpen((v) => !v)} />
 
         <div className="flex min-h-0 flex-1">
           <div className="min-w-0 flex-1 overflow-y-auto bg-background">{children}</div>
