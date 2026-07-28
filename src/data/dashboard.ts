@@ -230,6 +230,27 @@ export function getCopilotBrief(pathname: string, screenTitle: string): CopilotB
   };
 }
 
+export interface BreadcrumbItem {
+  label: string;
+  /** Omitted for the current (last) crumb. */
+  href?: string;
+}
+
+/** Full breadcrumb trail for the topbar — keyed by pathname, not just the page title. */
+export function getBreadcrumb(pathname: string, screenTitle: string): BreadcrumbItem[] {
+  const home: BreadcrumbItem = { label: "Planazo", href: "/" };
+
+  if (pathname === "/") return [{ label: "Planazo" }];
+  if (pathname === "/crear") return [home, { label: "Crear" }];
+  if (pathname === "/crear/manual") return [home, { label: "Crear", href: "/crear" }, { label: "Manual" }];
+  if (pathname === "/centro-ia") return [home, { label: "Centro IA" }];
+  if (pathname === "/contenido") return [home, { label: "Contenido" }];
+  if (pathname.startsWith("/contenido/")) return [home, { label: "Contenido", href: "/contenido" }, { label: screenTitle }];
+  if (pathname === "/perfil") return [home, { label: "Perfil" }];
+
+  return [home, { label: screenTitle }];
+}
+
 export interface CopilotLogEntry {
   text: string;
   when: string;

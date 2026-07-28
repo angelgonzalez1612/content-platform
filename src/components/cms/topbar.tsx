@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { AuthUser } from "@planazo/types";
+import { getBreadcrumb } from "@/data/dashboard";
 import { Icon } from "@/components/icon";
 import { UserMenu } from "@/components/cms/user-menu";
 
@@ -15,13 +18,25 @@ export function Topbar({
   copilotOpen: boolean;
   onToggleCopilot: () => void;
 }) {
+  const pathname = usePathname();
+  const crumbs = getBreadcrumb(pathname, title);
+
   return (
     <header className="flex h-[60px] flex-none items-center gap-3 border-b border-border bg-white/86 px-[22px] backdrop-blur-sm">
-      <div className="flex min-w-0 items-center gap-1.5">
-        <span className="text-[12.5px] text-ink-faint">Planazo</span>
-        <span className="text-[12px] text-[#D8D2CA]">/</span>
-        <span className="text-[14px] font-semibold tracking-tight">{title}</span>
-      </div>
+      <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5">
+        {crumbs.map((crumb, i) => (
+          <span key={`${crumb.label}-${i}`} className="flex min-w-0 items-center gap-1.5">
+            {i > 0 && <Icon d="M9 6l6 6-6 6" size={10} strokeWidth={2.4} className="flex-none text-[#D8D2CA]" />}
+            {crumb.href ? (
+              <Link href={crumb.href} className="truncate text-[12.5px] text-ink-faint transition-colors duration-150 hover:text-brand">
+                {crumb.label}
+              </Link>
+            ) : (
+              <span className="truncate text-[14px] font-semibold tracking-tight text-ink">{crumb.label}</span>
+            )}
+          </span>
+        ))}
+      </nav>
       <div className="flex-1" />
       <div className="flex items-center gap-1.5">
         <div className="flex items-center gap-1.5 rounded-lg border border-[#D8EFDF] bg-[#F4FBF6] px-2.5 py-[5px]">
