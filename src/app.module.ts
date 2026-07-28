@@ -4,6 +4,7 @@ import { validateEnv } from './config/env';
 import { DbModule } from './db/db.module';
 import { PlacesModule } from './modules/places/places.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AiModule } from './modules/ai/ai.module';
 import { HealthController } from './modules/health/health.controller';
 
 @Module({
@@ -15,6 +16,7 @@ import { HealthController } from './modules/health/health.controller';
     DbModule,
     PlacesModule,
     AuthModule,
+    AiModule,
   ],
   controllers: [HealthController],
 })
