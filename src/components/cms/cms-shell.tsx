@@ -16,12 +16,10 @@ export function CmsShell({
   title: string;
   children: ReactNode;
 }) {
-  const [copilotOpen, setCopilotOpen] = useState(true);
+  const [copilotOpen, setCopilotOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
 
   useEffect(() => {
-    setCopilotOpen(window.innerWidth > 1200);
-
     function onKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();

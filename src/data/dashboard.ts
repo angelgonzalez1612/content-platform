@@ -170,17 +170,64 @@ export function getActivity(): ActivityItem[] {
   ];
 }
 
-export function getCopilotContext(): string {
-  return "Vista general de la operación. Hoy hay 3 publicaciones y 2 revisiones pendientes.";
+export interface CopilotBrief {
+  context: string;
+  actions: string[];
 }
 
-export function getCopilotActions(): string[] {
-  return [
-    "Resumir el rendimiento de la semana",
-    "Detectar contenido que perdió tráfico",
-    "Proponer 5 keywords nuevas",
-    "Auditar los artículos de Eventos",
-  ];
+/** Copiloto context varies by screen — keyed by pathname, not just the page title. */
+export function getCopilotBrief(pathname: string, screenTitle: string): CopilotBrief {
+  if (pathname === "/") {
+    return {
+      context: "Vista general de la operación. Hoy hay 3 publicaciones y 2 revisiones pendientes.",
+      actions: [
+        "Resumir el rendimiento de la semana",
+        "Detectar contenido que perdió tráfico",
+        "Proponer 5 keywords nuevas",
+        "Auditar los artículos de Eventos",
+      ],
+    };
+  }
+
+  if (pathname === "/crear") {
+    return {
+      context: "Elige cómo crear un lugar nuevo: con IA a partir del nombre, o llenando la ficha a mano.",
+      actions: ["Sugerir 5 lugares populares que faltan", "Explicar qué campos completa la IA vs. tú"],
+    };
+  }
+
+  if (pathname === "/crear/manual") {
+    return {
+      context: "Llenando la ficha de un lugar nuevo a mano. Se crea como borrador hasta que lo publiques.",
+      actions: ["Sugerir una descripción a partir del nombre", "Recomendar categoría y etiquetas"],
+    };
+  }
+
+  if (pathname === "/centro-ia") {
+    return {
+      context: "Generando un borrador con IA. Completa dirección, teléfono y precio después de crearlo.",
+      actions: ["Sugerir lugares de la zona sin cubrir", "Explicar de dónde saca los datos la IA"],
+    };
+  }
+
+  if (pathname === "/contenido") {
+    return {
+      context: "Listado de lugares. Filtra por estado para ver qué falta revisar o publicar.",
+      actions: ["Mostrar los borradores más antiguos", "Detectar lugares sin categoría"],
+    };
+  }
+
+  if (pathname.startsWith("/contenido/")) {
+    return {
+      context: `Editando "${screenTitle}". Los cambios se guardan al presionar Guardar cambios.`,
+      actions: [`Revisar "${screenTitle}" en busca de datos faltantes`, "Sugerir una mejor descripción"],
+    };
+  }
+
+  return {
+    context: `Estás en ${screenTitle}. Todavía no hay contexto específico para esta pantalla.`,
+    actions: ["Resumir el rendimiento de la semana", "Proponer 5 keywords nuevas"],
+  };
 }
 
 export interface CopilotLogEntry {

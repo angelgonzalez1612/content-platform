@@ -1,11 +1,12 @@
 "use client";
 
-import { getCopilotActions, getCopilotContext, getCopilotLog } from "@/data/dashboard";
+import { usePathname } from "next/navigation";
+import { getCopilotBrief, getCopilotLog } from "@/data/dashboard";
 import { Icon } from "@/components/icon";
 
 export function CopilotPanel({ screenTitle, onClose }: { screenTitle: string; onClose: () => void }) {
-  const context = getCopilotContext();
-  const actions = getCopilotActions();
+  const pathname = usePathname();
+  const { context, actions } = getCopilotBrief(pathname, screenTitle);
   const log = getCopilotLog();
 
   return (
