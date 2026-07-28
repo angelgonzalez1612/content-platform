@@ -1,20 +1,63 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-brand: #ff5a00;
-  --color-brand-pressed: #e04f00;
-  --color-ink: #191512;
-  --color-ink-soft: #6b6058;
-  --color-border: #e5e0da;
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --color-brand: #fd690d;
+  --color-brand-pressed: #e85d06;
+  --color-ink: #17140f;
+  --color-ink-soft: #7a736c;
+  --color-ink-faint: #a39c95;
+  --color-border: #edeae6;
+  --color-border-soft: #f3f0ec;
   --color-card: #ffffff;
-  --color-background: #f7f5f2;
+  --color-background: #faf9f7;
+  --color-accent: #fff2e8;
+  --color-accent-fg: #c0561a;
+  --color-positive: #2e9e5b;
+  --color-negative: #c4453a;
+  --color-warning: #9a6b12;
 }
 
 @layer base {
   body {
-    @apply bg-background text-ink;
+    @apply bg-background font-sans text-ink antialiased;
   }
   button:not(:disabled) {
     cursor: pointer;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border: 3px solid var(--color-background);
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@keyframes pz-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pz-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
   }
 }
