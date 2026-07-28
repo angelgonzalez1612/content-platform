@@ -26,8 +26,11 @@ export async function getCmsPlace(id: string): Promise<PlaceDetail | null> {
 export interface UpdatePlaceInput {
   name?: string;
   description?: string | null;
+  zone?: string | null;
   address?: string | null;
   priceLevel?: number | null;
+  price?: number | null;
+  rating?: number | null;
   phone?: string | null;
   website?: string | null;
   status?: Place["status"];

@@ -22,8 +22,11 @@ export function PlaceEditForm({ place }: { place: PlaceDetail }) {
   const [form, setForm] = useState({
     name: place.name,
     description: place.description ?? "",
+    zone: place.zone ?? "",
     address: place.address ?? "",
     priceLevel: place.priceLevel,
+    price: place.price,
+    rating: place.rating,
     phone: place.phone ?? "",
     website: place.website ?? "",
     status: place.status,
@@ -45,8 +48,11 @@ export function PlaceEditForm({ place }: { place: PlaceDetail }) {
     const payload: UpdatePlaceInput = {
       name: form.name,
       description: form.description || null,
+      zone: form.zone || null,
       address: form.address || null,
       priceLevel: form.priceLevel,
+      price: form.price,
+      rating: form.rating,
       phone: form.phone || null,
       website: form.website || null,
       status: form.status,
@@ -98,11 +104,20 @@ export function PlaceEditForm({ place }: { place: PlaceDetail }) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
+          <label htmlFor="zone" className={labelClass}>
+            Zona / colonia
+          </label>
+          <input id="zone" value={form.zone} onChange={(e) => set("zone", e.target.value)} placeholder="ej. Roma Norte" className={fieldClass} />
+        </div>
+        <div className="flex flex-col gap-1.5">
           <label htmlFor="address" className={labelClass}>
             Dirección
           </label>
           <input id="address" value={form.address} onChange={(e) => set("address", e.target.value)} className={fieldClass} />
         </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="priceLevel" className={labelClass}>
             Nivel de precio
@@ -119,6 +134,35 @@ export function PlaceEditForm({ place }: { place: PlaceDetail }) {
             <option value="3">$$$</option>
             <option value="4">$$$$</option>
           </select>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="price" className={labelClass}>
+            Precio (MXN)
+          </label>
+          <input
+            id="price"
+            type="number"
+            min={0}
+            value={form.price ?? ""}
+            onChange={(e) => set("price", e.target.value ? Number(e.target.value) : null)}
+            placeholder="Vacío = gratis"
+            className={fieldClass}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="rating" className={labelClass}>
+            Rating
+          </label>
+          <input
+            id="rating"
+            type="number"
+            min={0}
+            max={5}
+            step={0.1}
+            value={form.rating ?? ""}
+            onChange={(e) => set("rating", e.target.value ? Number(e.target.value) : null)}
+            className={fieldClass}
+          />
         </div>
       </div>
 
