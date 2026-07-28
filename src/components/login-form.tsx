@@ -54,7 +54,7 @@ export function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="tu@correo.com"
-          className="rounded-xl border border-border bg-white px-3.5 py-3 text-[14.5px] text-ink outline-none transition-colors focus:border-brand"
+          className="rounded-xl border border-border bg-white px-3.5 py-3 text-[14.5px] text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-brand focus:shadow-[0_0_0_4px_rgba(253,105,13,.12)]"
         />
       </div>
 
@@ -70,7 +70,7 @@ export function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full rounded-xl border border-border bg-white px-3.5 py-3 pr-11 text-[14.5px] text-ink outline-none transition-colors focus:border-brand"
+            className="w-full rounded-xl border border-border bg-white px-3.5 py-3 pr-11 text-[14.5px] text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-brand focus:shadow-[0_0_0_4px_rgba(253,105,13,.12)]"
           />
           <button
             type="button"
@@ -101,7 +101,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="mt-1 rounded-[10px] bg-brand px-4 py-3 text-[14.5px] font-semibold text-white shadow-[0_1px_2px_rgba(253,105,13,.35)] transition-colors hover:bg-brand-pressed disabled:cursor-default disabled:opacity-60"
+        className="mt-1 rounded-[10px] bg-brand px-4 py-3 text-[14.5px] font-semibold text-white shadow-[0_1px_2px_rgba(253,105,13,.35)] transition-[transform,box-shadow,background-color] duration-200 hover:-translate-y-px hover:bg-brand-pressed hover:shadow-[0_10px_24px_-10px_rgba(253,105,13,.55)] active:translate-y-0 disabled:translate-y-0 disabled:cursor-default disabled:opacity-60 disabled:shadow-none"
       >
         {loading ? "Entrando…" : "Iniciar sesión"}
       </button>
