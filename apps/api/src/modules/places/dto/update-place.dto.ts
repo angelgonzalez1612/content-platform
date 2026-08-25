@@ -12,7 +12,7 @@ export const updatePlaceSchema = z
     reviewCount: z.number().int().min(0).optional(),
     phone: z.string().nullable().optional(),
     website: z.string().nullable().optional(),
-    status: z.enum(['draft', 'in_review', 'published', 'archived']).optional(),
+    status: z.enum(['draft', 'in_review', 'scheduled', 'published', 'archived']).optional(),
   })
   .strict();
 

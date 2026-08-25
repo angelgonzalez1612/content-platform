@@ -107,6 +107,21 @@ export interface ArticleSummary {
   publishedAt: string | null;
 }
 
+export interface Article extends ArticleSummary {
+  content: string | null;
+  status: ContentStatus;
+  aiGenerated: boolean;
+  sourceKeyword: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  canonicalUrl: string | null;
+  ogImageUrl: string | null;
+  categoryData: Record<string, unknown>;
+  places: Place[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 /**
  * The central knowledge-graph entity. A Place is reused across articles,
  * rankings, events and promotions instead of duplicating data per content type.
@@ -160,6 +175,8 @@ export interface PlanazoEvent {
   locationName: string | null;
   place: Place | null;
   status: ContentStatus;
+  categoryData: Record<string, unknown>;
+  seo: Seo | null;
 }
 
 export const PLACE_CATEGORY_SLUGS = ['comer', 'cafes', 'bares', 'cultura', 'aire-libre', 'tecnologia'] as const;
