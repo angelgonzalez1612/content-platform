@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
-import type { PlaceCategorySlug, ContentStatus } from "@planazo/types";
-import { CATEGORY_OPTIONS } from "@/data/categories";
+import type { ContentStatus, Category, Seo } from "@planazo/types";
+import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
+import { CategoryFieldsSection } from "@/components/cms/category-fields-section";
+import { SeoPanel } from "@/components/cms/seo-panel";
 
 const STATUS_OPTIONS: Array<{ value: ContentStatus; label: string }> = [
   { value: "draft", label: "Borrador" },
@@ -12,16 +14,12 @@ const STATUS_OPTIONS: Array<{ value: ContentStatus; label: string }> = [
   { value: "published", label: "Publicado" },
 ];
 
-const fieldClass =
-  "rounded-xl border border-border bg-white px-3.5 py-2.5 text-[14px] text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-brand focus:shadow-[0_0_0_4px_rgba(253,105,13,.12)]";
-const labelClass = "font-mono text-[10px] font-medium tracking-[.1em] text-ink-faint uppercase";
-
-export function PlaceCreateForm() {
+export function PlaceCreateForm({ categories }: { categories: Category[] }) {
   const router = useRouter();
   const [form, setForm] = useState({
     name: "",
     description: "",
-    categorySlug: CATEGORY_OPTIONS[0].slug as PlaceCategorySlug,
+    categoryId: categories[0]?.id ?? "",
     zone: "",
     address: "",
     priceLevel: null as number | null,
@@ -33,8 +31,12 @@ export function PlaceCreateForm() {
   });
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [categoryData, setCategoryData] = useState<Record<string, unknown>>({});
+  const [seo, setSeo] = useState<Seo>({});
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+
+  const category = categories.find((c) => c.id === form.categoryId) ?? null;
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -64,9 +66,11 @@ export function PlaceCreateForm() {
           priceLevel: form.priceLevel,
           price: form.price,
           rating: form.rating,
-          categorySlug: form.categorySlug,
+          categorySlug: category?.slug,
           tags,
           status: form.status,
+          categoryData,
+          seo,
         }),
       });
 
@@ -119,17 +123,19 @@ export function PlaceCreateForm() {
         </label>
         <select
           id="c-category"
-          value={form.categorySlug}
-          onChange={(e) => set("categorySlug", e.target.value as PlaceCategorySlug)}
+          value={form.categoryId}
+          onChange={(e) => set("categoryId", e.target.value)}
           className={`${fieldClass} max-w-[220px]`}
         >
-          {CATEGORY_OPTIONS.map((c) => (
-            <option key={c.slug} value={c.slug}>
-              {c.label}
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
             </option>
           ))}
         </select>
       </div>
+
+      <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
@@ -250,6 +256,8 @@ export function PlaceCreateForm() {
           </div>
         )}
       </div>
+
+      <SeoPanel seo={seo} onChange={setSeo} />
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="c-status" className={labelClass}>

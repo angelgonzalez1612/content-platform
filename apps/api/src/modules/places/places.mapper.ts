@@ -22,6 +22,8 @@ interface PlaceRow {
   phone: string | null;
   website: string | null;
   status: Place['status'];
+  categoryData: Record<string, unknown>;
+  seo: Place['seo'];
   createdAt: Date | string;
   updatedAt: Date | string;
   photos: Array<{
@@ -90,6 +92,8 @@ export function toPlaceSummary(row: PlaceRow): Place {
     categories: row.placeCategories.map((pc) => pc.category),
     tags: row.placeTags.map((pt) => pt.tag),
     photos: row.photos,
+    categoryData: row.categoryData,
+    seo: row.seo ?? null,
     createdAt: toIso(row.createdAt),
     updatedAt: toIso(row.updatedAt),
   };

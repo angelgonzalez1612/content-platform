@@ -13,6 +13,11 @@ export const updatePlaceSchema = z
     phone: z.string().nullable().optional(),
     website: z.string().nullable().optional(),
     status: z.enum(['draft', 'in_review', 'scheduled', 'published', 'archived']).optional(),
+    categoryData: z.record(z.string(), z.unknown()).optional(),
+    seo: z
+      .object({ title: z.string().optional(), description: z.string().optional(), canonical: z.string().optional(), ogImage: z.string().optional() })
+      .nullable()
+      .optional(),
   })
   .strict();
 

@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
-import { getCmsPlace } from "@/lib/cms-api";
+import { getCmsPlace, getCmsCategory } from "@/lib/cms-api";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { PlaceEditForm } from "@/components/cms/place-edit-form";
 
@@ -13,6 +13,9 @@ export default async function EditPlacePage({ params }: { params: Promise<{ id: 
   const place = await getCmsPlace(id);
   if (!place) notFound();
 
+  const categoryId = place.categories[0]?.id;
+  const category = categoryId ? await getCmsCategory(categoryId) : null;
+
   return (
     <CmsShell user={session} title={place.name}>
       <div className="mx-auto max-w-[720px] p-[26px] pb-[60px]">
@@ -22,7 +25,7 @@ export default async function EditPlacePage({ params }: { params: Promise<{ id: 
         <h1 className="mt-3 mb-1 text-[22px] font-semibold tracking-tight">{place.name}</h1>
         <p className="mb-6 text-[13.5px] text-ink-soft">/{place.slug}</p>
 
-        <PlaceEditForm place={place} />
+        <PlaceEditForm place={place} category={category} />
       </div>
     </CmsShell>
   );

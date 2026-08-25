@@ -1,13 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import type { Seo } from '@planazo/types';
+import type { Seo, CheckResult, AiDecision } from '@planazo/types';
 
-export interface CheckResult {
-  name: string;
-  passed: boolean;
-  detail?: string;
-  /** No bloqueante = se marca "revisar" pero no impide auto-publicar (ver Fase 3 del plan). */
-  blocking: boolean;
-}
+export type { CheckResult, AiDecision };
 
 export interface RunChecksInput {
   mode: 'draft' | 'improve';
@@ -23,8 +17,6 @@ export interface RunChecksInput {
   /** Para el chequeo de calidad (no bloqueante): texto principal a medir. */
   bodyText?: string;
 }
-
-export type AiDecision = 'auto-published' | 'needs-review';
 
 export interface RunChecksResult {
   checksRun: CheckResult[];

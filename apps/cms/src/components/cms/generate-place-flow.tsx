@@ -3,28 +3,45 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
-import type { PlaceCategorySlug, PlaceDraftOutput } from "@planazo/types";
-import { CATEGORY_OPTIONS } from "@/data/categories";
+import type { Category, CheckResult, AiDecision, Seo } from "@planazo/types";
 import { Icon } from "@/components/icon";
+import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
+import { CategoryFieldsSection } from "@/components/cms/category-fields-section";
+import { SeoPanel } from "@/components/cms/seo-panel";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
 
 type Step = "input" | "generating" | "review" | "creating";
+type ProviderId = "openai" | "claude-cli";
 
-const fieldClass =
-  "rounded-xl border border-border bg-white px-3.5 py-2.5 text-[14px] text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-brand focus:shadow-[0_0_0_4px_rgba(253,105,13,.12)]";
-const labelClass = "font-mono text-[10px] font-medium tracking-[.1em] text-ink-faint uppercase";
+const PROVIDERS: Array<{ id: ProviderId; label: string; hint: string }> = [
+  { id: "openai", label: "OpenAI", hint: "Salida estructurada garantizada · cuesta por token" },
+  { id: "claude-cli", label: "Claude (tu sesión)", hint: "Usa tu suscripción Pro/Max ya conectada · más lento" },
+];
 
-export function GeneratePlaceFlow() {
+interface DraftResponse {
+  draft: Record<string, unknown>;
+  checksRun: CheckResult[];
+  decision: AiDecision;
+}
+
+export function GeneratePlaceFlow({ categories }: { categories: Category[] }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("input");
   const [name, setName] = useState("");
   const [hints, setHints] = useState("");
+  const [provider, setProvider] = useState<ProviderId>("openai");
+  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
   const [error, setError] = useState("");
 
-  const [category, setCategory] = useState<PlaceCategorySlug>("comer");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [seo, setSeo] = useState<Seo>({});
+  const [categoryData, setCategoryData] = useState<Record<string, unknown>>({});
+  const [checksRun, setChecksRun] = useState<CheckResult[]>([]);
+  const [decision, setDecision] = useState<AiDecision>("needs-review");
+
+  const category = categories.find((c) => c.id === categoryId) ?? null;
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
@@ -32,11 +49,11 @@ export function GeneratePlaceFlow() {
     setStep("generating");
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/ai/generate-place`, {
+      const res = await fetch(`${apiConfig.baseUrl}/cms/ai/draft`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, hints: hints || undefined }),
+        body: JSON.stringify({ site: "planazo", contentType: "place", categoryId, name, hints: hints || undefined, provider }),
       });
 
       if (!res.ok) {
@@ -46,13 +63,22 @@ export function GeneratePlaceFlow() {
         return;
       }
 
-      const data: PlaceDraftOutput = await res.json();
-      setDescription(data.description);
-      setCategory(data.suggestedCategory);
-      setTags(data.suggestedTags);
+      const data: DraftResponse = await res.json();
+      const { seo: draftSeo, description: draftDescription, suggestedTags, ...rest } = data.draft as {
+        seo?: Seo;
+        description?: string;
+        suggestedTags?: string[];
+        [key: string]: unknown;
+      };
+      setDescription(draftDescription ?? "");
+      setTags(suggestedTags ?? []);
+      setSeo(draftSeo ?? {});
+      setCategoryData(rest);
+      setChecksRun(data.checksRun);
+      setDecision(data.decision);
       setStep("review");
     } catch {
-      setError("No se pudo conectar con el servidor. ¿Está corriendo la API y tiene OPENAI_API_KEY configurada?");
+      setError("No se pudo conectar con el servidor.");
       setStep("input");
     }
   }
@@ -66,7 +92,15 @@ export function GeneratePlaceFlow() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, categorySlug: category, tags, status: "draft" }),
+        body: JSON.stringify({
+          name,
+          description,
+          categorySlug: category?.slug,
+          tags,
+          status: decision === "auto-published" ? "published" : "draft",
+          categoryData,
+          seo,
+        }),
       });
 
       if (!res.ok) {
@@ -91,8 +125,9 @@ export function GeneratePlaceFlow() {
         </div>
         <h1 className="mb-1.5 text-[24px] font-semibold tracking-tight">¿Sobre qué lugar escribimos?</h1>
         <p className="mx-auto mb-7 max-w-[46ch] text-[13.5px] leading-[1.6] text-ink-soft">
-          Dame el nombre de un lugar real y lo que ya sabes de él. Escribo la descripción — la dirección, teléfono y
-          precio los completas tú, para no inventar datos que puedan estar mal.
+          Dame el nombre de un lugar real, la categoría y lo que ya sabes de él. Escribo la descripción y los campos
+          propios de la categoría — la dirección, teléfono y precio los completas tú, para no inventar datos que
+          puedan estar mal.
         </p>
 
         <form onSubmit={handleGenerate} className="flex flex-col gap-4 text-left">
@@ -110,6 +145,27 @@ export function GeneratePlaceFlow() {
               disabled={step === "generating"}
             />
           </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="place-category" className={labelClass}>
+              Categoría
+            </label>
+            <select
+              id="place-category"
+              required
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className={`${fieldClass} max-w-[280px]`}
+              disabled={step === "generating"}
+            >
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex flex-col gap-1.5">
             <label htmlFor="place-hints" className={labelClass}>
               Lo que ya sabes (opcional)
@@ -125,6 +181,27 @@ export function GeneratePlaceFlow() {
             />
           </div>
 
+          <div className="flex flex-col gap-1.5">
+            <span className={labelClass}>Proveedor de IA</span>
+            <div className="flex gap-2">
+              {PROVIDERS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setProvider(p.id)}
+                  disabled={step === "generating"}
+                  title={p.hint}
+                  className={`flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors ${
+                    provider === p.id ? "border-brand bg-accent" : "border-border bg-white hover:border-ink-faint"
+                  }`}
+                >
+                  <span className="block text-[13px] font-semibold">{p.label}</span>
+                  <span className="block text-[11px] text-ink-faint">{p.hint}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {error && <p className="rounded-lg bg-[#FDECEA] px-3 py-2 text-[13px] font-medium text-[#C4453A]">{error}</p>}
 
           <button
@@ -135,7 +212,7 @@ export function GeneratePlaceFlow() {
             {step === "generating" ? (
               <>
                 <Icon d={SPARK_ICON} size={15} strokeWidth={1.8} className="animate-spin" />
-                Investigando y escribiendo…
+                Investigando y escribiendo… {provider === "claude-cli" && "(puede tardar ~30s)"}
               </>
             ) : (
               <>
@@ -172,22 +249,11 @@ export function GeneratePlaceFlow() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="gen-category" className={labelClass}>
-            Categoría sugerida
-          </label>
-          <select
-            id="gen-category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value as PlaceCategorySlug)}
-            className={`${fieldClass} max-w-[220px]`}
-          >
-            {CATEGORY_OPTIONS.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.label}
-              </option>
-            ))}
-          </select>
+          <span className={labelClass}>Categoría</span>
+          <p className="text-[13.5px] text-ink">{category?.name}</p>
         </div>
+
+        <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 
         <div className="flex flex-col gap-1.5">
           <span className={labelClass}>Etiquetas sugeridas</span>
@@ -211,9 +277,14 @@ export function GeneratePlaceFlow() {
           </div>
         </div>
 
+        <SeoPanel seo={seo} onChange={setSeo} checksRun={checksRun} decision={decision} />
+
         <p className="rounded-lg bg-background px-3 py-2.5 text-[12.5px] leading-[1.5] text-ink-soft">
           Dirección, teléfono y precio quedan en blanco a propósito — la IA no los inventó. Complétalos en la
           pantalla de edición después de crear el borrador.
+          {decision === "auto-published"
+            ? " Este borrador pasó todos los checks automáticos — se creará como publicado."
+            : " Este borrador necesita revisión — se creará como borrador, no publicado."}
         </p>
 
         {error && <p className="rounded-lg bg-[#FDECEA] px-3 py-2 text-[13px] font-medium text-[#C4453A]">{error}</p>}
@@ -225,7 +296,7 @@ export function GeneratePlaceFlow() {
             disabled={step === "creating"}
             className="rounded-[10px] bg-brand px-4 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_1px_2px_rgba(253,105,13,.35)] transition-[transform,box-shadow,background-color] duration-200 hover:-translate-y-px hover:bg-brand-pressed hover:shadow-[0_10px_24px_-10px_rgba(253,105,13,.55)] disabled:translate-y-0 disabled:cursor-default disabled:opacity-60 disabled:shadow-none"
           >
-            {step === "creating" ? "Creando…" : "Crear como borrador"}
+            {step === "creating" ? "Creando…" : decision === "auto-published" ? "Crear y publicar" : "Crear como borrador"}
           </button>
           <button
             type="button"

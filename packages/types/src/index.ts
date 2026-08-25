@@ -55,6 +55,22 @@ export interface Seo {
   ogImage?: string;
 }
 
+/** Un check automático del agente editorial (ver checks.service.ts en apps/api). */
+export interface CheckResult {
+  name: string;
+  passed: boolean;
+  detail?: string;
+  blocking: boolean;
+}
+
+export type AiDecision = "auto-published" | "needs-review";
+
+export interface AiDraftResult {
+  draft: Record<string, unknown>;
+  checksRun: CheckResult[];
+  decision: AiDecision;
+}
+
 export interface Tag {
   id: string;
   name: string;
@@ -145,6 +161,8 @@ export interface Place {
   categories: Category[];
   tags: Tag[];
   photos: Photo[];
+  categoryData: Record<string, unknown>;
+  seo: Seo | null;
   createdAt: string;
   updatedAt: string;
 }

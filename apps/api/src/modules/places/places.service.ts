@@ -121,6 +121,8 @@ export class PlacesService {
         price: dto.price ?? null,
         rating: dto.rating ?? null,
         status: dto.status,
+        categoryData: dto.categoryData ?? {},
+        seo: dto.seo ?? null,
       })
       .returning({ id: places.id });
 

@@ -11,6 +11,11 @@ export const createPlaceSchema = z.object({
   categorySlug: z.string(),
   tags: z.array(z.string()).optional(),
   status: z.enum(['draft', 'in_review', 'scheduled', 'published', 'archived']).default('draft'),
+  categoryData: z.record(z.string(), z.unknown()).optional(),
+  seo: z
+    .object({ title: z.string().optional(), description: z.string().optional(), canonical: z.string().optional(), ogImage: z.string().optional() })
+    .nullable()
+    .optional(),
 });
 
 export type CreatePlaceDto = z.infer<typeof createPlaceSchema>;

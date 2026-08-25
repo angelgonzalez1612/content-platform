@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { apiConfig } from "@planazo/config";
-import type { Place, PlaceDetail } from "@planazo/types";
+import type { Place, PlaceDetail, Category, Seo } from "@planazo/types";
 
 async function cmsFetch(path: string, init?: RequestInit) {
   const cookieStore = await cookies();
@@ -34,4 +34,20 @@ export interface UpdatePlaceInput {
   phone?: string | null;
   website?: string | null;
   status?: Place["status"];
+  categoryData?: Record<string, unknown>;
+  seo?: Seo | null;
+}
+
+/** Sin `site`: todas las categorías. Con `site`: las de ese sitio + las compartidas. */
+export async function getCmsCategories(site?: "la-mira" | "planazo"): Promise<Category[]> {
+  const qs = site ? `?site=${site}` : "";
+  const res = await cmsFetch(`/cms/categories${qs}`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function getCmsCategory(id: string): Promise<Category | null> {
+  const res = await cmsFetch(`/cms/categories/${id}`);
+  if (!res.ok) return null;
+  return res.json();
 }
