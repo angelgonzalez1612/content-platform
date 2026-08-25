@@ -26,6 +26,7 @@
     "db:seed": "ts-node -r tsconfig-paths/register src/db/seed.ts",
     "db:seed:places": "ts-node -r tsconfig-paths/register src/db/seed-places.ts",
     "db:seed:categories": "ts-node -r tsconfig-paths/register src/db/seed-categories.ts",
+    "db:migrate:lamira-mock": "ts-node -r tsconfig-paths/register src/db/migrate-lamira-mock.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {

@@ -1,0 +1,1492 @@
+{
+  "GUIDE_GROUPS": [
+    {
+      "slug": "licencias-y-manejo",
+      "label": "Licencias y manejo"
+    },
+    {
+      "slug": "vehiculos-y-placas",
+      "label": "Vehículos y placas"
+    },
+    {
+      "slug": "multas-y-circulacion",
+      "label": "Multas y circulación"
+    },
+    {
+      "slug": "transporte-publico",
+      "label": "Transporte público"
+    },
+    {
+      "slug": "documentos-e-identidad",
+      "label": "Documentos e identidad"
+    },
+    {
+      "slug": "vivienda-y-seguridad",
+      "label": "Vivienda y servicios"
+    },
+    {
+      "slug": "salud",
+      "label": "Salud"
+    },
+    {
+      "slug": "apoyos-sociales",
+      "label": "Apoyos y programas sociales"
+    }
+  ],
+  "GUIDES": [
+    {
+      "id": "licencia-conducir-cdmx-primera-vez",
+      "slug": "licencia-conducir-cdmx-primera-vez",
+      "title": "Cómo sacar tu licencia de conducir en la Ciudad de México",
+      "dek": "Requisitos, qué tipo de licencia te corresponde y dónde tramitarla si es tu primera vez.",
+      "groupSlug": "licencias-y-manejo",
+      "updatedAt": "2026-08-01",
+      "readingTime": "5 min de lectura",
+      "officialSource": {
+        "label": "SEMOVI CDMX",
+        "url": "https://www.semovi.cdmx.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Vigencia",
+          "value": "1 o 3 años, a elección de quien tramita"
+        },
+        {
+          "label": "Dónde",
+          "value": "Módulos de licencias de SEMOVI"
+        },
+        {
+          "label": "Costo",
+          "value": "Varía según vigencia — confirma el monto actual en SEMOVI"
+        },
+        {
+          "label": "Edad mínima",
+          "value": "18 años para licencia tipo A (automovilista)"
+        }
+      ],
+      "toc": [
+        {
+          "id": "requisitos",
+          "label": "Requisitos generales"
+        },
+        {
+          "id": "tipos",
+          "label": "Qué tipo de licencia necesitas"
+        },
+        {
+          "id": "donde-tramitar",
+          "label": "Dónde y cómo tramitarla"
+        },
+        {
+          "id": "vigencia-costo",
+          "label": "Vigencia y costo"
+        }
+      ],
+      "content": [
+        {
+          "id": "requisitos",
+          "heading": "Requisitos generales",
+          "paragraphs": [
+            "Para tramitar tu licencia por primera vez normalmente necesitas: identificación oficial vigente, CURP, comprobante de domicilio de la Ciudad de México y aprobar un examen (que puede incluir teórico, visual y práctico según el módulo).",
+            "Si aprendiste a manejar por tu cuenta, igual puedes presentarte directamente al módulo a hacer el trámite — no es obligatorio tomar una escuela de manejo, aunque ayuda si es tu primera vez frente al volante."
+          ]
+        },
+        {
+          "id": "tipos",
+          "heading": "Qué tipo de licencia necesitas",
+          "paragraphs": [
+            "La licencia tipo A es para automovilistas (autos particulares), la tipo B para motociclistas, y existen tipos adicionales para transporte de carga y pasajeros que requieren trámites distintos.",
+            "Si solo manejas moto, tramitar licencia de automovilista no te habilita para conducirla — necesitas específicamente la de motociclista."
+          ]
+        },
+        {
+          "id": "donde-tramitar",
+          "heading": "Dónde y cómo tramitarla",
+          "paragraphs": [
+            "El trámite se hace en los módulos de licencias de SEMOVI. Varios módulos operan con cita previa agendada en línea, así que conviene revisar el sitio oficial antes de presentarte para evitar hacer fila sin cita."
+          ]
+        },
+        {
+          "id": "vigencia-costo",
+          "heading": "Vigencia y costo",
+          "paragraphs": [
+            "Puedes elegir la vigencia al pagar (por ejemplo 1 o 3 años); a mayor vigencia, mayor costo total pero menos trámites a futuro. El costo exacto se actualiza cada año fiscal, así que confírmalo directo en SEMOVI antes de ir."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Puedo tramitar mi licencia si mi comprobante de domicilio es de otro estado?",
+          "answer": "Generalmente se pide comprobante de domicilio de la Ciudad de México. Si vives en el Estado de México pero tienes un comprobante a tu nombre en CDMX, revisa las opciones vigentes con SEMOVI antes de ir al módulo."
+        },
+        {
+          "question": "¿Necesito escuela de manejo obligatoria?",
+          "answer": "No es obligatoria para tramitar la licencia, aunque si nunca has manejado te puede ayudar a aprobar el examen práctico."
+        }
+      ]
+    },
+    {
+      "id": "verificacion-vehicular-cdmx-calendario",
+      "slug": "verificacion-vehicular-cdmx-calendario",
+      "title": "Verificación vehicular en CDMX: cómo funciona el calendario",
+      "dek": "Cuándo te toca verificar según el color de tu engomado y el último dígito de tu placa, y qué pasa si no lo haces a tiempo.",
+      "groupSlug": "vehiculos-y-placas",
+      "updatedAt": "2026-08-01",
+      "readingTime": "4 min de lectura",
+      "officialSource": {
+        "label": "Verificentro CDMX",
+        "url": "https://www.verificacion.cdmx.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Frecuencia",
+          "value": "Semestral para la mayoría de los vehículos"
+        },
+        {
+          "label": "Exentos",
+          "value": "Vehículos con holograma 0 o 00, eléctricos e híbridos"
+        },
+        {
+          "label": "Se verifica en",
+          "value": "Verificentros autorizados"
+        },
+        {
+          "label": "Basado en",
+          "value": "Último dígito de placa + color de engomado del semestre"
+        }
+      ],
+      "toc": [
+        {
+          "id": "como-funciona",
+          "label": "Cómo funciona el calendario"
+        },
+        {
+          "id": "exenciones",
+          "label": "Quién está exento"
+        },
+        {
+          "id": "no-verificar",
+          "label": "Qué pasa si no verificas"
+        }
+      ],
+      "content": [
+        {
+          "id": "como-funciona",
+          "heading": "Cómo funciona el calendario",
+          "paragraphs": [
+            "Cada semestre se asigna un engomado de color y un grupo de terminaciones de placa con dos meses específicos para verificar. El calendario completo (color + meses + terminaciones) se publica cada año en el sitio oficial de verificación, porque puede ajustarse.",
+            "Conviene revisar el calendario vigente en cuanto empiece el semestre en vez de guiarte por el del año pasado, ya que las fechas exactas sí cambian."
+          ]
+        },
+        {
+          "id": "exenciones",
+          "heading": "Quién está exento",
+          "paragraphs": [
+            "Los vehículos con holograma de verificación 0 o 00 (los de emisiones más bajas) suelen tener exención total o verificación anual en vez de semestral. Vehículos eléctricos e híbridos también suelen estar exentos — confirma tu caso específico en el sitio oficial."
+          ]
+        },
+        {
+          "id": "no-verificar",
+          "heading": "Qué pasa si no verificas a tiempo",
+          "paragraphs": [
+            "Circular fuera de tu periodo de verificación es motivo de infracción y puede derivar en multa. Además, no poder verificar (por ejemplo, por rechazo de emisiones) te deja sin poder circular con normalidad hasta corregirlo."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Puedo verificar antes de que empiece mi periodo?",
+          "answer": "Por lo general el sistema solo te deja verificar dentro de la ventana de tu color/terminación asignada, no antes."
+        },
+        {
+          "question": "¿Qué pasa si mi auto no pasa la verificación?",
+          "answer": "Tienes un plazo para corregir la falla y volver a verificar sin pagar el trámite completo de nuevo, dentro de los días que marque tu comprobante — revisa el plazo exacto en tu holograma de rechazo."
+        }
+      ]
+    },
+    {
+      "id": "como-tramitar-reponer-placas-cdmx",
+      "slug": "como-tramitar-reponer-placas-cdmx",
+      "title": "Cómo tramitar o reponer tus placas en la Ciudad de México",
+      "dek": "Alta vehicular, reposición por robo o extravío, y cambio de propietario, paso por paso.",
+      "groupSlug": "vehiculos-y-placas",
+      "updatedAt": "2026-08-01",
+      "readingTime": "4 min de lectura",
+      "officialSource": {
+        "label": "SEMOVI CDMX",
+        "url": "https://www.semovi.cdmx.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Alta vehicular",
+          "value": "Se hace al comprar un auto nuevo o usado sin placas"
+        },
+        {
+          "label": "Reposición",
+          "value": "Por robo, extravío o deterioro"
+        },
+        {
+          "label": "Requiere",
+          "value": "Factura o carta factura, tarjeta de circulación, identificación"
+        },
+        {
+          "label": "Reporte previo",
+          "value": "Si es por robo, primero levanta la denuncia"
+        }
+      ],
+      "toc": [
+        {
+          "id": "alta",
+          "label": "Alta vehicular (auto nuevo o usado)"
+        },
+        {
+          "id": "reposicion",
+          "label": "Reposición por robo o extravío"
+        },
+        {
+          "id": "cambio-propietario",
+          "label": "Cambio de propietario"
+        }
+      ],
+      "content": [
+        {
+          "id": "alta",
+          "heading": "Alta vehicular (auto nuevo o usado)",
+          "paragraphs": [
+            "Si compras un auto nuevo, la agencia suele iniciar el trámite; si es usado y ya trae placas de otro estado, necesitas hacer el cambio de placas a CDMX presentando factura o carta factura, identificación y comprobante de domicilio."
+          ]
+        },
+        {
+          "id": "reposicion",
+          "heading": "Reposición por robo o extravío",
+          "paragraphs": [
+            "Si te robaron o perdiste tus placas, primero levanta la denuncia correspondiente — te la van a pedir como parte del trámite de reposición, junto con tu tarjeta de circulación e identificación."
+          ]
+        },
+        {
+          "id": "cambio-propietario",
+          "heading": "Cambio de propietario",
+          "paragraphs": [
+            "Al vender o comprar un auto usado, el cambio de propietario ante SEMOVI evita que multas o adeudos del dueño anterior (o tuyos, si vendes) sigan asociados incorrectamente al vehículo."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Puedo seguir circulando mientras tramito la reposición de placas?",
+          "answer": "Debes portar el acuse/comprobante del trámite en proceso, ya que circular sin placas ni comprobante es motivo de infracción."
+        },
+        {
+          "question": "¿Puedo tramitar el alta o reposición si el auto no está a mi nombre?",
+          "answer": "En general el trámite lo hace el propietario que aparece en la factura o carta factura. Si el auto cambió de dueño y nunca se actualizó, primero hay que resolver el cambio de propietario antes de poder tramitar otra cosa a tu nombre."
+        }
+      ]
+    },
+    {
+      "id": "hoy-no-circula-guia-cdmx",
+      "slug": "hoy-no-circula-guia-cdmx",
+      "title": "Hoy No Circula en CDMX: cómo saber si tu auto puede circular",
+      "dek": "Cómo se asigna el día de restricción, qué es el doble Hoy No Circula por contingencia, y quién está exento.",
+      "groupSlug": "multas-y-circulacion",
+      "updatedAt": "2026-08-01",
+      "readingTime": "4 min de lectura",
+      "officialSource": {
+        "label": "SEMOVI CDMX",
+        "url": "https://www.semovi.cdmx.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Se basa en",
+          "value": "Último dígito de placa + color de engomado"
+        },
+        {
+          "label": "Aplica en",
+          "value": "Ciudad de México y municipios conurbados del Estado de México"
+        },
+        {
+          "label": "Doble Hoy No Circula",
+          "value": "Se activa en contingencia ambiental"
+        },
+        {
+          "label": "Exentos",
+          "value": "Holograma 0 y 00, eléctricos, motocicletas (verifica tu caso)"
+        }
+      ],
+      "toc": [
+        {
+          "id": "como-funciona",
+          "label": "Cómo se asigna tu día"
+        },
+        {
+          "id": "contingencia",
+          "label": "Doble Hoy No Circula por contingencia"
+        },
+        {
+          "id": "exenciones",
+          "label": "Quién está exento"
+        }
+      ],
+      "content": [
+        {
+          "id": "como-funciona",
+          "heading": "Cómo se asigna tu día",
+          "paragraphs": [
+            "Cada auto tiene un día de la semana sin circular según el último dígito de su placa, y un horario restringido (generalmente en horas pico) que puede variar. El engomado de color también entra en juego en algunos esquemas adicionales de restricción los sábados."
+          ]
+        },
+        {
+          "id": "contingencia",
+          "heading": "Doble Hoy No Circula por contingencia ambiental",
+          "paragraphs": [
+            "Cuando se activa una contingencia ambiental (mala calidad del aire), se puede restringir un dígito adicional de placa ese día, además del que ya te toca normalmente. Estas alertas se anuncian con anticipación de un día por la Comisión Ambiental de la Megalópolis."
+          ]
+        },
+        {
+          "id": "exenciones",
+          "heading": "Quién está exento",
+          "paragraphs": [
+            "Los vehículos con holograma 0 o 00, así como eléctricos e híbridos, suelen estar exentos del programa. Motocicletas también tienen tratamiento distinto — confirma tu caso específico porque las reglas se revisan cada cierto tiempo."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿El Hoy No Circula aplica los fines de semana?",
+          "answer": "El esquema base aplica de lunes a viernes; los sábados puede haber una restricción adicional según el holograma, distinta a la de entre semana."
+        },
+        {
+          "question": "¿Aplica igual si mi auto tiene placas de otro estado?",
+          "answer": "Sí, si circulas de forma regular dentro de la Ciudad de México y la zona conurbada aplicable, el programa te alcanza aunque tus placas no sean del Estado de México ni de CDMX — el criterio es dónde circulas, no dónde está registrado el auto."
+        }
+      ]
+    },
+    {
+      "id": "que-hacer-si-chocas-cdmx",
+      "slug": "que-hacer-si-chocas-cdmx",
+      "title": "Qué hacer si chocas en la Ciudad de México: pasos a seguir",
+      "dek": "El orden correcto para reaccionar ante un choque, a quién llamar y cómo levantar el reporte sin complicarte.",
+      "groupSlug": "multas-y-circulacion",
+      "updatedAt": "2026-08-01",
+      "readingTime": "4 min de lectura",
+      "officialSource": {
+        "label": "SSC Ciudad de México",
+        "url": "https://www.ssc.cdmx.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Emergencia",
+          "value": "911"
+        },
+        {
+          "label": "Primero",
+          "value": "Verifica si hay heridos antes que nada"
+        },
+        {
+          "label": "No muevas el auto",
+          "value": "Si hay lesionados o desacuerdo, espera a la autoridad"
+        },
+        {
+          "label": "Documenta",
+          "value": "Fotos del lugar, placas y daños antes de mover algo"
+        }
+      ],
+      "toc": [
+        {
+          "id": "pasos-inmediatos",
+          "label": "Pasos inmediatos"
+        },
+        {
+          "id": "a-quien-llamar",
+          "label": "A quién llamar"
+        },
+        {
+          "id": "el-reporte",
+          "label": "Cómo se levanta el reporte"
+        }
+      ],
+      "content": [
+        {
+          "id": "pasos-inmediatos",
+          "heading": "Pasos inmediatos",
+          "paragraphs": [
+            "Primero revisa si hay personas lesionadas — eso siempre va antes que cualquier trámite. Si el choque es leve y ambas partes están de acuerdo en los hechos, puede resolverse directo con las aseguradoras; si hay desacuerdo o daños mayores, es mejor esperar a que llegue la autoridad de tránsito."
+          ]
+        },
+        {
+          "id": "a-quien-llamar",
+          "heading": "A quién llamar",
+          "paragraphs": [
+            "Llama al 911 si hay lesionados o el incidente bloquea la vialidad. Para el trámite de seguro, contacta a tu aseguradora desde el lugar — la mayoría tiene ajustadores que llegan al sitio."
+          ]
+        },
+        {
+          "id": "el-reporte",
+          "heading": "Cómo se levanta el reporte",
+          "paragraphs": [
+            "Un oficial de tránsito o el ajustador de seguros documenta el hecho, las placas involucradas y los daños. Conserva fotos propias del lugar antes de que se muevan los vehículos, te sirven como respaldo ante la aseguradora."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Debo mover mi auto si está estorbando el tráfico?",
+          "answer": "Si no hay lesionados y ambas partes están de acuerdo en lo ocurrido, sí conviene moverlo a un lugar seguro para no generar un accidente mayor. Si hay desacuerdo o lesionados, espera a la autoridad."
+        },
+        {
+          "question": "¿Necesito llamar a la policía aunque el choque sea leve?",
+          "answer": "No siempre es obligatorio si ambas partes están de acuerdo y resuelven directo con las aseguradoras, pero si hay cualquier desacuerdo sobre lo ocurrido, tener un reporte oficial te protege — sobre todo si el otro conductor cambia su versión después."
+        }
+      ]
+    },
+    {
+      "id": "como-pagar-consultar-multas-transito-cdmx",
+      "slug": "como-pagar-consultar-multas-transito-cdmx",
+      "title": "Cómo consultar y pagar una multa de tránsito en CDMX",
+      "dek": "Dónde revisar si tienes multas pendientes, formas de pago y cómo impugnar una fotomulta.",
+      "groupSlug": "multas-y-circulacion",
+      "updatedAt": "2026-08-01",
+      "readingTime": "4 min de lectura",
+      "officialSource": {
+        "label": "Secretaría de Finanzas CDMX",
+        "url": "https://www.finanzas.cdmx.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Consulta",
+          "value": "En línea, con placas o número de infracción"
+        },
+        {
+          "label": "Pago",
+          "value": "En línea, bancos autorizados o módulos"
+        },
+        {
+          "label": "Impugnación",
+          "value": "Tiene un plazo límite — no se puede hacer en cualquier momento"
+        },
+        {
+          "label": "Adeudos",
+          "value": "Pueden bloquear tu verificación o refrendo si no se liquidan"
+        }
+      ],
+      "toc": [
+        {
+          "id": "consultar",
+          "label": "Cómo consultar tus multas"
+        },
+        {
+          "id": "pagar",
+          "label": "Formas de pago"
+        },
+        {
+          "id": "impugnar",
+          "label": "Cómo impugnar una fotomulta"
+        }
+      ],
+      "content": [
+        {
+          "id": "consultar",
+          "heading": "Cómo consultar tus multas",
+          "paragraphs": [
+            "Puedes consultar adeudos de infracciones en línea capturando tus placas o el folio de la boleta. Es buena práctica revisarlo antes de tu verificación o refrendo anual, porque los adeudos vigentes pueden bloquear ambos trámites."
+          ]
+        },
+        {
+          "id": "pagar",
+          "heading": "Formas de pago",
+          "paragraphs": [
+            "El pago se puede hacer en línea, en bancos autorizados o en módulos de la Secretaría de Finanzas, según el medio vigente al momento del trámite."
+          ]
+        },
+        {
+          "id": "impugnar",
+          "heading": "Cómo impugnar una fotomulta",
+          "paragraphs": [
+            "Si consideras que una fotomulta es incorrecta (por ejemplo, la placa no coincide con tu vehículo), existe un proceso de inconformidad, pero tiene un plazo límite a partir de la notificación — no se puede impugnar después de vencido ese plazo, así que conviene revisar la boleta apenas la recibas."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Una multa sin pagar me impide verificar mi auto?",
+          "answer": "Sí, los adeudos de infracciones vigentes son una causa común de bloqueo tanto para verificación como para el refrendo vehicular."
+        },
+        {
+          "question": "¿Las fotomultas se pueden pagar con descuento si las liquido pronto?",
+          "answer": "En algunos periodos la ciudad ofrece descuentos por pronto pago de infracciones, pero no es una condición permanente — confirma si hay una promoción vigente al momento de consultar tu adeudo."
+        }
+      ]
+    },
+    {
+      "id": "como-tramitar-reponer-curp",
+      "slug": "como-tramitar-reponer-curp",
+      "title": "Cómo obtener o corregir tu CURP",
+      "dek": "Es un trámite gratuito: cuándo lo puedes hacer en línea y cuándo necesitas ir en persona al Registro Civil.",
+      "groupSlug": "documentos-e-identidad",
+      "updatedAt": "2026-08-01",
+      "readingTime": "3 min de lectura",
+      "officialSource": {
+        "label": "gob.mx/curp",
+        "url": "https://www.gob.mx/curp"
+      },
+      "quickFacts": [
+        {
+          "label": "Costo",
+          "value": "Gratuito"
+        },
+        {
+          "label": "En línea",
+          "value": "Si solo necesitas la constancia/descarga"
+        },
+        {
+          "label": "En persona",
+          "value": "Si necesitas corregir un dato"
+        },
+        {
+          "label": "Requiere",
+          "value": "Acta de nacimiento para trámites presenciales"
+        }
+      ],
+      "toc": [
+        {
+          "id": "descargar",
+          "label": "Descargar tu CURP en línea"
+        },
+        {
+          "id": "corregir",
+          "label": "Cuándo necesitas ir en persona"
+        }
+      ],
+      "content": [
+        {
+          "id": "descargar",
+          "heading": "Descargar tu CURP en línea",
+          "paragraphs": [
+            "Si ya tienes CURP asignada y solo necesitas la constancia (por ejemplo, para un trámite escolar o laboral), se descarga gratis en el portal oficial capturando tu nombre completo, fecha de nacimiento y entidad, o directamente la clave si ya la conoces."
+          ]
+        },
+        {
+          "id": "corregir",
+          "heading": "Cuándo necesitas ir en persona",
+          "paragraphs": [
+            "Si hay un error en tus datos (nombre mal escrito, fecha incorrecta) o nunca se te asignó CURP, el trámite de corrección o asignación se hace en el Registro Civil presentando tu acta de nacimiento."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿La CURP tiene costo?",
+          "answer": "No, obtenerla o descargarla es gratuito tanto en línea como en el Registro Civil."
+        },
+        {
+          "question": "¿Qué hago si mi CURP tiene una letra o número distinto al de mi acta?",
+          "answer": "Es justo el caso más común de corrección: acude al Registro Civil con tu acta de nacimiento original para que ajusten el dato incorrecto y te generen la CURP correcta."
+        }
+      ]
+    },
+    {
+      "id": "pasaporte-mexicano-requisitos-citas-costos",
+      "slug": "pasaporte-mexicano-requisitos-citas-costos",
+      "title": "Pasaporte mexicano: requisitos, cita y vigencia",
+      "dek": "Qué documentos llevar, cómo agendar tu cita y qué vigencias puedes elegir.",
+      "groupSlug": "documentos-e-identidad",
+      "updatedAt": "2026-08-01",
+      "readingTime": "4 min de lectura",
+      "officialSource": {
+        "label": "Secretaría de Relaciones Exteriores",
+        "url": "https://www.gob.mx/sre"
+      },
+      "quickFacts": [
+        {
+          "label": "Vigencias",
+          "value": "Distintas opciones según edad — confirma cuáles aplican para ti"
+        },
+        {
+          "label": "Cita",
+          "value": "Se agenda en línea antes de presentarte"
+        },
+        {
+          "label": "Requiere",
+          "value": "CURP, acta de nacimiento, identificación oficial"
+        },
+        {
+          "label": "Costo",
+          "value": "Varía según la vigencia elegida — confirma el monto actual con SRE"
+        }
+      ],
+      "toc": [
+        {
+          "id": "documentos",
+          "label": "Documentos que necesitas"
+        },
+        {
+          "id": "cita",
+          "label": "Cómo agendar tu cita"
+        },
+        {
+          "id": "vigencias",
+          "label": "Qué vigencia elegir"
+        }
+      ],
+      "content": [
+        {
+          "id": "documentos",
+          "heading": "Documentos que necesitas",
+          "paragraphs": [
+            "En general se pide acta de nacimiento, identificación oficial vigente, CURP y comprobante de domicilio reciente. Si es para un menor de edad, se agrega documentación adicional de los padres o tutores."
+          ]
+        },
+        {
+          "id": "cita",
+          "heading": "Cómo agendar tu cita",
+          "paragraphs": [
+            "El trámite requiere cita previa agendada en el sitio oficial de la SRE — no se atiende sin cita en la mayoría de las oficinas. Conviene agendar con anticipación, sobre todo en temporada vacacional cuando la demanda sube mucho."
+          ]
+        },
+        {
+          "id": "vigencias",
+          "heading": "Qué vigencia elegir",
+          "paragraphs": [
+            "Existen distintas vigencias disponibles y no todas aplican para cualquier edad — a mayor vigencia, mayor costo por trámite pero menos veces que tienes que renovarlo. Confirma las opciones vigentes para tu caso al momento de agendar."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Puedo tramitar el pasaporte sin CURP?",
+          "answer": "La CURP es parte de los requisitos estándar; si no la tienes, primero tramítala (es gratuita) antes de tu cita de pasaporte."
+        },
+        {
+          "question": "¿Qué pasa si pierdo mi cita o llego tarde?",
+          "answer": "Normalmente tienes que reagendar en el sitio oficial de la SRE — no siempre hay lugar para atenderte sin cita el mismo día, así que conviene llegar con margen y confirmar tu horario un día antes."
+        }
+      ]
+    },
+    {
+      "id": "como-reponer-credencial-ine",
+      "slug": "como-reponer-credencial-ine",
+      "title": "Cómo reponer tu credencial para votar (INE)",
+      "dek": "Qué hacer si la perdiste, te la robaron, se dañó o cambiaste de domicilio.",
+      "groupSlug": "documentos-e-identidad",
+      "updatedAt": "2026-08-01",
+      "readingTime": "3 min de lectura",
+      "officialSource": {
+        "label": "Instituto Nacional Electoral",
+        "url": "https://www.ine.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Dónde",
+          "value": "Módulo de Atención Ciudadana (MAC) del INE"
+        },
+        {
+          "label": "Cita",
+          "value": "Se agenda en línea, aunque algunos módulos reciben sin cita"
+        },
+        {
+          "label": "Requiere",
+          "value": "CURP y comprobante de domicilio si cambiaste de dirección"
+        },
+        {
+          "label": "Entrega",
+          "value": "No es inmediata — te dan una fecha para recogerla"
+        }
+      ],
+      "toc": [
+        {
+          "id": "motivos",
+          "label": "Motivos comunes de reposición"
+        },
+        {
+          "id": "como-tramitar",
+          "label": "Cómo hacer el trámite"
+        }
+      ],
+      "content": [
+        {
+          "id": "motivos",
+          "heading": "Motivos comunes de reposición",
+          "paragraphs": [
+            "Robo o extravío, deterioro de la credencial, cambio de domicilio, o corrección de datos personales son las razones más comunes para tramitar una reposición o actualización."
+          ]
+        },
+        {
+          "id": "como-tramitar",
+          "heading": "Cómo hacer el trámite",
+          "paragraphs": [
+            "Se realiza en cualquier Módulo de Atención Ciudadana del INE, idealmente agendando cita en línea para no hacer fila. Te toman una nueva foto y firma, y te dan una fecha posterior para recoger la credencial física — no te la entregan el mismo día."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Puedo votar mientras espero mi credencial nueva?",
+          "answer": "Fuera de periodo electoral no aplica; en año electoral, el INE define reglas específicas sobre credenciales en trámite — revisa el comunicado oficial vigente para ese proceso."
+        },
+        {
+          "question": "¿Puedo tramitar mi credencial en cualquier módulo del país?",
+          "answer": "Sí, un Módulo de Atención Ciudadana puede atenderte aunque no sea el de tu domicilio actual, aunque si además necesitas actualizar tu dirección conviene ir directo al módulo correspondiente a tu nuevo domicilio."
+        }
+      ]
+    },
+    {
+      "id": "que-hacer-en-caso-de-sismo-cdmx",
+      "slug": "que-hacer-en-caso-de-sismo-cdmx",
+      "title": "Qué hacer en caso de sismo en la Ciudad de México",
+      "dek": "Protocolo básico de antes, durante y después — y por qué conviene revisarlo aunque ya lo sepas.",
+      "groupSlug": "vivienda-y-seguridad",
+      "updatedAt": "2026-08-01",
+      "readingTime": "4 min de lectura",
+      "officialSource": {
+        "label": "Secretaría de Gestión Integral de Riesgos y Protección Civil CDMX",
+        "url": "https://www.proteccioncivil.cdmx.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Alerta sísmica",
+          "value": "Suena antes del movimiento fuerte, no siempre con el mismo margen"
+        },
+        {
+          "label": "Punto de reunión",
+          "value": "Identifícalo en tu edificio/colonia antes de que pase algo"
+        },
+        {
+          "label": "Durante el sismo",
+          "value": "No corras a elevadores ni escaleras en movimiento"
+        },
+        {
+          "label": "Después",
+          "value": "Revisa daños antes de reingresar y espera réplicas"
+        }
+      ],
+      "toc": [
+        {
+          "id": "antes",
+          "label": "Antes: prepárate con calma"
+        },
+        {
+          "id": "durante",
+          "label": "Durante el sismo"
+        },
+        {
+          "id": "despues",
+          "label": "Después del sismo"
+        }
+      ],
+      "content": [
+        {
+          "id": "antes",
+          "heading": "Antes: prepárate con calma",
+          "paragraphs": [
+            "Identifica tu punto de reunión y las rutas de evacuación de tu edificio o colonia antes de que ocurra un sismo, no durante. Tener una mochila de emergencia básica (agua, radio, linterna, documentos, medicamentos) en un lugar accesible ayuda mucho a no improvisar."
+          ]
+        },
+        {
+          "id": "durante",
+          "heading": "Durante el sismo",
+          "paragraphs": [
+            "Aléjate de ventanas y objetos que puedan caer, y si estás dentro, protégete bajo una estructura firme. Nunca uses el elevador durante o inmediatamente después de un sismo, y evita bajar corriendo por escaleras mientras el movimiento continúa."
+          ]
+        },
+        {
+          "id": "despues",
+          "heading": "Después del sismo",
+          "paragraphs": [
+            "Revisa que no haya daños estructurales visibles ni fugas de gas antes de reingresar a un inmueble. Es normal que haya réplicas en las horas siguientes, así que mantente atento a la información oficial de Protección Civil en vez de rumores en redes."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿La alerta sísmica siempre suena antes de sentir el sismo?",
+          "answer": "No siempre con el mismo margen de tiempo — depende de dónde esté el epicentro. En sismos con epicentro muy cercano a la ciudad, la alerta puede sonar casi al mismo tiempo que el movimiento o incluso después."
+        },
+        {
+          "question": "¿Debo salir corriendo del edificio en cuanto suena la alerta?",
+          "answer": "No corriendo — Protección Civil recomienda protegerte primero donde estés (bajo una estructura firme, lejos de ventanas) y evacuar de forma ordenada por las escaleras solo cuando el movimiento lo permita, nunca en plena sacudida."
+        }
+      ]
+    },
+    {
+      "id": "como-reportar-bache-fuga-luminaria-cdmx",
+      "slug": "como-reportar-bache-fuga-luminaria-cdmx",
+      "title": "Cómo reportar un bache, una fuga de agua o una luminaria fundida",
+      "dek": "Los canales oficiales para reportar fallas urbanas en CDMX y qué esperar de tiempos de respuesta.",
+      "groupSlug": "vivienda-y-seguridad",
+      "updatedAt": "2026-08-01",
+      "readingTime": "3 min de lectura",
+      "officialSource": {
+        "label": "Locatel CDMX",
+        "url": "https://www.locatel.cdmx.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Canal principal",
+          "value": "Locatel (teléfono y app) y redes de la alcaldía"
+        },
+        {
+          "label": "Fugas de agua",
+          "value": "Se reportan también directo a SACMEX"
+        },
+        {
+          "label": "Con qué datos",
+          "value": "Ubicación exacta o cruce de calles, foto si es posible"
+        },
+        {
+          "label": "Seguimiento",
+          "value": "Te dan folio para dar seguimiento al reporte"
+        }
+      ],
+      "toc": [
+        {
+          "id": "que-reportar",
+          "label": "Qué se puede reportar"
+        },
+        {
+          "id": "como-reportar",
+          "label": "Cómo reportarlo"
+        }
+      ],
+      "content": [
+        {
+          "id": "que-reportar",
+          "heading": "Qué se puede reportar",
+          "paragraphs": [
+            "Baches, luminarias fundidas, coladeras dañadas, fugas de agua visibles y árboles caídos son de los reportes más comunes de vía pública. Cada uno puede tener un área responsable distinta (alcaldía, SACMEX, CFE en el caso de luminarias con cableado eléctrico), pero no necesitas saber cuál para reportarlo."
+          ]
+        },
+        {
+          "id": "como-reportar",
+          "heading": "Cómo reportarlo",
+          "paragraphs": [
+            "Locatel funge como puerta de entrada única para la mayoría de estos reportes, por teléfono o app, y turna el caso al área correspondiente. Muchas alcaldías también tienen su propia línea o cuenta de redes sociales para reportes directos — si tu reporte urge, usar ambos canales no está de más.",
+            "Guarda el folio que te den: te sirve para dar seguimiento si después de varios días no ves avance."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Cuánto tarda en atenderse un reporte?",
+          "answer": "Varía mucho según el tipo de falla y la carga de trabajo del área responsable — desde días hasta semanas en fallas que requieren obra. Da seguimiento con tu folio si pasa mucho tiempo sin respuesta."
+        },
+        {
+          "question": "¿Puedo reportar de forma anónima?",
+          "answer": "Sí, la mayoría de los canales no exigen que te identifiques para levantar el reporte, aunque dejar un teléfono de contacto ayuda si el área responsable necesita confirmar la ubicación exacta."
+        }
+      ]
+    },
+    {
+      "id": "como-pagar-predial-agua-cdmx",
+      "slug": "como-pagar-predial-agua-cdmx",
+      "title": "Cómo pagar tu predial y agua en la Ciudad de México",
+      "dek": "Dónde consultar tu adeudo, cuándo hay descuento por pronto pago y las formas de pago disponibles.",
+      "groupSlug": "vivienda-y-seguridad",
+      "updatedAt": "2026-08-01",
+      "readingTime": "3 min de lectura",
+      "officialSource": {
+        "label": "Secretaría de Finanzas CDMX",
+        "url": "https://www.finanzas.cdmx.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Consulta",
+          "value": "En línea, con tu cuenta predial o cuenta de agua"
+        },
+        {
+          "label": "Descuento",
+          "value": "Suele haber descuento por pago anticipado en los primeros meses del año"
+        },
+        {
+          "label": "Pago",
+          "value": "En línea, bancos autorizados o aplicaciones móviles bancarias"
+        },
+        {
+          "label": "Sin recibo físico",
+          "value": "Puedes pagar aunque no tengas la boleta impresa"
+        }
+      ],
+      "toc": [
+        {
+          "id": "consultar-adeudo",
+          "label": "Cómo consultar tu adeudo"
+        },
+        {
+          "id": "descuentos",
+          "label": "Descuentos por pronto pago"
+        },
+        {
+          "id": "formas-de-pago",
+          "label": "Formas de pago"
+        }
+      ],
+      "content": [
+        {
+          "id": "consultar-adeudo",
+          "heading": "Cómo consultar tu adeudo",
+          "paragraphs": [
+            "Puedes consultar el monto de tu predial o agua en línea capturando tu cuenta (aparece en boletas anteriores) sin necesidad de ir a una oficina."
+          ]
+        },
+        {
+          "id": "descuentos",
+          "heading": "Descuentos por pronto pago",
+          "paragraphs": [
+            "La Ciudad de México suele ofrecer un descuento si pagas el año completo por adelantado durante los primeros meses del año — el porcentaje y la fecha límite se publican cada enero, así que conviene revisarlo apenas empieza el año si te interesa aprovecharlo."
+          ]
+        },
+        {
+          "id": "formas-de-pago",
+          "heading": "Formas de pago",
+          "paragraphs": [
+            "Se puede pagar en línea, en bancos autorizados o desde la app de tu banco usando la línea de captura de tu boleta."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Qué pasa si no pago mi predial a tiempo?",
+          "answer": "Genera recargos que se acumulan con el tiempo, y un adeudo importante puede complicar trámites futuros relacionados con la propiedad. Conviene ponerte al corriente en cuanto puedas en vez de dejarlo crecer."
+        },
+        {
+          "question": "¿Puedo pagar el predial de un inmueble que no está a mi nombre?",
+          "answer": "Sí, cualquier persona puede pagar con solo tener el número de cuenta predial — no es necesario ser el propietario registrado para hacer el pago."
+        }
+      ]
+    },
+    {
+      "id": "donde-vacunarse-cdmx",
+      "slug": "donde-vacunarse-cdmx",
+      "title": "Dónde vacunarte en la Ciudad de México",
+      "dek": "Módulos fijos e itinerantes, y qué llevar el día de tu vacuna.",
+      "groupSlug": "salud",
+      "updatedAt": "2026-08-01",
+      "readingTime": "3 min de lectura",
+      "officialSource": {
+        "label": "Secretaría de Salud CDMX",
+        "url": "https://www.salud.cdmx.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Módulos fijos",
+          "value": "Centros de salud de cada alcaldía"
+        },
+        {
+          "label": "Módulos itinerantes",
+          "value": "Se anuncian por temporada y por colonia"
+        },
+        {
+          "label": "Costo",
+          "value": "Gratuito en el esquema público de vacunación"
+        },
+        {
+          "label": "Lleva",
+          "value": "Cartilla de vacunación e identificación"
+        }
+      ],
+      "toc": [
+        {
+          "id": "donde",
+          "label": "Dónde vacunarte"
+        },
+        {
+          "id": "que-llevar",
+          "label": "Qué llevar"
+        }
+      ],
+      "content": [
+        {
+          "id": "donde",
+          "heading": "Dónde vacunarte",
+          "paragraphs": [
+            "Los centros de salud de cada alcaldía aplican el esquema básico de vacunación de forma permanente. Además, es común que se instalen módulos itinerantes en plazas o mercados por temporada (por ejemplo, campañas de influenza) — estos se anuncian con poca anticipación, así que conviene seguir las redes oficiales de tu alcaldía o de Salud CDMX."
+          ]
+        },
+        {
+          "id": "que-llevar",
+          "heading": "Qué llevar",
+          "paragraphs": [
+            "Lleva tu cartilla de vacunación si la tienes (te ayuda a no repetir dosis) y una identificación. Si es para un menor, la cartilla es indispensable."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Tiene costo vacunarse en el sector público?",
+          "answer": "No, las vacunas del esquema público son gratuitas."
+        },
+        {
+          "question": "¿Necesito ser derechohabiente del IMSS o ISSSTE para vacunarte gratis?",
+          "answer": "No, el esquema básico de vacunación en los centros de salud de la Ciudad de México es público y no depende de estar afiliado a un instituto de seguridad social."
+        }
+      ]
+    },
+    {
+      "id": "hospitales-clinicas-urgencias-cdmx",
+      "slug": "hospitales-clinicas-urgencias-cdmx",
+      "title": "Qué hacer ante una urgencia médica en la Ciudad de México",
+      "dek": "A quién llamar, y cómo ubicar el hospital u hospital más cercano según tu emergencia.",
+      "groupSlug": "salud",
+      "updatedAt": "2026-08-01",
+      "readingTime": "3 min de lectura",
+      "officialSource": {
+        "label": "Secretaría de Salud CDMX",
+        "url": "https://www.salud.cdmx.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Emergencia",
+          "value": "911"
+        },
+        {
+          "label": "Urgencias reales",
+          "value": "Se atienden en cualquier hospital, público o privado"
+        },
+        {
+          "label": "Sin dinero o seguro",
+          "value": "Ningún hospital puede negarte atención de urgencia real"
+        },
+        {
+          "label": "No es urgencia",
+          "value": "Para dudas de salud no urgentes, usa Locatel"
+        }
+      ],
+      "toc": [
+        {
+          "id": "a-donde-ir",
+          "label": "A dónde ir"
+        },
+        {
+          "id": "tus-derechos",
+          "label": "Lo que debes saber"
+        }
+      ],
+      "content": [
+        {
+          "id": "a-donde-ir",
+          "heading": "A dónde ir",
+          "paragraphs": [
+            "Ante una urgencia real (riesgo de vida, órgano o función), acude al hospital más cercano, sea público o privado — por ley, la atención de urgencias no puede condicionarse al pago o a que tengas seguro. Si no puedes trasladarte, llama al 911."
+          ]
+        },
+        {
+          "id": "tus-derechos",
+          "heading": "Lo que debes saber",
+          "paragraphs": [
+            "Un hospital privado debe estabilizarte aunque no puedas pagar en el momento — la parte administrativa/financiera se resuelve después, nunca antes de atenderte en una urgencia real."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Un hospital privado me puede negar la atención si no tengo dinero?",
+          "answer": "No, si se trata de una urgencia real que pone en riesgo la vida, un órgano o una función, la ley obliga a estabilizarte primero."
+        },
+        {
+          "question": "¿Cómo sé si algo realmente es una urgencia y no puede esperar a consulta normal?",
+          "answer": "Si hay riesgo de vida, pérdida de una función corporal o de un órgano (dificultad severa para respirar, sangrado que no para, pérdida de conciencia, dolor de pecho intenso), es urgencia y debes ir directo al hospital más cercano o llamar al 911. Ante la duda, siempre es mejor acudir."
+        }
+      ]
+    },
+    {
+      "id": "como-sacar-cita-imss-issste",
+      "slug": "como-sacar-cita-imss-issste",
+      "title": "Cómo sacar una cita en el IMSS o el ISSSTE",
+      "dek": "Los pasos para agendar consulta según en cuál de los dos institutos estás afiliado.",
+      "groupSlug": "salud",
+      "updatedAt": "2026-08-01",
+      "readingTime": "3 min de lectura",
+      "officialSource": {
+        "label": "IMSS",
+        "url": "https://www.imss.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "IMSS",
+          "value": "Cita por app IMSS Digital o en tu clínica de adscripción"
+        },
+        {
+          "label": "ISSSTE",
+          "value": "Cita en línea o en tu unidad médica asignada"
+        },
+        {
+          "label": "Requiere",
+          "value": "Número de seguridad social o CURP"
+        },
+        {
+          "label": "Urgencias",
+          "value": "No necesitan cita previa"
+        }
+      ],
+      "toc": [
+        {
+          "id": "imss",
+          "label": "Si estás en el IMSS"
+        },
+        {
+          "id": "issste",
+          "label": "Si estás en el ISSSTE"
+        }
+      ],
+      "content": [
+        {
+          "id": "imss",
+          "heading": "Si estás en el IMSS",
+          "paragraphs": [
+            "Puedes agendar cita de medicina familiar desde la app o el portal del IMSS, capturando tu número de seguridad social. La cita normalmente es en la Unidad de Medicina Familiar que te corresponde según tu domicilio registrado."
+          ]
+        },
+        {
+          "id": "issste",
+          "heading": "Si estás en el ISSSTE",
+          "paragraphs": [
+            "El ISSSTE tiene su propio portal de citas en línea; también puedes acudir directo a tu unidad médica de adscripción si el sistema en línea no tiene disponibilidad cercana."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Necesito cita para una urgencia?",
+          "answer": "No — las urgencias se atienden sin cita previa en cualquier unidad del instituto."
+        },
+        {
+          "question": "¿Puedo cambiarme de Unidad de Medicina Familiar si me queda lejos?",
+          "answer": "Sí, tanto el IMSS como el ISSSTE permiten solicitar cambio de unidad o clínica de adscripción, normalmente en línea o directamente en la unidad que te corresponde actualmente."
+        }
+      ]
+    },
+    {
+      "id": "pension-adultos-mayores-tarjeta-bienestar",
+      "slug": "pension-adultos-mayores-tarjeta-bienestar",
+      "title": "Pensión para adultos mayores y Tarjeta Bienestar: cómo tramitarla",
+      "dek": "Quién puede acceder al apoyo, qué documentos pide el registro y cómo consultar tu pago.",
+      "groupSlug": "apoyos-sociales",
+      "updatedAt": "2026-08-01",
+      "readingTime": "3 min de lectura",
+      "officialSource": {
+        "label": "gob.mx/bienestar",
+        "url": "https://www.gob.mx/bienestar"
+      },
+      "quickFacts": [
+        {
+          "label": "A quién aplica",
+          "value": "Personas adultas mayores, según edad mínima vigente del programa"
+        },
+        {
+          "label": "Registro",
+          "value": "Por convocatoria — no se puede solicitar en cualquier momento"
+        },
+        {
+          "label": "Requiere",
+          "value": "CURP, identificación y comprobante de domicilio"
+        },
+        {
+          "label": "Pago",
+          "value": "Se deposita en la Tarjeta Bienestar de forma bimestral"
+        }
+      ],
+      "toc": [
+        {
+          "id": "quien-puede",
+          "label": "Quién puede acceder"
+        },
+        {
+          "id": "como-registrarse",
+          "label": "Cómo registrarte"
+        }
+      ],
+      "content": [
+        {
+          "id": "quien-puede",
+          "heading": "Quién puede acceder",
+          "paragraphs": [
+            "El programa está dirigido a personas adultas mayores que cumplan la edad mínima vigente — esta edad y el monto del apoyo se revisan periódicamente, así que confírmalos en la fuente oficial antes de suponer que no calificas."
+          ]
+        },
+        {
+          "id": "como-registrarse",
+          "heading": "Cómo registrarte",
+          "paragraphs": [
+            "El registro se abre por convocatoria en periodos específicos del año, no de forma permanente. Se solicita CURP, identificación oficial y comprobante de domicilio; una vez aceptado, el pago se deposita bimestralmente en tu Tarjeta Bienestar."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Puedo registrarme en cualquier momento del año?",
+          "answer": "No, el registro se abre por convocatoria en fechas específicas — hay que estar al pendiente del anuncio oficial en tu localidad."
+        },
+        {
+          "question": "¿Qué pasa si la persona beneficiaria no puede acudir a cobrar o hacer trámites?",
+          "answer": "Existen figuras de representante o auxiliar para casos de personas con movilidad reducida o enfermedad — el programa contempla ese supuesto, pero requiere trámite y documentación adicional específica que conviene confirmar en la fuente oficial."
+        }
+      ]
+    },
+    {
+      "id": "becas-apoyos-sociales-cdmx",
+      "slug": "becas-apoyos-sociales-cdmx",
+      "title": "Becas y apoyos sociales vigentes en la Ciudad de México",
+      "dek": "Dónde consultar la lista de programas activos y sus fechas de registro.",
+      "groupSlug": "apoyos-sociales",
+      "updatedAt": "2026-08-01",
+      "readingTime": "3 min de lectura",
+      "officialSource": {
+        "label": "Secretaría de Inclusión y Bienestar Social CDMX",
+        "url": "https://www.sibiso.cdmx.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Dónde consultar",
+          "value": "Portal de SIBISO y de tu alcaldía"
+        },
+        {
+          "label": "Tipos comunes",
+          "value": "Becas escolares, apoyo a jefas de familia, útiles y uniformes"
+        },
+        {
+          "label": "Registro",
+          "value": "Por convocatoria, con fechas límite"
+        },
+        {
+          "label": "Requiere",
+          "value": "Documentación distinta según cada programa"
+        }
+      ],
+      "toc": [
+        {
+          "id": "donde-consultar",
+          "label": "Dónde consultar los programas activos"
+        },
+        {
+          "id": "como-aplicar",
+          "label": "Cómo aplicar"
+        }
+      ],
+      "content": [
+        {
+          "id": "donde-consultar",
+          "heading": "Dónde consultar los programas activos",
+          "paragraphs": [
+            "La Secretaría de Inclusión y Bienestar Social (SIBISO) publica el catálogo de programas sociales vigentes de la ciudad; muchas alcaldías también manejan programas propios adicionales a los de la ciudad, así que vale la pena revisar ambos."
+          ]
+        },
+        {
+          "id": "como-aplicar",
+          "heading": "Cómo aplicar",
+          "paragraphs": [
+            "Cada programa tiene su propia convocatoria, requisitos y fecha límite — no existe un registro único para todos. Revisa la ficha específica del programa que te interese antes de reunir documentos."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Puedo estar inscrito en más de un programa social a la vez?",
+          "answer": "En muchos casos sí, siempre que cumplas los requisitos de cada uno por separado — pero algunos programas son excluyentes entre sí. Revisa las reglas de operación del programa específico."
+        },
+        {
+          "question": "¿Los programas de la ciudad y los de mi alcaldía son lo mismo?",
+          "answer": "No necesariamente — la ciudad tiene programas centrales operados por SIBISO, y cada alcaldía puede tener programas propios adicionales con sus propios requisitos. Vale la pena revisar ambos catálogos por separado."
+        }
+      ]
+    },
+    {
+      "id": "tarjeta-metro-como-sacarla-recargarla",
+      "slug": "tarjeta-metro-como-sacarla-recargarla",
+      "title": "Cómo sacar y recargar tu tarjeta del Metro",
+      "dek": "El paso a paso para tramitar tu tarjeta y mantenerla con saldo.",
+      "groupSlug": "transporte-publico",
+      "updatedAt": "2026-08-01",
+      "readingTime": "3 min de lectura",
+      "officialSource": {
+        "label": "Metro CDMX (STC)",
+        "url": "https://www.metro.cdmx.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Dónde se saca",
+          "value": "Taquillas y expendedoras dentro de las estaciones"
+        },
+        {
+          "label": "Recarga",
+          "value": "En taquilla, expendedoras automáticas o apps autorizadas"
+        },
+        {
+          "label": "Sirve también en",
+          "value": "Metrobús y otros sistemas integrados, según el convenio vigente"
+        },
+        {
+          "label": "Costo de la tarjeta",
+          "value": "Tiene un costo único de expedición, aparte del saldo que le cargues"
+        }
+      ],
+      "toc": [
+        {
+          "id": "como-sacarla",
+          "label": "Cómo sacarla"
+        },
+        {
+          "id": "como-recargarla",
+          "label": "Cómo recargarla"
+        }
+      ],
+      "content": [
+        {
+          "id": "como-sacarla",
+          "heading": "Cómo sacarla",
+          "paragraphs": [
+            "Se tramita directamente en taquilla dentro de cualquier estación del Metro, pagando el costo de expedición más el saldo inicial que quieras cargarle."
+          ]
+        },
+        {
+          "id": "como-recargarla",
+          "heading": "Cómo recargarla",
+          "paragraphs": [
+            "Puedes recargarla en taquilla, en las máquinas expendedoras dentro de las estaciones, o mediante apps autorizadas si tu tarjeta es compatible con recarga digital."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿La misma tarjeta sirve para el Metrobús?",
+          "answer": "En muchos casos sí, porque varios sistemas de transporte de la ciudad están integrados a la misma tarjeta — confirma la compatibilidad vigente de tu tarjeta específica."
+        },
+        {
+          "question": "¿Qué hago si pierdo mi tarjeta con saldo?",
+          "answer": "Si tu tarjeta está registrada a tu nombre, puedes reportarla y en muchos casos recuperar el saldo en una tarjeta nueva; si nunca la registraste, el saldo generalmente se pierde junto con la tarjeta física — vale la pena registrarla apenas la saques."
+        }
+      ]
+    },
+    {
+      "id": "ecobici-como-registrarte-cdmx",
+      "slug": "ecobici-como-registrarte-cdmx",
+      "title": "Ecobici: cómo registrarte y cuánto cuesta",
+      "dek": "El sistema de bicicletas públicas de la ciudad — membresías, registro y cómo usarlo.",
+      "groupSlug": "transporte-publico",
+      "updatedAt": "2026-08-01",
+      "readingTime": "3 min de lectura",
+      "officialSource": {
+        "label": "Ecobici CDMX",
+        "url": "https://www.ecobici.cdmx.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Registro",
+          "value": "En línea o en un módulo, con identificación"
+        },
+        {
+          "label": "Membresías",
+          "value": "Existen opciones anuales y de corto plazo (turista)"
+        },
+        {
+          "label": "Uso",
+          "value": "Viajes cortos gratuitos según tu plan; excedente tiene costo adicional"
+        },
+        {
+          "label": "Zona de cobertura",
+          "value": "Limitada a ciertas alcaldías — confirma si tu zona está cubierta"
+        }
+      ],
+      "toc": [
+        {
+          "id": "como-registrarte",
+          "label": "Cómo registrarte"
+        },
+        {
+          "id": "como-funciona",
+          "label": "Cómo funciona el uso"
+        }
+      ],
+      "content": [
+        {
+          "id": "como-registrarte",
+          "heading": "Cómo registrarte",
+          "paragraphs": [
+            "El registro se hace en línea con una identificación oficial, eligiendo el tipo de membresía que te convenga (anual para uso frecuente, de corto plazo si solo la vas a usar unos días)."
+          ]
+        },
+        {
+          "id": "como-funciona",
+          "heading": "Cómo funciona el uso",
+          "paragraphs": [
+            "Cada membresía incluye cierto tiempo de uso gratuito por viaje; si te pasas de ese tiempo, se cobra un cargo adicional por los minutos extra. El sistema solo cubre ciertas alcaldías, así que confirma que tu zona tenga estaciones antes de sacar la membresía."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Ecobici cubre toda la Ciudad de México?",
+          "answer": "No, el sistema opera en una zona específica de la ciudad, no en todas las alcaldías — revisa el mapa de cobertura vigente antes de registrarte si vives fuera del centro/poniente."
+        },
+        {
+          "question": "¿Qué pasa si no encuentro estación disponible para dejar la bici?",
+          "answer": "La app del sistema muestra en tiempo real qué estaciones tienen espacio libre; en zonas de alta demanda conviene revisarla antes de terminar tu viaje para no quedarte sin dónde dejarla."
+        }
+      ]
+    },
+    {
+      "id": "cablebus-trolebus-rtp-guia-cdmx",
+      "slug": "cablebus-trolebus-rtp-guia-cdmx",
+      "title": "Cablebús, Trolebús y RTP: cómo funcionan y cómo pagar tu viaje",
+      "dek": "Una guía rápida a los sistemas de transporte público menos conocidos de la ciudad.",
+      "groupSlug": "transporte-publico",
+      "updatedAt": "2026-08-01",
+      "readingTime": "3 min de lectura",
+      "officialSource": {
+        "label": "Servicio de Transportes Eléctricos (STE)",
+        "url": "https://www.ste.cdmx.gob.mx"
+      },
+      "quickFacts": [
+        {
+          "label": "Cablebús",
+          "value": "Líneas elevadas que conectan zonas altas con el resto de la red"
+        },
+        {
+          "label": "Trolebús",
+          "value": "Opera con las mismas tarjetas del transporte integrado"
+        },
+        {
+          "label": "RTP",
+          "value": "Rutas de camión de bajo costo operadas por el gobierno de la ciudad"
+        },
+        {
+          "label": "Pago",
+          "value": "Tarjeta integrada en la mayoría de las líneas; RTP a veces acepta efectivo"
+        }
+      ],
+      "toc": [
+        {
+          "id": "cablebus",
+          "label": "Cablebús"
+        },
+        {
+          "id": "trolebus-rtp",
+          "label": "Trolebús y RTP"
+        }
+      ],
+      "content": [
+        {
+          "id": "cablebus",
+          "heading": "Cablebús",
+          "paragraphs": [
+            "El Cablebús conecta zonas altas de la ciudad —donde el transporte convencional tiene más dificultad— con estaciones del resto de la red de transporte. Se paga con la misma tarjeta integrada del sistema de transporte de la ciudad."
+          ]
+        },
+        {
+          "id": "trolebus-rtp",
+          "heading": "Trolebús y RTP",
+          "paragraphs": [
+            "El Trolebús opera rutas eléctricas en varias zonas de la ciudad y se paga igual con tarjeta integrada. RTP son camiones de bajo costo operados por el gobierno capitalino — en algunas rutas todavía aceptan pago en efectivo, además de tarjeta."
+          ]
+        }
+      ],
+      "faq": [
+        {
+          "question": "¿Necesito una tarjeta distinta para cada sistema?",
+          "answer": "No, la mayoría de estos sistemas está integrada a la misma tarjeta de transporte de la ciudad — confirma la compatibilidad vigente si tu tarjeta es de otro sistema."
+        },
+        {
+          "question": "¿El Cablebús tiene el mismo costo que un viaje normal de transporte público?",
+          "answer": "Generalmente se integra a la misma tarifa del sistema de transporte de la ciudad, sin costo adicional por ir en cable en vez de camión o Metro — confirma la tarifa vigente antes de tu viaje."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "ALERTAS": [
+    {
+      "id": "cierre-vial-paseo-reforma-marcha",
+      "slug": "cierre-vial-paseo-reforma-marcha",
+      "title": "Cierre vial afecta Paseo de la Reforma",
+      "status": "activa",
+      "topicSlug": "trafico",
+      "alcaldiaSlug": "cuauhtemoc",
+      "updatedAt": "2026-06-11T11:32:00-06:00",
+      "description": "Una marcha del Ángel de la Independencia al Zócalo mantiene cerrados varios carriles de Paseo de la Reforma. Se recomienda usar Circuito Interior o Eje 1 Poniente como rutas alternas.",
+      "updates": [
+        {
+          "time": "11:32",
+          "text": "Se mantiene el cierre en ambos sentidos entre Ángel e Insurgentes."
+        },
+        {
+          "time": "11:15",
+          "text": "Autoridades reportan avance lento del contingente hacia el Zócalo."
+        },
+        {
+          "time": "10:58",
+          "text": "Inicia la concentración en el Ángel de la Independencia."
+        }
+      ]
+    },
+    {
+      "id": "choque-multiple-viaducto-rio-piedad",
+      "slug": "choque-multiple-viaducto-rio-piedad",
+      "title": "Choque múltiple en Viaducto Río de la Piedad",
+      "status": "en-seguimiento",
+      "topicSlug": "trafico",
+      "alcaldiaSlug": "iztacalco",
+      "updatedAt": "2026-06-11T09:46:00-06:00",
+      "description": "Un choque múltiple mantiene cerrado un carril del Viaducto en dirección a Pantitlán. Grúas y servicios de emergencia trabajan en el retiro de los vehículos.",
+      "updates": [
+        {
+          "time": "09:46",
+          "text": "Un carril reabierto; persiste avance lento en la zona."
+        },
+        {
+          "time": "09:20",
+          "text": "Servicios de emergencia confirman que no hay personas graves."
+        },
+        {
+          "time": "09:06",
+          "text": "Se reporta el choque a la altura de Pantitlán, un carril cerrado."
+        }
+      ]
+    },
+    {
+      "id": "operativo-seguridad-colonia-doctores",
+      "slug": "operativo-seguridad-colonia-doctores",
+      "title": "SSC reporta operativo en la colonia Doctores",
+      "status": "en-seguimiento",
+      "topicSlug": "seguridad",
+      "alcaldiaSlug": "cuauhtemoc",
+      "updatedAt": "2026-06-11T08:15:00-06:00",
+      "description": "Elementos de la Secretaría de Seguridad Ciudadana realizan un operativo en la colonia Doctores tras reportes ciudadanos de robo a transeúntes.",
+      "updates": [
+        {
+          "time": "08:15",
+          "text": "El operativo continúa; se reportan detenciones preliminares."
+        },
+        {
+          "time": "07:40",
+          "text": "Inicia el despliegue de elementos en la zona."
+        }
+      ]
+    },
+    {
+      "id": "avance-lento-metro-linea-3",
+      "slug": "avance-lento-metro-linea-3",
+      "title": "Línea 3 del Metro presenta avance lento",
+      "status": "activa",
+      "topicSlug": "metro",
+      "updatedAt": "2026-06-11T14:32:00-06:00",
+      "description": "El Sistema de Transporte Colectivo reporta afluencia mayor a la habitual y avance lento en la Línea 3, en ambos sentidos.",
+      "updates": [
+        {
+          "time": "14:32",
+          "text": "Persiste el avance lento entre Indios Verdes y Centro Médico."
+        },
+        {
+          "time": "14:10",
+          "text": "STC confirma mayor afluencia de lo habitual para la hora."
+        }
+      ]
+    },
+    {
+      "id": "lluvia-fuerte-granizo-poniente",
+      "slug": "lluvia-fuerte-granizo-poniente",
+      "title": "Alerta amarilla por lluvia fuerte con granizo en el poniente",
+      "status": "activa",
+      "topicSlug": "clima",
+      "updatedAt": "2026-06-10T16:40:00-06:00",
+      "description": "El Sistema de Aguas emitió alerta amarilla para ocho alcaldías del poniente y sur de la ciudad ante la probabilidad de lluvia intensa con granizo durante la tarde.",
+      "updates": [
+        {
+          "time": "16:40",
+          "text": "Se mantiene la alerta hasta las 20:00 horas."
+        },
+        {
+          "time": "15:50",
+          "text": "Se emite la alerta amarilla para el poniente y sur de la ciudad."
+        }
+      ]
+    },
+    {
+      "id": "cierre-bacheo-circuito-interior-coyoacan",
+      "slug": "cierre-bacheo-circuito-interior-coyoacan",
+      "title": "Cierre por bacheo en Circuito Interior a la altura de Coyoacán",
+      "status": "resuelta",
+      "topicSlug": "trafico",
+      "alcaldiaSlug": "coyoacan",
+      "updatedAt": "2026-06-09T13:00:00-06:00",
+      "description": "Trabajos de bacheo mantuvieron cerrado un carril de Circuito Interior; los trabajos concluyeron y el tramo opera con normalidad.",
+      "updates": [
+        {
+          "time": "13:00",
+          "text": "Concluyen los trabajos, el carril reabre por completo."
+        },
+        {
+          "time": "09:15",
+          "text": "Inicia el cierre parcial para los trabajos de bacheo."
+        }
+      ]
+    }
+  ]
+}

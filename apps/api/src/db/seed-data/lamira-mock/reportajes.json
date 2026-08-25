@@ -1,0 +1,134 @@
+{
+  "REPORTAJES": [
+    {
+      "id": "puntos-negros-accidentes-viales-cdmx",
+      "slug": "puntos-negros-accidentes-viales-cdmx",
+      "title": "Los puntos donde más se acumulan los accidentes viales en la ciudad",
+      "dek": "Un repaso a los cruces y tramos que concentran la mayor incidencia de choques, según los reportes de tránsito del último semestre.",
+      "authorSlug": "renata-sosa",
+      "publishedAt": "2026-06-01T08:00:00-06:00",
+      "readingTime": "8 min de lectura",
+      "tags": [
+        "Movilidad",
+        "Seguridad vial",
+        "Análisis"
+      ],
+      "sourceKind": "editorial",
+      "imageCaption": "Ilustración: Cuerpo de redacción La Mira.",
+      "toc": [
+        {
+          "id": "el-panorama",
+          "label": "El panorama general"
+        },
+        {
+          "id": "los-puntos",
+          "label": "Los puntos más señalados"
+        },
+        {
+          "id": "que-se-esta-haciendo",
+          "label": "Qué se está haciendo al respecto"
+        }
+      ],
+      "content": [
+        {
+          "heading": "El panorama general",
+          "paragraphs": [
+            "Nota de ejemplo: este reportaje ilustra el formato de análisis largo con datos — en una versión con datos reales, aquí iría el contexto general de incidencia vial en la ciudad durante el periodo analizado."
+          ]
+        },
+        {
+          "heading": "Los puntos más señalados",
+          "paragraphs": [
+            "Viaducto Río de la Piedad, Circuito Interior a la altura de Coyoacán y Calzada de Tlalpan aparecen de forma recurrente entre los tramos con mayor número de incidentes reportados."
+          ]
+        },
+        {
+          "heading": "Qué se está haciendo al respecto",
+          "paragraphs": [
+            "Las autoridades han anunciado obras puntuales de reordenamiento vial en varios de estos tramos, aunque persisten los cuellos de botella en horas pico."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "que-tan-lejos-esta-tu-alcaldia-de-un-hospital",
+      "slug": "que-tan-lejos-esta-tu-alcaldia-de-un-hospital",
+      "title": "Qué tan lejos está tu alcaldía del hospital más cercano",
+      "dek": "Un vistazo a la distribución de la infraestructura de salud pública en las 16 demarcaciones de la ciudad.",
+      "authorSlug": "ana-lucia-prado",
+      "publishedAt": "2026-05-28T09:00:00-06:00",
+      "readingTime": "6 min de lectura",
+      "tags": [
+        "Salud",
+        "Alcaldías",
+        "Análisis"
+      ],
+      "sourceKind": "institucional",
+      "imageCaption": "Ilustración: Cuerpo de redacción La Mira.",
+      "toc": [
+        {
+          "id": "la-distribucion",
+          "label": "La distribución actual"
+        },
+        {
+          "id": "las-zonas-mas-alejadas",
+          "label": "Las zonas más alejadas"
+        }
+      ],
+      "content": [
+        {
+          "heading": "La distribución actual",
+          "paragraphs": [
+            "Nota de ejemplo: aquí iría el análisis de cobertura hospitalaria por alcaldía con datos oficiales reales."
+          ]
+        },
+        {
+          "heading": "Las zonas más alejadas",
+          "paragraphs": [
+            "Las alcaldías de la periferia, como Milpa Alta y Tláhuac, muestran de forma consistente los mayores tiempos de traslado a un hospital de segundo nivel."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "un-ano-de-ciclovias-nuevas-que-tanto-se-usan",
+      "slug": "un-ano-de-ciclovias-nuevas-que-tanto-se-usan",
+      "title": "Un año de ciclovías nuevas: ¿qué tanto se están usando?",
+      "dek": "Revisamos el avance de la red de ciclovías inauguradas en los últimos doce meses y qué dicen quienes las usan a diario.",
+      "authorSlug": "diego-marin",
+      "publishedAt": "2026-05-20T10:00:00-06:00",
+      "readingTime": "7 min de lectura",
+      "tags": [
+        "Movilidad",
+        "Medio ambiente",
+        "Reportaje"
+      ],
+      "sourceKind": "editorial",
+      "imageCaption": "Ilustración: Cuerpo de redacción La Mira.",
+      "toc": [
+        {
+          "id": "el-avance",
+          "label": "El avance de la red"
+        },
+        {
+          "id": "el-uso-real",
+          "label": "El uso real, en cifras"
+        }
+      ],
+      "content": [
+        {
+          "heading": "El avance de la red",
+          "paragraphs": [
+            "Nota de ejemplo: aquí iría el recuento de kilómetros de ciclovía inaugurados y su distribución por alcaldía."
+          ]
+        },
+        {
+          "heading": "El uso real, en cifras",
+          "paragraphs": [
+            "Los tramos que conectan con estaciones de transporte público muestran consistentemente mayor uso que los aislados de la red de movilidad existente."
+          ]
+        }
+      ]
+    }
+  ]
+}

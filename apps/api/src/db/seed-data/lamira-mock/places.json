@@ -1,0 +1,105 @@
+{
+  "LUGARES": [
+    {
+      "id": "bosque-de-chapultepec",
+      "slug": "bosque-de-chapultepec",
+      "name": "Bosque de Chapultepec",
+      "kind": "parque",
+      "alcaldiaSlug": "miguel-hidalgo",
+      "description": "Uno de los parques urbanos más grandes de América Latina, con museos, el Castillo de Chapultepec y amplias áreas verdes."
+    },
+    {
+      "id": "parque-mexico",
+      "slug": "parque-mexico",
+      "name": "Parque México",
+      "kind": "parque",
+      "alcaldiaSlug": "cuauhtemoc",
+      "colonia": "condesa",
+      "description": "Parque emblemático de la Condesa, rodeado de arquitectura art déco, cafés y espacios para actividades al aire libre."
+    },
+    {
+      "id": "zocalo-capitalino",
+      "slug": "zocalo-capitalino",
+      "name": "Zócalo capitalino",
+      "kind": "plaza",
+      "alcaldiaSlug": "cuauhtemoc",
+      "colonia": "centro-historico",
+      "description": "La Plaza de la Constitución, corazón cívico e histórico de la ciudad, sede de eventos masivos y celebraciones."
+    },
+    {
+      "id": "jardin-centenario",
+      "slug": "jardin-centenario",
+      "name": "Jardín Centenario",
+      "kind": "plaza",
+      "alcaldiaSlug": "coyoacan",
+      "colonia": "coyoacan-centro",
+      "description": "Plaza central del centro histórico de Coyoacán, punto de encuentro rodeado de cafés, mercados de artesanías y kioscos."
+    },
+    {
+      "id": "museo-palacio-bellas-artes",
+      "slug": "museo-palacio-bellas-artes",
+      "name": "Museo del Palacio de Bellas Artes",
+      "kind": "museo",
+      "alcaldiaSlug": "cuauhtemoc",
+      "colonia": "centro-historico",
+      "description": "Recinto cultural emblemático de la ciudad, sede de exposiciones temporales, ópera y el Palacio de Bellas Artes."
+    },
+    {
+      "id": "angel-de-la-independencia",
+      "slug": "angel-de-la-independencia",
+      "name": "Ángel de la Independencia",
+      "kind": "monumento",
+      "alcaldiaSlug": "cuauhtemoc",
+      "colonia": "juarez",
+      "description": "Columna conmemorativa sobre Paseo de la Reforma, punto de referencia y de encuentro para celebraciones y manifestaciones."
+    },
+    {
+      "id": "colonia-roma-norte",
+      "slug": "colonia-roma-norte",
+      "name": "Roma Norte",
+      "kind": "colonia",
+      "alcaldiaSlug": "cuauhtemoc",
+      "description": "Colonia conocida por su oferta gastronómica, galerías y arquitectura de principios del siglo XX."
+    },
+    {
+      "id": "colonia-condesa",
+      "slug": "colonia-condesa",
+      "name": "Condesa",
+      "kind": "colonia",
+      "alcaldiaSlug": "cuauhtemoc",
+      "description": "Zona residencial y comercial reconocida por sus parques, cafés y ambiente peatonal."
+    },
+    {
+      "id": "colonia-del-valle",
+      "slug": "colonia-del-valle",
+      "name": "Del Valle",
+      "kind": "colonia",
+      "alcaldiaSlug": "benito-juarez",
+      "description": "Colonia residencial extensa con amplia oferta de comercios y servicios locales."
+    },
+    {
+      "id": "estacion-metro-insurgentes",
+      "slug": "estacion-metro-insurgentes",
+      "name": "Estación Insurgentes",
+      "kind": "estacion-metro",
+      "alcaldiaSlug": "cuauhtemoc",
+      "description": "Estación de la Línea 1 del Metro, una de las más transitadas por su cercanía con la Zona Rosa."
+    },
+    {
+      "id": "estacion-metro-pantitlan",
+      "slug": "estacion-metro-pantitlan",
+      "name": "Estación Pantitlán",
+      "kind": "estacion-metro",
+      "alcaldiaSlug": "iztacalco",
+      "description": "Estación de correspondencia entre varias líneas del Metro, una de las más concurridas del sistema."
+    },
+    {
+      "id": "estacion-metrobus-buenavista",
+      "slug": "estacion-metrobus-buenavista",
+      "name": "Estación Buenavista (Metrobús)",
+      "kind": "estacion-metrobus",
+      "alcaldiaSlug": "cuauhtemoc",
+      "description": "Estación terminal de la Línea 4 del Metrobús, con conexión a la estación de tren suburbano."
+    }
+  ]
+}
