@@ -71,6 +71,149 @@ export interface AiDraftResult {
   decision: AiDecision;
 }
 
+// ── Los 6 tipos de contenido editorial de la-mira ───────────────────────────
+// Reflejan 1:1 sus tablas en apps/api/src/db/schema/lamira.ts — cada uno
+// deliberadamente con su propia forma, sin interfaz base compartida (ver
+// Fase 1 del plan de arquitectura: la-mira/src/lib/types.ts ya está así).
+
+export interface TocEntry {
+  id: string;
+  label: string;
+}
+
+export interface ContentBlock {
+  heading?: string | null;
+  paragraphs: string[];
+}
+
+export interface Noticia {
+  id: string;
+  slug: string;
+  siteId: string;
+  title: string;
+  dek: string;
+  category: Category | null;
+  alcaldiaSlug: string | null;
+  colonia: string | null;
+  authorSlug: string;
+  publishedAt: string;
+  updatedAt: string | null;
+  readingTime: string;
+  status: ContentStatus;
+  sourceKind: string | null;
+  externalSource: string | null;
+  youtubeId: string | null;
+  tags: string[];
+  seo: Seo | null;
+  toc: TocEntry[];
+  content: ContentBlock[];
+  imageCaption: string | null;
+  featured: boolean;
+  tag: string | null;
+  categoryData: Record<string, unknown>;
+  createdAt: string;
+}
+
+export type AlertaStatus = "activa" | "en-seguimiento" | "resuelta";
+
+export interface Alerta {
+  id: string;
+  slug: string;
+  siteId: string;
+  title: string;
+  alertaStatus: AlertaStatus;
+  category: Category | null;
+  alcaldiaSlug: string | null;
+  updatedAt: string;
+  description: string;
+  updates: { time: string; text: string }[];
+  seo: Seo | null;
+  categoryData: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface Guia {
+  id: string;
+  slug: string;
+  siteId: string;
+  title: string;
+  dek: string;
+  groupSlug: string;
+  category: Category | null;
+  updatedAt: string;
+  readingTime: string;
+  status: ContentStatus;
+  officialSource: { label: string; url: string } | null;
+  quickFacts: { label: string; value: string }[];
+  seo: Seo | null;
+  toc: TocEntry[];
+  content: { id: string; heading: string; paragraphs: string[] }[];
+  faq: { question: string; answer: string }[];
+  categoryData: Record<string, unknown>;
+  createdAt: string;
+}
+
+export type EventoStatus = "proximo" | "en-curso" | "finalizado" | "cancelado";
+
+export interface LamiraEvento {
+  id: string;
+  slug: string;
+  siteId: string;
+  title: string;
+  tag: string;
+  category: Category | null;
+  eventoStatus: EventoStatus;
+  date: string;
+  time: string;
+  location: string;
+  alcaldiaSlug: string | null;
+  price: string;
+  description: string;
+  organizer: string;
+  officialUrl: string | null;
+  seo: Seo | null;
+  categoryData: Record<string, unknown>;
+  createdAt: string;
+}
+
+export type LugarKind = "parque" | "plaza" | "museo" | "monumento" | "colonia" | "estacion-metro" | "estacion-metrobus";
+
+export interface LamiraLugar {
+  id: string;
+  slug: string;
+  siteId: string;
+  name: string;
+  kind: LugarKind;
+  category: Category | null;
+  alcaldiaSlug: string;
+  colonia: string | null;
+  description: string;
+  seo: Seo | null;
+  categoryData: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface Reportaje {
+  id: string;
+  slug: string;
+  siteId: string;
+  title: string;
+  dek: string;
+  authorSlug: string;
+  category: Category | null;
+  publishedAt: string;
+  readingTime: string;
+  status: ContentStatus;
+  tags: string[];
+  sourceKind: string | null;
+  seo: Seo | null;
+  imageCaption: string;
+  toc: TocEntry[];
+  content: ContentBlock[];
+  categoryData: Record<string, unknown>;
+  createdAt: string;
+}
+
 export interface Tag {
   id: string;
   name: string;

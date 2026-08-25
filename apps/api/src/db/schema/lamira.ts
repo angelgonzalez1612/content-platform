@@ -18,7 +18,7 @@ interface TocEntry {
   label: string;
 }
 interface ContentBlock {
-  heading?: string;
+  heading?: string | null;
   paragraphs: string[];
 }
 
