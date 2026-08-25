@@ -1,42 +1,36 @@
-import {
-  pgTable,
-  uuid,
-  text,
-  timestamp,
-  boolean,
-  primaryKey,
-} from 'drizzle-orm/pg-core';
-import { contentStatusEnum } from './enums';
+import { sqliteTable, text, integer, primaryKey } from 'drizzle-orm/sqlite-core';
+import { idColumn, createdAtColumn } from './columns.helpers';
+import { CONTENT_STATUS_VALUES } from './enums';
 import { places } from './places';
 
-export const articles = pgTable('articles', {
-  id: uuid('id').defaultRandom().primaryKey(),
+export const articles = sqliteTable('articles', {
+  id: idColumn(),
   slug: text('slug').notNull().unique(),
   title: text('title').notNull(),
   excerpt: text('excerpt'),
   content: text('content'),
   coverImageUrl: text('cover_image_url'),
-  status: contentStatusEnum('status').default('draft').notNull(),
-  aiGenerated: boolean('ai_generated').default(true).notNull(),
+  status: text('status', { enum: CONTENT_STATUS_VALUES })
+    .default('draft')
+    .notNull(),
+  aiGenerated: integer('ai_generated', { mode: 'boolean' })
+    .default(true)
+    .notNull(),
   sourceKeyword: text('source_keyword'),
   seoTitle: text('seo_title'),
   seoDescription: text('seo_description'),
-  publishedAt: timestamp('published_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
+  publishedAt: integer('published_at', { mode: 'timestamp' }),
+  createdAt: createdAtColumn(),
+  updatedAt: createdAtColumn('updated_at'),
 });
 
-export const articlePlaces = pgTable(
+export const articlePlaces = sqliteTable(
   'article_places',
   {
-    articleId: uuid('article_id')
+    articleId: text('article_id')
       .notNull()
       .references(() => articles.id, { onDelete: 'cascade' }),
-    placeId: uuid('place_id')
+    placeId: text('place_id')
       .notNull()
       .references(() => places.id, { onDelete: 'cascade' }),
   },

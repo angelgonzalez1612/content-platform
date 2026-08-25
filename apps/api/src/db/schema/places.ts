@@ -1,112 +1,101 @@
-import {
-  pgTable,
-  uuid,
-  text,
-  timestamp,
-  numeric,
-  smallint,
-  integer,
-  boolean,
-  time,
-  primaryKey,
-} from 'drizzle-orm/pg-core';
-import { contentStatusEnum } from './enums';
+import { sqliteTable, text, real, integer, primaryKey } from 'drizzle-orm/sqlite-core';
+import { idColumn, createdAtColumn } from './columns.helpers';
+import { CONTENT_STATUS_VALUES } from './enums';
 import { categories, tags, services } from './taxonomy';
 
-export const places = pgTable('places', {
-  id: uuid('id').defaultRandom().primaryKey(),
+export const places = sqliteTable('places', {
+  id: idColumn(),
   slug: text('slug').notNull().unique(),
   name: text('name').notNull(),
   description: text('description'),
   /** Neighborhood/colonia — distinct from the full street address. */
   zone: text('zone'),
-  latitude: numeric('latitude', { precision: 9, scale: 6 }),
-  longitude: numeric('longitude', { precision: 9, scale: 6 }),
+  // text, not real — matches Postgres numeric-without-mode's string return
+  // type, which @planazo/types and places.service.ts already assume.
+  latitude: text('latitude'),
+  longitude: text('longitude'),
   address: text('address'),
-  priceLevel: smallint('price_level'),
+  priceLevel: integer('price_level'),
   /** Actual MXN amount, when known — priceLevel alone ($/$$/$$$) isn't enough for the site's price label. */
   price: integer('price'),
-  rating: numeric('rating', { precision: 2, scale: 1, mode: 'number' }),
+  rating: real('rating'),
   reviewCount: integer('review_count').default(0).notNull(),
   phone: text('phone'),
   website: text('website'),
-  status: contentStatusEnum('status').default('draft').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .defaultNow()
+  status: text('status', { enum: CONTENT_STATUS_VALUES })
+    .default('draft')
     .notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
+  createdAt: createdAtColumn(),
+  updatedAt: createdAtColumn('updated_at'),
 });
 
-export const placeCategories = pgTable(
+export const placeCategories = sqliteTable(
   'place_categories',
   {
-    placeId: uuid('place_id')
+    placeId: text('place_id')
       .notNull()
       .references(() => places.id, { onDelete: 'cascade' }),
-    categoryId: uuid('category_id')
+    categoryId: text('category_id')
       .notNull()
       .references(() => categories.id, { onDelete: 'cascade' }),
   },
   (t) => [primaryKey({ columns: [t.placeId, t.categoryId] })],
 );
 
-export const placeTags = pgTable(
+export const placeTags = sqliteTable(
   'place_tags',
   {
-    placeId: uuid('place_id')
+    placeId: text('place_id')
       .notNull()
       .references(() => places.id, { onDelete: 'cascade' }),
-    tagId: uuid('tag_id')
+    tagId: text('tag_id')
       .notNull()
       .references(() => tags.id, { onDelete: 'cascade' }),
   },
   (t) => [primaryKey({ columns: [t.placeId, t.tagId] })],
 );
 
-export const placeServices = pgTable(
+export const placeServices = sqliteTable(
   'place_services',
   {
-    placeId: uuid('place_id')
+    placeId: text('place_id')
       .notNull()
       .references(() => places.id, { onDelete: 'cascade' }),
-    serviceId: uuid('service_id')
+    serviceId: text('service_id')
       .notNull()
       .references(() => services.id, { onDelete: 'cascade' }),
   },
   (t) => [primaryKey({ columns: [t.placeId, t.serviceId] })],
 );
 
-export const photos = pgTable('photos', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  placeId: uuid('place_id')
+export const photos = sqliteTable('photos', {
+  id: idColumn(),
+  placeId: text('place_id')
     .notNull()
     .references(() => places.id, { onDelete: 'cascade' }),
   url: text('url').notNull(),
   alt: text('alt'),
   position: integer('position').default(0).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
+  createdAt: createdAtColumn(),
 });
 
-export const socialLinks = pgTable('social_links', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  placeId: uuid('place_id')
+export const socialLinks = sqliteTable('social_links', {
+  id: idColumn(),
+  placeId: text('place_id')
     .notNull()
     .references(() => places.id, { onDelete: 'cascade' }),
   platform: text('platform').notNull(),
   url: text('url').notNull(),
 });
 
-export const openingHours = pgTable('opening_hours', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  placeId: uuid('place_id')
+export const openingHours = sqliteTable('opening_hours', {
+  id: idColumn(),
+  placeId: text('place_id')
     .notNull()
     .references(() => places.id, { onDelete: 'cascade' }),
-  dayOfWeek: smallint('day_of_week').notNull(),
-  opensAt: time('opens_at'),
-  closesAt: time('closes_at'),
-  closed: boolean('closed').default(false).notNull(),
+  dayOfWeek: integer('day_of_week').notNull(),
+  // Stored as "HH:MM" text — SQLite has no native time type.
+  opensAt: text('opens_at'),
+  closesAt: text('closes_at'),
+  closed: integer('closed', { mode: 'boolean' }).default(false).notNull(),
 });

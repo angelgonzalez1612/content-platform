@@ -1,28 +1,23 @@
-import { pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core';
+import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { idColumn, createdAtColumn } from './columns.helpers';
 
-export const categories = pgTable('categories', {
-  id: uuid('id').defaultRandom().primaryKey(),
+export const categories = sqliteTable('categories', {
+  id: idColumn(),
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
+  createdAt: createdAtColumn(),
 });
 
-export const tags = pgTable('tags', {
-  id: uuid('id').defaultRandom().primaryKey(),
+export const tags = sqliteTable('tags', {
+  id: idColumn(),
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
+  createdAt: createdAtColumn(),
 });
 
-export const services = pgTable('services', {
-  id: uuid('id').defaultRandom().primaryKey(),
+export const services = sqliteTable('services', {
+  id: idColumn(),
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
+  createdAt: createdAtColumn(),
 });

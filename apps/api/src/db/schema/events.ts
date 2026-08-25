@@ -1,36 +1,37 @@
-import { pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core';
-import { contentStatusEnum } from './enums';
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { idColumn, createdAtColumn } from './columns.helpers';
+import { CONTENT_STATUS_VALUES } from './enums';
 import { places } from './places';
 
-export const events = pgTable('events', {
-  id: uuid('id').defaultRandom().primaryKey(),
+export const events = sqliteTable('events', {
+  id: idColumn(),
   slug: text('slug').notNull().unique(),
   name: text('name').notNull(),
   description: text('description'),
-  startDate: timestamp('start_date', { withTimezone: true }).notNull(),
-  endDate: timestamp('end_date', { withTimezone: true }),
-  placeId: uuid('place_id').references(() => places.id, {
+  startDate: integer('start_date', { mode: 'timestamp' }).notNull(),
+  endDate: integer('end_date', { mode: 'timestamp' }),
+  placeId: text('place_id').references(() => places.id, {
     onDelete: 'set null',
   }),
   locationName: text('location_name'),
-  status: contentStatusEnum('status').default('draft').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .defaultNow()
+  status: text('status', { enum: CONTENT_STATUS_VALUES })
+    .default('draft')
     .notNull(),
+  createdAt: createdAtColumn(),
 });
 
-export const promotions = pgTable('promotions', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  placeId: uuid('place_id')
+export const promotions = sqliteTable('promotions', {
+  id: idColumn(),
+  placeId: text('place_id')
     .notNull()
     .references(() => places.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
   description: text('description'),
   discountLabel: text('discount_label'),
-  startDate: timestamp('start_date', { withTimezone: true }),
-  endDate: timestamp('end_date', { withTimezone: true }),
-  status: contentStatusEnum('status').default('draft').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .defaultNow()
+  startDate: integer('start_date', { mode: 'timestamp' }),
+  endDate: integer('end_date', { mode: 'timestamp' }),
+  status: text('status', { enum: CONTENT_STATUS_VALUES })
+    .default('draft')
     .notNull(),
+  createdAt: createdAtColumn(),
 });

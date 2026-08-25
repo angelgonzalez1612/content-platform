@@ -1,17 +1,13 @@
-import { pgTable, uuid, text, timestamp, pgEnum } from 'drizzle-orm/pg-core';
+import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { idColumn, createdAtColumn, updatedAtColumn } from './columns.helpers';
+import { USER_ROLE_VALUES } from './enums';
 
-export const userRoleEnum = pgEnum('user_role', ['admin', 'editor']);
-
-export const users = pgTable('users', {
-  id: uuid('id').defaultRandom().primaryKey(),
+export const users = sqliteTable('users', {
+  id: idColumn(),
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
   name: text('name').notNull(),
-  role: userRoleEnum('role').default('editor').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
+  role: text('role', { enum: USER_ROLE_VALUES }).default('editor').notNull(),
+  createdAt: createdAtColumn(),
+  updatedAt: updatedAtColumn(),
 });

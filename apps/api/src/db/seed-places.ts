@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { eq } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/libsql';
+import { createClient } from '@libsql/client';
 import * as schema from './schema';
 
 const CATEGORIES = [
@@ -121,8 +121,8 @@ const PLACES = [
 ];
 
 async function main() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  const db = drizzle(pool, { schema });
+  const client = createClient({ url: process.env.DATABASE_URL ?? 'file:./data/dev.sqlite' });
+  const db = drizzle(client, { schema });
 
   // Idempotent per-slug upsert instead of an all-or-nothing early exit —
   // safe to re-run after adding new fields to PLACES.
@@ -177,7 +177,7 @@ async function main() {
   }
   console.log(`${created} lugares creados, ${updated} actualizados.`);
 
-  await pool.end();
+  client.close();
 }
 
 main().catch((err) => {

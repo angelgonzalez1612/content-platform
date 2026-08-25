@@ -1,8 +1,8 @@
 import 'dotenv/config';
 import { hash } from 'bcryptjs';
 import { eq } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/libsql';
+import { createClient } from '@libsql/client';
 import * as schema from './schema';
 
 const SALT_ROUNDS = 12;
@@ -17,8 +17,8 @@ async function main() {
     return;
   }
 
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  const db = drizzle(pool, { schema });
+  const client = createClient({ url: process.env.DATABASE_URL ?? 'file:./data/dev.sqlite' });
+  const db = drizzle(client, { schema });
 
   const existing = await db.query.users.findFirst({
     where: eq(schema.users.email, email.toLowerCase().trim()),
@@ -26,7 +26,7 @@ async function main() {
 
   if (existing) {
     console.log(`Ya existe un usuario con el correo ${email} — nada que hacer.`);
-    await pool.end();
+    client.close();
     return;
   }
 
@@ -39,7 +39,7 @@ async function main() {
   });
 
   console.log(`Usuario admin creado: ${email}`);
-  await pool.end();
+  client.close();
 }
 
 main().catch((err) => {
