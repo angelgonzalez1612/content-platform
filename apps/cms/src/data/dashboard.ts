@@ -238,9 +238,9 @@ export interface BreadcrumbItem {
 
 /** Full breadcrumb trail for the topbar — keyed by pathname, not just the page title. */
 export function getBreadcrumb(pathname: string, screenTitle: string): BreadcrumbItem[] {
-  const home: BreadcrumbItem = { label: "Planazo", href: "/" };
+  const home: BreadcrumbItem = { label: "Content CMS", href: "/" };
 
-  if (pathname === "/") return [{ label: "Planazo" }];
+  if (pathname === "/") return [{ label: "Content CMS" }];
   if (pathname === "/crear") return [home, { label: "Crear" }];
   if (pathname === "/crear/manual") return [home, { label: "Crear", href: "/crear" }, { label: "Manual" }];
   if (pathname === "/centro-ia") return [home, { label: "Centro IA" }];

@@ -33,7 +33,7 @@ export default async function PerfilPage() {
     <CmsShell user={session} title="Perfil">
       <div className="mx-auto max-w-[680px] p-[26px] pb-[60px] [animation:pz-in_.4s_ease-out_both]">
         <h1 className="mb-1 text-[22px] font-semibold tracking-tight">Perfil</h1>
-        <p className="mb-6 text-[13.5px] text-ink-soft">Tu información de cuenta en Planazo CMS.</p>
+        <p className="mb-6 text-[13.5px] text-ink-soft">Tu información de cuenta en Content CMS.</p>
 
         <div className="relative overflow-hidden rounded-[18px] bg-ink px-7 py-8 text-white">
           <div

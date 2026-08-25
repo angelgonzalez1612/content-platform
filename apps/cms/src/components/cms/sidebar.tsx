@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_GROUPS } from "@/data/dashboard";
@@ -49,10 +48,9 @@ export function Sidebar({
       }`}
     >
       <div className={`flex h-[60px] flex-none items-center gap-2.5 border-b border-border-soft ${collapsed ? "justify-center px-0" : "px-[18px]"}`}>
-        <Image src="/logo.jpg" alt="Planazo" width={26} height={26} className="flex-none rounded-[7px] object-cover" style={{ mixBlendMode: "multiply" }} />
+        <span className="grid size-[26px] flex-none place-items-center rounded-[7px] bg-brand text-[12px] font-semibold text-white">C</span>
         <div className={`flex flex-col leading-[1.1] ${collapseText(collapsed)}`} style={{ maxWidth: collapsed ? 0 : 140 }}>
-          <span className="text-[14.5px] font-semibold tracking-tight">Planazo</span>
-          <span className="font-mono text-[8.5px] font-medium tracking-[.14em] text-ink-faint uppercase">CMS · CDMX</span>
+          <span className="text-[14.5px] font-semibold tracking-tight">Content CMS</span>
         </div>
       </div>
 

@@ -16,10 +16,10 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Planazo CMS",
-    template: "%s | Planazo CMS",
+    default: "Content CMS",
+    template: "%s | Content CMS",
   },
-  description: "Panel interno para generar y publicar contenido de Planazo.",
+  description: "Panel interno para generar y publicar contenido de la-mira y Planazo.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
