@@ -8,7 +8,10 @@ import {
   type ContentProvider,
   type PlaceDraftInput,
   type PlaceDraftOutput,
+  type StructuredGenerateInput,
 } from '../content-provider.interface';
+
+export const OPENAI_MODEL = 'gpt-4o-mini';
 
 const draftSchema = z.object({
   description: z
@@ -60,7 +63,7 @@ export class OpenAiProvider implements ContentProvider {
     ].join('\n');
 
     const completion = await client.chat.completions.parse({
-      model: 'gpt-4o-mini',
+      model: OPENAI_MODEL,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userPrompt },
@@ -74,5 +77,31 @@ export class OpenAiProvider implements ContentProvider {
     }
 
     return parsed;
+  }
+
+  async generateStructured<Schema extends z.ZodTypeAny>(
+    input: StructuredGenerateInput<Schema>,
+  ): Promise<z.infer<Schema>> {
+    const client = this.getClient();
+
+    const completion = await client.chat.completions.parse({
+      model: OPENAI_MODEL,
+      messages: [
+        { role: 'system', content: input.systemPrompt },
+        { role: 'user', content: input.userPrompt },
+      ],
+      response_format: zodResponseFormat(input.schema, input.schemaName),
+    });
+
+    const parsed = completion.choices[0]?.message?.parsed;
+    if (!parsed) {
+      throw new InternalServerErrorException('OpenAI no devolvió una respuesta válida.');
+    }
+
+    // El SDK de OpenAI infiere su propio helper de tipo (InferZodType<Schema>)
+    // en vez de z.infer<Schema> dentro de un genérico — estructuralmente son
+    // el mismo shape (ya verificado en runtime), TS solo no puede probarlo
+    // a través de dos alias de tipo distintos en este contexto genérico.
+    return parsed as z.infer<Schema>;
   }
 }
