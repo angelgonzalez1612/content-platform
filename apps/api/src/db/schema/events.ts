@@ -2,6 +2,7 @@ import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import { idColumn, createdAtColumn } from './columns.helpers';
 import { CONTENT_STATUS_VALUES } from './enums';
 import { places } from './places';
+import type { Seo } from '@planazo/types';
 
 export const events = sqliteTable('events', {
   id: idColumn(),
@@ -17,6 +18,8 @@ export const events = sqliteTable('events', {
   status: text('status', { enum: CONTENT_STATUS_VALUES })
     .default('draft')
     .notNull(),
+  categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
+  seo: text('seo', { mode: 'json' }).$type<Seo>(),
   createdAt: createdAtColumn(),
 });
 

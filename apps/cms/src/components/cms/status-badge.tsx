@@ -3,6 +3,7 @@ import type { Place } from "@planazo/types";
 const STATUS_STYLE: Record<Place["status"], { label: string; bg: string; fg: string }> = {
   draft: { label: "Borrador", bg: "#F3F0EC", fg: "#5C564F" },
   in_review: { label: "En revisión", bg: "#FEF6E7", fg: "#9A6B12" },
+  scheduled: { label: "Programado", bg: "#EAF1FE", fg: "#2A5FB8" },
   published: { label: "Publicado", bg: "#EAF7EF", fg: "#2E9E5B" },
   archived: { label: "Archivado", bg: "#FDECEA", fg: "#C4453A" },
 };

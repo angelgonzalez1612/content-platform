@@ -2,6 +2,7 @@ import { sqliteTable, text, real, integer, primaryKey } from 'drizzle-orm/sqlite
 import { idColumn, createdAtColumn } from './columns.helpers';
 import { CONTENT_STATUS_VALUES } from './enums';
 import { categories, tags, services } from './taxonomy';
+import type { Seo } from '@planazo/types';
 
 export const places = sqliteTable('places', {
   id: idColumn(),
@@ -25,6 +26,10 @@ export const places = sqliteTable('places', {
   status: text('status', { enum: CONTENT_STATUS_VALUES })
     .default('draft')
     .notNull(),
+  // Campos extra según el field_schema de la categoría asignada (ej. si algún
+  // día una categoría de Place quiere un campo propio). Vacío ({}) por defecto.
+  categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
+  seo: text('seo', { mode: 'json' }).$type<Seo>(),
   createdAt: createdAtColumn(),
   updatedAt: createdAtColumn('updated_at'),
 });

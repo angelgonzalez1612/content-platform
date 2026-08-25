@@ -1,4 +1,5 @@
 import { relations } from 'drizzle-orm';
+import { sites } from './sites';
 import { categories, tags, services } from './taxonomy';
 import {
   places,
@@ -12,6 +13,47 @@ import {
 import { articles, articlePlaces } from './articles';
 import { events, promotions } from './events';
 import { rankings, rankingPlaces } from './rankings';
+import { noticias, alertas, guias, lamiraEventos, lamiraLugares, reportajes } from './lamira';
+
+export const sitesRelations = relations(sites, ({ many }) => ({
+  categories: many(categories),
+  noticias: many(noticias),
+  alertas: many(alertas),
+  guias: many(guias),
+  lamiraEventos: many(lamiraEventos),
+  lamiraLugares: many(lamiraLugares),
+  reportajes: many(reportajes),
+}));
+
+export const noticiasRelations = relations(noticias, ({ one }) => ({
+  site: one(sites, { fields: [noticias.siteId], references: [sites.id] }),
+  category: one(categories, { fields: [noticias.categoryId], references: [categories.id] }),
+}));
+
+export const alertasRelations = relations(alertas, ({ one }) => ({
+  site: one(sites, { fields: [alertas.siteId], references: [sites.id] }),
+  category: one(categories, { fields: [alertas.categoryId], references: [categories.id] }),
+}));
+
+export const guiasRelations = relations(guias, ({ one }) => ({
+  site: one(sites, { fields: [guias.siteId], references: [sites.id] }),
+  category: one(categories, { fields: [guias.categoryId], references: [categories.id] }),
+}));
+
+export const lamiraEventosRelations = relations(lamiraEventos, ({ one }) => ({
+  site: one(sites, { fields: [lamiraEventos.siteId], references: [sites.id] }),
+  category: one(categories, { fields: [lamiraEventos.categoryId], references: [categories.id] }),
+}));
+
+export const lamiraLugaresRelations = relations(lamiraLugares, ({ one }) => ({
+  site: one(sites, { fields: [lamiraLugares.siteId], references: [sites.id] }),
+  category: one(categories, { fields: [lamiraLugares.categoryId], references: [categories.id] }),
+}));
+
+export const reportajesRelations = relations(reportajes, ({ one }) => ({
+  site: one(sites, { fields: [reportajes.siteId], references: [sites.id] }),
+  category: one(categories, { fields: [reportajes.categoryId], references: [categories.id] }),
+}));
 
 export const placesRelations = relations(places, ({ many }) => ({
   placeCategories: many(placeCategories),
@@ -26,7 +68,8 @@ export const placesRelations = relations(places, ({ many }) => ({
   rankingPlaces: many(rankingPlaces),
 }));
 
-export const categoriesRelations = relations(categories, ({ many }) => ({
+export const categoriesRelations = relations(categories, ({ one, many }) => ({
+  site: one(sites, { fields: [categories.siteId], references: [sites.id] }),
   placeCategories: many(placeCategories),
 }));
 

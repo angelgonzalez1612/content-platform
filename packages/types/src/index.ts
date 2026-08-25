@@ -1,4 +1,7 @@
-export type ContentStatus = 'draft' | 'in_review' | 'published' | 'archived';
+// 'scheduled' se agregó al unificar con el ContentStatus que la-mira ya
+// definía (5 estados en español: borrador/revision/programado/publicado/
+// archivado) — el mapeo español↔inglés vive en la capa de UI, no aquí.
+export type ContentStatus = 'draft' | 'in_review' | 'scheduled' | 'published' | 'archived';
 
 export type UserRole = 'admin' | 'editor';
 
@@ -10,10 +13,46 @@ export interface AuthUser {
   createdAt: string;
 }
 
+export interface Site {
+  id: string;
+  slug: string; // 'la-mira' | 'planazo'
+  name: string;
+  domain: string | null;
+}
+
+export type FieldType = 'text' | 'textarea' | 'number' | 'boolean' | 'date' | 'select' | 'multiselect';
+
+/**
+ * One entry in a Category's field_schema — defines one category-specific
+ * form field (e.g. "destino" for Viajes, "linea" for Metro). `isFact: true`
+ * means the AI editorial agent must never invent/alter this field without
+ * explicit human confirmation, same spirit as address/phone/price on Place.
+ */
+export interface FieldSchemaEntry {
+  key: string;
+  label: string;
+  type: FieldType;
+  required?: boolean;
+  isFact?: boolean;
+  options?: string[]; // for 'select' / 'multiselect'
+}
+
 export interface Category {
   id: string;
   name: string;
   slug: string;
+  siteId: string | null; // null = shared between sites
+  fieldSchema: FieldSchemaEntry[];
+}
+
+/** Per-item SEO override — falls back to the content's own title/description
+ * when absent. Present on every content type (see docs/plans for which
+ * types lacked it before the multi-site schema). */
+export interface Seo {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  ogImage?: string;
 }
 
 export interface Tag {

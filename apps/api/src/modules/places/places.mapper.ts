@@ -1,7 +1,7 @@
-import type { Place, PlaceDetail } from '@planazo/types';
+import type { Place, PlaceDetail, FieldSchemaEntry } from '@planazo/types';
 
 type PlaceCategoryRow = {
-  category: { id: string; name: string; slug: string };
+  category: { id: string; name: string; slug: string; siteId: string | null; fieldSchema: FieldSchemaEntry[] };
 };
 type PlaceTagRow = { tag: { id: string; name: string; slug: string } };
 type PlaceServiceRow = { service: { id: string; name: string; slug: string } };
