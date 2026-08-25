@@ -3,8 +3,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
 import { categories, sites, places, contentAuditLog } from '../../db/schema';
-import { CONTENT_PROVIDER, type ContentProvider } from './content-provider.interface';
-import { OPENAI_MODEL } from './providers/openai-provider';
+import { ProviderRegistry } from './provider-registry.service';
 import { ChecksService, type CheckResult, type AiDecision } from './checks.service';
 import { buildFieldSchemaZod, factKeys } from './field-schema-builder';
 import { getContentTypeConfig } from './content-types';
@@ -26,7 +25,7 @@ export interface DraftResult {
 export class AiDraftService {
   constructor(
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
-    @Inject(CONTENT_PROVIDER) private readonly provider: ContentProvider,
+    private readonly providers: ProviderRegistry,
     private readonly checks: ChecksService,
   ) {}
 
@@ -52,7 +51,7 @@ export class AiDraftService {
       .filter(Boolean)
       .join('\n');
 
-    const output = await this.provider.generateStructured({
+    const output = await this.providers.get(dto.provider).generateStructured({
       systemPrompt: typeConfig.systemPrompt,
       userPrompt,
       schema: fullSchema,
@@ -106,7 +105,7 @@ export class AiDraftService {
 
     const improveSystemPrompt = `${typeConfig.systemPrompt}\n\nEstás MEJORANDO contenido existente, no creando desde cero: expande texto genérico/ambiguo, pero cada campo marcado como dato verificable debe salir idéntico al valor original salvo instrucción explícita del editor.`;
 
-    const output = await this.provider.generateStructured({
+    const output = await this.providers.get(dto.provider).generateStructured({
       systemPrompt: improveSystemPrompt,
       userPrompt,
       schema: fullSchema,
@@ -135,7 +134,7 @@ export class AiDraftService {
       mode: 'improve',
       sourceContext: { instructions: dto.instructions ?? null },
       inputFacts: originalFacts,
-      aiModel: OPENAI_MODEL,
+      aiModel: dto.provider === 'claude-cli' ? 'claude-cli' : 'gpt-4o-mini',
       aiOutput: output as Record<string, unknown>,
       checksRun,
       decision,
