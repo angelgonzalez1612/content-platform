@@ -1,0 +1,17 @@
+node_modules
+.pnpm-store
+.turbo
+dist
+.next
+out
+coverage
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+.vercel
+
+# Agent skills — machine-specific symlinks, restore with `npx skills experimental_install`
+.claude/skills/
+.agents/skills/
