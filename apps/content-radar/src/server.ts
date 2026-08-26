@@ -65,7 +65,7 @@ app.get("/s/:siteId/reporte/:file", async (req, res) => {
     const nav = categoryNav(raw);
     const { date, geo } = parseFileName(file, site.id);
     const header = `
-      <p class="breadcrumb">content-radar / <span>${escapeHtml(site.name)}</span></p>
+      <p class="breadcrumb">Content Radar / <span>${escapeHtml(site.name)}</span></p>
       <h1 class="page-title">${escapeHtml(site.name)} <span class="page-sub">${escapeHtml(date)} · ${escapeHtml(geo)}</span></h1>
     `;
     res.send(
@@ -226,8 +226,8 @@ function sidebar(site: SiteConfig, files: string[], activeFile: string | null): 
   return `
     <nav class="sidebar">
       <div class="brand">
-        <h1>content-radar</h1>
-        <p class="eyebrow">Radar de contenido · CDMX</p>
+        <h1>Content Radar</h1>
+        <p class="eyebrow">Temas del día · CDMX</p>
       </div>
       ${siteSwitcher(site.id)}
       <form method="post" action="/s/${site.id}/actualizar" class="refresh-form">
@@ -250,10 +250,10 @@ function layout(site: SiteConfig, sidebarHtml: string, mainHtml: string): string
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>content-radar — ${escapeHtml(site.name)}</title>
+<title>Content Radar — ${escapeHtml(site.name)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>${STYLES}</style>
 </head>
 <body>
@@ -330,45 +330,33 @@ const FILTER_SCRIPT = `
 })();
 `;
 
+// Paleta y tipografía calcadas de content-platform/apps/cms/src/app/globals.css
+// (--color-brand, --color-ink, etc.) — content-radar ahora se ve/embebe DENTRO
+// del CMS (sidebar "Content Radar"), así que debe sentirse como la misma
+// aplicación, no como una herramienta aparte con su propio skin. El CMS es
+// de un solo tema (sin dark mode) — se sigue el mismo criterio aquí.
 const STYLES = `
   :root {
-    color-scheme: light dark;
-    --bg: #ffffff;
+    --bg: #faf9f7;
     --panel: #ffffff;
-    --panel-muted: #faf6f0;
-    --text: #0a0a0a;
-    --muted: #9e9e9e;
-    --border: #e5e5e5;
-    --accent: #ac9869;
-    --accent-hover: #9c8957;
-    --accent-text: #7e6e47;
-    --amber-bg: #fbf0e1;
-    --amber-text: #b26a00;
-    --amber-border: #f2ddb7;
-    --green-bg: #e8f3ec;
-    --green-text: #1f7a3f;
+    --panel-muted: #f3f0ec;
+    --text: #17140f;
+    --muted: #7a736c;
+    --muted-faint: #a39c95;
+    --border: #edeae6;
+    --border-soft: #f3f0ec;
+    --accent: #fd690d;
+    --accent-hover: #e85d06;
+    --accent-wash: #fff2e8;
+    --accent-text: #c0561a;
+    --amber-bg: #fff2e8;
+    --amber-text: #c0561a;
+    --amber-border: #ffe2cc;
+    --green-bg: #eaf7ef;
+    --green-text: #2e9e5b;
     --green-border: #cde5d3;
-    --font-sans: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    --font-sans: "Instrument Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #17150f;
-      --panel: #1e1b14;
-      --panel-muted: #2a2519;
-      --text: #f2eee3;
-      --muted: #8c8577;
-      --border: #34301f;
-      --accent: #c4a96e;
-      --accent-hover: #d4bc85;
-      --accent-text: #d4bc85;
-      --amber-bg: #3a2a12;
-      --amber-text: #e0a94d;
-      --amber-border: #5a4620;
-      --green-bg: #16281d;
-      --green-text: #5fcb86;
-      --green-border: #234c31;
-    }
   }
   * { box-sizing: border-box; }
   body {
@@ -377,10 +365,11 @@ const STYLES = `
     color: var(--text);
     font-family: var(--font-sans);
     font-size: 14px;
+    -webkit-font-smoothing: antialiased;
   }
   .layout { display: flex; min-height: 100vh; }
   .sidebar {
-    width: 280px;
+    width: 264px;
     flex-shrink: 0;
     background: var(--panel);
     border-right: 1px solid var(--border);
@@ -391,23 +380,32 @@ const STYLES = `
     align-self: flex-start;
     height: 100vh;
   }
-  .brand { margin-bottom: 1.25rem; }
+  .brand { margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem; }
+  .brand::before {
+    content: "";
+    flex: none;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: var(--accent);
+  }
   .sidebar h1 { font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
   .eyebrow {
-    margin: 0.2rem 0 0;
+    margin: 0.15rem 0 0;
     font-size: 0.65rem;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: var(--muted-faint);
   }
   .list-label {
     font-size: 0.65rem;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: var(--muted-faint);
     margin: 1.25rem 0 0.5rem;
+    font-family: var(--font-mono);
   }
   .site-switcher {
     display: flex;
@@ -416,26 +414,26 @@ const STYLES = `
     margin-bottom: 1rem;
     background: var(--panel-muted);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 10px;
   }
   .site-tab {
     flex: 1;
     text-align: center;
     padding: 0.35rem 0.5rem;
-    border-radius: 6px;
+    border-radius: 8px;
     text-decoration: none;
     color: var(--muted);
     font-size: 0.78rem;
     font-weight: 500;
   }
-  .site-tab.active { background: var(--panel); color: var(--accent-text); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+  .site-tab.active { background: var(--panel); color: var(--accent-text); font-weight: 600; box-shadow: 0 1px 2px rgba(23,20,17,.06); }
   .refresh-form { display: flex; gap: 0.4rem; margin-bottom: 0.5rem; }
   .refresh-form select {
     flex-shrink: 0;
     max-width: 7.5rem;
     padding: 0.4rem 0.3rem;
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     background: var(--panel);
     color: var(--text);
     font-family: var(--font-sans);
@@ -443,30 +441,32 @@ const STYLES = `
   }
   .refresh-form button {
     flex: 1;
-    padding: 0.4rem 0.6rem;
-    border: 1px solid var(--accent-hover);
-    border-radius: 6px;
+    padding: 0.45rem 0.6rem;
+    border: none;
+    border-radius: 8px;
     background: var(--accent);
     color: #fff;
     cursor: pointer;
     font-size: 0.8rem;
-    font-weight: 500;
+    font-weight: 600;
     font-family: var(--font-sans);
+    box-shadow: 0 1px 2px rgba(253,105,13,.35);
+    transition: background-color .15s ease, transform .15s ease;
   }
-  .refresh-form button:hover { background: var(--accent-hover); }
+  .refresh-form button:hover { background: var(--accent-hover); transform: translateY(-1px); }
   .report-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.15rem; }
   .report-link {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0.45rem 0.6rem;
-    border-radius: 6px;
+    border-radius: 8px;
     color: var(--text);
     text-decoration: none;
     font-size: 0.85rem;
   }
   .report-link:hover { background: var(--panel-muted); }
-  .report-link.active { background: var(--panel-muted); color: var(--accent-text); font-weight: 600; }
+  .report-link.active { background: var(--accent-wash); color: var(--accent-text); font-weight: 600; }
   .geo-badge { font-size: 0.68rem; color: var(--muted); font-family: var(--font-mono); }
   .empty { color: var(--muted); font-size: 0.85rem; }
   .content { flex: 1; padding: 2rem 3rem 4rem; max-width: 900px; min-width: 0; overflow-wrap: break-word; }
@@ -489,8 +489,8 @@ const STYLES = `
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.3rem 0.65rem;
-    border-radius: 6px;
+    padding: 0.32rem 0.7rem;
+    border-radius: 999px;
     border: 1px solid var(--border);
     background: var(--panel);
     color: var(--muted);
@@ -502,7 +502,7 @@ const STYLES = `
     appearance: none;
     transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
   }
-  .chip:hover { border-color: var(--amber-text); color: var(--text); }
+  .chip:hover { border-color: var(--amber-border); color: var(--text); }
   .chip.active {
     border-color: var(--amber-border);
     background: var(--amber-bg);
@@ -533,10 +533,10 @@ const STYLES = `
   .card {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 14px;
     padding: 1.25rem 1.5rem 1.5rem;
     margin-bottom: 1.25rem;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 1px 2px rgba(23,20,17,.03);
   }
   .card-hot {
     border-color: var(--amber-border);
@@ -546,17 +546,18 @@ const STYLES = `
   .report h2 {
     margin: 0 0 1rem;
     font-size: 0.7rem;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--muted);
+    font-family: var(--font-mono);
   }
   .report h3 {
     font-size: 0.95rem;
     font-weight: 600;
     margin: 1.25rem 0 0.4rem;
     padding-top: 1.1rem;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--border-soft);
   }
   .report h3:first-of-type { padding-top: 0; border-top: none; margin-top: 0; }
   .sub-label {
@@ -566,6 +567,7 @@ const STYLES = `
     letter-spacing: 0.07em;
     text-transform: uppercase;
     color: var(--muted);
+    font-family: var(--font-mono);
   }
   .sub-label-hint {
     display: inline-block;

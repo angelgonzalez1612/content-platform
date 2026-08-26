@@ -19,6 +19,13 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Operación",
     items: [
       { id: "dashboard", name: "Dashboard", icon: "M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z" },
+      {
+        // Primero en la lista a propósito: es el paso 0 del flujo editorial —
+        // de aquí sale el tema/contexto que luego alimenta Crear/Centro IA.
+        id: "content-radar",
+        name: "Content Radar",
+        icon: "M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18zM12 12l5-3M12 3v4M12 17v4M3 12h4M17 12h4",
+      },
       { id: "crear", name: "Crear", icon: "M12 5v14M5 12h14" },
       { id: "ia", name: "Centro IA", icon: "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z", badge: "IA" },
       { id: "contenido", name: "Contenido", icon: "M5 4h9l5 5v11H5zM14 4v5h5M8 13h8M8 16.5h5", badge: "24" },
@@ -29,11 +36,6 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Conocimiento",
     items: [
-      {
-        id: "content-radar",
-        name: "Content Radar",
-        icon: "M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18zM12 12l5-3M12 3v4M12 17v4M3 12h4M17 12h4",
-      },
       { id: "entidades", name: "Entidades", icon: "M12 3l7 4v10l-7 4-7-4V7zM12 3v18M5 7l7 4 7-4" },
       { id: "keywords", name: "Keywords", icon: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM16.5 16.5L21 21", badge: "14" },
       { id: "seo", name: "SEO", icon: "M4 17a8 8 0 1 1 16 0M12 13l4-3" },
