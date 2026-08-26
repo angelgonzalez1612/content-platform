@@ -1,0 +1,24 @@
+{
+  "name": "@planazo/content-radar",
+  "version": "0.1.0",
+  "description": "CLI que consulta Google Trends (tiempo real + diario) y genera un reporte de temas en tendencia para decidir qué notas publicar.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "trends": "tsx src/index.ts",
+    "web": "tsx src/server.ts",
+    "dev": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "fast-xml-parser": "^5.11.0",
+    "marked": "^18.0.10"
+  }
+}
