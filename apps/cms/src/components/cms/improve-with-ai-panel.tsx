@@ -24,12 +24,14 @@ interface ImproveResult {
 /** "Mejorar" nunca sobreescribe directo — solo pide el borrador al agente y
  * lo entrega al componente padre para que el humano decida si lo aplica. */
 export function ImproveWithAiPanel({
-  placeId,
+  contentType,
+  contentId,
   expanded,
   onToggle,
   onResult,
 }: {
-  placeId: string;
+  contentType: string;
+  contentId: string;
   expanded: boolean;
   onToggle: () => void;
   onResult: (result: ImproveResult) => void;
@@ -43,7 +45,7 @@ export function ImproveWithAiPanel({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/ai/improve/place/${placeId}`, {
+      const res = await fetch(`${apiConfig.baseUrl}/cms/ai/improve/${contentType}/${contentId}`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

@@ -94,3 +94,31 @@ export async function getCmsLamiraContent(): Promise<LamiraContentRow[]> {
 
   return rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
+
+/** Getters de un solo item por tipo — los usan las páginas de edición
+ * (server components) de `/contenido/lamira/[type]/[id]`. Mismo patrón que
+ * `getCmsPlace`: `null` si no existe o el fetch falla (404 -> notFound()). */
+async function safeOne<T>(path: string): Promise<T | null> {
+  const res = await cmsFetch(path);
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function getCmsNoticia(id: string): Promise<Noticia | null> {
+  return safeOne<Noticia>(`/cms/lamira/noticias/${id}`);
+}
+export async function getCmsAlerta(id: string): Promise<Alerta | null> {
+  return safeOne<Alerta>(`/cms/lamira/alertas/${id}`);
+}
+export async function getCmsGuia(id: string): Promise<Guia | null> {
+  return safeOne<Guia>(`/cms/lamira/guias/${id}`);
+}
+export async function getCmsLamiraEvento(id: string): Promise<LamiraEvento | null> {
+  return safeOne<LamiraEvento>(`/cms/lamira/eventos/${id}`);
+}
+export async function getCmsLamiraLugar(id: string): Promise<LamiraLugar | null> {
+  return safeOne<LamiraLugar>(`/cms/lamira/lugares/${id}`);
+}
+export async function getCmsReportaje(id: string): Promise<Reportaje | null> {
+  return safeOne<Reportaje>(`/cms/lamira/reportajes/${id}`);
+}

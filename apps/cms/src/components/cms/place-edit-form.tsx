@@ -107,7 +107,8 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
   return (
     <div className="flex flex-col gap-4">
       <ImproveWithAiPanel
-        placeId={place.id}
+        contentType="place"
+        contentId={place.id}
         expanded={improving}
         onToggle={() => setImproving((v) => !v)}
         onResult={setImproveResult}

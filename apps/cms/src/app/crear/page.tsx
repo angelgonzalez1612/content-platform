@@ -3,17 +3,35 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { Icon } from "@/components/icon";
+import { SiteTabs } from "@/components/cms/site-tabs";
+import { LamiraCrearTypePicker } from "@/components/cms/lamira/crear-type-picker";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
 const PENCIL_ICON = "M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3zM14 6l4 4";
 
-export default async function CrearPage() {
+export default async function CrearPage({ searchParams }: { searchParams: Promise<{ site?: string }> }) {
   const session = await getSession();
   if (!session) redirect("/login");
 
+  const { site } = await searchParams;
+  const isLamira = site === "lamira";
+
   return (
     <CmsShell user={session} title="Crear">
-      <div className="mx-auto max-w-[760px] p-[26px] pb-[60px] text-center">
+      <div className="mx-auto max-w-[760px] p-[26px] pb-[60px]">
+        <SiteTabs site={isLamira ? "lamira" : "planazo"} basePath="/crear" />
+      </div>
+
+      {isLamira ? (
+        <div className="mx-auto max-w-[760px] px-[26px] pb-[60px] text-center">
+          <h1 className="mb-1.5 text-[24px] font-semibold tracking-tight">¿Qué quieres crear?</h1>
+          <p className="mx-auto mb-8 max-w-[52ch] text-[13.5px] leading-[1.6] text-ink-soft">
+            Elige el tipo de contenido y cómo quieres armarlo — con IA a partir de un tema, o llenando la ficha tú mismo.
+          </p>
+          <LamiraCrearTypePicker />
+        </div>
+      ) : (
+      <div className="mx-auto max-w-[760px] px-[26px] pb-[60px] text-center">
         <h1 className="mb-1.5 text-[24px] font-semibold tracking-tight">¿Cómo quieres crear el lugar?</h1>
         <p className="mx-auto mb-8 max-w-[52ch] text-[13.5px] leading-[1.6] text-ink-soft">
           Elige generar un borrador con IA a partir del nombre, o llenar la ficha tú mismo desde cero.
@@ -66,6 +84,7 @@ export default async function CrearPage() {
           </Link>
         </div>
       </div>
+      )}
     </CmsShell>
   );
 }
