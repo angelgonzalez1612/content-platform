@@ -1,5 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
-import type { SiteConfig } from "./sites.js";
+import type { SiteConfig } from "./sites";
 
 export interface NewsItem {
   title: string;

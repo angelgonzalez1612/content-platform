@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@planazo/config": "workspace:^",
+    "@planazo/content-radar": "workspace:^",
     "@planazo/types": "workspace:^",
     "next": "16.2.12",
     "react": "19.2.4",

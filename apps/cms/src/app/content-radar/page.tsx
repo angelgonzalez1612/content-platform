@@ -1,37 +1,94 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { CmsShell } from "@/components/cms/cms-shell";
+import { listReports, parseFileName, readReportFile, renderReport } from "@planazo/content-radar/render";
+import { DEFAULT_SITE_ID } from "@planazo/content-radar/sites";
+import { refreshContentRadar } from "./actions";
+import { CategoryFilter } from "./category-filter";
+import { ReportPicker } from "./report-picker";
+import "./content-radar.css";
 
-// content-radar corre como su propio server Express (apps/content-radar,
-// puerto 4310 en dev) — no es una página Next.js, así que se embebe por
-// iframe en vez de importarlo. Sigue siendo parte del monorepo (Fase
-// "fusiona content-radar a content-platform") y arranca junto con api+cms
-// vía `pnpm dev` en la raíz; esto solo le da un lugar visible en el CMS.
-const CONTENT_RADAR_URL = process.env.NEXT_PUBLIC_CONTENT_RADAR_URL ?? "http://localhost:4310";
+// Content Radar vive nativo aquí — antes era un server Express aparte
+// (apps/content-radar, puerto 4310) embebido por iframe; ahora esta página
+// importa la lógica de @planazo/content-radar como librería y renderiza el
+// reporte ella misma. La corrida diaria automática (7am, Task Scheduler)
+// sigue siendo el CLI de content-radar sin cambios — esta página solo lee
+// los .md que esa corrida ya deja en apps/content-radar/reports.
+const GEO_OPTIONS: { code: string; flag: string; label: string }[] = [
+  { code: "MX", flag: "🇲🇽", label: "México" },
+  { code: "US", flag: "🇺🇸", label: "Estados Unidos" },
+  { code: "ES", flag: "🇪🇸", label: "España" },
+  { code: "AR", flag: "🇦🇷", label: "Argentina" },
+  { code: "CO", flag: "🇨🇴", label: "Colombia" },
+  { code: "CL", flag: "🇨🇱", label: "Chile" },
+  { code: "PE", flag: "🇵🇪", label: "Perú" },
+  { code: "BR", flag: "🇧🇷", label: "Brasil" },
+];
 
-export default async function ContentRadarPage() {
+export default async function ContentRadarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ file?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/login");
 
+  const { file: requestedFile } = await searchParams;
+  const files = await listReports(DEFAULT_SITE_ID);
+  const activeFile = requestedFile && files.includes(requestedFile) ? requestedFile : files[0];
+
+  const pickerOptions = files.map((f) => {
+    const { date, geo } = parseFileName(f, DEFAULT_SITE_ID);
+    return { value: `/content-radar?file=${encodeURIComponent(f)}`, label: `${date} · ${geo}` };
+  });
+
+  const refreshForm = (
+    <form action={refreshContentRadar} className="cr-refresh-form">
+      <select name="geo" aria-label="Región (geo)" defaultValue="MX">
+        {GEO_OPTIONS.map(({ code, flag, label }) => (
+          <option key={code} value={code}>
+            {flag} {label}
+          </option>
+        ))}
+      </select>
+      <button type="submit">Actualizar</button>
+    </form>
+  );
+
+  if (!activeFile) {
+    return (
+      <CmsShell user={session} title="Content Radar">
+        <div className="cr-scope">
+          <div className="cr-picker cr-picker-end">
+            {refreshForm}
+          </div>
+          <div className="cr-content">
+            <div className="cr-empty">
+              <p>No hay reportes guardados todavía.</p>
+              <p>Usa &quot;Actualizar&quot; para generar el primero.</p>
+            </div>
+          </div>
+        </div>
+      </CmsShell>
+    );
+  }
+
+  const raw = await readReportFile(activeFile);
+  const { navHtml, articleHtml } = await renderReport(raw);
+
   return (
     <CmsShell user={session} title="Content Radar">
-      <div className="flex h-full flex-col">
-        <div className="flex flex-none items-center justify-end border-b border-border-soft bg-white px-[26px] py-3">
-          <a
-            href={CONTENT_RADAR_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="flex-none text-[12.5px] font-medium text-ink-soft hover:text-brand"
-          >
-            Abrir en pestaña nueva ↗
-          </a>
+      <div className="cr-scope">
+        <div className="cr-picker">
+          <ReportPicker options={pickerOptions} value={`/content-radar?file=${encodeURIComponent(activeFile)}`} />
+          {refreshForm}
         </div>
-        <iframe
-          src={`${CONTENT_RADAR_URL}/?embed=1`}
-          title="Content Radar"
-          className="min-h-0 flex-1 border-0"
-        />
+        <div className="cr-content">
+          <div dangerouslySetInnerHTML={{ __html: navHtml }} />
+          <article className="report" dangerouslySetInnerHTML={{ __html: articleHtml }} />
+        </div>
       </div>
+      <CategoryFilter />
     </CmsShell>
   );
 }

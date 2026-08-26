@@ -4,8 +4,8 @@ try {
   // sin .env es válido — YouTube simplemente no aparece en el reporte
 }
 
-import { runAndSave } from "./run.js";
-import { DEFAULT_SITE_ID, SITES } from "./sites.js";
+import { runAndSave } from "./run";
+import { DEFAULT_SITE_ID, SITES } from "./sites";
 
 function parseArgs() {
   const args = process.argv.slice(2);

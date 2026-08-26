@@ -1,0 +1,223 @@
+/* Estilos del reporte de Content Radar — vive nativo dentro del CMS (ya no es
+   un server aparte embebido por iframe), así que reusa los tokens reales del
+   CMS (--color-brand, --font-sans, etc. de globals.css) en vez de duplicarlos.
+   Todo va prefijado bajo .cr-scope para no chocar con clases del resto del CMS. */
+
+.cr-scope {
+  --cr-amber-bg: #fff2e8;
+  --cr-amber-border: #ffe2cc;
+  --cr-green-bg: #eaf7ef;
+  --cr-green-border: #cde5d3;
+  font-size: 14px;
+}
+
+.cr-scope .cr-content { padding: 1.5rem clamp(1.25rem, 3vw, 2.5rem) 4rem; max-width: 1040px; }
+
+/* ── barra de reporte (selector de fecha + Actualizar) ─────────────────── */
+.cr-scope .cr-picker {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.75rem clamp(1.25rem, 3vw, 2.5rem);
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-border);
+}
+.cr-scope .cr-report-select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-card);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+}
+.cr-scope .cr-refresh-form { display: flex; gap: 0.4rem; margin: 0; }
+.cr-scope .cr-refresh-form select {
+  flex-shrink: 0;
+  padding: 0.4rem 0.3rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-card);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+}
+.cr-scope .cr-refresh-form button {
+  padding: 0.45rem 0.8rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-brand);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  box-shadow: 0 1px 2px rgba(253, 105, 13, 0.35);
+  transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.cr-scope .cr-refresh-form button:hover { background: var(--color-brand-pressed); transform: translateY(-1px); box-shadow: 0 4px 10px -3px rgba(253, 105, 13, 0.5); }
+.cr-scope .cr-refresh-form button:active { transform: translateY(0); }
+.cr-scope .cr-refresh-form button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.cr-scope .cr-picker.cr-picker-end { justify-content: flex-end; }
+.cr-scope .cr-empty { color: var(--color-ink-soft); }
+
+/* ── filter chips ────────────────────────────────────────────────────── */
+.cr-scope .filters-bar {
+  position: sticky;
+  top: 56px;
+  z-index: 20;
+  background: var(--color-background);
+  padding: 0.9rem 0 0.85rem;
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.cr-scope .category-nav { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.cr-scope .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-ink-soft);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+.cr-scope .chip:hover { border-color: var(--cr-amber-border); color: var(--color-ink); }
+.cr-scope .chip.active { border-color: var(--cr-amber-border); background: var(--cr-amber-bg); color: var(--color-accent-fg); }
+.cr-scope .chip-all.active { border-color: var(--color-brand-pressed); background: var(--color-brand); color: #fff; }
+.cr-scope .chip span { font-family: var(--font-mono); color: inherit; opacity: 0.75; font-size: 0.75rem; }
+.cr-scope .filter-status:not([hidden]) { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--color-ink-soft); margin-top: 0.65rem; }
+.cr-scope .filter-reset { border: none; background: none; padding: 0; color: var(--color-accent-fg); font-size: 0.78rem; font-weight: 600; text-decoration: underline; cursor: pointer; font-family: inherit; }
+
+/* ── section cards ───────────────────────────────────────────────────── */
+.cr-scope .card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 1.4rem 1.6rem 1.6rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 2px rgba(23, 20, 17, 0.03);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.cr-scope .card:hover { box-shadow: 0 4px 16px -8px rgba(23, 20, 17, 0.1); border-color: var(--color-border-soft); }
+.cr-scope .card-hot { border: 1px solid var(--cr-amber-border); border-top: 3px solid var(--color-brand); background: var(--cr-amber-bg); padding: 1.6rem 1.75rem 1.75rem; }
+.cr-scope .card-hot h2 { color: var(--color-accent-fg); }
+.cr-scope .card-hot .count-pill { background: rgba(253, 105, 13, 0.14); color: var(--color-accent-fg); }
+
+/* ── headings inside a section ───────────────────────────────────────── */
+.cr-scope .report h2 {
+  margin: 0 0 1.1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.cr-scope .count-pill {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--color-ink-soft);
+  background: var(--color-border-soft);
+  padding: 0.1em 0.55em;
+  border-radius: 999px;
+}
+.cr-scope .report h3 {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  margin: 1.5rem 0 0.6rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border-soft);
+}
+.cr-scope .report h3:first-of-type { padding-top: 0; border-top: none; margin-top: 0; }
+.cr-scope .rank {
+  flex: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--color-ink-faint);
+  min-width: 1.3em;
+}
+.cr-scope .card-hot .rank { color: var(--color-brand); }
+.cr-scope .report a.publish-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: var(--color-brand);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(253, 105, 13, 0.3);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+.cr-scope .report a.publish-btn:hover { background: var(--color-brand-pressed); color: #fff; transform: translateY(-1px); }
+.cr-scope .report h3 a.publish-btn { margin-left: auto; flex: none; align-self: center; }
+/* Botón compacto por cada nota individual (listas planas de noticias/videos
+   en categorías sin tema numerado, ej. Tráfico, Clima, Cultura). */
+.cr-scope .report li a.publish-btn-sm { margin-left: 0.5rem; padding: 0.1rem 0.5rem; font-size: 0.64rem; vertical-align: middle; opacity: 0.85; }
+.cr-scope .report li a.publish-btn-sm:hover { opacity: 1; }
+.cr-scope .sub-label { margin: 1.35rem 0 0.6rem; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-ink-soft); font-family: var(--font-mono); }
+.cr-scope .sub-label-hint { display: inline-block; margin-left: 0.4rem; text-transform: none; font-weight: 400; letter-spacing: normal; opacity: 0.8; }
+
+/* ── lists ───────────────────────────────────────────────────────────── */
+.cr-scope .report ul { list-style: none; padding-left: 0; margin: 0.4rem 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.cr-scope .report li { line-height: 1.45; font-size: 0.88rem; color: var(--color-ink-soft); }
+.cr-scope .report h3 + ul { gap: 0.5rem; }
+.cr-scope .report h3 + ul > li:first-child { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; font-size: 0.8rem; }
+.cr-scope .report h3 + ul > li:has(> ul) { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-ink-faint); margin-top: 0.15rem; }
+.cr-scope .report h3 + ul > li:has(> ul) > ul { margin-top: 0.4rem; gap: 0.35rem; }
+.cr-scope .report h3 + ul > li:has(> ul) > ul > li { font-size: 0.85rem; font-weight: 400; text-transform: none; letter-spacing: normal; color: var(--color-ink-soft); }
+.cr-scope .report ol { list-style: none; padding-left: 0; margin: 0.4rem 0 0; counter-reset: rank; }
+.cr-scope .report ol > li { counter-increment: rank; display: flex; align-items: baseline; gap: 0.7rem; padding: 0.55rem 0; border-bottom: 1px solid var(--color-border-soft); font-size: 0.9rem; color: var(--color-ink); }
+.cr-scope .report ol > li::before { content: counter(rank); flex: none; min-width: 1.5em; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 700; color: var(--color-ink-faint); }
+.cr-scope .report ol > li:last-child { border-bottom: none; }
+.cr-scope .report a { color: var(--color-ink); text-decoration-color: var(--color-border); text-underline-offset: 2px; transition: color 0.12s ease, text-decoration-color 0.12s ease; }
+.cr-scope .report a:hover { color: var(--color-accent-fg); text-decoration-color: var(--color-brand); }
+.cr-scope .report strong { font-weight: 600; color: var(--color-ink); }
+.cr-scope .report code { font-family: var(--font-mono); font-size: 0.78em; background: var(--color-border-soft); border: 1px solid var(--color-border); border-radius: 4px; padding: 0.1em 0.4em; color: var(--color-accent-fg); }
+.cr-scope .report > p:first-of-type {
+  color: var(--color-ink-soft);
+  font-size: 0.84rem;
+  margin: 0 0 1.5rem;
+  padding: 0.55rem 0.85rem;
+  background: var(--color-border-soft);
+  border-radius: 10px;
+  display: inline-block;
+}
+
+/* ── badges ──────────────────────────────────────────────────────────── */
+.cr-scope .origin-badge { display: inline-block; font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600; padding: 0.05em 0.45em; border-radius: 4px; vertical-align: middle; }
+.cr-scope .origin-mx { background: var(--cr-green-bg); color: var(--color-positive); border: 1px solid var(--cr-green-border); }
+.cr-scope .origin-intl { background: var(--color-border-soft); color: var(--color-ink-soft); border: 1px solid var(--color-border); }
+.cr-scope .tag { display: inline-block; font-size: 0.68rem; font-weight: 500; padding: 0.05em 0.5em; border-radius: 4px; background: var(--color-border-soft); color: var(--color-accent-fg); border: 1px solid var(--color-border); vertical-align: middle; }
+.cr-scope .geo-tag { display: inline-block; font-size: 0.68rem; font-weight: 500; padding: 0.05em 0.5em; border-radius: 4px; background: var(--cr-green-bg); color: var(--color-positive); border: 1px solid var(--cr-green-border); vertical-align: middle; }

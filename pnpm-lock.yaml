@@ -159,6 +159,9 @@ importers:
       '@planazo/config':
         specifier: workspace:^
         version: link:../../packages/config
+      '@planazo/content-radar':
+        specifier: workspace:^
+        version: link:../content-radar
       '@planazo/types':
         specifier: workspace:^
         version: link:../../packages/types
@@ -199,9 +202,6 @@ importers:
 
   apps/content-radar:
     dependencies:
-      express:
-        specifier: ^5.2.1
-        version: 5.2.1
       fast-xml-parser:
         specifier: ^5.11.0
         version: 5.11.0
@@ -209,9 +209,6 @@ importers:
         specifier: ^18.0.10
         version: 18.0.11
     devDependencies:
-      '@types/express':
-        specifier: ^5.0.6
-        version: 5.0.6
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.3
