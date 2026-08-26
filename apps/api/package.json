@@ -28,6 +28,7 @@
     "db:seed:categories": "ts-node -r tsconfig-paths/register src/db/seed-categories.ts",
     "db:migrate:lamira-mock": "ts-node -r tsconfig-paths/register src/db/migrate-lamira-mock.ts",
     "db:apply-mejorar-lamira": "ts-node -r tsconfig-paths/register src/db/apply-mejorar-lamira.ts",
+    "db:trim-seo-and-apply": "ts-node -r tsconfig-paths/register src/db/trim-seo-and-apply.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
