@@ -76,7 +76,21 @@
   margin-bottom: 1.75rem;
   border-bottom: 1px solid var(--color-border);
 }
-.cr-scope .category-nav { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.cr-scope .category-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+/* Agrupa los chips en dos bloques: secciones agregadas (Lo más caliente, Qué
+   busca la gente, Lo más buscado ahora, Otros — …) vs. las 20 categorías fijas
+   del sitio — no son lo mismo y mezclarlas en una sola fila plana confundía. */
+.cr-scope .chip-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.cr-scope .chip-group + .chip-group { padding-left: 0.6rem; border-left: 1px solid var(--color-border); }
+.cr-scope .chip-group-label {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
 .cr-scope .chip {
   display: inline-flex;
   align-items: center;

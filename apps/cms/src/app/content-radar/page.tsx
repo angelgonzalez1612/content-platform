@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { listReports, parseFileName, readReportFile, renderReport } from "@planazo/content-radar/render";
-import { DEFAULT_SITE_ID } from "@planazo/content-radar/sites";
+import { DEFAULT_SITE_ID, getSite } from "@planazo/content-radar/sites";
 import { refreshContentRadar } from "./actions";
 import { CategoryFilter } from "./category-filter";
 import { ReportPicker } from "./report-picker";
@@ -73,8 +73,11 @@ export default async function ContentRadarPage({
     );
   }
 
+  const site = getSite(DEFAULT_SITE_ID);
+  const categoryLabels = new Set(site.categories.map((c) => c.label));
+
   const raw = await readReportFile(activeFile);
-  const { navHtml, articleHtml } = await renderReport(raw);
+  const { navHtml, articleHtml } = await renderReport(raw, categoryLabels);
 
   return (
     <CmsShell user={session} title="Content Radar">

@@ -145,22 +145,36 @@ function wrapSectionsInCards(html: string): string {
 // Escanea directo el markdown por cualquier `## Título \`(N)\`` — no una lista fija
 // de labels conocidos, porque secciones como "Otros — Nacional — <estado>" son
 // dinámicas (32 estados posibles, se generan solo los que sí traen algo ese día).
-export function categoryNav(rawMarkdown: string): string {
+//
+// No todas esas secciones son "categorías" del sitio (las 20 fijas de sites.ts,
+// tipo Tráfico/Clima/Eventos) — "Lo más caliente", "Qué busca la gente (frases)",
+// "Lo más buscado ahora" y "Otros — …" son agregados globales, no un tema propio.
+// `categoryLabels` (site.categories.map(c => c.label)) es lo que distingue unas
+// de otras para separarlas en dos grupos visuales dentro de la misma barra.
+export function categoryNav(rawMarkdown: string, categoryLabels: Set<string>): string {
   const headingRe = /^## (.+?) `\((\d+)\)`$/gm;
-  const chips: string[] = [];
+  const categoryChips: string[] = [];
+  const generalChips: string[] = [];
   for (const match of rawMarkdown.matchAll(headingRe)) {
     const label = match[1];
     const count = match[2];
     const slug = slugify(label);
-    chips.push(`<a class="chip" href="#${slug}" data-slug="${slug}">${escapeHtml(label)} <span>${count}</span></a>`);
+    const chip = `<a class="chip" href="#${slug}" data-slug="${slug}">${escapeHtml(label)} <span>${count}</span></a>`;
+    (categoryLabels.has(label) ? categoryChips : generalChips).push(chip);
   }
 
-  if (chips.length === 0) return "";
+  if (categoryChips.length === 0 && generalChips.length === 0) return "";
+  const group = (label: string, chips: string[]) =>
+    chips.length === 0
+      ? ""
+      : `<div class="chip-group"><span class="chip-group-label">${escapeHtml(label)}</span>${chips.join("")}</div>`;
+
   return `
     <div class="filters-bar">
       <nav class="category-nav">
         <button type="button" class="chip chip-all active" data-slug="__all__">Todos</button>
-        ${chips.join("")}
+        ${group("General", generalChips)}
+        ${group("Categorías", categoryChips)}
       </nav>
       <p class="filter-status" hidden></p>
     </div>
@@ -174,12 +188,15 @@ export interface RenderedReport {
 
 // Punto de entrada único: markdown crudo del reporte -> HTML listo para
 // inyectar en la página (nav de chips + artículo con tarjetas/botones).
-export async function renderReport(rawMarkdown: string): Promise<RenderedReport> {
+// `categoryLabels` = site.categories.map(c => c.label), para separar en la
+// barra de chips las categorías reales de las secciones agregadas (Lo más
+// caliente, Qué busca la gente, Lo más buscado ahora, Otros — …).
+export async function renderReport(rawMarkdown: string, categoryLabels: Set<string>): Promise<RenderedReport> {
   const parsed = (await marked.parse(rawMarkdown)).replace(/<h1>.*?<\/h1>/, "");
   const articleHtml = wrapSectionsInCards(
     injectItemPublishButtons(injectPublishButtons(wrapRankedHeadings(addHeadingAnchors(parsed)))),
   );
-  const navHtml = categoryNav(rawMarkdown);
+  const navHtml = categoryNav(rawMarkdown, categoryLabels);
   return { navHtml, articleHtml };
 }
 
