@@ -79,7 +79,9 @@ app.get("/s/:siteId/reporte/:file", async (req, res) => {
     const raw = await readFile(path.join(REPORTS_DIR, file), "utf-8");
     // El h1 de la-mira/planazo se reemplaza por el header propio (breadcrumb + título) de abajo.
     const parsed = (await marked.parse(raw)).replace(/<h1>.*?<\/h1>/, "");
-    const html = wrapSectionsInCards(injectPublishButtons(wrapRankedHeadings(addHeadingAnchors(parsed))));
+    const html = wrapSectionsInCards(
+      injectItemPublishButtons(injectPublishButtons(wrapRankedHeadings(addHeadingAnchors(parsed)))),
+    );
     const nav = categoryNav(raw);
     const { date, geo } = parseFileName(file, site.id);
     const header = `
@@ -201,6 +203,27 @@ function injectPublishButtons(html: string): string {
       return `<h3><span class="rank">${rank}</span>${titleHtml}${button}</h3>${rest}`;
     })
     .join("");
+}
+
+// La mayoría de categorías (Tráfico, Clima, Cultura, etc.) NO tienen un tema
+// numerado como "Lo más caliente" — son listas planas de `<li><a>título</a> —
+// fuente</li>` (noticias, videos de YouTube). Cada una de esas notas gana su
+// propio botón Publicar chiquito, mismo destino (Centro IA) que el de los
+// temas rankeados, pero usando el título de la nota en vez del título del tema.
+// Corre DESPUÉS de injectPublishButtons así que no toca los <h3> ya armados.
+function injectItemPublishButtons(html: string): string {
+  return html.replace(
+    /<li><a href="([^"]+)">([^<]+)<\/a>\s*—\s*([^<]+?)<\/li>/g,
+    (match, url: string, title: string, source: string) => {
+      const hints = `Fuente de content-radar: "${title}" — ${source} (${url}).`;
+      const publishUrl =
+        `${CMS_URL}/centro-ia?site=lamira&type=noticia` +
+        `&name=${encodeURIComponent(title)}` +
+        `&hints=${encodeURIComponent(hints)}`;
+      const button = `<a class="publish-btn publish-btn-sm" href="${publishUrl}" target="_top" rel="noopener" title="Publicar sobre esta nota">Publicar</a>`;
+      return `<li><a href="${url}">${title}</a> — ${source}${button}</li>`;
+    },
+  );
 }
 
 // Cada sección (## heading + su contenido hasta el siguiente ##) se envuelve en una
@@ -771,10 +794,7 @@ const STYLES = `
     min-width: 1.3em;
   }
   .card-hot .rank { color: var(--accent); }
-  .report h3 a.publish-btn {
-    margin-left: auto;
-    flex: none;
-    align-self: center;
+  .report a.publish-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
@@ -790,8 +810,19 @@ const STYLES = `
     box-shadow: 0 1px 2px rgba(253,105,13,.3);
     transition: background-color 0.15s ease, transform 0.15s ease;
   }
-  .report h3 a.publish-btn:hover { background: var(--accent-hover); color: #fff; transform: translateY(-1px); }
-  .report h3 a.publish-btn span { font-family: var(--font-sans); }
+  .report a.publish-btn:hover { background: var(--accent-hover); color: #fff; transform: translateY(-1px); }
+  .report a.publish-btn span { font-family: var(--font-sans); }
+  .report h3 a.publish-btn { margin-left: auto; flex: none; align-self: center; }
+  /* Botón compacto por cada nota individual (listas planas de noticias/videos
+     en categorías sin tema numerado, ej. Tráfico, Clima, Cultura). */
+  .report li a.publish-btn-sm {
+    margin-left: 0.5rem;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.64rem;
+    vertical-align: middle;
+    opacity: 0.85;
+  }
+  .report li a.publish-btn-sm:hover { opacity: 1; }
   .sub-label {
     margin: 1.35rem 0 0.6rem;
     font-size: 0.68rem;
