@@ -61,7 +61,7 @@ app.get("/s/:siteId/reporte/:file", async (req, res) => {
     const raw = await readFile(path.join(REPORTS_DIR, file), "utf-8");
     // El h1 de la-mira/planazo se reemplaza por el header propio (breadcrumb + título) de abajo.
     const parsed = (await marked.parse(raw)).replace(/<h1>.*?<\/h1>/, "");
-    const html = wrapSectionsInCards(addHeadingAnchors(parsed));
+    const html = wrapSectionsInCards(wrapRankedHeadings(addHeadingAnchors(parsed)));
     const nav = categoryNav(raw);
     const { date, geo } = parseFileName(file, site.id);
     const header = `
@@ -123,14 +123,26 @@ function slugify(text: string): string {
 }
 
 // marked no agrega ids a los headings por defecto; se los inyectamos para poder
-// saltar directo a una categoría desde la barra de navegación.
+// saltar directo a una categoría desde la barra de navegación. De paso, el
+// conteo `(N)` que build-markdown-report.ts pone entre backticks (queda como
+// <code>(N)</code>) se convierte en una píldora propia — se ve más a
+// "cuántos hay en esta sección" y menos a un dato de código suelto.
 function addHeadingAnchors(html: string): string {
   return html.replace(/<h2>(.*?)<\/h2>/g, (_match, inner: string) => {
     // El conteo " (N)" varía en cada corrida; se excluye del id para que coincida
     // con el slug del label que generan los chips de categoryNav().
     const plain = inner.replace(/<[^>]+>/g, "").replace(/\s*\(\d+\)\s*$/, "");
-    return `<h2 id="${slugify(plain)}">${inner}</h2>`;
+    const withPill = inner.replace(/<code>\((\d+)\)<\/code>/, '<span class="count-pill">$1</span>');
+    return `<h2 id="${slugify(plain)}">${withPill}</h2>`;
   });
+}
+
+// "### N. Título" (temas rankeados de "Lo más caliente" y de cada categoría) se
+// separa en número + título para poder darle al número su propio tratamiento
+// visual — aquí sí hay un orden real que importa (posición = qué tan caliente
+// está el tema), no es el "01/02/03" decorativo de una landing.
+function wrapRankedHeadings(html: string): string {
+  return html.replace(/<h3>(\d+)\.\s+(.*?)<\/h3>/g, '<h3><span class="rank">$1</span>$2</h3>');
 }
 
 // Cada sección (## heading + su contenido hasta el siguiente ##) se envuelve en una
@@ -226,8 +238,17 @@ function sidebar(site: SiteConfig, files: string[], activeFile: string | null): 
   return `
     <nav class="sidebar">
       <div class="brand">
-        <h1>Content Radar</h1>
-        <p class="eyebrow">Temas del día · CDMX</p>
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="8" />
+            <path d="M12 12l4-2.3" />
+            <path d="M12 4v2M12 18v2M4 12h2M18 12h2" />
+          </svg>
+        </span>
+        <span>
+          <h1>Content Radar</h1>
+          <p class="eyebrow">Temas del día · CDMX</p>
+        </span>
       </div>
       ${siteSwitcher(site.id)}
       <form method="post" action="/s/${site.id}/actualizar" class="refresh-form">
@@ -367,6 +388,11 @@ const STYLES = `
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
   }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }
+  }
+
+  /* ── layout ──────────────────────────────────────────────────────────── */
   .layout { display: flex; min-height: 100vh; }
   .sidebar {
     width: 264px;
@@ -380,21 +406,26 @@ const STYLES = `
     align-self: flex-start;
     height: 100vh;
   }
-  .brand { margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem; }
-  .brand::before {
-    content: "";
+  .content { flex: 1; padding: 2.25rem clamp(1.5rem, 4vw, 3.25rem) 5rem; max-width: 1040px; min-width: 0; overflow-wrap: break-word; }
+
+  /* ── sidebar: brand ──────────────────────────────────────────────────── */
+  .brand { margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.65rem; }
+  .brand-mark {
     flex: none;
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
     background: var(--accent);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 2px 6px -2px rgba(253,105,13,.55);
   }
   .sidebar h1 { font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
   .eyebrow {
-    margin: 0.15rem 0 0;
+    margin: 0.1rem 0 0;
     font-size: 0.65rem;
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
     color: var(--muted-faint);
   }
@@ -404,9 +435,11 @@ const STYLES = `
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--muted-faint);
-    margin: 1.25rem 0 0.5rem;
+    margin: 1.5rem 0 0.5rem;
     font-family: var(--font-mono);
   }
+
+  /* ── sidebar: controls ───────────────────────────────────────────────── */
   .site-switcher {
     display: flex;
     gap: 2px;
@@ -427,7 +460,7 @@ const STYLES = `
     font-weight: 500;
   }
   .site-tab.active { background: var(--panel); color: var(--accent-text); font-weight: 600; box-shadow: 0 1px 2px rgba(23,20,17,.06); }
-  .refresh-form { display: flex; gap: 0.4rem; margin-bottom: 0.5rem; }
+  .refresh-form { display: flex; gap: 0.4rem; }
   .refresh-form select {
     flex-shrink: 0;
     max-width: 7.5rem;
@@ -451,9 +484,12 @@ const STYLES = `
     font-weight: 600;
     font-family: var(--font-sans);
     box-shadow: 0 1px 2px rgba(253,105,13,.35);
-    transition: background-color .15s ease, transform .15s ease;
+    transition: background-color .15s ease, transform .15s ease, box-shadow .15s ease;
   }
-  .refresh-form button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .refresh-form button:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 10px -3px rgba(253,105,13,.5); }
+  .refresh-form button:active { transform: translateY(0); }
+
+  /* ── sidebar: report history ─────────────────────────────────────────── */
   .report-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.15rem; }
   .report-link {
     display: flex;
@@ -464,24 +500,38 @@ const STYLES = `
     color: var(--text);
     text-decoration: none;
     font-size: 0.85rem;
+    transition: background-color .12s ease;
   }
   .report-link:hover { background: var(--panel-muted); }
   .report-link.active { background: var(--accent-wash); color: var(--accent-text); font-weight: 600; }
   .geo-badge { font-size: 0.68rem; color: var(--muted); font-family: var(--font-mono); }
   .empty { color: var(--muted); font-size: 0.85rem; }
-  .content { flex: 1; padding: 2rem 3rem 4rem; max-width: 900px; min-width: 0; overflow-wrap: break-word; }
   .empty-state { color: var(--muted); }
-  .breadcrumb { margin: 0; font-size: 0.78rem; color: var(--muted); }
+
+  /* ── page header ─────────────────────────────────────────────────────── */
+  .breadcrumb { margin: 0; font-size: 0.78rem; color: var(--muted); display: flex; align-items: center; gap: 0.4rem; }
+  .breadcrumb::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: var(--green-text); flex: none; }
   .breadcrumb span { color: var(--text); font-weight: 500; }
-  .page-title { margin: 0.15rem 0 1.5rem; font-size: 1.4rem; font-weight: 600; letter-spacing: -0.01em; }
-  .page-sub { font-family: var(--font-mono); font-size: 0.8rem; font-weight: 400; color: var(--muted); margin-left: 0.6rem; }
+  .page-title { margin: 0.3rem 0 1rem; font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; text-wrap: balance; }
+  .page-sub { font-family: var(--font-mono); font-size: 0.85rem; font-weight: 400; color: var(--muted); margin-left: 0.7rem; vertical-align: middle; }
+  .report > p:first-of-type {
+    color: var(--muted);
+    font-size: 0.84rem;
+    margin: -0.35rem 0 2rem;
+    padding: 0.55rem 0.85rem;
+    background: var(--panel-muted);
+    border-radius: 10px;
+    display: inline-block;
+  }
+
+  /* ── filter chips ────────────────────────────────────────────────────── */
   .filters-bar {
     position: sticky;
     top: 0;
     z-index: 20;
     background: var(--bg);
     padding: 0.9rem 0 0.85rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.75rem;
     border-bottom: 1px solid var(--border);
   }
   .category-nav { display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -529,39 +579,77 @@ const STYLES = `
     cursor: pointer;
     font-family: inherit;
   }
-  .report > p:first-of-type { color: var(--muted); font-size: 0.85rem; margin: -0.5rem 0 1.5rem; }
+
+  /* ── section cards ───────────────────────────────────────────────────── */
   .card {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 14px;
-    padding: 1.25rem 1.5rem 1.5rem;
-    margin-bottom: 1.25rem;
+    padding: 1.4rem 1.6rem 1.6rem;
+    margin-bottom: 1.5rem;
     box-shadow: 0 1px 2px rgba(23,20,17,.03);
+    transition: box-shadow .15s ease, border-color .15s ease;
   }
+  .card:hover { box-shadow: 0 4px 16px -8px rgba(23,20,17,.1); border-color: var(--border-soft); }
   .card-hot {
-    border-color: var(--amber-border);
-    background: linear-gradient(180deg, var(--amber-bg) 0%, var(--panel) 140px);
+    border: 1px solid var(--amber-border);
+    border-top: 3px solid var(--accent);
+    background: var(--amber-bg);
+    padding: 1.6rem 1.75rem 1.75rem;
   }
-  .card-hot h2 { color: var(--amber-text); }
+  .card-hot h2 { color: var(--accent-text); }
+  .card-hot .count-pill { background: rgba(253,105,13,.14); color: var(--accent-text); }
+  .card-hot .card { box-shadow: none; }
+
+  /* ── headings inside a section ───────────────────────────────────────── */
   .report h2 {
-    margin: 0 0 1rem;
-    font-size: 0.7rem;
+    margin: 0 0 1.1rem;
+    font-size: 0.82rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: var(--text);
     font-family: var(--font-mono);
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  .count-pill {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--muted);
+    background: var(--panel-muted);
+    padding: 0.1em 0.55em;
+    border-radius: 999px;
   }
   .report h3 {
-    font-size: 0.95rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.65rem;
+    font-size: 1rem;
     font-weight: 600;
-    margin: 1.25rem 0 0.4rem;
-    padding-top: 1.1rem;
+    color: var(--text);
+    margin: 1.5rem 0 0.6rem;
+    padding-top: 1.25rem;
     border-top: 1px solid var(--border-soft);
   }
   .report h3:first-of-type { padding-top: 0; border-top: none; margin-top: 0; }
+  .rank {
+    flex: none;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--muted-faint);
+    min-width: 1.3em;
+  }
+  .card-hot .rank { color: var(--accent); }
   .sub-label {
-    margin: 1.1rem 0 0.5rem;
+    margin: 1.35rem 0 0.6rem;
     font-size: 0.68rem;
     font-weight: 600;
     letter-spacing: 0.07em;
@@ -577,12 +665,44 @@ const STYLES = `
     letter-spacing: normal;
     opacity: 0.8;
   }
-  .report ul, .report ol { padding-left: 1.2rem; margin: 0.4rem 0; }
-  .report li { margin-bottom: 0.35rem; line-height: 1.45; font-size: 0.88rem; }
-  .report ol > li { font-size: 0.9rem; }
-  .report a { color: var(--text); text-decoration-color: var(--border); transition: color 0.12s ease, text-decoration-color 0.12s ease; }
+
+  /* ── lists ───────────────────────────────────────────────────────────── */
+  .report ul { list-style: none; padding-left: 0; margin: 0.4rem 0; display: flex; flex-direction: column; gap: 0.4rem; }
+  .report li { line-height: 1.45; font-size: 0.88rem; color: var(--muted); }
+  .report h3 + ul { gap: 0.5rem; }
+  .report h3 + ul > li:first-child { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; font-size: 0.8rem; }
+  .report h3 + ul > li:has(> ul) { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted-faint); margin-top: 0.15rem; }
+  .report h3 + ul > li:has(> ul) > ul { margin-top: 0.4rem; gap: 0.35rem; }
+  .report h3 + ul > li:has(> ul) > ul > li { font-size: 0.85rem; font-weight: 400; text-transform: none; letter-spacing: normal; color: var(--muted); }
+  .report ol {
+    list-style: none;
+    padding-left: 0;
+    margin: 0.4rem 0 0;
+    counter-reset: rank;
+  }
+  .report ol > li {
+    counter-increment: rank;
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+  .report ol > li::before {
+    content: counter(rank);
+    flex: none;
+    min-width: 1.5em;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: var(--muted-faint);
+  }
+  .report ol > li:last-child { border-bottom: none; }
+  .report a { color: var(--text); text-decoration-color: var(--border); text-underline-offset: 2px; transition: color 0.12s ease, text-decoration-color 0.12s ease; }
   .report a:hover { color: var(--accent-text); text-decoration-color: var(--accent); }
-  .report strong { font-weight: 600; }
+  .report strong { font-weight: 600; color: var(--text); }
   .report code {
     font-family: var(--font-mono);
     font-size: 0.78em;
@@ -592,13 +712,8 @@ const STYLES = `
     padding: 0.1em 0.4em;
     color: var(--accent-text);
   }
-  .report h2 code {
-    background: none;
-    border: none;
-    padding: 0;
-    color: var(--muted);
-    font-weight: 500;
-  }
+
+  /* ── badges ──────────────────────────────────────────────────────────── */
   .origin-badge {
     display: inline-block;
     font-family: var(--font-mono);
