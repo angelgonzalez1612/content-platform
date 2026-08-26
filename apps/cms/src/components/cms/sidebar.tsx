@@ -6,7 +6,13 @@ import { usePathname } from "next/navigation";
 import { NAV_GROUPS } from "@/data/dashboard";
 import { Icon } from "@/components/icon";
 
-const ROUTES: Record<string, string> = { dashboard: "/", crear: "/crear", ia: "/centro-ia", contenido: "/contenido" };
+const ROUTES: Record<string, string> = {
+  dashboard: "/",
+  crear: "/crear",
+  ia: "/centro-ia",
+  contenido: "/contenido",
+  "content-radar": "/content-radar",
+};
 
 interface TooltipState {
   label: string;
