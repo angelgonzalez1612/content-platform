@@ -98,7 +98,11 @@ function injectPublishButtons(html: string): string {
         `&hints=${encodeURIComponent(hints)}`;
       const button = `<a class="publish-btn" href="${publishUrl}" rel="noopener">Publicar<span aria-hidden="true"> →</span></a>`;
 
-      return `<h3><span class="rank">${rank}</span>${titleHtml}${button}</h3>${rest}`;
+      // El texto (rank+título) va envuelto en su propio span para que el botón
+      // quede siempre pegado al final de la fila, sin importar qué tan largo
+      // sea el título — antes lo seguía en línea y el punto donde caía el
+      // botón brincaba de tema a tema, se veía disparejo.
+      return `<h3><span class="cr-item-text"><span class="rank">${rank}</span>${titleHtml}</span>${button}</h3>${rest}`;
     })
     .join("");
 }
@@ -119,7 +123,10 @@ function injectItemPublishButtons(html: string): string {
         `&name=${encodeURIComponent(title)}` +
         `&hints=${encodeURIComponent(hints)}`;
       const button = `<a class="publish-btn publish-btn-sm" href="${publishUrl}" rel="noopener" title="Publicar sobre esta nota">Publicar</a>`;
-      return `<li><a href="${url}">${title}</a> — ${source}${button}</li>`;
+      // Mismo motivo que en injectPublishButtons: el título+fuente va en su
+      // propio span para que el botón quede fijo al final de la fila en vez
+      // de perseguir el largo variable del texto.
+      return `<li><span class="cr-item-text"><a href="${url}">${title}</a> — ${source}</span>${button}</li>`;
     },
   );
 }

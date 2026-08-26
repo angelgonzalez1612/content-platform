@@ -216,8 +216,8 @@
 }
 .cr-scope .report h3 {
   display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 0.65rem;
   font-size: 1rem;
   font-weight: 600;
@@ -227,6 +227,22 @@
   border-top: 1px solid var(--color-border-soft);
 }
 .cr-scope .report h3:first-of-type { padding-top: 0; border-top: none; margin-top: 0; }
+/* El texto (rank+título o título+fuente) va en su propio bloque que sí
+   puede achicarse/pasar a otra línea — el botón Publicar, afuera de ese
+   bloque, siempre queda pegado al final de la fila sin importar qué tan
+   largo sea el texto. Antes iba todo en línea y el botón brincaba de
+   posición según el largo del título — se veía disparejo. */
+.cr-scope .report h3 .cr-item-text,
+.cr-scope .report li .cr-item-text {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.cr-scope .report li:has(> .cr-item-text) { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; }
 .cr-scope .rank {
   flex: none;
   font-family: var(--font-mono);
@@ -253,10 +269,10 @@
   transition: background-color 0.15s ease, transform 0.15s ease;
 }
 .cr-scope .report a.publish-btn:hover { background: var(--color-brand-pressed); color: #fff; transform: translateY(-1px); }
-.cr-scope .report h3 a.publish-btn { margin-left: auto; flex: none; align-self: center; }
+.cr-scope .report h3 a.publish-btn { flex: none; align-self: flex-start; }
 /* Botón compacto por cada nota individual (listas planas de noticias/videos
    en categorías sin tema numerado, ej. Tráfico, Clima, Cultura). */
-.cr-scope .report li a.publish-btn-sm { margin-left: 0.5rem; padding: 0.1rem 0.5rem; font-size: 0.64rem; vertical-align: middle; opacity: 0.85; }
+.cr-scope .report li a.publish-btn-sm { flex: none; align-self: baseline; padding: 0.1rem 0.5rem; font-size: 0.64rem; opacity: 0.85; }
 .cr-scope .report li a.publish-btn-sm:hover { opacity: 1; }
 .cr-scope .sub-label { margin: 1.35rem 0 0.6rem; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-ink-soft); font-family: var(--font-mono); }
 .cr-scope .sub-label-hint { display: inline-block; margin-left: 0.4rem; text-transform: none; font-weight: 400; letter-spacing: normal; opacity: 0.8; }
@@ -294,8 +310,8 @@
   .cr-scope .cr-picker { padding: 0.6rem 1rem; justify-content: flex-start; }
   .cr-scope .cr-refresh-form { flex-wrap: wrap; }
   .cr-scope .cr-hero-grid { grid-template-columns: 1fr; }
-  .cr-scope .report h3 { flex-direction: column; align-items: flex-start; gap: 0.35rem; }
-  .cr-scope .report h3 a.publish-btn { margin-left: 0; }
+  .cr-scope .report h3 { flex-direction: column; gap: 0.35rem; }
+  .cr-scope .report li:has(> .cr-item-text) { flex-direction: column; gap: 0.3rem; }
   .cr-scope .cr-row-summary { padding: 0.75rem 0.9rem; }
   .cr-scope .cr-row-body { padding: 1rem 0.9rem 1.2rem; }
 }
