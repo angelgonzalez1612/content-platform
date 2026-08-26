@@ -61,11 +61,16 @@ export class ChecksService {
     }
 
     // 3. SEO.
+    // Tolerancia a 70 (no 60 estricto): 60 es la guía de libro de texto, pero
+    // el corte real de Google es por ancho en píxeles (~600px), no por conteo
+    // de caracteres — un título de 61-70 rara vez se trunca de verdad. Ver
+    // Fase 6.5 del plan: con el límite estricto, prácticamente ningún título
+    // generado por claude-cli (sin structured-output forzado) pasaba.
     const title = input.seo?.title;
     checksRun.push({
       name: 'seo-titulo',
-      passed: !!title && title.length > 0 && title.length <= 60,
-      detail: !title ? 'Falta seo.title' : title.length > 60 ? `${title.length} caracteres, máx. 60` : undefined,
+      passed: !!title && title.length > 0 && title.length <= 70,
+      detail: !title ? 'Falta seo.title' : title.length > 70 ? `${title.length} caracteres, máx. 70` : undefined,
       blocking: true,
     });
 

@@ -19,6 +19,14 @@ export interface ContentTypeConfig {
   systemPrompt: string;
 }
 
+const LAMIRA_BASE_PROMPT = `Eres redactor de la-mira, un periódico digital hiperlocal de la Ciudad de México.
+
+Reglas estrictas:
+- Solo escribes con la información y las fuentes que te da el editor. NUNCA inventes cifras, nombres, fechas, ubicaciones exactas ni citas que no te dieron — el periodismo inventado es inaceptable, no un detalle menor.
+- Si el editor no dio suficiente información para un dato específico, escribe alrededor de esa ausencia en vez de rellenar con una suposición.
+- Tono: directo, informativo, sin adjetivos innecesarios — noticia, no opinión.
+- Responde siempre en español de México.`;
+
 export const CONTENT_TYPES: Record<string, ContentTypeConfig> = {
   place: {
     contentType: 'place',
@@ -48,13 +56,61 @@ Reglas estrictas:
         .describe('Cuerpo de la nota en bloques; heading es opcional (null si no aplica).'),
     },
     requiredEditorialFields: ['dek', 'content'],
-    systemPrompt: `Eres redactor de la-mira, un periódico digital hiperlocal de la Ciudad de México.
-
-Reglas estrictas:
-- Solo escribes con la información y las fuentes que te da el editor. NUNCA inventes cifras, nombres, fechas, ubicaciones exactas ni citas que no te dieron — el periodismo inventado es inaceptable, no un detalle menor.
-- Si el editor no dio suficiente información para un dato específico, escribe alrededor de esa ausencia en vez de rellenar con una suposición.
-- Tono: directo, informativo, sin adjetivos innecesarios — noticia, no opinión.
-- Responde siempre en español de México.`,
+    systemPrompt: LAMIRA_BASE_PROMPT,
+  },
+  alerta: {
+    contentType: 'alerta',
+    label: 'Alerta (la-mira)',
+    editorialShape: {
+      description: z.string().describe('1-3 párrafos, explica la situación con lo que se sabe hasta ahora.'),
+    },
+    requiredEditorialFields: ['description'],
+    systemPrompt: LAMIRA_BASE_PROMPT,
+  },
+  guia: {
+    contentType: 'guia',
+    label: 'Guía (la-mira)',
+    editorialShape: {
+      dek: z.string().describe('Bajada de 1-2 líneas, resume qué resuelve la guía.'),
+      content: z
+        .array(z.object({ id: z.string(), heading: z.string(), paragraphs: z.array(z.string()) }))
+        .min(1)
+        .describe('Cuerpo de la guía en bloques con heading obligatorio.'),
+      faq: z.array(z.object({ question: z.string(), answer: z.string() })).describe('Preguntas frecuentes reales sobre el trámite.'),
+    },
+    requiredEditorialFields: ['dek', 'content'],
+    systemPrompt: `${LAMIRA_BASE_PROMPT}\n\nEsta pieza es una guía de trámite ("evergreen"), no una noticia — quickFacts y officialSource ya están capturados aparte y no debes repetirlos ni contradecirlos en el cuerpo.`,
+  },
+  evento: {
+    contentType: 'evento',
+    label: 'Evento (la-mira)',
+    editorialShape: {
+      description: z.string().describe('1-2 párrafos que inviten a asistir, sin inventar fecha/hora/lugar/precio — esos ya están capturados aparte.'),
+    },
+    requiredEditorialFields: ['description'],
+    systemPrompt: LAMIRA_BASE_PROMPT,
+  },
+  lugar: {
+    contentType: 'lugar',
+    label: 'Lugar (la-mira)',
+    editorialShape: {
+      description: z.string().describe('1-2 párrafos que describan el lugar para alguien que nunca ha ido.'),
+    },
+    requiredEditorialFields: ['description'],
+    systemPrompt: LAMIRA_BASE_PROMPT,
+  },
+  reportaje: {
+    contentType: 'reportaje',
+    label: 'Reportaje (la-mira)',
+    editorialShape: {
+      dek: z.string().describe('Bajada de 1-2 líneas, resume el ángulo del reportaje sin repetir el título.'),
+      content: z
+        .array(z.object({ heading: z.string().nullable(), paragraphs: z.array(z.string()) }))
+        .min(1)
+        .describe('Cuerpo del reportaje en bloques; heading es opcional (null si no aplica).'),
+    },
+    requiredEditorialFields: ['dek', 'content'],
+    systemPrompt: `${LAMIRA_BASE_PROMPT}\n\nEsta pieza es un reportaje de análisis (más largo, más contexto), no una noticia de último momento.`,
   },
 };
 

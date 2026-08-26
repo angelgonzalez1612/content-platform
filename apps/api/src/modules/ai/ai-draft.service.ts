@@ -2,14 +2,43 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
-import { categories, sites, places, contentAuditLog } from '../../db/schema';
+import {
+  categories,
+  sites,
+  places,
+  noticias,
+  alertas,
+  guias,
+  lamiraEventos,
+  lamiraLugares,
+  reportajes,
+  contentAuditLog,
+  type ContentStatus,
+} from '../../db/schema';
 import { ProviderRegistry } from './provider-registry.service';
 import { ChecksService, type CheckResult, type AiDecision } from './checks.service';
 import { buildFieldSchemaZod, factKeys } from './field-schema-builder';
 import { getContentTypeConfig } from './content-types';
 import { DraftRequestDto, ImproveRequestDto } from './dto/draft-request.dto';
 
-const seoShape = { title: z.string().max(60), description: z.string().min(120).max(160) };
+// Sin límites de longitud aquí a propósito (a diferencia de una versión
+// anterior que sí los tenía): un structured-output que no da en el clavo
+// exacto de 120-160/60 caracteres a la primera hacía que claude-cli (que
+// valida+reintenta contra este mismo schema) agotara sus reintentos y
+// tronara con un 500 en vez de simplemente quedar "needs-review" — la
+// longitud real SÍ se sigue exigiendo, pero como check post-generación en
+// ChecksService (bloqueante para auto-publicar), no como restricción dura
+// de generación. Mismo resultado de seguridad, sin el crash.
+// Los límites reales (≤60 / 120-160) se exigen como CHECK bloqueante en
+// ChecksService, no aquí — aquí solo se pone un tope holgado (evita que un
+// output vacío o desbordado pase) para no repetir el crash que causaba la
+// versión anterior (min/max exactos + reintentos agotados en claude-cli, que
+// no tiene structured-output forzado como OpenAI). El `.describe()` sigue
+// comunicando el objetivo real para que el modelo apunte ahí de todos modos.
+const seoShape = {
+  title: z.string().min(1).max(90).describe('Título SEO — máximo 60 caracteres (cuenta los caracteres, es un límite real de Google).'),
+  description: z.string().min(60).max(220).describe('Meta descripción SEO — entre 120 y 160 caracteres (cuenta los caracteres).'),
+};
 
 export interface DraftResult {
   draft: Record<string, unknown>;
@@ -83,8 +112,13 @@ export class AiDraftService {
 
     const category = existing.placeCategories[0]?.category;
     const typeConfig = getContentTypeConfig('place');
-    const fieldSchema = category ? buildFieldSchemaZod(category.fieldSchema) : z.object({});
-    const fullSchema = z.object({ seo: z.object(seoShape), ...typeConfig.editorialShape, ...fieldSchema.shape });
+    // A propósito SIN fieldSchema.shape aquí (a diferencia de draft()): "Mejorar"
+    // nunca debe poder escribir campos de categoría — ni siquiera con instrucciones
+    // explícitas de no inventar, el modelo (sobre todo vía claude-cli, sin
+    // structured-output forzado) tiende a "llenar" cualquier campo que el schema
+    // le ofrezca. Quitarlo del schema hace la protección estructural, no solo de
+    // prompt — ver Fase 6.5 del plan, donde esto se detectó en la práctica.
+    const fullSchema = z.object({ seo: z.object(seoShape), ...typeConfig.editorialShape });
 
     const originalFacts: Record<string, unknown> = { ...existing.categoryData };
 
@@ -95,15 +129,15 @@ export class AiDraftService {
       `Categoría: ${category?.name ?? '(sin categoría)'}`,
       dto.instructions ? `Instrucción del editor: ${dto.instructions}` : '',
       '',
-      'Tu trabajo es MEJORAR la redacción y el SEO — no inventar ni cambiar ningún dato verificable. Los campos marcados como dato verificable deben quedar exactamente igual salvo que el editor te haya dado un reemplazo explícito arriba.',
+      'Tu trabajo es MEJORAR la redacción y el SEO. No te pido ningún dato de la categoría (dirección, precio, horario, etc.) — esos ya están capturados aparte y no forman parte de tu respuesta.',
       Object.keys(originalFacts).length
-        ? `Valores actuales de campos-hecho (no los cambies): ${JSON.stringify(originalFacts)}`
+        ? `Para contexto, así están hoy los datos verificables de este lugar (no forman parte de tu respuesta, son solo referencia): ${JSON.stringify(originalFacts)}`
         : '',
     ]
       .filter(Boolean)
       .join('\n');
 
-    const improveSystemPrompt = `${typeConfig.systemPrompt}\n\nEstás MEJORANDO contenido existente, no creando desde cero: expande texto genérico/ambiguo, pero cada campo marcado como dato verificable debe salir idéntico al valor original salvo instrucción explícita del editor.`;
+    const improveSystemPrompt = `${typeConfig.systemPrompt}\n\nEstás MEJORANDO contenido existente, no creando desde cero: expande texto genérico/ambiguo. Tu respuesta solo lleva los campos editoriales (descripción, SEO) que te pide el schema — nunca dirección, teléfono, precios, horarios ni ningún otro dato verificable.`;
 
     const output = await this.providers.get(dto.provider).generateStructured({
       systemPrompt: improveSystemPrompt,
@@ -140,6 +174,147 @@ export class AiDraftService {
       decision,
       statusBefore: existing.status,
       statusAfter: decision === 'auto-published' ? 'published' : 'in_review',
+      actorId: actorId ?? null,
+    });
+
+    return { draft: output as Record<string, unknown>, checksRun, decision };
+  }
+
+  /** Los 6 tipos de la-mira con CRUD real (Fase 2) — 'place' sigue por separado
+   * arriba porque su categoría es una relación N:M (placeCategories), no una
+   * columna categoryId directa como en estos. `queryKey` es el nombre que usa
+   * `db.query.<queryKey>` (Drizzle no permite indexar `db.query` por la tabla
+   * misma, solo por su nombre de export). */
+  private lamiraTableInfo(type: string): { table: typeof noticias; queryKey: 'noticias' | 'alertas' | 'guias' | 'lamiraEventos' | 'lamiraLugares' | 'reportajes' } {
+    switch (type) {
+      case 'noticia':
+        return { table: noticias, queryKey: 'noticias' };
+      case 'alerta':
+        return { table: alertas as never, queryKey: 'alertas' };
+      case 'guia':
+        return { table: guias as never, queryKey: 'guias' };
+      case 'evento':
+        return { table: lamiraEventos as never, queryKey: 'lamiraEventos' };
+      case 'lugar':
+        return { table: lamiraLugares as never, queryKey: 'lamiraLugares' };
+      case 'reportaje':
+        return { table: reportajes as never, queryKey: 'reportajes' };
+      default:
+        throw new BadRequestException(`"Mejorar" no está implementado para el tipo "${type}".`);
+    }
+  }
+
+  /** "Título" legible del row para el prompt — cada tipo de la-mira usa un
+   * nombre de campo distinto (title vs. name), igual que el original. */
+  private lamiraTitle(type: string, row: Record<string, unknown>): string {
+    return type === 'lugar' ? (row.name as string) : (row.title as string);
+  }
+
+  /** Texto actual a mejorar, por tipo — solo lo editorial (nunca fecha/hora/
+   * precio/ubicación/updates, que son datos verificables capturados aparte
+   * y ni siquiera entran al schema que ve la IA). */
+  private lamiraCurrentText(type: string, row: Record<string, unknown>): string {
+    switch (type) {
+      case 'noticia':
+      case 'reportaje':
+        return JSON.stringify({ dek: row.dek, content: row.content });
+      case 'guia':
+        return JSON.stringify({ dek: row.dek, content: row.content, faq: row.faq });
+      case 'alerta':
+      case 'evento':
+      case 'lugar':
+        return (row.description as string) ?? '(vacía — redáctala desde cero con lo que sabes del título)';
+      default:
+        return '';
+    }
+  }
+
+  /** Enruta improve/:type/:id al método correcto — 'place' ya tenía su propia
+   * implementación probada (Fase 3); los 6 tipos de la-mira comparten una
+   * sola implementación genérica porque su forma (categoryId directo,
+   * categoryData jsonb, seo jsonb) ya es idéntica entre sí. */
+  async improveContent(type: string, id: string, dto: ImproveRequestDto, actorId?: string): Promise<DraftResult> {
+    if (type === 'place') return this.improvePlace(id, dto, actorId);
+    return this.improveLamiraContent(type, id, dto, actorId);
+  }
+
+  private async improveLamiraContent(type: string, id: string, dto: ImproveRequestDto, actorId?: string): Promise<DraftResult> {
+    const { table, queryKey } = this.lamiraTableInfo(type);
+    const existing = await (this.db.query[queryKey] as never as (typeof this.db.query)['noticias']).findFirst({
+      where: eq(table.id, id),
+      with: { category: true },
+    });
+    if (!existing) throw new NotFoundException(`"${type}" "${id}" no existe`);
+
+    const typeConfig = getContentTypeConfig(type);
+    const category = (existing as { category: { id: string; name: string; fieldSchema: import('@planazo/types').FieldSchemaEntry[] } | null }).category;
+    // A propósito SIN fieldSchema.shape aquí (a diferencia de draft()) — ver el
+    // mismo comentario en improvePlace más arriba: protección estructural, no
+    // solo de prompt, contra que el modelo "invente" campos de categoría.
+    const fullSchema = z.object({ seo: z.object(seoShape), ...typeConfig.editorialShape });
+
+    const row = existing as unknown as Record<string, unknown>;
+    const originalFacts: Record<string, unknown> = { ...(row.categoryData as Record<string, unknown>) };
+
+    const userPrompt = [
+      `Tipo de contenido: ${typeConfig.label}`,
+      `Título/nombre: ${this.lamiraTitle(type, row)}`,
+      `Contenido actual: ${this.lamiraCurrentText(type, row)}`,
+      `Categoría: ${category?.name ?? '(sin categoría)'}`,
+      dto.instructions ? `Instrucción del editor: ${dto.instructions}` : '',
+      '',
+      'Tu trabajo es MEJORAR la redacción y el SEO. No te pido ningún campo de categoría (datos verificables como línea, zona afectada, hora de inicio, etc.) — esos ya están capturados aparte y no forman parte de tu respuesta.',
+      Object.keys(originalFacts).length
+        ? `Para contexto, así están hoy los datos verificables de esta pieza (no forman parte de tu respuesta, son solo referencia): ${JSON.stringify(originalFacts)}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const improveSystemPrompt = `${typeConfig.systemPrompt}\n\nEstás MEJORANDO contenido existente, no creando desde cero: expande texto genérico/ambiguo. Tu respuesta solo lleva los campos editoriales que te pide el schema — nunca cifras, fechas, ubicaciones ni ningún otro dato verificable.`;
+
+    const output = await this.providers.get(dto.provider).generateStructured({
+      systemPrompt: improveSystemPrompt,
+      userPrompt,
+      schema: fullSchema,
+      schemaName: `${type}_improve`,
+    });
+
+    const { checksRun, decision } = this.checks.run({
+      mode: 'improve',
+      requiredFields: [...typeConfig.requiredEditorialFields],
+      factFields: category ? factKeys(category.fieldSchema) : [],
+      draftData: output as Record<string, unknown>,
+      originalFacts,
+      seo: (output as { seo?: { title?: string; description?: string } }).seo,
+      // la-mira no modela fotos con alt todavía (a diferencia de Place) — no hay
+      // nada que chequear, no bloquea.
+      hasImageWithAlt: undefined,
+      slugAvailable: true, // el slug no cambia en "improve"
+      bodyText: JSON.stringify(output),
+    });
+
+    const site = await this.db.query.sites.findFirst({ where: eq(sites.slug, 'la-mira') });
+    // noticia/guia/reportaje tienen `status` (ContentStatus real, igual que Place);
+    // alerta/evento/lugar no tienen ese concepto — el contenido migrado en Fase 6
+    // ya está publicado en el sitio, así que se registra como tal.
+    const statusValue = (typeof row.status === 'string' ? row.status : 'published') as ContentStatus;
+
+    await this.db.insert(contentAuditLog).values({
+      siteId: site!.id,
+      contentType: type,
+      contentId: id,
+      categoryId: category?.id,
+      mode: 'improve',
+      sourceContext: { instructions: dto.instructions ?? null },
+      inputFacts: originalFacts,
+      aiModel: dto.provider === 'claude-cli' ? 'claude-cli' : 'gpt-4o-mini',
+      aiOutput: output as Record<string, unknown>,
+      checksRun,
+      decision,
+      // Esta pasada (Fase 6.5) solo mejora texto, nunca cambia el status editorial.
+      statusBefore: statusValue,
+      statusAfter: statusValue,
       actorId: actorId ?? null,
     });
 
