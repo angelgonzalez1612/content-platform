@@ -18,7 +18,11 @@
   width: 100%;
 }
 
-.cr-scope .cr-content { padding: 1.5rem clamp(1.25rem, 3vw, 2.5rem) 4rem; max-width: 1040px; min-width: 0; width: 100%; }
+/* Sin max-width — antes se topaba en 1040px y dejaba un espacio vacío a la
+   derecha en vez de aprovechar lo que el sidebar (colapsado o no) deja
+   libre; ahora ocupa el 100% real del panel, que ya se ajusta solo al
+   colapsar/expandir el sidebar (flexbox del CmsShell, sin JS de por medio). */
+.cr-scope .cr-content { padding: 1.5rem clamp(1.25rem, 3vw, 2.5rem) 4rem; min-width: 0; width: 100%; }
 
 /* ── barra de reporte (selector de fecha + Actualizar) ─────────────────── */
 .cr-scope .cr-picker {
