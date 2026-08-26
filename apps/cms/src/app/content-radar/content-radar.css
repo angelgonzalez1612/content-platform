@@ -9,9 +9,16 @@
   --cr-green-bg: #eaf7ef;
   --cr-green-border: #cde5d3;
   font-size: 14px;
+  /* El sidebar del CMS se colapsa/expande (64px ↔ 246px) y esta página vive
+     en el panel flex que se reparte el resto del ancho — sin min-width:0 un
+     hijo con ancho intrínseco (la grid del hero, sobre todo) puede forzar
+     ese panel más ancho de lo que el flexbox le está dando, empujando todo
+     el layout y produciendo scroll horizontal en vez de reflow. */
+  min-width: 0;
+  width: 100%;
 }
 
-.cr-scope .cr-content { padding: 1.5rem clamp(1.25rem, 3vw, 2.5rem) 4rem; max-width: 1040px; }
+.cr-scope .cr-content { padding: 1.5rem clamp(1.25rem, 3vw, 2.5rem) 4rem; max-width: 1040px; min-width: 0; width: 100%; }
 
 /* ── barra de reporte (selector de fecha + Actualizar) ─────────────────── */
 .cr-scope .cr-picker {
@@ -95,13 +102,22 @@
   color: var(--color-ink);
 }
 .cr-scope .cr-hero-hint { font-size: 0.8rem; font-weight: 400; color: var(--color-ink-soft); }
-.cr-scope .cr-hero-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.85rem; }
+/* minmax() calcula su mínimo contra el ancho real del contenedor de grid —
+   min-width:0 evita que ese mínimo empuje el panel completo más ancho que
+   el espacio que le dejó el sidebar (colapsado 64px ↔ expandido 246px). */
+.cr-scope .cr-hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 0.85rem;
+  min-width: 0;
+}
 .cr-scope .cr-hero-tile {
   background: var(--cr-amber-bg);
   border: 1px solid var(--cr-amber-border);
   border-top: 3px solid var(--color-brand);
   border-radius: 14px;
   padding: 1.1rem 1.25rem 1.25rem;
+  min-width: 0;
 }
 .cr-scope .cr-hero-tile .rank { color: var(--color-brand); }
 
@@ -144,6 +160,7 @@
   cursor: pointer;
   list-style: none;
   font-family: var(--font-mono);
+  min-width: 0;
 }
 .cr-scope .cr-row-summary::-webkit-details-marker { display: none; }
 .cr-scope .cr-row-summary:hover { background: var(--color-border-soft); }
@@ -155,7 +172,10 @@
   color: var(--color-ink);
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.55rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .cr-scope .cr-row-chevron { flex: none; color: var(--color-ink-faint); transition: transform 0.15s ease; }
 .cr-scope .cr-row[open] .cr-row-chevron { transform: rotate(180deg); }
@@ -212,7 +232,6 @@
   color: var(--color-ink-faint);
   min-width: 1.3em;
 }
-.cr-scope .card-hot .rank { color: var(--color-brand); }
 .cr-scope .report a.publish-btn {
   display: inline-flex;
   align-items: center;
@@ -261,3 +280,18 @@
 .cr-scope .origin-intl { background: var(--color-border-soft); color: var(--color-ink-soft); border: 1px solid var(--color-border); }
 .cr-scope .tag { display: inline-block; font-size: 0.68rem; font-weight: 500; padding: 0.05em 0.5em; border-radius: 4px; background: var(--color-border-soft); color: var(--color-accent-fg); border: 1px solid var(--color-border); vertical-align: middle; }
 .cr-scope .geo-tag { display: inline-block; font-size: 0.68rem; font-weight: 500; padding: 0.05em 0.5em; border-radius: 4px; background: var(--cr-green-bg); color: var(--color-positive); border: 1px solid var(--cr-green-border); vertical-align: middle; }
+
+/* ── angosto: sidebar expandido + ventana chica, o celular ─────────────
+   Mismo layout, solo menos aire y una sola columna — nada depende de JS,
+   así que reflow al cambiar el ancho (sidebar colapsa/expande, resize de
+   ventana) es automático; esto solo afina los tamaños en el extremo angosto. */
+@media (max-width: 640px) {
+  .cr-scope .cr-content { padding: 1.1rem 1rem 3rem; }
+  .cr-scope .cr-picker { padding: 0.6rem 1rem; justify-content: flex-start; }
+  .cr-scope .cr-refresh-form { flex-wrap: wrap; }
+  .cr-scope .cr-hero-grid { grid-template-columns: 1fr; }
+  .cr-scope .report h3 { flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+  .cr-scope .report h3 a.publish-btn { margin-left: 0; }
+  .cr-scope .cr-row-summary { padding: 0.75rem 0.9rem; }
+  .cr-scope .cr-row-body { padding: 1rem 0.9rem 1.2rem; }
+}
