@@ -1,5 +1,5 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { slugify } from '@planazo/shared';
 import type { Place, PlaceDetail } from '@planazo/types';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
@@ -13,9 +13,30 @@ import { toPlaceSummary, toPlaceDetail } from './places.mapper';
 export class PlacesService {
   constructor(@Inject(DRIZZLE) private readonly db: DrizzleDb) {}
 
+  /** `?category=`/`?tag=` filtran por slug — el DTO ya los declaraba desde
+   * antes, pero nunca se habían conectado a la query (planazo_fronted ya los
+   * mandaba sin que tuvieran efecto; se detectó al migrar el mock, ver Fase
+   * "conectar Planazo"). Van por subquery porque Drizzle's relational
+   * `findMany` no permite filtrar por una relación N:M directamente. */
   async findAll(query: QueryPlacesDto): Promise<Place[]> {
+    const conditions = [eq(places.status, 'published')];
+
+    if (query.category) {
+      const category = await this.db.query.categories.findFirst({ where: eq(categories.slug, query.category) });
+      if (!category) return [];
+      const idsInCategory = this.db.select({ placeId: placeCategories.placeId }).from(placeCategories).where(eq(placeCategories.categoryId, category.id));
+      conditions.push(inArray(places.id, idsInCategory));
+    }
+
+    if (query.tag) {
+      const tag = await this.db.query.tags.findFirst({ where: eq(tags.slug, query.tag) });
+      if (!tag) return [];
+      const idsWithTag = this.db.select({ placeId: placeTags.placeId }).from(placeTags).where(eq(placeTags.tagId, tag.id));
+      conditions.push(inArray(places.id, idsWithTag));
+    }
+
     const rows = await this.db.query.places.findMany({
-      where: eq(places.status, 'published'),
+      where: and(...conditions),
       limit: query.limit,
       offset: query.offset,
       with: {
