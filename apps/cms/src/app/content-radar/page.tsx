@@ -16,12 +16,7 @@ export default async function ContentRadarPage() {
   return (
     <CmsShell user={session} title="Content Radar">
       <div className="flex h-full flex-col">
-        <div className="flex flex-none items-center justify-between border-b border-border-soft bg-white px-[26px] py-3">
-          <p className="text-[13px] text-ink-soft">
-            Google Trends, YouTube y frases de búsqueda sobre CDMX — corre todos los días a las 7am. Cada tema trae
-            su propio botón <strong className="font-semibold text-ink">Publicar</strong> — te manda directo a Centro
-            IA con ese tema ya cargado.
-          </p>
+        <div className="flex flex-none items-center justify-end border-b border-border-soft bg-white px-[26px] py-3">
           <a
             href={CONTENT_RADAR_URL}
             target="_blank"
