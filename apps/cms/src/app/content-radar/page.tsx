@@ -2,9 +2,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { listReports, parseFileName, readReportFile, renderReport } from "@planazo/content-radar/render";
-import { DEFAULT_SITE_ID, getSite } from "@planazo/content-radar/sites";
+import { DEFAULT_SITE_ID } from "@planazo/content-radar/sites";
 import { refreshContentRadar } from "./actions";
-import { CategoryFilter } from "./category-filter";
 import { ReportPicker } from "./report-picker";
 import "./content-radar.css";
 
@@ -73,11 +72,8 @@ export default async function ContentRadarPage({
     );
   }
 
-  const site = getSite(DEFAULT_SITE_ID);
-  const categoryLabels = new Set(site.categories.map((c) => c.label));
-
   const raw = await readReportFile(activeFile);
-  const { navHtml, articleHtml } = await renderReport(raw, categoryLabels);
+  const { leadingHtml, jumpNavHtml, heroHtml, accordionHtml, referenceHtml } = await renderReport(raw);
 
   return (
     <CmsShell user={session} title="Content Radar">
@@ -86,12 +82,19 @@ export default async function ContentRadarPage({
           <ReportPicker options={pickerOptions} value={`/content-radar?file=${encodeURIComponent(activeFile)}`} />
           {refreshForm}
         </div>
-        <div className="cr-content">
-          <div dangerouslySetInnerHTML={{ __html: navHtml }} />
-          <article className="report" dangerouslySetInnerHTML={{ __html: articleHtml }} />
+        <div className="cr-content report">
+          {leadingHtml && <div className="cr-summary" dangerouslySetInnerHTML={{ __html: leadingHtml }} />}
+          {heroHtml && <div dangerouslySetInnerHTML={{ __html: heroHtml }} />}
+          {jumpNavHtml && <div dangerouslySetInnerHTML={{ __html: jumpNavHtml }} />}
+          {accordionHtml && <div className="cr-accordion" dangerouslySetInnerHTML={{ __html: accordionHtml }} />}
+          {referenceHtml && (
+            <section className="cr-reference">
+              <h2 className="cr-reference-heading">Tendencias generales</h2>
+              <div className="cr-accordion" dangerouslySetInnerHTML={{ __html: referenceHtml }} />
+            </section>
+          )}
         </div>
       </div>
-      <CategoryFilter />
     </CmsShell>
   );
 }

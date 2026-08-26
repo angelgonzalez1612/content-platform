@@ -2,7 +2,7 @@ import { marked } from "marked";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { REPORTS_DIR } from "./run";
-import { HOTTEST_HEADING } from "./report";
+import { HOTTEST_HEADING, SEARCH_PHRASES_HEADING, TOP_SEARCHES_HEADING } from "./report";
 
 // Todo lo que convierte un reporte .md de content-radar en HTML interactivo
 // (temas rankeados, botones Publicar, tarjetas por categoría, chips de
@@ -124,80 +124,117 @@ function injectItemPublishButtons(html: string): string {
   );
 }
 
-// Cada sección (## heading + su contenido hasta el siguiente ##) se envuelve en una
-// tarjeta con borde, para que el reporte se vea como paneles en vez de texto corrido.
-// data-slug (leído del id del propio h2) es lo que usa el filtro de la barra de chips.
-function wrapSectionsInCards(html: string): string {
-  return html
-    .split(/(?=<h2 )/)
-    .map((part) => {
-      if (!part.trim().startsWith("<h2")) return part;
-      const idMatch = part.match(/<h2 id="([^"]+)"/);
-      const slug = idMatch ? idMatch[1] : "";
-      const hotClass = slug === slugify(HOTTEST_HEADING) ? " card-hot" : "";
-      return `<section class="card${hotClass}" data-slug="${slug}">${part}</section>`;
-    })
+// "Lo más caliente" no es una categoría más — es el resumen cross-categoría,
+// el punto de entrada real del reporte. En vez de otra tarjeta perdida en la
+// lista vertical, sus temas se arman como una cuadrícula de tarjetas grandes
+// y escaneables, aparte de todo lo demás. Reutiliza el HTML que ya armaron
+// wrapRankedHeadings/injectPublishButtons (rank + título + botón dentro del
+// propio <h3>) — solo cambia cómo se agrupan/laydan, no su contenido.
+function buildHeroTiles(sectionBody: string): string {
+  const tiles = sectionBody
+    .split(/(?=<h3>)/)
+    .filter((part) => part.trim().startsWith("<h3>"))
+    .map((part) => `<article class="cr-hero-tile">${part}</article>`)
     .join("");
+  if (!tiles) return "";
+  return `
+    <section class="cr-hero">
+      <h2 class="cr-hero-heading">
+        Radar del día
+        <span class="cr-hero-hint">los temas más calientes ahora mismo, cruzando todas las categorías</span>
+      </h2>
+      <div class="cr-hero-grid">${tiles}</div>
+    </section>
+  `;
 }
 
-// Barra de saltos rápidos por categoría, construida a partir de qué secciones
-// realmente aparecen en este reporte (buildMarkdownReport solo emite las que tienen temas).
-// Escanea directo el markdown por cualquier `## Título \`(N)\`` — no una lista fija
-// de labels conocidos, porque secciones como "Otros — Nacional — <estado>" son
-// dinámicas (32 estados posibles, se generan solo los que sí traen algo ese día).
-//
-// No todas esas secciones son "categorías" del sitio (las 20 fijas de sites.ts,
-// tipo Tráfico/Clima/Eventos) — "Lo más caliente", "Qué busca la gente (frases)",
-// "Lo más buscado ahora" y "Otros — …" son agregados globales, no un tema propio.
-// `categoryLabels` (site.categories.map(c => c.label)) es lo que distingue unas
-// de otras para separarlas en dos grupos visuales dentro de la misma barra.
-export function categoryNav(rawMarkdown: string, categoryLabels: Set<string>): string {
-  const headingRe = /^## (.+?) `\((\d+)\)`$/gm;
-  const categoryChips: string[] = [];
-  const generalChips: string[] = [];
-  for (const match of rawMarkdown.matchAll(headingRe)) {
-    const label = match[1];
-    const count = match[2];
-    const slug = slugify(label);
-    const chip = `<a class="chip" href="#${slug}" data-slug="${slug}">${escapeHtml(label)} <span>${count}</span></a>`;
-    (categoryLabels.has(label) ? categoryChips : generalChips).push(chip);
-  }
+const CHEVRON_ICON =
+  '<svg class="cr-row-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 
-  if (categoryChips.length === 0 && generalChips.length === 0) return "";
-  const group = (label: string, chips: string[]) =>
-    chips.length === 0
-      ? ""
-      : `<div class="chip-group"><span class="chip-group-label">${escapeHtml(label)}</span>${chips.join("")}</div>`;
-
+// Una fila colapsable por sección — antes cada categoría era una tarjeta
+// gigante siempre expandida (noticias + videos + frases mezclados), había
+// que scrollear muchísimo para llegar a algo útil. Colapsada por defecto,
+// solo el nombre + conteo son visibles hasta que se hace clic; <details> es
+// nativo (sin JS) así que también funciona sin JavaScript.
+function buildRow(slug: string, headerInner: string, body: string, muted: boolean): string {
   return `
-    <div class="filters-bar">
-      <nav class="category-nav">
-        <button type="button" class="chip chip-all active" data-slug="__all__">Todos</button>
-        ${group("General", generalChips)}
-        ${group("Categorías", categoryChips)}
-      </nav>
-      <p class="filter-status" hidden></p>
-    </div>
+    <details class="cr-row${muted ? " cr-row-muted" : ""}" id="${slug}">
+      <summary class="cr-row-summary">
+        <span class="cr-row-name">${headerInner}</span>
+        ${CHEVRON_ICON}
+      </summary>
+      <div class="cr-row-body">${body}</div>
+    </details>
   `;
 }
 
 export interface RenderedReport {
-  navHtml: string;
-  articleHtml: string;
+  leadingHtml: string;
+  jumpNavHtml: string;
+  heroHtml: string;
+  accordionHtml: string;
+  referenceHtml: string;
 }
 
 // Punto de entrada único: markdown crudo del reporte -> HTML listo para
-// inyectar en la página (nav de chips + artículo con tarjetas/botones).
-// `categoryLabels` = site.categories.map(c => c.label), para separar en la
-// barra de chips las categorías reales de las secciones agregadas (Lo más
-// caliente, Qué busca la gente, Lo más buscado ahora, Otros — …).
-export async function renderReport(rawMarkdown: string, categoryLabels: Set<string>): Promise<RenderedReport> {
+// inyectar en la página, ya separado en los bloques reales de la nueva
+// estructura:
+//  - leadingHtml: el resumen de una línea al inicio del reporte.
+//  - heroHtml: "Lo más caliente", cuadrícula de tarjetas (ver buildHeroTiles).
+//  - accordionHtml: categorías del sitio + "Otros — …" como filas colapsables
+//    — son las secciones con temas/noticias reales, lo que sí se publica.
+//  - referenceHtml: "Qué busca la gente"/"Lo más buscado ahora" — listas de
+//    referencia (frases/términos sin fuente citable), separadas de las
+//    categorías porque no son un tema del que se pueda publicar directo.
+export async function renderReport(rawMarkdown: string): Promise<RenderedReport> {
   const parsed = (await marked.parse(rawMarkdown)).replace(/<h1>.*?<\/h1>/, "");
-  const articleHtml = wrapSectionsInCards(
-    injectItemPublishButtons(injectPublishButtons(wrapRankedHeadings(addHeadingAnchors(parsed)))),
-  );
-  const navHtml = categoryNav(rawMarkdown, categoryLabels);
-  return { navHtml, articleHtml };
+  const transformed = injectItemPublishButtons(injectPublishButtons(wrapRankedHeadings(addHeadingAnchors(parsed))));
+
+  const headingRe = /^## (.+?) `\((\d+)\)`$/gm;
+  const headings = [...rawMarkdown.matchAll(headingRe)].map((m) => ({ label: m[1] }));
+
+  const parts = transformed.split(/(?=<h2 )/);
+  const firstIsSection = parts[0]?.trim().startsWith("<h2") ?? false;
+  const leadingHtml = firstIsSection ? "" : (parts[0] ?? "");
+  const sectionParts = firstIsSection ? parts : parts.slice(1);
+
+  let heroHtml = "";
+  const jumpChips: string[] = [];
+  const accordionRows: string[] = [];
+  const referenceRows: string[] = [];
+
+  sectionParts.forEach((part, i) => {
+    const heading = headings[i];
+    if (!heading) return;
+    const h2Match = part.match(/<h2 id="([^"]+)"[^>]*>([\s\S]*?)<\/h2>/);
+    const slug = h2Match ? h2Match[1] : slugify(heading.label);
+    const headerInner = h2Match ? h2Match[2] : escapeHtml(heading.label);
+    const body = h2Match ? part.slice(h2Match[0].length) : part;
+
+    if (heading.label === HOTTEST_HEADING) {
+      heroHtml = buildHeroTiles(body);
+      return;
+    }
+
+    const isReference = heading.label === SEARCH_PHRASES_HEADING || heading.label === TOP_SEARCHES_HEADING;
+    const row = buildRow(slug, headerInner, body, isReference);
+    if (isReference) {
+      referenceRows.push(row);
+    } else {
+      accordionRows.push(row);
+      jumpChips.push(`<a class="chip" href="#${slug}">${escapeHtml(heading.label)}</a>`);
+    }
+  });
+
+  const jumpNavHtml = jumpChips.length === 0 ? "" : `<nav class="cr-jump">${jumpChips.join("")}</nav>`;
+
+  return {
+    leadingHtml,
+    jumpNavHtml,
+    heroHtml,
+    accordionHtml: accordionRows.join(""),
+    referenceHtml: referenceRows.join(""),
+  };
 }
 
 export async function readReportFile(fileName: string): Promise<string> {

@@ -66,83 +66,118 @@
 .cr-scope .cr-picker.cr-picker-end { justify-content: flex-end; }
 .cr-scope .cr-empty { color: var(--color-ink-soft); }
 
-/* ── filter chips ────────────────────────────────────────────────────── */
-.cr-scope .filters-bar {
-  position: sticky;
-  top: 56px;
-  z-index: 20;
-  background: var(--color-background);
-  padding: 0.9rem 0 0.85rem;
-  margin-bottom: 1.75rem;
-  border-bottom: 1px solid var(--color-border);
+/* ── resumen del día ─────────────────────────────────────────────────── */
+.cr-scope .cr-summary p {
+  color: var(--color-ink-soft);
+  font-size: 0.84rem;
+  margin: 0 0 1.75rem;
+  padding: 0.55rem 0.85rem;
+  background: var(--color-border-soft);
+  border-radius: 10px;
+  display: inline-block;
 }
-.cr-scope .category-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-/* Agrupa los chips en dos bloques: secciones agregadas (Lo más caliente, Qué
-   busca la gente, Lo más buscado ahora, Otros — …) vs. las 20 categorías fijas
-   del sitio — no son lo mismo y mezclarlas en una sola fila plana confundía. */
-.cr-scope .chip-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
-.cr-scope .chip-group + .chip-group { padding-left: 0.6rem; border-left: 1px solid var(--color-border); }
-.cr-scope .chip-group-label {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--color-ink-faint);
+
+/* ── "Radar del día" (Lo más caliente) ──────────────────────────────────
+   No es una categoría más — es el resumen cross-categoría, el punto de
+   entrada real del reporte. Cuadrícula de tarjetas grandes en vez de otra
+   fila perdida en la lista, con fondo/borde propios (mismo acento de marca
+   que antes tenía "card-hot", ahora protagonista en vez de escondido). */
+.cr-scope .cr-hero { margin-bottom: 2.25rem; }
+.cr-scope .cr-hero-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
 }
+.cr-scope .cr-hero-hint { font-size: 0.8rem; font-weight: 400; color: var(--color-ink-soft); }
+.cr-scope .cr-hero-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.85rem; }
+.cr-scope .cr-hero-tile {
+  background: var(--cr-amber-bg);
+  border: 1px solid var(--cr-amber-border);
+  border-top: 3px solid var(--color-brand);
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem 1.25rem;
+}
+.cr-scope .cr-hero-tile .rank { color: var(--color-brand); }
+
+/* ── acceso rápido a categorías ─────────────────────────────────────── */
+.cr-scope .cr-jump { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
 .cr-scope .chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.32rem 0.7rem;
+  padding: 0.3rem 0.65rem;
   border-radius: 999px;
   border: 1px solid var(--color-border);
   background: var(--color-card);
   color: var(--color-ink-soft);
   text-decoration: none;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  appearance: none;
-  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+  transition: border-color 0.12s ease, color 0.12s ease;
 }
-.cr-scope .chip:hover { border-color: var(--cr-amber-border); color: var(--color-ink); }
-.cr-scope .chip.active { border-color: var(--cr-amber-border); background: var(--cr-amber-bg); color: var(--color-accent-fg); }
-.cr-scope .chip-all.active { border-color: var(--color-brand-pressed); background: var(--color-brand); color: #fff; }
-.cr-scope .chip span { font-family: var(--font-mono); color: inherit; opacity: 0.75; font-size: 0.75rem; }
-.cr-scope .filter-status:not([hidden]) { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--color-ink-soft); margin-top: 0.65rem; }
-.cr-scope .filter-reset { border: none; background: none; padding: 0; color: var(--color-accent-fg); font-size: 0.78rem; font-weight: 600; text-decoration: underline; cursor: pointer; font-family: inherit; }
+.cr-scope .chip:hover { border-color: var(--color-brand-pressed); color: var(--color-accent-fg); }
 
-/* ── section cards ───────────────────────────────────────────────────── */
-.cr-scope .card {
+/* ── categorías (filas colapsables) ─────────────────────────────────────
+   Antes cada categoría era una tarjeta gigante siempre expandida — 25
+   muros de texto mezclando noticias/videos/frases, había que scrollear
+   muchísimo. <details> es nativo (sin JS): colapsada por defecto, solo
+   nombre + conteo visibles hasta que se hace clic. */
+.cr-scope .cr-accordion { display: flex; flex-direction: column; gap: 0.5rem; }
+.cr-scope .cr-accordion + .cr-accordion { margin-top: 0.5rem; }
+.cr-scope .cr-row {
   background: var(--color-card);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
-  padding: 1.4rem 1.6rem 1.6rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 2px rgba(23, 20, 17, 0.03);
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  border-radius: 12px;
+  overflow: hidden;
 }
-.cr-scope .card:hover { box-shadow: 0 4px 16px -8px rgba(23, 20, 17, 0.1); border-color: var(--color-border-soft); }
-.cr-scope .card-hot { border: 1px solid var(--cr-amber-border); border-top: 3px solid var(--color-brand); background: var(--cr-amber-bg); padding: 1.6rem 1.75rem 1.75rem; }
-.cr-scope .card-hot h2 { color: var(--color-accent-fg); }
-.cr-scope .card-hot .count-pill { background: rgba(253, 105, 13, 0.14); color: var(--color-accent-fg); }
-
-/* ── headings inside a section ───────────────────────────────────────── */
-.cr-scope .report h2 {
-  margin: 0 0 1.1rem;
+.cr-scope .cr-row-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1.1rem;
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-mono);
+}
+.cr-scope .cr-row-summary::-webkit-details-marker { display: none; }
+.cr-scope .cr-row-summary:hover { background: var(--color-border-soft); }
+.cr-scope .cr-row-name {
   font-size: 0.82rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--color-ink);
-  font-family: var(--font-mono);
   display: flex;
   align-items: center;
   gap: 0.55rem;
 }
+.cr-scope .cr-row-chevron { flex: none; color: var(--color-ink-faint); transition: transform 0.15s ease; }
+.cr-scope .cr-row[open] .cr-row-chevron { transform: rotate(180deg); }
+.cr-scope .cr-row-body { padding: 0 1.1rem 1.4rem; border-top: 1px solid var(--color-border-soft); padding-top: 1.1rem; }
+
+/* ── tendencias generales (referencia, no accionable) ───────────────────
+   "Qué busca la gente"/"Lo más buscado ahora" son listas de frases/términos
+   sin fuente citable — no hay de dónde publicar directo, por eso van
+   separadas de las categorías reales y con menos peso visual. */
+.cr-scope .cr-reference { margin-top: 2.5rem; }
+.cr-scope .cr-reference-heading {
+  margin: 0 0 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
+.cr-scope .cr-reference .cr-row { background: var(--color-background); }
+.cr-scope .cr-reference .cr-row-name { color: var(--color-ink-soft); }
+
+/* ── headings inside a section ───────────────────────────────────────── */
 .cr-scope .count-pill {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -219,15 +254,6 @@
 .cr-scope .report a:hover { color: var(--color-accent-fg); text-decoration-color: var(--color-brand); }
 .cr-scope .report strong { font-weight: 600; color: var(--color-ink); }
 .cr-scope .report code { font-family: var(--font-mono); font-size: 0.78em; background: var(--color-border-soft); border: 1px solid var(--color-border); border-radius: 4px; padding: 0.1em 0.4em; color: var(--color-accent-fg); }
-.cr-scope .report > p:first-of-type {
-  color: var(--color-ink-soft);
-  font-size: 0.84rem;
-  margin: 0 0 1.5rem;
-  padding: 0.55rem 0.85rem;
-  background: var(--color-border-soft);
-  border-radius: 10px;
-  display: inline-block;
-}
 
 /* ── badges ──────────────────────────────────────────────────────────── */
 .cr-scope .origin-badge { display: inline-block; font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600; padding: 0.05em 0.45em; border-radius: 4px; vertical-align: middle; }
