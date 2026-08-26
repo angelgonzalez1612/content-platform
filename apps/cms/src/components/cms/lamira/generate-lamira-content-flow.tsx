@@ -36,12 +36,22 @@ interface DraftResponse {
   decision: AiDecision;
 }
 
-export function GenerateLamiraContentFlow({ type, categories }: { type: string; categories: Category[] }) {
+export function GenerateLamiraContentFlow({
+  type,
+  categories,
+  initialName,
+  initialHints,
+}: {
+  type: string;
+  categories: Category[];
+  initialName?: string;
+  initialHints?: string;
+}) {
   const router = useRouter();
   const meta = TYPE_META[type];
   const [step, setStep] = useState<Step>("input");
-  const [name, setName] = useState("");
-  const [hints, setHints] = useState("");
+  const [name, setName] = useState(initialName ?? "");
+  const [hints, setHints] = useState(initialHints ?? "");
   const [provider, setProvider] = useState<ProviderId>("openai");
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
   const [error, setError] = useState("");

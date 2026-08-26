@@ -18,12 +18,9 @@ export default async function ContentRadarPage() {
       <div className="flex h-full flex-col">
         <div className="flex flex-none items-center justify-between border-b border-border-soft bg-white px-[26px] py-3">
           <p className="text-[13px] text-ink-soft">
-            Google Trends, YouTube y frases de búsqueda sobre CDMX — corre todos los días a las 7am. Usa un tema de
-            aquí como contexto en{" "}
-            <a href="/centro-ia" className="font-medium text-brand hover:underline">
-              Centro IA
-            </a>
-            .
+            Google Trends, YouTube y frases de búsqueda sobre CDMX — corre todos los días a las 7am. Cada tema trae
+            su propio botón <strong className="font-semibold text-ink">Publicar</strong> — te manda directo a Centro
+            IA con ese tema ya cargado.
           </p>
           <a
             href={CONTENT_RADAR_URL}
@@ -35,7 +32,7 @@ export default async function ContentRadarPage() {
           </a>
         </div>
         <iframe
-          src={CONTENT_RADAR_URL}
+          src={`${CONTENT_RADAR_URL}/?embed=1`}
           title="Content Radar"
           className="min-h-0 flex-1 border-0"
         />

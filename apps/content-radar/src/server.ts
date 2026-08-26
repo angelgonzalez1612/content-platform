@@ -13,6 +13,9 @@ import { DEFAULT_SITE_ID, SITES, getSite, type SiteConfig } from "./sites.js";
 import { HOTTEST_HEADING } from "./report.js";
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 4310;
+// URL del CMS (apps/cms) — el botón "Publicar" de cada tema apunta ahí, con
+// target="_top" para salir del iframe y navegar la ventana completa del CMS.
+const CMS_URL = process.env.CMS_URL ?? "http://localhost:3002";
 const FILE_NAME_RE = /^[\w-]+\.md$/;
 
 const app = express();
@@ -24,31 +27,46 @@ app.use((_req, res, next) => {
   next();
 });
 
-app.get("/", (_req, res) => {
-  res.redirect(`/s/${DEFAULT_SITE_ID}`);
+// `?embed=1` — puesto por el iframe del CMS (apps/cms/src/app/content-radar) —
+// suprime el sidebar propio de content-radar (brand/historial/refrescar) para
+// no duplicar la navegación con la del CMS, que ya lo envuelve. Se propaga a
+// mano por todos los redirects y por el <form> de "Actualizar" (que es un
+// POST, no hereda la query string solo) para que moverse dentro de
+// content-radar sin salir del CMS nunca "recupere" el sidebar completo.
+function isEmbed(value: unknown): boolean {
+  return value === "1" || value === "true";
+}
+function embedQS(embed: boolean): string {
+  return embed ? "?embed=1" : "";
+}
+
+app.get("/", (req, res) => {
+  res.redirect(`/s/${DEFAULT_SITE_ID}${embedQS(isEmbed(req.query.embed))}`);
 });
 
 // Compat con URLs de antes del multi-sitio (todo era implícitamente la-mira).
 app.get("/reporte/:file", (req, res) => {
-  res.redirect(`/s/${DEFAULT_SITE_ID}/reporte/${req.params.file}`);
+  res.redirect(`/s/${DEFAULT_SITE_ID}/reporte/${req.params.file}${embedQS(isEmbed(req.query.embed))}`);
 });
 
 app.get("/s/:siteId", async (req, res) => {
   const site = requireSite(req.params.siteId, res);
   if (!site) return;
+  const embed = isEmbed(req.query.embed);
 
   const files = await listReports(site.id);
   const latest = files[0];
   if (!latest) {
-    res.send(layout(site, sidebar(site, files, null), emptyState()));
+    res.send(layout(site, sidebar(site, files, null, embed), emptyState(), embed));
     return;
   }
-  res.redirect(`/s/${site.id}/reporte/${latest}`);
+  res.redirect(`/s/${site.id}/reporte/${latest}${embedQS(embed)}`);
 });
 
 app.get("/s/:siteId/reporte/:file", async (req, res) => {
   const site = requireSite(req.params.siteId, res);
   if (!site) return;
+  const embed = isEmbed(req.query.embed);
 
   const { file } = req.params;
   if (!FILE_NAME_RE.test(file)) {
@@ -61,7 +79,7 @@ app.get("/s/:siteId/reporte/:file", async (req, res) => {
     const raw = await readFile(path.join(REPORTS_DIR, file), "utf-8");
     // El h1 de la-mira/planazo se reemplaza por el header propio (breadcrumb + título) de abajo.
     const parsed = (await marked.parse(raw)).replace(/<h1>.*?<\/h1>/, "");
-    const html = wrapSectionsInCards(wrapRankedHeadings(addHeadingAnchors(parsed)));
+    const html = wrapSectionsInCards(injectPublishButtons(wrapRankedHeadings(addHeadingAnchors(parsed))));
     const nav = categoryNav(raw);
     const { date, geo } = parseFileName(file, site.id);
     const header = `
@@ -69,20 +87,21 @@ app.get("/s/:siteId/reporte/:file", async (req, res) => {
       <h1 class="page-title">${escapeHtml(site.name)} <span class="page-sub">${escapeHtml(date)} · ${escapeHtml(geo)}</span></h1>
     `;
     res.send(
-      layout(site, sidebar(site, files, file), `${header}${nav}<article class="report">${html}</article>`)
+      layout(site, sidebar(site, files, file, embed), `${header}${nav}<article class="report">${html}</article>`, embed)
     );
   } catch {
-    res.status(404).send(layout(site, sidebar(site, files, null), `<p>No se encontró ${escapeHtml(file)}.</p>`));
+    res.status(404).send(layout(site, sidebar(site, files, null, embed), `<p>No se encontró ${escapeHtml(file)}.</p>`, embed));
   }
 });
 
 app.post("/s/:siteId/actualizar", async (req, res) => {
   const site = requireSite(req.params.siteId, res);
   if (!site) return;
+  const embed = isEmbed(req.body?.embed);
 
   const geo = typeof req.body?.geo === "string" && req.body.geo.trim() ? req.body.geo.trim() : "MX";
   const { fileName } = await runAndSave(site.id, geo);
-  res.redirect(`/s/${site.id}/reporte/${fileName}`);
+  res.redirect(`/s/${site.id}/reporte/${fileName}${embedQS(embed)}`);
 });
 
 function requireSite(siteId: string, res: express.Response): SiteConfig | null {
@@ -143,6 +162,45 @@ function addHeadingAnchors(html: string): string {
 // está el tema), no es el "01/02/03" decorativo de una landing.
 function wrapRankedHeadings(html: string): string {
   return html.replace(/<h3>(\d+)\.\s+(.*?)<\/h3>/g, '<h3><span class="rank">$1</span>$2</h3>');
+}
+
+// Botón "Publicar" por tema rankeado — deep-link a Centro IA con el tema y la
+// primera fuente citada ya cargados como `name`/`hints`. `target="_top"` para
+// que el clic (adentro del iframe embebido en el CMS) navegue la ventana
+// completa hacia la pantalla real de creación, no el iframe. Corre DESPUÉS de
+// wrapRankedHeadings (opera sobre `<h3><span class="rank">…`) y ANTES de
+// wrapSectionsInCards (necesita ver dónde empieza el siguiente h2/h3 en el
+// HTML plano, que wrapSectionsInCards ya trocea en <section>s separadas).
+function injectPublishButtons(html: string): string {
+  return html
+    .split(/(?=<h3><span class="rank">)/)
+    .map((part) => {
+      const h3Match = part.match(/^<h3><span class="rank">(\d+)<\/span>(.*?)<\/h3>/);
+      if (!h3Match) return part;
+
+      const [full, rank, titleHtml] = h3Match;
+      const title = titleHtml.replace(/<[^>]+>/g, "").trim();
+      const rest = part.slice(full.length);
+
+      // El cuerpo de ESTE tema es lo que sigue hasta el próximo h2/h3 (o el
+      // final del documento) — de ahí se saca la primera fuente citada, si hay.
+      const nextHeadingIdx = rest.search(/<h[23]/);
+      const body = nextHeadingIdx === -1 ? rest : rest.slice(0, nextHeadingIdx);
+      const linkMatch = body.match(/<a href="([^"]+)">([^<]+)<\/a>\s*—\s*([^<\n]+)/);
+
+      const hints = linkMatch
+        ? `Tema de content-radar: "${title}". Fuente citada: "${linkMatch[2].trim()}" — ${linkMatch[3].trim()} (${linkMatch[1]}).`
+        : `Tema de content-radar: "${title}".`;
+
+      const publishUrl =
+        `${CMS_URL}/centro-ia?site=lamira&type=noticia` +
+        `&name=${encodeURIComponent(title)}` +
+        `&hints=${encodeURIComponent(hints)}`;
+      const button = `<a class="publish-btn" href="${publishUrl}" target="_top" rel="noopener">Publicar<span aria-hidden="true"> →</span></a>`;
+
+      return `<h3><span class="rank">${rank}</span>${titleHtml}${button}</h3>${rest}`;
+    })
+    .join("");
 }
 
 // Cada sección (## heading + su contenido hasta el siguiente ##) se envuelve en una
@@ -226,7 +284,9 @@ function geoSelect(): string {
   return `<select name="geo" aria-label="Región (geo)">${options}</select>`;
 }
 
-function sidebar(site: SiteConfig, files: string[], activeFile: string | null): string {
+function sidebar(site: SiteConfig, files: string[], activeFile: string | null, embed: boolean): string {
+  if (embed) return embedBar(site, files, activeFile);
+
   const items = files
     .map((f) => {
       const { date, geo } = parseFileName(f, site.id);
@@ -261,11 +321,44 @@ function sidebar(site: SiteConfig, files: string[], activeFile: string | null): 
   `;
 }
 
+// Versión embebida en el CMS (?embed=1, ver isEmbed()) — el CMS YA tiene su
+// propio sidebar con "Content Radar" como item, así que repetir el sidebar
+// completo de content-radar (marca, historial de reportes) duplicaba la
+// navegación en dos menús verticales lado a lado. Esta es una sola barra
+// horizontal angosta con lo mínimo indispensable: cambiar de reporte y
+// regenerar uno nuevo — el resto (marca, descripción) ya lo pone el CMS.
+function embedBar(site: SiteConfig, files: string[], activeFile: string | null): string {
+  const options = files
+    .map((f) => {
+      const { date, geo } = parseFileName(f, site.id);
+      const selected = f === activeFile ? " selected" : "";
+      return `<option value="/s/${site.id}/reporte/${f}?embed=1"${selected}>${date} · ${escapeHtml(geo)}</option>`;
+    })
+    .join("");
+
+  return `
+    <header class="embed-bar">
+      <select
+        class="embed-report-select"
+        aria-label="Reporte"
+        onchange="if (this.value) window.location.href = this.value;"
+      >
+        ${options || '<option value="">Sin reportes todavía</option>'}
+      </select>
+      <form method="post" action="/s/${site.id}/actualizar" class="refresh-form embed-refresh-form">
+        <input type="hidden" name="embed" value="1" />
+        ${geoSelect()}
+        <button type="submit">Actualizar</button>
+      </form>
+    </header>
+  `;
+}
+
 function emptyState(): string {
   return `<div class="empty-state"><p>No hay reportes guardados todavía.</p><p>Usa "Actualizar ahora" para generar el primero.</p></div>`;
 }
 
-function layout(site: SiteConfig, sidebarHtml: string, mainHtml: string): string {
+function layout(site: SiteConfig, navHtml: string, mainHtml: string, embed: boolean): string {
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -277,9 +370,9 @@ function layout(site: SiteConfig, sidebarHtml: string, mainHtml: string): string
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>${STYLES}</style>
 </head>
-<body>
+<body class="${embed ? "is-embed" : ""}">
   <div class="layout">
-    ${sidebarHtml}
+    ${navHtml}
     <main class="content">${mainHtml}</main>
   </div>
   <script>${FILTER_SCRIPT}</script>
@@ -407,6 +500,35 @@ const STYLES = `
     height: 100vh;
   }
   .content { flex: 1; padding: 2.25rem clamp(1.5rem, 4vw, 3.25rem) 5rem; max-width: 1040px; min-width: 0; overflow-wrap: break-word; }
+
+  /* ── embed mode (dentro del iframe del CMS, ver isEmbed()) ────────────── */
+  /* Sin sidebar propio — una sola barra angosta arriba en vez de un segundo
+     menú vertical junto al del CMS. */
+  .is-embed .layout { display: block; min-height: 0; }
+  .is-embed .content { max-width: none; padding: 1.5rem clamp(1.25rem, 3vw, 2.5rem) 4rem; }
+  .embed-bar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.6rem clamp(1.25rem, 3vw, 2.5rem);
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+  }
+  .embed-report-select {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--panel);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+  }
+  .embed-refresh-form { margin: 0; }
 
   /* ── sidebar: brand ──────────────────────────────────────────────────── */
   .brand { margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.65rem; }
@@ -629,6 +751,7 @@ const STYLES = `
   .report h3 {
     display: flex;
     align-items: baseline;
+    flex-wrap: wrap;
     gap: 0.65rem;
     font-size: 1rem;
     font-weight: 600;
@@ -648,6 +771,27 @@ const STYLES = `
     min-width: 1.3em;
   }
   .card-hot .rank { color: var(--accent); }
+  .report h3 a.publish-btn {
+    margin-left: auto;
+    flex: none;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(253,105,13,.3);
+    transition: background-color 0.15s ease, transform 0.15s ease;
+  }
+  .report h3 a.publish-btn:hover { background: var(--accent-hover); color: #fff; transform: translateY(-1px); }
+  .report h3 a.publish-btn span { font-family: var(--font-sans); }
   .sub-label {
     margin: 1.35rem 0 0.6rem;
     font-size: 0.68rem;
