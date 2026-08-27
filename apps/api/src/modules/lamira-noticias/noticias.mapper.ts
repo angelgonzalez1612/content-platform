@@ -22,6 +22,8 @@ interface NoticiaRow {
   toc: Noticia['toc'];
   content: Noticia['content'];
   imageCaption: string | null;
+  imageUrl: string | null;
+  imageCredit: string | null;
   featured: boolean;
   tag: string | null;
   categoryData: Record<string, unknown>;
@@ -54,6 +56,8 @@ export function toNoticia(row: NoticiaRow): Noticia {
     toc: row.toc,
     content: row.content,
     imageCaption: row.imageCaption,
+    imageUrl: row.imageUrl,
+    imageCredit: row.imageCredit,
     featured: row.featured,
     tag: row.tag,
     categoryData: row.categoryData,

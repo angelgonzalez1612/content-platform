@@ -19,6 +19,8 @@ export const createAlertaSchema = z.object({
   description: z.string().min(1),
   updates: z.array(z.object({ time: z.string(), text: z.string() })).optional(),
   seo: seoSchema,
+  imageUrl: z.string().nullable().optional(),
+  imageCredit: z.string().nullable().optional(),
   categoryData: z.record(z.string(), z.unknown()).optional(),
 });
 export type CreateAlertaDto = z.infer<typeof createAlertaSchema>;
@@ -32,6 +34,8 @@ export const updateAlertaSchema = z
     description: z.string().min(1).optional(),
     updates: z.array(z.object({ time: z.string(), text: z.string() })).optional(),
     seo: seoSchema,
+    imageUrl: z.string().nullable().optional(),
+    imageCredit: z.string().nullable().optional(),
     categoryData: z.record(z.string(), z.unknown()).optional(),
   })
   .strict();

@@ -45,6 +45,11 @@ export interface DraftResult {
   draft: Record<string, unknown>;
   checksRun: CheckResult[];
   decision: AiDecision;
+  // Fase 4 del plan: imagen de la fuente original (og:image), con crédito —
+  // viene del scraping (ArticleScraperService), NUNCA la genera/inventa la
+  // IA. null cuando no hay fuente citada o el scraping no encontró imagen;
+  // el humano puede quitarla/reemplazarla en la revisión de todos modos.
+  image: { url: string; credit: string } | null;
 }
 
 // Orquesta el agente editorial: arma el schema dinámico (tipo de contenido +
@@ -68,6 +73,15 @@ export class AiDraftService {
     const url = hints?.match(/https?:\/\/\S+/)?.[0]?.replace(/[).,]+$/, '');
     if (!url) return null;
     return this.scraper.scrape(url);
+  }
+
+  // Nombre de la fuente ("MILENIO", "La Jornada"...) tal como content-radar ya
+  // lo escribe en `hints`, justo antes de la URL entre paréntesis — mismo
+  // formato en injectPublishButtons e injectItemPublishButtons. Se usa para
+  // el crédito de la imagen ("Foto: MILENIO"), no para el prompt de la IA.
+  private sourceLabelFromHints(hints?: string): string | null {
+    const match = hints?.match(/—\s*([^()]+?)\s*\(https?:\/\//);
+    return match?.[1]?.trim() || null;
   }
 
   async draft(dto: DraftRequestDto): Promise<DraftResult> {
@@ -123,7 +137,13 @@ export class AiDraftService {
       bodyText: JSON.stringify(output),
     });
 
-    return { draft: output as Record<string, unknown>, checksRun, decision };
+    // Fase 4 del plan: imagen de la fuente citada, con crédito — determinística
+    // (viene del og:image real que ya trajo el scraping), nunca la decide la IA.
+    const sourceLabel = this.sourceLabelFromHints(dto.hints);
+    const image =
+      scrapedArticle?.imageUrl && sourceLabel ? { url: scrapedArticle.imageUrl, credit: `Foto: ${sourceLabel}` } : null;
+
+    return { draft: output as Record<string, unknown>, checksRun, decision, image };
   }
 
   /** Solo implementado para 'place' por ahora — es el único tipo con carga/guardado
@@ -202,7 +222,9 @@ export class AiDraftService {
       actorId: actorId ?? null,
     });
 
-    return { draft: output as Record<string, unknown>, checksRun, decision };
+    // "Mejorar" edita contenido ya existente — no toca la imagen (eso vive
+    // aparte, en el registro que ya se creó); Fase 4 solo cubre el draft nuevo.
+    return { draft: output as Record<string, unknown>, checksRun, decision, image: null };
   }
 
   /** Los 6 tipos de la-mira con CRUD real (Fase 2) — 'place' sigue por separado
@@ -343,6 +365,8 @@ export class AiDraftService {
       actorId: actorId ?? null,
     });
 
-    return { draft: output as Record<string, unknown>, checksRun, decision };
+    // "Mejorar" edita contenido ya existente — no toca la imagen (eso vive
+    // aparte, en el registro que ya se creó); Fase 4 solo cubre el draft nuevo.
+    return { draft: output as Record<string, unknown>, checksRun, decision, image: null };
   }
 }

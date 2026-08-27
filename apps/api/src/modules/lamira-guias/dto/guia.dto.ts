@@ -24,6 +24,8 @@ export const createGuiaSchema = z.object({
   toc: z.array(z.object({ id: z.string(), label: z.string() })).optional(),
   content: z.array(z.object({ id: z.string(), heading: z.string(), paragraphs: z.array(z.string()) })).optional(),
   faq: z.array(z.object({ question: z.string(), answer: z.string() })).optional(),
+  imageUrl: z.string().nullable().optional(),
+  imageCredit: z.string().nullable().optional(),
   categoryData: z.record(z.string(), z.unknown()).optional(),
 });
 export type CreateGuiaDto = z.infer<typeof createGuiaSchema>;
@@ -42,6 +44,8 @@ export const updateGuiaSchema = z
     toc: z.array(z.object({ id: z.string(), label: z.string() })).optional(),
     content: z.array(z.object({ id: z.string(), heading: z.string(), paragraphs: z.array(z.string()) })).optional(),
     faq: z.array(z.object({ question: z.string(), answer: z.string() })).optional(),
+    imageUrl: z.string().nullable().optional(),
+    imageCredit: z.string().nullable().optional(),
     categoryData: z.record(z.string(), z.unknown()).optional(),
   })
   .strict();

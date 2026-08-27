@@ -21,6 +21,8 @@ export const createLamiraLugarSchema = z.object({
   colonia: z.string().nullable().optional(),
   description: z.string().min(1),
   seo: seoSchema,
+  imageUrl: z.string().nullable().optional(),
+  imageCredit: z.string().nullable().optional(),
   categoryData: z.record(z.string(), z.unknown()).optional(),
 });
 export type CreateLamiraLugarDto = z.infer<typeof createLamiraLugarSchema>;
@@ -34,6 +36,8 @@ export const updateLamiraLugarSchema = z
     colonia: z.string().nullable().optional(),
     description: z.string().min(1).optional(),
     seo: seoSchema,
+    imageUrl: z.string().nullable().optional(),
+    imageCredit: z.string().nullable().optional(),
     categoryData: z.record(z.string(), z.unknown()).optional(),
   })
   .strict();

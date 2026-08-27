@@ -69,6 +69,7 @@ export interface AiDraftResult {
   draft: Record<string, unknown>;
   checksRun: CheckResult[];
   decision: AiDecision;
+  image: { url: string; credit: string } | null;
 }
 
 // ── Los 6 tipos de contenido editorial de la-mira ───────────────────────────
@@ -108,6 +109,8 @@ export interface Noticia {
   toc: TocEntry[];
   content: ContentBlock[];
   imageCaption: string | null;
+  imageUrl: string | null;
+  imageCredit: string | null;
   featured: boolean;
   tag: string | null;
   categoryData: Record<string, unknown>;
@@ -128,6 +131,8 @@ export interface Alerta {
   description: string;
   updates: { time: string; text: string }[];
   seo: Seo | null;
+  imageUrl: string | null;
+  imageCredit: string | null;
   categoryData: Record<string, unknown>;
   createdAt: string;
 }
@@ -149,6 +154,8 @@ export interface Guia {
   toc: TocEntry[];
   content: { id: string; heading: string; paragraphs: string[] }[];
   faq: { question: string; answer: string }[];
+  imageUrl: string | null;
+  imageCredit: string | null;
   categoryData: Record<string, unknown>;
   createdAt: string;
 }
@@ -172,6 +179,8 @@ export interface LamiraEvento {
   organizer: string;
   officialUrl: string | null;
   seo: Seo | null;
+  imageUrl: string | null;
+  imageCredit: string | null;
   categoryData: Record<string, unknown>;
   createdAt: string;
 }
@@ -189,6 +198,8 @@ export interface LamiraLugar {
   colonia: string | null;
   description: string;
   seo: Seo | null;
+  imageUrl: string | null;
+  imageCredit: string | null;
   categoryData: Record<string, unknown>;
   createdAt: string;
 }
@@ -208,6 +219,8 @@ export interface Reportaje {
   sourceKind: string | null;
   seo: Seo | null;
   imageCaption: string;
+  imageUrl: string | null;
+  imageCredit: string | null;
   toc: TocEntry[];
   content: ContentBlock[];
   categoryData: Record<string, unknown>;

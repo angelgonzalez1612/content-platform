@@ -25,6 +25,8 @@ export const createLamiraEventoSchema = z.object({
   organizer: z.string().min(1),
   officialUrl: z.string().nullable().optional(),
   seo: seoSchema,
+  imageUrl: z.string().nullable().optional(),
+  imageCredit: z.string().nullable().optional(),
   categoryData: z.record(z.string(), z.unknown()).optional(),
 });
 export type CreateLamiraEventoDto = z.infer<typeof createLamiraEventoSchema>;
@@ -44,6 +46,8 @@ export const updateLamiraEventoSchema = z
     organizer: z.string().min(1).optional(),
     officialUrl: z.string().nullable().optional(),
     seo: seoSchema,
+    imageUrl: z.string().nullable().optional(),
+    imageCredit: z.string().nullable().optional(),
     categoryData: z.record(z.string(), z.unknown()).optional(),
   })
   .strict();

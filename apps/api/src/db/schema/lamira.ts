@@ -46,6 +46,12 @@ export const noticias = sqliteTable('noticias', {
   toc: text('toc', { mode: 'json' }).$type<TocEntry[]>().notNull().default([]),
   content: text('content', { mode: 'json' }).$type<ContentBlock[]>().notNull().default([]),
   imageCaption: text('image_caption'),
+  // Fase 4 del plan de rediseño del pipeline (content-radar → Centro IA):
+  // imagen de la fuente original citada, con crédito — extraída del
+  // og:image del artículo scrapeado (ArticleScraperService). Nullable: sigue
+  // siendo válido crear contenido sin imagen (manual, o si el scraping falló).
+  imageUrl: text('image_url'),
+  imageCredit: text('image_credit'), // ej. "Foto: MILENIO"
   featured: integer('featured', { mode: 'boolean' }).default(false).notNull(),
   tag: text('tag'), // 'CLIMA' | 'DEPORTES' — badge suelto, distinto de categoryId
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
@@ -67,6 +73,8 @@ export const alertas = sqliteTable('alertas', {
   updates: text('updates', { mode: 'json' }).$type<{ time: string; text: string }[]>().notNull().default([]),
   // Nuevo respecto al original — Alerta no tenía seo. Ver Fase 5 del plan.
   seo: text('seo', { mode: 'json' }).$type<Seo>(),
+  imageUrl: text('image_url'), // Fase 4 — ver comentario en noticias arriba.
+  imageCredit: text('image_credit'),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
   createdAt: createdAtColumn(),
 });
@@ -94,6 +102,8 @@ export const guias = sqliteTable('guias', {
     .notNull()
     .default([]),
   faq: text('faq', { mode: 'json' }).$type<{ question: string; answer: string }[]>().notNull().default([]),
+  imageUrl: text('image_url'), // Fase 4 — ver comentario en noticias arriba.
+  imageCredit: text('image_credit'),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
   createdAt: createdAtColumn(),
 });
@@ -121,6 +131,8 @@ export const lamiraEventos = sqliteTable('lamira_eventos', {
   organizer: text('organizer').notNull(),
   officialUrl: text('official_url'),
   seo: text('seo', { mode: 'json' }).$type<Seo>(),
+  imageUrl: text('image_url'), // Fase 4 — ver comentario en noticias arriba.
+  imageCredit: text('image_credit'),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
   createdAt: createdAtColumn(),
 });
@@ -142,6 +154,8 @@ export const lamiraLugares = sqliteTable('lamira_lugares', {
   description: text('description').notNull(),
   // Nuevo respecto al original — Lugar no tenía seo. Ver Fase 5 del plan.
   seo: text('seo', { mode: 'json' }).$type<Seo>(),
+  imageUrl: text('image_url'), // Fase 4 — ver comentario en noticias arriba.
+  imageCredit: text('image_credit'),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
   createdAt: createdAtColumn(),
 });
@@ -165,6 +179,8 @@ export const reportajes = sqliteTable('reportajes', {
   sourceKind: text('source_kind'),
   seo: text('seo', { mode: 'json' }).$type<Seo>(),
   imageCaption: text('image_caption').notNull(),
+  imageUrl: text('image_url'), // Fase 4 — ver comentario en noticias arriba.
+  imageCredit: text('image_credit'),
   toc: text('toc', { mode: 'json' }).$type<TocEntry[]>().notNull().default([]),
   content: text('content', { mode: 'json' }).$type<ContentBlock[]>().notNull().default([]),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),

@@ -17,6 +17,8 @@ interface GuiaRow {
   toc: Guia['toc'];
   content: Guia['content'];
   faq: Guia['faq'];
+  imageUrl: string | null;
+  imageCredit: string | null;
   categoryData: Record<string, unknown>;
   createdAt: Date | string;
 }
@@ -41,6 +43,8 @@ export function toGuia(row: GuiaRow): Guia {
     toc: row.toc,
     content: row.content,
     faq: row.faq,
+    imageUrl: row.imageUrl,
+    imageCredit: row.imageCredit,
     categoryData: row.categoryData,
     createdAt: toIso(row.createdAt),
   };

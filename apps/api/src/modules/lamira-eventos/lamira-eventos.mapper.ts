@@ -17,6 +17,8 @@ interface LamiraEventoRow {
   organizer: string;
   officialUrl: string | null;
   seo: LamiraEvento['seo'];
+  imageUrl: string | null;
+  imageCredit: string | null;
   categoryData: Record<string, unknown>;
   createdAt: Date | string;
 }
@@ -41,6 +43,8 @@ export function toLamiraEvento(row: LamiraEventoRow): LamiraEvento {
     organizer: row.organizer,
     officialUrl: row.officialUrl,
     seo: row.seo ?? null,
+    imageUrl: row.imageUrl,
+    imageCredit: row.imageCredit,
     categoryData: row.categoryData,
     createdAt: toIso(row.createdAt),
   };

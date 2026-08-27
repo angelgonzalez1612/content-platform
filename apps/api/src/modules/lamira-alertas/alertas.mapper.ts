@@ -12,6 +12,8 @@ interface AlertaRow {
   description: string;
   updates: Alerta['updates'];
   seo: Alerta['seo'];
+  imageUrl: string | null;
+  imageCredit: string | null;
   categoryData: Record<string, unknown>;
   createdAt: Date | string;
 }
@@ -31,6 +33,8 @@ export function toAlerta(row: AlertaRow): Alerta {
     description: row.description,
     updates: row.updates,
     seo: row.seo ?? null,
+    imageUrl: row.imageUrl,
+    imageCredit: row.imageCredit,
     categoryData: row.categoryData,
     createdAt: toIso(row.createdAt),
   };

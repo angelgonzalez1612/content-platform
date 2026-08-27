@@ -34,6 +34,7 @@ interface DraftResponse {
   draft: Record<string, unknown>;
   checksRun: CheckResult[];
   decision: AiDecision;
+  image: { url: string; credit: string } | null;
 }
 
 export function GenerateLamiraContentFlow({
@@ -64,6 +65,9 @@ export function GenerateLamiraContentFlow({
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>({});
   const [checksRun, setChecksRun] = useState<CheckResult[]>([]);
   const [decision, setDecision] = useState<AiDecision>("needs-review");
+  // Imagen de la fuente citada, con crédito — viene del scraping (Fase 4 del
+  // plan), nunca la genera la IA. El humano puede quitarla en la revisión.
+  const [image, setImage] = useState<{ url: string; credit: string } | null>(null);
 
   // Campos que la IA no genera (son datos verificables) — el humano los llena
   // en la revisión. Para alerta/evento/lugar son obligatorios de verdad
@@ -131,6 +135,7 @@ export function GenerateLamiraContentFlow({
       setCategoryData(rest);
       setChecksRun(data.checksRun);
       setDecision(data.decision);
+      setImage(data.image);
       setStep("review");
     } catch {
       setError("No se pudo conectar con el servidor.");
@@ -143,26 +148,27 @@ export function GenerateLamiraContentFlow({
     setError("");
 
     const status = meta.hasStatus ? (decision === "auto-published" ? "published" : "draft") : undefined;
+    const imageFields = { imageUrl: image?.url ?? null, imageCredit: image?.credit ?? null };
     let payload: Record<string, unknown>;
 
     switch (type) {
       case "noticia":
-        payload = { title: name, dek, categoryId: categoryId || null, authorSlug: extra.authorSlug, status, toc: buildToc(content), content, categoryData, seo };
+        payload = { title: name, dek, categoryId: categoryId || null, authorSlug: extra.authorSlug, status, toc: buildToc(content), content, categoryData, seo, ...imageFields };
         break;
       case "guia":
-        payload = { title: name, dek, groupSlug: extra.groupSlug, categoryId: categoryId || null, status, content: withBlockIds(content), faq, categoryData, seo };
+        payload = { title: name, dek, groupSlug: extra.groupSlug, categoryId: categoryId || null, status, content: withBlockIds(content), faq, categoryData, seo, ...imageFields };
         break;
       case "reportaje":
-        payload = { title: name, dek, categoryId: categoryId || null, authorSlug: extra.authorSlug, status, tags: extra.tags.length ? extra.tags : ["Reportaje"], imageCaption: extra.imageCaption || "Pendiente", toc: buildToc(content), content, categoryData, seo };
+        payload = { title: name, dek, categoryId: categoryId || null, authorSlug: extra.authorSlug, status, tags: extra.tags.length ? extra.tags : ["Reportaje"], imageCaption: extra.imageCaption || "Pendiente", toc: buildToc(content), content, categoryData, seo, ...imageFields };
         break;
       case "alerta":
-        payload = { title: name, alertaStatus: extra.alertaStatus, categoryId: categoryId || null, alcaldiaSlug: extra.alcaldiaSlug || null, description, categoryData, seo };
+        payload = { title: name, alertaStatus: extra.alertaStatus, categoryId: categoryId || null, alcaldiaSlug: extra.alcaldiaSlug || null, description, categoryData, seo, ...imageFields };
         break;
       case "evento":
-        payload = { title: name, tag: extra.tag || "Evento", categoryId: categoryId || null, eventoStatus: extra.eventoStatus, date: extra.date, time: extra.time, location: extra.location, alcaldiaSlug: extra.alcaldiaSlug || null, price: extra.price, description, organizer: extra.organizer, categoryData, seo };
+        payload = { title: name, tag: extra.tag || "Evento", categoryId: categoryId || null, eventoStatus: extra.eventoStatus, date: extra.date, time: extra.time, location: extra.location, alcaldiaSlug: extra.alcaldiaSlug || null, price: extra.price, description, organizer: extra.organizer, categoryData, seo, ...imageFields };
         break;
       case "lugar":
-        payload = { name, kind: extra.kind, categoryId: categoryId || null, alcaldiaSlug: extra.alcaldiaSlug, colonia: extra.colonia || null, description, categoryData, seo };
+        payload = { name, kind: extra.kind, categoryId: categoryId || null, alcaldiaSlug: extra.alcaldiaSlug, colonia: extra.colonia || null, description, categoryData, seo, ...imageFields };
         break;
       default:
         payload = {};
@@ -306,6 +312,21 @@ export function GenerateLamiraContentFlow({
       <h1 className="mt-3 mb-5 text-[22px] font-semibold tracking-tight">{name}</h1>
 
       <div className="flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+        {image && (
+          <div className="flex flex-col gap-1.5">
+            <span className={labelClass}>Imagen (de la fuente citada)</span>
+            <div className="flex items-start gap-3 rounded-[10px] border border-border-soft bg-background p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
+              <img src={image.url} alt="" className="h-20 w-28 flex-none rounded-[8px] object-cover" />
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-0.5">
+                <p className="truncate text-[12px] text-ink-soft">{image.credit}</p>
+                <button type="button" onClick={() => setImage(null)} className="self-start text-[12px] font-medium text-ink-soft hover:text-brand">
+                  Quitar imagen
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {isRichContent ? (
           <>
             <div className="flex flex-col gap-1.5">

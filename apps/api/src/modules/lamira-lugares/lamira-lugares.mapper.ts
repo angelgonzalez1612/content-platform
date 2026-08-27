@@ -11,6 +11,8 @@ interface LamiraLugarRow {
   colonia: string | null;
   description: string;
   seo: LamiraLugar['seo'];
+  imageUrl: string | null;
+  imageCredit: string | null;
   categoryData: Record<string, unknown>;
   createdAt: Date | string;
 }
@@ -29,6 +31,8 @@ export function toLamiraLugar(row: LamiraLugarRow): LamiraLugar {
     colonia: row.colonia,
     description: row.description,
     seo: row.seo ?? null,
+    imageUrl: row.imageUrl,
+    imageCredit: row.imageCredit,
     categoryData: row.categoryData,
     createdAt: toIso(row.createdAt),
   };
