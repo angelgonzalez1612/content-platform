@@ -126,7 +126,21 @@
 .cr-scope .cr-hero-tile .rank { color: var(--color-brand); }
 
 /* ── acceso rápido a categorías ─────────────────────────────────────── */
-.cr-scope .cr-jump { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
+/* Fijo (sticky) justo debajo de la barra de reporte mientras se hace scroll —
+   con 22 filas de categoría, poder saltar a una sin tener que subir hasta
+   arriba de todo es lo que lo hace útil. */
+.cr-scope .cr-jump {
+  position: sticky;
+  top: 56px;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.85rem 0;
+  margin-bottom: 0.75rem;
+  background: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
+}
 .cr-scope .chip {
   display: inline-flex;
   align-items: center;
