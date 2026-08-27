@@ -21,6 +21,7 @@ import { buildFieldSchemaZod, factKeys } from './field-schema-builder';
 import { getContentTypeConfig } from './content-types';
 import { DraftRequestDto, ImproveRequestDto } from './dto/draft-request.dto';
 import { ArticleScraperService, type ScrapedArticle } from './article-scraper.service';
+import { CategoriesService } from '../categories/categories.service';
 
 // Sin límites de longitud aquí a propósito (a diferencia de una versión
 // anterior que sí los tenía): un structured-output que no da en el clavo
@@ -50,6 +51,10 @@ export interface DraftResult {
   // IA. null cuando no hay fuente citada o el scraping no encontró imagen;
   // el humano puede quitarla/reemplazarla en la revisión de todos modos.
   image: { url: string; credit: string } | null;
+  // La categoría con la que se generó el draft — si el caller no mandó
+  // categoryId, es la que la IA clasificó sola (ver classifyCategory). El
+  // CMS la usa para dejarla preseleccionada, editable, en la revisión.
+  categoryId: string;
 }
 
 // Orquesta el agente editorial: arma el schema dinámico (tipo de contenido +
@@ -63,6 +68,7 @@ export class AiDraftService {
     private readonly providers: ProviderRegistry,
     private readonly checks: ChecksService,
     private readonly scraper: ArticleScraperService,
+    private readonly categoriesService: CategoriesService,
   ) {}
 
   // La primera URL citada en `hints` (content-radar siempre la manda entre
@@ -84,18 +90,58 @@ export class AiDraftService {
     return match?.[1]?.trim() || null;
   }
 
+  // El editor ya no elige la categoría a mano por default (arrancaba siempre
+  // en la primera de la lista del sitio, casi nunca la correcta) — la IA la
+  // clasifica sola, con el mismo material (tema + artículo completo) que va
+  // a usar para redactar. Sigue siendo 100% editable después: dto.categoryId
+  // es opcional justo para permitir que el humano la fuerce si hace falta.
+  private async classifyCategory(dto: DraftRequestDto, scrapedArticle: ScrapedArticle | null): Promise<string> {
+    const siteCategories = await this.categoriesService.findAll(dto.site);
+    if (siteCategories.length === 0) {
+      throw new BadRequestException(`El sitio "${dto.site}" no tiene categorías configuradas.`);
+    }
+
+    const categoryIds = siteCategories.map((c) => c.id) as [string, ...string[]];
+    const classifySchema = z.object({
+      categoryId: z.enum(categoryIds).describe('El id de la categoría que mejor encaja — debe ser exactamente uno de los ids de la lista.'),
+    });
+
+    const material = [
+      `Tema/título: ${dto.name}`,
+      dto.hints ? `Notas del editor: ${dto.hints}` : '',
+      scrapedArticle ? `Artículo completo de la fuente citada:\n"""\n${scrapedArticle.text}\n"""` : '',
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+
+    const categoryList = siteCategories.map((c) => `- ${c.id}: ${c.name}`).join('\n');
+    const siteLabel = dto.site === 'la-mira' ? 'La Mira, un periódico digital hiperlocal de la Ciudad de México' : 'Planazo, una guía de planes y lugares de la Ciudad de México';
+
+    const output = await this.providers.get(dto.provider).generateStructured({
+      systemPrompt: `Eres un editor que clasifica contenido para ${siteLabel}. Tu único trabajo es elegir, de la lista de categorías reales que te doy, la que mejor encaja con el tema — nunca inventes una categoría que no esté en la lista.`,
+      userPrompt: `${material}\n\nCategorías disponibles (responde con el id de exactamente una de ellas):\n${categoryList}`,
+      schema: classifySchema,
+      schemaName: 'category_classification',
+    });
+
+    return (output as { categoryId: string }).categoryId;
+  }
+
   async draft(dto: DraftRequestDto): Promise<DraftResult> {
     const typeConfig = getContentTypeConfig(dto.contentType);
-    const category = await this.db.query.categories.findFirst({ where: eq(categories.id, dto.categoryId) });
-    if (!category) throw new BadRequestException(`Categoría "${dto.categoryId}" no existe`);
-
-    const fieldSchema = buildFieldSchemaZod(category.fieldSchema);
-    const fullSchema = z.object({ seo: z.object(seoShape), ...typeConfig.editorialShape, ...fieldSchema.shape });
 
     // Fase 2 del plan de rediseño del pipeline (content-radar → Centro IA):
     // en vez de que la IA solo vea el titular citado en `hints`, se lee el
-    // artículo completo de esa fuente — más material real para redactar.
+    // artículo completo de esa fuente — más material real, tanto para
+    // clasificar la categoría como para redactar.
     const scrapedArticle = await this.scrapeSourceFromHints(dto.hints);
+
+    const categoryId = dto.categoryId ?? (await this.classifyCategory(dto, scrapedArticle));
+    const category = await this.db.query.categories.findFirst({ where: eq(categories.id, categoryId) });
+    if (!category) throw new BadRequestException(`Categoría "${categoryId}" no existe`);
+
+    const fieldSchema = buildFieldSchemaZod(category.fieldSchema);
+    const fullSchema = z.object({ seo: z.object(seoShape), ...typeConfig.editorialShape, ...fieldSchema.shape });
 
     const userPrompt = [
       `Tipo de contenido: ${typeConfig.label}`,
@@ -143,7 +189,7 @@ export class AiDraftService {
     const image =
       scrapedArticle?.imageUrl && sourceLabel ? { url: scrapedArticle.imageUrl, credit: `Foto: ${sourceLabel}` } : null;
 
-    return { draft: output as Record<string, unknown>, checksRun, decision, image };
+    return { draft: output as Record<string, unknown>, checksRun, decision, image, categoryId: category.id };
   }
 
   /** Solo implementado para 'place' por ahora — es el único tipo con carga/guardado
@@ -224,7 +270,7 @@ export class AiDraftService {
 
     // "Mejorar" edita contenido ya existente — no toca la imagen (eso vive
     // aparte, en el registro que ya se creó); Fase 4 solo cubre el draft nuevo.
-    return { draft: output as Record<string, unknown>, checksRun, decision, image: null };
+    return { draft: output as Record<string, unknown>, checksRun, decision, image: null, categoryId: category?.id ?? '' };
   }
 
   /** Los 6 tipos de la-mira con CRUD real (Fase 2) — 'place' sigue por separado
@@ -367,6 +413,6 @@ export class AiDraftService {
 
     // "Mejorar" edita contenido ya existente — no toca la imagen (eso vive
     // aparte, en el registro que ya se creó); Fase 4 solo cubre el draft nuevo.
-    return { draft: output as Record<string, unknown>, checksRun, decision, image: null };
+    return { draft: output as Record<string, unknown>, checksRun, decision, image: null, categoryId: category?.id ?? '' };
   }
 }

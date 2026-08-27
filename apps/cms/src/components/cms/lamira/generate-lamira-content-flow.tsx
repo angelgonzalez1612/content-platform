@@ -11,6 +11,7 @@ import { ContentBlocksField, type ContentBlockValue } from "@/components/cms/con
 import { TagsField } from "@/components/cms/tags-field";
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { buildToc, withBlockIds } from "@/components/cms/lamira/content-blocks-util";
+import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
 type Step = "input" | "generating" | "review" | "creating";
@@ -35,6 +36,7 @@ interface DraftResponse {
   checksRun: CheckResult[];
   decision: AiDecision;
   image: { url: string; credit: string } | null;
+  categoryId: string;
 }
 
 export function GenerateLamiraContentFlow({
@@ -54,7 +56,12 @@ export function GenerateLamiraContentFlow({
   const [name, setName] = useState(initialName ?? "");
   const [hints, setHints] = useState(initialHints ?? "");
   const [provider, setProvider] = useState<ProviderId>("openai");
-  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
+  // La categoría ya no la elige el humano de entrada — la clasifica la IA a
+  // partir del tema (ver AiDraftService.classifyCategory), y llega aquí ya
+  // resuelta en la respuesta del draft. Sigue siendo 100% editable en la
+  // revisión, justo debajo, por si la IA se equivocó.
+  const [categoryId, setCategoryId] = useState("");
+  const [categoryWasAiChosen, setCategoryWasAiChosen] = useState(false);
   const [error, setError] = useState("");
 
   const [dek, setDek] = useState("");
@@ -108,7 +115,10 @@ export function GenerateLamiraContentFlow({
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ site: "la-mira", contentType: type, categoryId, name, hints: hints || undefined, provider }),
+        // categoryId se omite a propósito: sin ella, el backend clasifica sola
+        // la categoría (ver AiDraftService.classifyCategory) a partir del tema
+        // + la fuente completa — es lo que llega en data.categoryId abajo.
+        body: JSON.stringify({ site: "la-mira", contentType: type, name, hints: hints || undefined, provider }),
       });
 
       if (!res.ok) {
@@ -136,6 +146,8 @@ export function GenerateLamiraContentFlow({
       setChecksRun(data.checksRun);
       setDecision(data.decision);
       setImage(data.image);
+      setCategoryId(data.categoryId);
+      setCategoryWasAiChosen(true);
       setStep("review");
     } catch {
       setError("No se pudo conectar con el servidor.");
@@ -225,19 +237,6 @@ export function GenerateLamiraContentFlow({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="lc-category" className={labelClass}>
-              Categoría
-            </label>
-            <select id="lc-category" required value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={`${fieldClass} max-w-[280px]`} disabled={step === "generating"}>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between gap-2">
               <label htmlFor="lc-hints" className={labelClass}>
                 Lo que ya sabes (fuentes, contexto, etc.)
@@ -258,6 +257,7 @@ export function GenerateLamiraContentFlow({
               className={`${fieldClass} resize-none`}
               disabled={step === "generating"}
             />
+            <p className="text-[11.5px] text-ink-faint">La categoría la elige la IA a partir del tema — la revisas y puedes cambiarla después de generar.</p>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -311,7 +311,27 @@ export function GenerateLamiraContentFlow({
       </span>
       <h1 className="mt-3 mb-5 text-[22px] font-semibold tracking-tight">{name}</h1>
 
-      <div className="flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+      <LamiraPreviewCard
+        type={type}
+        name={name}
+        categoryName={category?.name ?? null}
+        image={image}
+        dek={dek}
+        description={description}
+        content={content}
+        alertaStatus={extra.alertaStatus}
+        alcaldiaSlug={extra.alcaldiaSlug}
+        eventoStatus={extra.eventoStatus}
+        date={extra.date}
+        time={extra.time}
+        location={extra.location}
+        price={extra.price}
+        organizer={extra.organizer}
+        kind={extra.kind}
+        colonia={extra.colonia}
+      />
+
+      <div className="mt-5 flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
         {image && (
           <div className="flex flex-col gap-1.5">
             <span className={labelClass}>Imagen (de la fuente citada)</span>
@@ -352,8 +372,32 @@ export function GenerateLamiraContentFlow({
         )}
 
         <div className="flex flex-col gap-1.5">
-          <span className={labelClass}>Categoría</span>
-          <p className="text-[13.5px] text-ink">{category?.name}</p>
+          <div className="flex items-center gap-2">
+            <label htmlFor="lc-review-category" className={labelClass}>
+              Categoría
+            </label>
+            {categoryWasAiChosen && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 font-mono text-[9.5px] font-medium tracking-[.04em] text-accent-fg uppercase">
+                <Icon d={SPARK_ICON} size={9} strokeWidth={2} />
+                Elegida por IA
+              </span>
+            )}
+          </div>
+          <select
+            id="lc-review-category"
+            value={categoryId}
+            onChange={(e) => {
+              setCategoryId(e.target.value);
+              setCategoryWasAiChosen(false);
+            }}
+            className={`${fieldClass} max-w-[280px]`}
+          >
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />

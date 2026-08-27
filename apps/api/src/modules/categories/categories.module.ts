@@ -5,5 +5,6 @@ import { CategoriesService } from './categories.service';
 @Module({
   controllers: [CmsCategoriesController],
   providers: [CategoriesService],
+  exports: [CategoriesService], // AiModule lo usa para clasificar categoría automáticamente
 })
 export class CategoriesModule {}

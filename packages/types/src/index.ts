@@ -70,6 +70,9 @@ export interface AiDraftResult {
   checksRun: CheckResult[];
   decision: AiDecision;
   image: { url: string; credit: string } | null;
+  // La categoría con la que se generó el draft — clasificada por la IA
+  // cuando el caller no mandó categoryId. El CMS la preselecciona, editable.
+  categoryId: string;
 }
 
 // ── Los 6 tipos de contenido editorial de la-mira ───────────────────────────

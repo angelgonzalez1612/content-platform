@@ -4,7 +4,7 @@ import { AI_PROVIDER_IDS } from '../provider-registry.service';
 export const draftRequestSchema = z.object({
   site: z.enum(['la-mira', 'planazo']),
   contentType: z.string().min(1),
-  categoryId: z.string().min(1),
+  categoryId: z.string().min(1).optional(), // si se omite, la IA la clasifica sola (ver AiDraftService.classifyCategory)
   name: z.string().min(1),
   hints: z.string().optional(),
   provider: z.enum(AI_PROVIDER_IDS).default('openai'),
