@@ -18,14 +18,16 @@ type Step = "input" | "generating" | "review" | "creating";
 type ProviderId = "openai" | "claude-cli";
 
 // Duplicado a propósito de la-mira/src/data/mock/authors.ts (repos separados,
-// sin paquete de tipos compartido — mismo patrón que api-types.ts allá). Solo
-// "redaccion-la-mira" es un byline real; los otros 4 son personas ficticias
-// que quedaron del contenido mock migrado (Fase 6) — se listan por si se
-// quiere reasignar algo a mano, pero NUNCA son el default ni se puede escribir
-// un nombre nuevo aquí (antes era texto libre — un slug inventado o mal
-// escrito rompía el byline en la página real, que no tiene fallback visual).
+// sin paquete de tipos compartido — mismo patrón que api-types.ts allá).
+// "redaccion-la-mira" y "angel-gonzalez" son bylines reales; los otros 4 son
+// personas ficticias que quedaron del contenido mock migrado (Fase 6) — se
+// listan por si se quiere reasignar algo a mano, pero NUNCA son el default
+// ni se puede escribir un nombre nuevo aquí (antes era texto libre — un slug
+// inventado o mal escrito rompía el byline en la página real, sin fallback
+// visual).
 const AUTHOR_OPTIONS: Array<{ slug: string; label: string }> = [
   { slug: "redaccion-la-mira", label: "Redacción La Mira" },
+  { slug: "angel-gonzalez", label: "Angel González" },
   { slug: "mariana-robles", label: "Mariana Robles" },
   { slug: "jorge-villasenor", label: "Jorge Villaseñor" },
   { slug: "ana-lucia-prado", label: "Ana Lucía Prado" },
@@ -126,8 +128,21 @@ export function GenerateLamiraContentFlow({
   const [checksRun, setChecksRun] = useState<CheckResult[]>(initialDraft?.checksRun ?? []);
   const [decision, setDecision] = useState<AiDecision>(initialDraft?.decision ?? "needs-review");
   // Imagen de la fuente citada, con crédito — viene del scraping (Fase 4 del
-  // plan), nunca la genera la IA. El humano puede quitarla en la revisión.
+  // plan), nunca la genera la IA. El humano puede quitarla, reemplazarla o
+  // (si el scraping no encontró ninguna) agregar una a mano en la revisión.
   const [image, setImage] = useState<{ url: string; credit: string } | null>(initialDraft?.image ?? null);
+  const [editingImage, setEditingImage] = useState(false);
+  const [imageDraft, setImageDraft] = useState({ url: "", credit: "" });
+
+  function startEditImage() {
+    setImageDraft(image ?? { url: "", credit: "" });
+    setEditingImage(true);
+  }
+  function saveImage() {
+    if (!imageDraft.url.trim()) return;
+    setImage({ url: imageDraft.url.trim(), credit: imageDraft.credit.trim() });
+    setEditingImage(false);
+  }
 
   // Campos que la IA no genera (son datos verificables) — el humano los llena
   // en la revisión. Para alerta/evento/lugar son obligatorios de verdad
@@ -395,21 +410,58 @@ export function GenerateLamiraContentFlow({
       />
 
       <div className="mt-5 flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
-        {image && (
-          <div className="flex flex-col gap-1.5">
-            <span className={labelClass}>Imagen (de la fuente citada)</span>
+        <div className="flex flex-col gap-1.5">
+          <span className={labelClass}>Imagen{image ? " (de la fuente citada)" : ""}</span>
+
+          {editingImage ? (
+            <div className="flex flex-col gap-2 rounded-[10px] border border-border-soft bg-background p-3">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="img-url" className="text-[11px] font-medium text-ink-faint">
+                  URL de la imagen
+                </label>
+                <input id="img-url" value={imageDraft.url} onChange={(e) => setImageDraft((d) => ({ ...d, url: e.target.value }))} placeholder="https://…" className={fieldClass} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label htmlFor="img-credit" className="text-[11px] font-medium text-ink-faint">
+                  Crédito
+                </label>
+                <input id="img-credit" value={imageDraft.credit} onChange={(e) => setImageDraft((d) => ({ ...d, credit: e.target.value }))} placeholder="ej. Foto: MILENIO" className={fieldClass} />
+              </div>
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={saveImage} disabled={!imageDraft.url.trim()} className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-pressed disabled:opacity-50">
+                  Guardar imagen
+                </button>
+                <button type="button" onClick={() => setEditingImage(false)} className="text-[12px] font-medium text-ink-soft hover:text-brand">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : image ? (
             <div className="flex items-start gap-3 rounded-[10px] border border-border-soft bg-background p-3">
               {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
               <img src={image.url} alt="" className="h-20 w-28 flex-none rounded-[8px] object-cover" />
               <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-0.5">
-                <p className="truncate text-[12px] text-ink-soft">{image.credit}</p>
-                <button type="button" onClick={() => setImage(null)} className="self-start text-[12px] font-medium text-ink-soft hover:text-brand">
-                  Quitar imagen
-                </button>
+                <p className="truncate text-[12px] text-ink-soft">{image.credit || "(sin crédito)"}</p>
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={startEditImage} className="text-[12px] font-medium text-ink-soft hover:text-brand">
+                    Reemplazar
+                  </button>
+                  <button type="button" onClick={() => setImage(null)} className="text-[12px] font-medium text-ink-soft hover:text-negative">
+                    Quitar imagen
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          ) : (
+            <button
+              type="button"
+              onClick={startEditImage}
+              className="self-start rounded-lg border border-dashed border-border bg-background px-3 py-2 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
+            >
+              + Agregar imagen
+            </button>
+          )}
+        </div>
         {isRichContent ? (
           <>
             <div className="flex flex-col gap-1.5">

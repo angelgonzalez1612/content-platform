@@ -50,15 +50,27 @@ function AdSlotPreview({ format }: { format: "rectangle" | "in-feed" }) {
   );
 }
 
-// Soporte de **negritas** (Markdown mínimo) dentro de un párrafo — mismo
-// parser que usa el cuerpo real de la-mira (ver renderInline en las páginas
-// de detalle), para que resaltar una palabra en el editor de bloques
-// realmente se vea así una vez publicado, no solo en esta vista previa.
+// Markdown mínimo dentro de un párrafo — **negritas**, *cursiva*, ==color de
+// acento==. Mismo parser que usa el cuerpo real de la-mira (ver renderInline
+// en las páginas de detalle), para que resaltar/inclinar/colorear una palabra
+// en el editor de bloques realmente se vea así una vez publicado, no solo en
+// esta vista previa. Mayúsculas no necesita sintaxis propia — se escriben
+// directo en el texto.
 function renderInline(text: string): ReactNode[] {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  const parts = text.split(/(\*\*[^*]+\*\*|==[^=]+==|\*[^*]+\*)/g);
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
       return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("==") && part.endsWith("==") && part.length > 4) {
+      return (
+        <mark key={i} className="bg-transparent font-semibold text-brand">
+          {part.slice(2, -2)}
+        </mark>
+      );
+    }
+    if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+      return <em key={i}>{part.slice(1, -1)}</em>;
     }
     return part;
   });
@@ -199,9 +211,18 @@ export function LamiraPreviewCard({
           {isRichContent && content.length === 0 && <p className="mt-4 text-[13px] text-ink-faint italic">Sin cuerpo todavía — se completa arriba, en el editor de bloques.</p>}
 
           {type !== "lugar" && (
-            <p className="mt-5 border-t border-border-soft pt-3 text-[11px] text-ink-faint">
-              Puedes escribir <code className="rounded bg-background px-1 py-0.5 font-mono">**así**</code> en cualquier párrafo para resaltarlo en negritas — se ve reflejado arriba y también en la página real.
-            </p>
+            <div className="mt-5 flex flex-col gap-1 border-t border-border-soft pt-3 text-[11px] text-ink-faint">
+              <p>Puedes darle formato a cualquier párrafo — se ve reflejado arriba y también en la página real:</p>
+              <p>
+                <code className="rounded bg-background px-1 py-0.5 font-mono">**negritas**</code>
+                {" · "}
+                <code className="rounded bg-background px-1 py-0.5 font-mono">*cursiva*</code>
+                {" · "}
+                <code className="rounded bg-background px-1 py-0.5 font-mono">==color de acento==</code>
+                {" · "}
+                MAYÚSCULAS se escriben directo, sin sintaxis especial.
+              </p>
+            </div>
           )}
         </article>
       </div>
