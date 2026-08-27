@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { AlertaStatus, EventoStatus, LugarKind } from "@planazo/types";
 import type { ContentBlockValue } from "@/components/cms/content-blocks-field";
 
@@ -23,6 +24,45 @@ const EVENTO_STATUS_LABEL: Record<EventoStatus, string> = {
   finalizado: "Finalizado",
   cancelado: "Cancelado",
 };
+
+// Espejo visual del AdSlot real de la-mira (src/components/ads/AdSlot.tsx) —
+// mismo texto/formato de placeholder ("Espacio publicitario · SIZE · Google
+// AdSense") que se ve ahí cuando no hay AdSense configurado, para que la
+// vista previa muestre dónde caen los anuncios de verdad, no un mockup
+// inventado. `rectangle` = el de la barra lateral en la página real (aquí,
+// sin layout de 2 columnas, se centra angosto); `in-feed` = el que interrumpe
+// el cuerpo después del segundo bloque (misma posición que la página real).
+const AD_SIZES: Record<"rectangle" | "in-feed", { label: string; maxWidth: number; aspect: string }> = {
+  rectangle: { label: "300×250", maxWidth: 300, aspect: "300 / 250" },
+  "in-feed": { label: "responsivo", maxWidth: 640, aspect: "1240 / 200" },
+};
+
+function AdSlotPreview({ format }: { format: "rectangle" | "in-feed" }) {
+  const size = AD_SIZES[format];
+  return (
+    <div
+      role="presentation"
+      className="mx-auto flex w-full items-center justify-center rounded-[8px] border border-dashed border-border-soft bg-background text-[10.5px] font-medium tracking-wider text-ink-faint uppercase"
+      style={{ maxWidth: size.maxWidth, aspectRatio: size.aspect }}
+    >
+      Espacio publicitario · {size.label} · Google AdSense
+    </div>
+  );
+}
+
+// Soporte de **negritas** (Markdown mínimo) dentro de un párrafo — mismo
+// parser que usa el cuerpo real de la-mira (ver renderInline en las páginas
+// de detalle), para que resaltar una palabra en el editor de bloques
+// realmente se vea así una vez publicado, no solo en esta vista previa.
+function renderInline(text: string): ReactNode[] {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
 
 export interface LamiraPreviewProps {
   type: string;
@@ -120,26 +160,49 @@ export function LamiraPreviewCard({
             </div>
           )}
 
-          {isRichContent && dek && <p className="mt-3 text-[15px] leading-[1.55] text-ink-soft">{dek}</p>}
+          {isRichContent && dek && <p className="mt-3 text-[15px] leading-[1.55] text-ink-soft">{renderInline(dek)}</p>}
 
-          {!isRichContent && description && <p className="mt-3 text-[14px] leading-[1.6] whitespace-pre-line text-ink">{description}</p>}
+          {/* rectangle = ad de la barra lateral en la página real; aquí, sin esas 2 columnas, va centrado justo debajo del encabezado — misma posición relativa (antes del cuerpo). */}
+          {(type === "noticia" || type === "guia" || type === "reportaje") && (
+            <div className="my-4">
+              <AdSlotPreview format="rectangle" />
+            </div>
+          )}
+
+          {!isRichContent && description && <p className="mt-3 text-[14px] leading-[1.6] whitespace-pre-line text-ink">{renderInline(description)}</p>}
+
+          {(type === "alerta" || type === "evento") && (
+            <div className="my-4">
+              <AdSlotPreview format="rectangle" />
+            </div>
+          )}
 
           {isRichContent && content.length > 0 && (
             <div className="mt-5 flex flex-col gap-4 border-t border-border-soft pt-5">
               {content.map((block, i) => (
-                <div key={i} className="flex flex-col gap-1.5">
-                  {block.heading && <h3 className="font-serif text-[16px] font-semibold text-ink">{block.heading}</h3>}
-                  {block.paragraphs.map((p, j) => (
-                    <p key={j} className="text-[14px] leading-[1.65] text-ink-soft">
-                      {p}
-                    </p>
-                  ))}
+                <div key={i} className="contents">
+                  <div className="flex flex-col gap-1.5">
+                    {block.heading && <h3 className="font-serif text-[16px] font-semibold text-ink">{block.heading}</h3>}
+                    {block.paragraphs.map((p, j) => (
+                      <p key={j} className="text-[14px] leading-[1.65] text-ink-soft">
+                        {renderInline(p)}
+                      </p>
+                    ))}
+                  </div>
+                  {/* in-feed = mismo lugar que la página real de noticia/guía: justo después del 2º bloque. Reportaje no lo tiene en el sitio real, por eso no aparece aquí. */}
+                  {i === 1 && (type === "noticia" || type === "guia") && <AdSlotPreview format="in-feed" />}
                 </div>
               ))}
             </div>
           )}
 
           {isRichContent && content.length === 0 && <p className="mt-4 text-[13px] text-ink-faint italic">Sin cuerpo todavía — se completa arriba, en el editor de bloques.</p>}
+
+          {type !== "lugar" && (
+            <p className="mt-5 border-t border-border-soft pt-3 text-[11px] text-ink-faint">
+              Puedes escribir <code className="rounded bg-background px-1 py-0.5 font-mono">**así**</code> en cualquier párrafo para resaltarlo en negritas — se ve reflejado arriba y también en la página real.
+            </p>
+          )}
         </article>
       </div>
     </div>

@@ -17,6 +17,22 @@ const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 
 type Step = "input" | "generating" | "review" | "creating";
 type ProviderId = "openai" | "claude-cli";
 
+// Duplicado a propósito de la-mira/src/data/mock/authors.ts (repos separados,
+// sin paquete de tipos compartido — mismo patrón que api-types.ts allá). Solo
+// "redaccion-la-mira" es un byline real; los otros 4 son personas ficticias
+// que quedaron del contenido mock migrado (Fase 6) — se listan por si se
+// quiere reasignar algo a mano, pero NUNCA son el default ni se puede escribir
+// un nombre nuevo aquí (antes era texto libre — un slug inventado o mal
+// escrito rompía el byline en la página real, que no tiene fallback visual).
+const AUTHOR_OPTIONS: Array<{ slug: string; label: string }> = [
+  { slug: "redaccion-la-mira", label: "Redacción La Mira" },
+  { slug: "mariana-robles", label: "Mariana Robles" },
+  { slug: "jorge-villasenor", label: "Jorge Villaseñor" },
+  { slug: "ana-lucia-prado", label: "Ana Lucía Prado" },
+  { slug: "diego-marin", label: "Diego Marín" },
+  { slug: "renata-sosa", label: "Renata Sosa" },
+];
+
 const PROVIDERS: Array<{ id: ProviderId; label: string; hint: string }> = [
   { id: "openai", label: "OpenAI", hint: "Salida estructurada garantizada · cuesta por token" },
   { id: "claude-cli", label: "Claude (tu sesión)", hint: "Usa tu suscripción Pro/Max ya conectada · más lento" },
@@ -119,7 +135,7 @@ export function GenerateLamiraContentFlow({
   // cualquier fila creada ahí es pública de inmediato, así que aquí no se
   // puede "completar después" como sí puede Place/noticia/guia/reportaje.
   const [extra, setExtra] = useState({
-    authorSlug: "",
+    authorSlug: "redaccion-la-mira",
     groupSlug: "documentos-e-identidad",
     tags: [] as string[],
     imageCaption: "",
@@ -462,9 +478,21 @@ export function GenerateLamiraContentFlow({
           {(type === "noticia" || type === "reportaje") && (
             <div className="flex flex-col gap-1.5">
               <label htmlFor="ex-author" className={labelClass}>
-                Autor (slug)
+                Autor
               </label>
-              <input id="ex-author" required value={extra.authorSlug} onChange={(e) => setExtraField("authorSlug", e.target.value)} placeholder="ej. mariana-robles" className={fieldClass} />
+              <select id="ex-author" value={extra.authorSlug} onChange={(e) => setExtraField("authorSlug", e.target.value)} className={`${fieldClass} max-w-[260px]`}>
+                {AUTHOR_OPTIONS.map((a) => (
+                  <option key={a.slug} value={a.slug}>
+                    {a.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11.5px] leading-[1.4] text-ink-faint">
+                &quot;Redacción La Mira&quot; es el byline genérico de la casa — el default recomendado para lo que
+                genera la IA. Los demás nombres son personas ficticias que quedaron de contenido migrado antes de
+                este flujo; evita elegirlos para notas nuevas. Ya no se puede escribir un nombre libre aquí — evita
+                inventar una firma que no existe, y de paso evita romper la página real (que solo reconoce estos).
+              </p>
             </div>
           )}
           {type === "reportaje" && (
