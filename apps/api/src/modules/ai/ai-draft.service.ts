@@ -20,6 +20,7 @@ import { ChecksService, type CheckResult, type AiDecision } from './checks.servi
 import { buildFieldSchemaZod, factKeys } from './field-schema-builder';
 import { getContentTypeConfig } from './content-types';
 import { DraftRequestDto, ImproveRequestDto } from './dto/draft-request.dto';
+import { ArticleScraperService, type ScrapedArticle } from './article-scraper.service';
 
 // Sin límites de longitud aquí a propósito (a diferencia de una versión
 // anterior que sí los tenía): un structured-output que no da en el clavo
@@ -56,7 +57,18 @@ export class AiDraftService {
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
     private readonly providers: ProviderRegistry,
     private readonly checks: ChecksService,
+    private readonly scraper: ArticleScraperService,
   ) {}
+
+  // La primera URL citada en `hints` (content-radar siempre la manda entre
+  // paréntesis al final — ver injectPublishButtons/injectItemPublishButtons
+  // en apps/content-radar/src/render.ts). Si el scraping falla (sitio caído,
+  // paywall, formato inesperado) devuelve null — nunca bloquea el draft.
+  private async scrapeSourceFromHints(hints?: string): Promise<ScrapedArticle | null> {
+    const url = hints?.match(/https?:\/\/\S+/)?.[0]?.replace(/[).,]+$/, '');
+    if (!url) return null;
+    return this.scraper.scrape(url);
+  }
 
   async draft(dto: DraftRequestDto): Promise<DraftResult> {
     const typeConfig = getContentTypeConfig(dto.contentType);
@@ -66,11 +78,19 @@ export class AiDraftService {
     const fieldSchema = buildFieldSchemaZod(category.fieldSchema);
     const fullSchema = z.object({ seo: z.object(seoShape), ...typeConfig.editorialShape, ...fieldSchema.shape });
 
+    // Fase 2 del plan de rediseño del pipeline (content-radar → Centro IA):
+    // en vez de que la IA solo vea el titular citado en `hints`, se lee el
+    // artículo completo de esa fuente — más material real para redactar.
+    const scrapedArticle = await this.scrapeSourceFromHints(dto.hints);
+
     const userPrompt = [
       `Tipo de contenido: ${typeConfig.label}`,
       `Categoría: ${category.name}`,
       `Nombre/título: ${dto.name}`,
       dto.hints ? `Notas del editor: ${dto.hints}` : 'Notas del editor: (ninguna)',
+      scrapedArticle
+        ? `\nArtículo completo de la fuente citada (leído en vivo, para que tengas más contexto que solo el titular):\n"""\n${scrapedArticle.text}\n"""`
+        : '',
       '',
       'Genera también seo.title (≤60 caracteres) y seo.description (120-160 caracteres) para esta pieza.',
       category.fieldSchema.length
