@@ -163,9 +163,15 @@ const CHEVRON_ICON =
 // que scrollear muchísimo para llegar a algo útil. Colapsada por defecto,
 // solo el nombre + conteo son visibles hasta que se hace clic; <details> es
 // nativo (sin JS) así que también funciona sin JavaScript.
+// Las categorías reales (Tráfico, Clima, Eventos... + "Otros — …") arrancan
+// abiertas — son el contenido accionable del reporte, no tiene sentido
+// esconderlas de entrada. "Tendencias generales" (muted=true) sí arranca
+// colapsado — es referencia (frases/términos sin fuente citable), no hace
+// falta verla salvo que se busque. Todas siguen siendo <details> reales:
+// se pueden cerrar/abrir con un clic, "abierto" es solo el estado inicial.
 function buildRow(slug: string, headerInner: string, body: string, muted: boolean): string {
   return `
-    <details class="cr-row${muted ? " cr-row-muted" : ""}" id="${slug}">
+    <details class="cr-row${muted ? " cr-row-muted" : ""}" id="${slug}"${muted ? "" : " open"}>
       <summary class="cr-row-summary">
         <span class="cr-row-name">${headerInner}</span>
         ${CHEVRON_ICON}
