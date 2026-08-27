@@ -28,6 +28,13 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       { id: "crear", name: "Crear", icon: "M12 5v14M5 12h14" },
       { id: "ia", name: "Centro IA", icon: "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z", badge: "IA" },
+      {
+        // Referencia de qué pide cada tipo de contenido antes de generar — no
+        // es un paso del flujo en sí, por eso va después de Crear/Centro IA.
+        id: "plantillas",
+        name: "Plantillas",
+        icon: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
+      },
       { id: "contenido", name: "Contenido", icon: "M5 4h9l5 5v11H5zM14 4v5h5M8 13h8M8 16.5h5", badge: "24" },
       { id: "calendario", name: "Calendario Editorial", icon: "M5 6h14v14H5zM5 10h14M9 4v4M15 4v4" },
       { id: "automatizaciones", name: "Automatizaciones", icon: "M6 5h5v5H6zM13 14h5v5h-5zM8.5 10v6.5H13" },
@@ -251,6 +258,7 @@ export function getBreadcrumb(pathname: string, screenTitle: string): Breadcrumb
   if (pathname === "/crear") return [home, { label: "Crear" }];
   if (pathname === "/crear/manual") return [home, { label: "Crear", href: "/crear" }, { label: "Manual" }];
   if (pathname === "/centro-ia") return [home, { label: "Centro IA" }];
+  if (pathname === "/plantillas") return [home, { label: "Plantillas" }];
   if (pathname === "/contenido") return [home, { label: "Contenido" }];
   if (pathname.startsWith("/contenido/")) return [home, { label: "Contenido", href: "/contenido" }, { label: screenTitle }];
   if (pathname === "/perfil") return [home, { label: "Perfil" }];

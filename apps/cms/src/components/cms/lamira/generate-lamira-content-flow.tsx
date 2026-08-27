@@ -42,7 +42,8 @@ interface DraftResponse {
 }
 
 function parseDraftFields(draft: Record<string, unknown>) {
-  const { dek, content, faq, description, seo, ...rest } = draft as {
+  const { title, dek, content, faq, description, seo, ...rest } = draft as {
+    title?: string;
     dek?: string;
     content?: ContentBlockValue[];
     faq?: { question: string; answer: string }[];
@@ -51,6 +52,10 @@ function parseDraftFields(draft: Record<string, unknown>) {
     [k: string]: unknown;
   };
   return {
+    // Solo noticia/alerta/guia/evento/reportaje traen `title` (ver titleShape
+    // en content-types.ts) — "lugar" no, ahí el nombre es un sustantivo propio
+    // que ya escribió el humano, no un encabezado que reescribir.
+    title: title ?? "",
     dek: dek ?? "",
     description: description ?? "",
     content: (content ?? []).map((b) => ({ heading: b.heading ?? null, paragraphs: b.paragraphs })),
@@ -91,6 +96,11 @@ export function GenerateLamiraContentFlow({
   const [categoryWasAiChosen, setCategoryWasAiChosen] = useState(!!initialDraft);
   const [error, setError] = useState("");
 
+  // El encabezado publicado — para noticia/alerta/guia/evento/reportaje lo
+  // escribe la IA (distinto del tema/semilla que se dio en `name`); para
+  // "lugar" nunca llega de la IA, así que arranca igual a `name` y el humano
+  // lo edita si quiere (es su propio nombre, no un titular).
+  const [title, setTitle] = useState(initialParsed?.title || initialName || "");
   const [dek, setDek] = useState(initialParsed?.dek ?? "");
   const [description, setDescription] = useState(initialParsed?.description ?? "");
   const [content, setContent] = useState<ContentBlockValue[]>(initialParsed?.content ?? []);
@@ -157,6 +167,7 @@ export function GenerateLamiraContentFlow({
 
       const data: DraftResponse = await res.json();
       const parsed = parseDraftFields(data.draft);
+      setTitle(parsed.title || name);
       setDek(parsed.dek);
       setDescription(parsed.description);
       setContent(parsed.content);
@@ -185,22 +196,22 @@ export function GenerateLamiraContentFlow({
 
     switch (type) {
       case "noticia":
-        payload = { title: name, dek, categoryId: categoryId || null, authorSlug: extra.authorSlug, status, toc: buildToc(content), content, categoryData, seo, ...imageFields };
+        payload = { title, dek, categoryId: categoryId || null, authorSlug: extra.authorSlug, status, toc: buildToc(content), content, categoryData, seo, ...imageFields };
         break;
       case "guia":
-        payload = { title: name, dek, groupSlug: extra.groupSlug, categoryId: categoryId || null, status, content: withBlockIds(content), faq, categoryData, seo, ...imageFields };
+        payload = { title, dek, groupSlug: extra.groupSlug, categoryId: categoryId || null, status, content: withBlockIds(content), faq, categoryData, seo, ...imageFields };
         break;
       case "reportaje":
-        payload = { title: name, dek, categoryId: categoryId || null, authorSlug: extra.authorSlug, status, tags: extra.tags.length ? extra.tags : ["Reportaje"], imageCaption: extra.imageCaption || "Pendiente", toc: buildToc(content), content, categoryData, seo, ...imageFields };
+        payload = { title, dek, categoryId: categoryId || null, authorSlug: extra.authorSlug, status, tags: extra.tags.length ? extra.tags : ["Reportaje"], imageCaption: extra.imageCaption || "Pendiente", toc: buildToc(content), content, categoryData, seo, ...imageFields };
         break;
       case "alerta":
-        payload = { title: name, alertaStatus: extra.alertaStatus, categoryId: categoryId || null, alcaldiaSlug: extra.alcaldiaSlug || null, description, categoryData, seo, ...imageFields };
+        payload = { title, alertaStatus: extra.alertaStatus, categoryId: categoryId || null, alcaldiaSlug: extra.alcaldiaSlug || null, description, categoryData, seo, ...imageFields };
         break;
       case "evento":
-        payload = { title: name, tag: extra.tag || "Evento", categoryId: categoryId || null, eventoStatus: extra.eventoStatus, date: extra.date, time: extra.time, location: extra.location, alcaldiaSlug: extra.alcaldiaSlug || null, price: extra.price, description, organizer: extra.organizer, categoryData, seo, ...imageFields };
+        payload = { title, tag: extra.tag || "Evento", categoryId: categoryId || null, eventoStatus: extra.eventoStatus, date: extra.date, time: extra.time, location: extra.location, alcaldiaSlug: extra.alcaldiaSlug || null, price: extra.price, description, organizer: extra.organizer, categoryData, seo, ...imageFields };
         break;
       case "lugar":
-        payload = { name, kind: extra.kind, categoryId: categoryId || null, alcaldiaSlug: extra.alcaldiaSlug, colonia: extra.colonia || null, description, categoryData, seo, ...imageFields };
+        payload = { name: title, kind: extra.kind, categoryId: categoryId || null, alcaldiaSlug: extra.alcaldiaSlug, colonia: extra.colonia || null, description, categoryData, seo, ...imageFields };
         break;
       default:
         payload = {};
@@ -329,11 +340,27 @@ export function GenerateLamiraContentFlow({
       <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 font-mono text-[10.5px] font-medium tracking-[.06em] text-accent-fg uppercase">
         Borrador IA · revisa antes de crear
       </span>
-      <h1 className="mt-3 mb-5 text-[22px] font-semibold tracking-tight">{name}</h1>
+
+      <div className="mt-3 mb-5 flex flex-col gap-1">
+        <label htmlFor="lc-title" className="flex items-center gap-1.5 font-mono text-[10px] font-medium tracking-[.1em] text-ink-faint uppercase">
+          {type === "lugar" ? "Nombre" : "Encabezado"}
+          {type !== "lugar" && (
+            <span className="normal-case tracking-normal text-ink-faint">
+              — lo escribió la IA a partir de &quot;{name}&quot;, edítalo si quieres
+            </span>
+          )}
+        </label>
+        <input
+          id="lc-title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full rounded-[8px] border border-transparent bg-transparent px-0 py-1 text-[22px] font-semibold tracking-tight text-ink transition-colors focus:border-border-soft focus:bg-white focus:px-3 focus:outline-none"
+        />
+      </div>
 
       <LamiraPreviewCard
         type={type}
-        name={name}
+        name={title}
         categoryName={category?.name ?? null}
         image={image}
         dek={dek}
@@ -424,7 +451,13 @@ export function GenerateLamiraContentFlow({
 
         {/* Campos que la IA no genera — ver comentario en `extra` arriba. */}
         <div className="flex flex-col gap-4 rounded-[12px] border border-border-soft bg-background p-4">
-          <span className="font-mono text-[10px] font-medium tracking-[.1em] text-ink-faint uppercase">Datos que tienes que completar tú</span>
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] font-medium tracking-[.1em] text-ink-faint uppercase">Datos que tienes que completar tú</span>
+            <p className="text-[11.5px] leading-[1.4] text-ink-faint">
+              Son datos verificables (fecha, ubicación, estado actual…) que la IA nunca inventa a propósito — solo un
+              humano puede confirmarlos. Los que ya traen un valor por default los puedes dejar tal cual.
+            </p>
+          </div>
 
           {(type === "noticia" || type === "reportaje") && (
             <div className="flex flex-col gap-1.5">
@@ -463,23 +496,30 @@ export function GenerateLamiraContentFlow({
             </div>
           )}
           {type === "alerta" && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="ex-alerta-status" className={labelClass}>
-                  Estado
-                </label>
-                <select id="ex-alerta-status" value={extra.alertaStatus} onChange={(e) => setExtraField("alertaStatus", e.target.value as AlertaStatus)} className={fieldClass}>
-                  <option value="activa">Activa</option>
-                  <option value="en-seguimiento">En seguimiento</option>
-                  <option value="resuelta">Resuelta</option>
-                </select>
+            <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="ex-alerta-status" className={labelClass}>
+                    Estado <span className="normal-case font-normal text-ink-faint">(opcional)</span>
+                  </label>
+                  <select id="ex-alerta-status" value={extra.alertaStatus} onChange={(e) => setExtraField("alertaStatus", e.target.value as AlertaStatus)} className={fieldClass}>
+                    <option value="activa">Activa</option>
+                    <option value="en-seguimiento">En seguimiento</option>
+                    <option value="resuelta">Resuelta</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="ex-alcaldia" className={labelClass}>
+                    Alcaldía (slug) <span className="normal-case font-normal text-ink-faint">(opcional)</span>
+                  </label>
+                  <input id="ex-alcaldia" value={extra.alcaldiaSlug} onChange={(e) => setExtraField("alcaldiaSlug", e.target.value)} placeholder="ej. cuauhtemoc" className={fieldClass} />
+                </div>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="ex-alcaldia" className={labelClass}>
-                  Alcaldía (slug)
-                </label>
-                <input id="ex-alcaldia" value={extra.alcaldiaSlug} onChange={(e) => setExtraField("alcaldiaSlug", e.target.value)} placeholder="ej. cuauhtemoc" className={fieldClass} />
-              </div>
+              <p className="text-[11.5px] leading-[1.4] text-ink-faint">
+                &quot;Estado&quot; es si la alerta sigue activa ahora mismo, ya se está resolviendo, o ya se resolvió
+                — dato que solo tú sabes, la IA nunca lo adivina. Ya viene en &quot;Activa&quot; por default; solo
+                cámbialo si sabes que ya cambió.
+              </p>
             </div>
           )}
           {type === "evento" && (

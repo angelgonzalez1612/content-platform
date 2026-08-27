@@ -26,6 +26,22 @@ export interface ContentTypeConfig {
   systemPrompt: string;
 }
 
+// Compartido por los 5 tipos "de nota" (noticia/alerta/guia/evento/reportaje)
+// — el humano manda un tema/semilla (a veces literal el titular de otro
+// medio, vía content-radar), pero el encabezado publicado lo escribe la IA:
+// nunca debe ser una copia tal cual de ese tema. `place`/`evento-planazo`/
+// `lugar` (la-mira) NO lo llevan a propósito — ahí el "nombre" es un
+// sustantivo propio real (un lugar, un negocio), no un titular que reescribir.
+const titleShape = {
+  title: z
+    .string()
+    .min(1)
+    .max(140)
+    .describe(
+      'Tu propio encabezado para esta pieza — atractivo, claro, con tu voz editorial. NO copies ni repitas tal cual el texto de "Tema/semilla" del prompt: ese es solo tu punto de partida, no un titular listo para publicar.',
+    ),
+};
+
 const LAMIRA_BASE_PROMPT = `Eres redactor de la-mira, un periódico digital hiperlocal de la Ciudad de México.
 
 Reglas estrictas:
@@ -61,13 +77,14 @@ Reglas estrictas:
     site: 'la-mira',
     classifyHint: 'Hecho puntual con vigencia corta — algo que pasó o se anunció, sin ser una disrupción activa urgente.',
     editorialShape: {
+      ...titleShape,
       dek: z.string().describe('Bajada de 1-2 líneas, resume la noticia sin repetir el título.'),
       content: z
         .array(z.object({ heading: z.string().nullable(), paragraphs: z.array(z.string()) }))
         .min(1)
         .describe('Cuerpo de la nota en bloques; heading es opcional (null si no aplica).'),
     },
-    requiredEditorialFields: ['dek', 'content'],
+    requiredEditorialFields: ['title', 'dek', 'content'],
     systemPrompt: LAMIRA_BASE_PROMPT,
   },
   alerta: {
@@ -76,9 +93,10 @@ Reglas estrictas:
     site: 'la-mira',
     classifyHint: 'Disrupción activa EN CURSO ahora mismo (bloqueo, cierre, riesgo de seguridad, clima severo) que amerita urgencia — no un hecho ya cerrado.',
     editorialShape: {
+      ...titleShape,
       description: z.string().describe('1-3 párrafos, explica la situación con lo que se sabe hasta ahora.'),
     },
-    requiredEditorialFields: ['description'],
+    requiredEditorialFields: ['title', 'description'],
     systemPrompt: LAMIRA_BASE_PROMPT,
   },
   guia: {
@@ -87,6 +105,7 @@ Reglas estrictas:
     site: 'la-mira',
     classifyHint: 'Contenido evergreen tipo trámite/how-to ("cómo tramitar X", "qué hacer si Y") — no tiene fecha de vigencia.',
     editorialShape: {
+      ...titleShape,
       dek: z.string().describe('Bajada de 1-2 líneas, resume qué resuelve la guía.'),
       content: z
         .array(z.object({ id: z.string(), heading: z.string(), paragraphs: z.array(z.string()) }))
@@ -94,7 +113,7 @@ Reglas estrictas:
         .describe('Cuerpo de la guía en bloques con heading obligatorio.'),
       faq: z.array(z.object({ question: z.string(), answer: z.string() })).describe('Preguntas frecuentes reales sobre el trámite.'),
     },
-    requiredEditorialFields: ['dek', 'content'],
+    requiredEditorialFields: ['title', 'dek', 'content'],
     systemPrompt: `${LAMIRA_BASE_PROMPT}\n\nEsta pieza es una guía de trámite ("evergreen"), no una noticia — quickFacts y officialSource ya están capturados aparte y no debes repetirlos ni contradecirlos en el cuerpo.`,
   },
   evento: {
@@ -103,9 +122,10 @@ Reglas estrictas:
     site: 'la-mira',
     classifyHint: 'Evento noticioso de una sola vez o de agenda pública (marcha, festival grande, anuncio oficial) — angle de periodismo/cobertura, no una recomendación evergreen de plan. Si el evento está ligado a un negocio/lugar recurrente (bar, foro, restaurante) y el angle es "qué hacer", usa evento-planazo en vez de este.',
     editorialShape: {
+      ...titleShape,
       description: z.string().describe('1-2 párrafos que inviten a asistir, sin inventar fecha/hora/lugar/precio — esos ya están capturados aparte.'),
     },
-    requiredEditorialFields: ['description'],
+    requiredEditorialFields: ['title', 'description'],
     systemPrompt: LAMIRA_BASE_PROMPT,
   },
   'evento-planazo': {
@@ -141,13 +161,14 @@ Reglas estrictas:
     site: 'la-mira',
     classifyHint: 'Análisis largo, con más contexto y profundidad — no una noticia de último momento ni una nota corta.',
     editorialShape: {
+      ...titleShape,
       dek: z.string().describe('Bajada de 1-2 líneas, resume el ángulo del reportaje sin repetir el título.'),
       content: z
         .array(z.object({ heading: z.string().nullable(), paragraphs: z.array(z.string()) }))
         .min(1)
         .describe('Cuerpo del reportaje en bloques; heading es opcional (null si no aplica).'),
     },
-    requiredEditorialFields: ['dek', 'content'],
+    requiredEditorialFields: ['title', 'dek', 'content'],
     systemPrompt: `${LAMIRA_BASE_PROMPT}\n\nEsta pieza es un reportaje de análisis (más largo, más contexto), no una noticia de último momento.`,
   },
 };

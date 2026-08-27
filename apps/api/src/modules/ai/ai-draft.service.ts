@@ -39,8 +39,18 @@ import { CategoriesService } from '../categories/categories.service';
 // no tiene structured-output forzado como OpenAI). El `.describe()` sigue
 // comunicando el objetivo real para que el modelo apunte ahí de todos modos.
 const seoShape = {
-  title: z.string().min(1).max(90).describe('Título SEO — máximo 60 caracteres (cuenta los caracteres, es un límite real de Google).'),
-  description: z.string().min(60).max(220).describe('Meta descripción SEO — entre 120 y 160 caracteres (cuenta los caracteres).'),
+  title: z
+    .string()
+    .min(1)
+    .max(90)
+    .describe(
+      'Título SEO — máximo 60 caracteres (cuenta los caracteres, es un límite real de Google). Atractivo para clic, con su propio ángulo — no una copia tal cual del tema/semilla ni del encabezado editorial.',
+    ),
+  description: z
+    .string()
+    .min(60)
+    .max(220)
+    .describe('Meta descripción SEO — entre 120 y 160 caracteres (cuenta los caracteres). Atractiva y concreta, sin repetir el título palabra por palabra.'),
 };
 
 export interface DraftResult {
@@ -194,10 +204,17 @@ export class AiDraftService {
     const fieldSchema = buildFieldSchemaZod(category.fieldSchema);
     const fullSchema = z.object({ seo: z.object(seoShape), ...typeConfig.editorialShape, ...fieldSchema.shape });
 
+    // Los tipos "de nota" (noticia/alerta/guia/evento/reportaje) llevan su
+    // propio campo `title` en editorialShape (ver titleShape en content-types.ts)
+    // — ahí dto.name es solo el tema/semilla que dispara la generación, NUNCA
+    // el encabezado final. `place`/`evento-planazo`/`lugar` no lo llevan: ahí
+    // dto.name SÍ es el nombre propio real (un lugar, un negocio) y se usa tal
+    // cual, no se reescribe.
+    const hasOwnTitle = 'title' in typeConfig.editorialShape;
     const userPrompt = [
       `Tipo de contenido: ${typeConfig.label}`,
       `Categoría: ${category.name}`,
-      `Nombre/título: ${dto.name}`,
+      hasOwnTitle ? `Tema/semilla (NO es el título final — tú escribes tu propio encabezado en el campo "title"): ${dto.name}` : `Nombre: ${dto.name}`,
       dto.hints ? `Notas del editor: ${dto.hints}` : 'Notas del editor: (ninguna)',
       // Fase 3 del plan: el artículo completo va marcado explícitamente como
       // "material de referencia" — es insumo factual, NO una fuente para
@@ -208,7 +225,10 @@ export class AiDraftService {
         ? `\nMaterial de referencia — artículo completo de la fuente citada, leído en vivo. SOLO para informarte de los hechos: no lo copies, no lo parafrasees de cerca, no repitas su estructura. Redacta tu propia nota, con tus propias palabras:\n"""\n${scrapedArticle.text}\n"""`
         : '',
       '',
-      'Genera también seo.title (≤60 caracteres) y seo.description (120-160 caracteres) para esta pieza.',
+      hasOwnTitle
+        ? 'Escribe tu propio "title" (encabezado editorial) — atractivo, distinto del tema/semilla de arriba, nunca una copia tal cual de un titular ajeno.'
+        : '',
+      'Genera también seo.title (≤60 caracteres) y seo.description (120-160 caracteres) para esta pieza — con su propio ángulo, no una repetición del encabezado.',
       category.fieldSchema.length
         ? `Completa también estos campos propios de la categoría cuando la información lo permita (deja null los que no puedas saber con certeza, especialmente los marcados como dato verificable): ${category.fieldSchema.map((f) => `${f.key} (${f.label})`).join(', ')}.`
         : '',

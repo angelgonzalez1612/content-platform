@@ -10,6 +10,7 @@ const ROUTES: Record<string, string> = {
   dashboard: "/",
   crear: "/crear",
   ia: "/centro-ia",
+  plantillas: "/plantillas",
   contenido: "/contenido",
   "content-radar": "/content-radar",
 };
