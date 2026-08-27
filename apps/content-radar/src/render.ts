@@ -224,7 +224,12 @@ export async function renderReport(rawMarkdown: string): Promise<RenderedReport>
     }
 
     const isReference = heading.label === SEARCH_PHRASES_HEADING || heading.label === TOP_SEARCHES_HEADING;
-    const row = buildRow(slug, headerInner, body, isReference);
+    // El conteo (la píldora "17", "22"...) se quita del nombre de las filas de
+    // categoría — a simple vista, colapsadas, era el único "badge" visible y
+    // no aportaba (el título ya dice de qué se trata; el conteo importa poco
+    // sin abrir la fila). Las 2 filas de referencia sí lo conservan.
+    const rowLabel = isReference ? headerInner : headerInner.replace(/\s*<span class="count-pill">\d+<\/span>/, "");
+    const row = buildRow(slug, rowLabel, body, isReference);
     if (isReference) {
       referenceRows.push(row);
     } else {
