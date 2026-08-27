@@ -40,16 +40,20 @@ export default async function CentroIaPage({
 
   return (
     <CmsShell user={session} title="Centro IA">
-      <div className="mx-auto max-w-[680px] px-[26px] pt-[26px]">
-        <SiteTabs site={isLamira ? "lamira" : "planazo"} basePath="/centro-ia" />
+      <div className="flex flex-col lg:h-full">
+        <div className="flex-none px-[26px] pt-[26px]">
+          <SiteTabs site={isLamira ? "lamira" : "planazo"} basePath="/centro-ia" />
+        </div>
+        <div className="lg:min-h-0 lg:flex-1">
+          {isLamira ? (
+            <GenerateLamiraContentFlow type={type} categories={categories} initialName={name} initialHints={hints} />
+          ) : rawType === "evento-planazo" ? (
+            <GenerateEventFlow categories={categories} initialName={name} />
+          ) : (
+            <GeneratePlaceFlow categories={categories} initialName={name} />
+          )}
+        </div>
       </div>
-      {isLamira ? (
-        <GenerateLamiraContentFlow type={type} categories={categories} initialName={name} initialHints={hints} />
-      ) : rawType === "evento-planazo" ? (
-        <GenerateEventFlow categories={categories} initialName={name} />
-      ) : (
-        <GeneratePlaceFlow categories={categories} initialName={name} />
-      )}
     </CmsShell>
   );
 }

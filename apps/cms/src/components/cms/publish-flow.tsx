@@ -97,18 +97,25 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
   if (resolved) {
     const { site, contentType } = resolved.draftResponse;
     return (
-      <div className="mx-auto max-w-[680px] px-[26px] pt-[26px]">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-background px-2.5 py-1 font-mono text-[10px] font-medium tracking-[.04em] text-ink-faint uppercase">
-          <Icon d={SPARK_ICON} size={10} strokeWidth={2} />
-          Se publica en {SITE_LABEL[site]} · {TYPE_LABEL[contentType] ?? contentType}
-        </span>
-        {site === "la-mira" ? (
-          <GenerateLamiraContentFlow type={contentType} categories={resolved.categories} initialName={resolved.name} initialDraft={resolved.draftResponse} />
-        ) : contentType === "place" ? (
-          <GeneratePlaceFlow categories={resolved.categories} initialName={resolved.name} initialDraft={resolved.draftResponse} />
-        ) : (
-          <GenerateEventFlow categories={resolved.categories} initialName={resolved.name} initialDraft={resolved.draftResponse} />
-        )}
+      <div className="flex flex-col lg:h-full">
+        {/* Franja angosta solo para el badge — el flujo de abajo NO hereda
+            este ancho, usa toda la página (GenerateLamiraContentFlow trae su
+            propia revisión de pantalla dividida). */}
+        <div className="flex-none px-[26px] pt-[26px]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-background px-2.5 py-1 font-mono text-[10px] font-medium tracking-[.04em] text-ink-faint uppercase">
+            <Icon d={SPARK_ICON} size={10} strokeWidth={2} />
+            Se publica en {SITE_LABEL[site]} · {TYPE_LABEL[contentType] ?? contentType}
+          </span>
+        </div>
+        <div className="lg:min-h-0 lg:flex-1">
+          {site === "la-mira" ? (
+            <GenerateLamiraContentFlow type={contentType} categories={resolved.categories} initialName={resolved.name} initialDraft={resolved.draftResponse} />
+          ) : contentType === "place" ? (
+            <GeneratePlaceFlow categories={resolved.categories} initialName={resolved.name} initialDraft={resolved.draftResponse} />
+          ) : (
+            <GenerateEventFlow categories={resolved.categories} initialName={resolved.name} initialDraft={resolved.draftResponse} />
+          )}
+        </div>
       </div>
     );
   }
