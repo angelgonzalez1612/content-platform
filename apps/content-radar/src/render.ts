@@ -3,6 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { REPORTS_DIR } from "./run";
 import { HOTTEST_HEADING, SEARCH_PHRASES_HEADING, TOP_SEARCHES_HEADING } from "./report";
+import { DEFAULT_SITE_ID, getSite, type LamiraPublishType } from "./sites";
 
 // Todo lo que convierte un reporte .md de content-radar en HTML interactivo
 // (temas rankeados, botones Publicar, tarjetas por categoría, chips de
@@ -67,11 +68,13 @@ function wrapRankedHeadings(html: string): string {
 }
 
 // Botón "Publicar" por tema rankeado — deep-link a Centro IA con el tema y la
-// primera fuente citada ya cargados como `name`/`hints`. Corre DESPUÉS de
-// wrapRankedHeadings (opera sobre `<h3><span class="rank">…`) y ANTES de
-// wrapSectionsInCards (necesita ver dónde empieza el siguiente h2/h3 en el
-// HTML plano, que wrapSectionsInCards ya trocea en <section>s separadas).
-function injectPublishButtons(html: string): string {
+// primera fuente citada ya cargados como `name`/`hints`. `publishType` viene
+// fijo por categoría (site.categories[].publishType, ver sites.ts) — ya no se
+// adivina por palabras del título, esa heurística se probó y falló repetido
+// contra titulares reales. Corre DESPUÉS de wrapRankedHeadings (opera sobre
+// `<h3><span class="rank">…`) y por sección (ver renderReport), no sobre el
+// documento completo, precisamente para poder usar el tipo de ESA categoría.
+function injectPublishButtons(html: string, publishType: LamiraPublishType): string {
   return html
     .split(/(?=<h3><span class="rank">)/)
     .map((part) => {
@@ -93,7 +96,7 @@ function injectPublishButtons(html: string): string {
         : `Tema de content-radar: "${title}".`;
 
       const publishUrl =
-        `/centro-ia?site=lamira&type=noticia` +
+        `/centro-ia?site=lamira&type=${publishType}` +
         `&name=${encodeURIComponent(title)}` +
         `&hints=${encodeURIComponent(hints)}`;
       const button = `<a class="publish-btn" href="${publishUrl}" rel="noopener">Publicar<span aria-hidden="true"> →</span></a>`;
@@ -112,14 +115,15 @@ function injectPublishButtons(html: string): string {
 // fuente</li>` (noticias, videos de YouTube). Cada una de esas notas gana su
 // propio botón Publicar chiquito, mismo destino (Centro IA) que el de los
 // temas rankeados, pero usando el título de la nota en vez del título del tema.
+// Mismo `publishType` fijo por categoría que injectPublishButtons — ver ahí.
 // Corre DESPUÉS de injectPublishButtons así que no toca los <h3> ya armados.
-function injectItemPublishButtons(html: string): string {
+function injectItemPublishButtons(html: string, publishType: LamiraPublishType): string {
   return html.replace(
     /<li><a href="([^"]+)">([^<]+)<\/a>\s*—\s*([^<]+?)<\/li>/g,
     (match, url: string, title: string, source: string) => {
       const hints = `Fuente de content-radar: "${title}" — ${source} (${url}).`;
       const publishUrl =
-        `/centro-ia?site=lamira&type=noticia` +
+        `/centro-ia?site=lamira&type=${publishType}` +
         `&name=${encodeURIComponent(title)}` +
         `&hints=${encodeURIComponent(hints)}`;
       const button = `<a class="publish-btn publish-btn-sm" href="${publishUrl}" rel="noopener" title="Publicar sobre esta nota">Publicar</a>`;
@@ -194,15 +198,25 @@ export interface RenderedReport {
 //    categorías porque no son un tema del que se pueda publicar directo.
 export async function renderReport(rawMarkdown: string): Promise<RenderedReport> {
   const parsed = (await marked.parse(rawMarkdown)).replace(/<h1>.*?<\/h1>/, "");
-  const transformed = injectItemPublishButtons(injectPublishButtons(wrapRankedHeadings(addHeadingAnchors(parsed))));
+  // wrapRankedHeadings/addHeadingAnchors son formato puro (no arman links) —
+  // corren sobre el documento completo. injectPublishButtons/injectItemPublishButtons
+  // sí necesitan saber en qué categoría están (para el `publishType` correcto),
+  // así que corren MÁS ABAJO, ya por sección, después del split por <h2>.
+  const formatted = wrapRankedHeadings(addHeadingAnchors(parsed));
 
   const headingRe = /^## (.+?) `\((\d+)\)`$/gm;
   const headings = [...rawMarkdown.matchAll(headingRe)].map((m) => ({ label: m[1] }));
 
-  const parts = transformed.split(/(?=<h2 )/);
+  const parts = formatted.split(/(?=<h2 )/);
   const firstIsSection = parts[0]?.trim().startsWith("<h2") ?? false;
   const leadingHtml = firstIsSection ? "" : (parts[0] ?? "");
   const sectionParts = firstIsSection ? parts : parts.slice(1);
+
+  // Categoría -> tipo de contenido de La Mira, fijo (site.categories[].publishType
+  // en sites.ts) — "Lo más caliente" y "Otros — …" (temas sin categoría real) usan
+  // "noticia" por default, igual que antes de este mapeo existir.
+  const site = getSite(DEFAULT_SITE_ID);
+  const typeByLabel = new Map(site.categories.map((c) => [c.label, c.publishType]));
 
   let heroHtml = "";
   const accordionRows: string[] = [];
@@ -214,7 +228,10 @@ export async function renderReport(rawMarkdown: string): Promise<RenderedReport>
     const h2Match = part.match(/<h2 id="([^"]+)"[^>]*>([\s\S]*?)<\/h2>/);
     const slug = h2Match ? h2Match[1] : slugify(heading.label);
     const headerInner = h2Match ? h2Match[2] : escapeHtml(heading.label);
-    const body = h2Match ? part.slice(h2Match[0].length) : part;
+    const rawBody = h2Match ? part.slice(h2Match[0].length) : part;
+
+    const publishType: LamiraPublishType = typeByLabel.get(heading.label) ?? "noticia";
+    const body = injectItemPublishButtons(injectPublishButtons(rawBody, publishType), publishType);
 
     if (heading.label === HOTTEST_HEADING) {
       heroHtml = buildHeroTiles(body);

@@ -4,7 +4,6 @@ import { getCmsCategories } from "@/lib/cms-api";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { GeneratePlaceFlow } from "@/components/cms/generate-place-flow";
 import { GenerateLamiraContentFlow } from "@/components/cms/lamira/generate-lamira-content-flow";
-import { PublishDestinationPicker } from "@/components/cms/lamira/publish-destination-picker";
 import { SiteTabs } from "@/components/cms/site-tabs";
 
 const LAMIRA_TYPES = new Set(["noticia", "alerta", "guia", "evento", "lugar", "reportaje"]);
@@ -12,24 +11,12 @@ const LAMIRA_TYPES = new Set(["noticia", "alerta", "guia", "evento", "lugar", "r
 export default async function CentroIaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ site?: string; type?: string; name?: string; hints?: string; step?: string }>;
+  searchParams: Promise<{ site?: string; type?: string; name?: string; hints?: string }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const { site, type: rawType, name, hints, step } = await searchParams;
-
-  // El botón Publicar de Content Radar manda directo a un tema (?name=) sin
-  // preguntar sitio/tipo — antes eso arrancaba de una en "La Mira / Noticia"
-  // ya decidido. Si viene un tema y todavía no se confirmó (?step=form), se
-  // pregunta primero — site/type de la URL solo quedan como sugerencia.
-  if (name && step !== "form") {
-    return (
-      <CmsShell user={session} title="Centro IA">
-        <PublishDestinationPicker name={name} hints={hints ?? ""} initialSite={site ?? "lamira"} initialType={rawType ?? "noticia"} />
-      </CmsShell>
-    );
-  }
+  const { site, type: rawType, name, hints } = await searchParams;
 
   const isLamira = site === "lamira";
   const type = rawType && LAMIRA_TYPES.has(rawType) ? rawType : "noticia";
