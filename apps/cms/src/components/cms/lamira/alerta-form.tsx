@@ -124,7 +124,7 @@ export function AlertaForm({ categories, existing }: { categories: Category[]; e
           <label htmlFor="a-description" className={labelClass}>
             Descripción
           </label>
-          <RichTextarea id="a-description" required rows={4} value={form.description} onChange={(v) => set("description", v)} className={`${fieldClass} resize-none`} />
+          <RichTextarea id="a-description" required rows={4} value={form.description} onChange={(v) => set("description", v)} />
         </div>
 
         <div className="grid grid-cols-2 gap-4">

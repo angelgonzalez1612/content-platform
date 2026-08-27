@@ -375,51 +375,33 @@ export function GenerateLamiraContentFlow({
 
   // review / creating
   return (
-    <div className="mx-auto max-w-[680px] p-[26px] pb-[60px]">
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 font-mono text-[10.5px] font-medium tracking-[.06em] text-accent-fg uppercase">
-        Borrador IA · revisa antes de crear
-      </span>
+    <div className="flex w-full flex-col lg:flex-row">
+      <div className="min-w-0 flex-1">
+        <div className="p-[26px] pb-8">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 font-mono text-[10.5px] font-medium tracking-[.06em] text-accent-fg uppercase">
+            Borrador IA · revisa antes de crear
+          </span>
 
-      <div className="mt-3 mb-5 flex flex-col gap-1">
-        <label htmlFor="lc-title" className="flex items-center gap-1.5 font-mono text-[10px] font-medium tracking-[.1em] text-ink-faint uppercase">
-          {type === "lugar" ? "Nombre" : "Encabezado"}
-          {type !== "lugar" && (
-            <span className="normal-case tracking-normal text-ink-faint">
-              — lo escribió la IA a partir de &quot;{name}&quot;, edítalo si quieres
-            </span>
-          )}
-        </label>
-        <input
-          id="lc-title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full rounded-[8px] border border-transparent bg-transparent px-0 py-1 text-[22px] font-semibold tracking-tight text-ink transition-colors focus:border-border-soft focus:bg-white focus:px-3 focus:outline-none"
-        />
-      </div>
+          <div className="mt-3 mb-5 flex flex-col gap-1">
+            <label htmlFor="lc-title" className="flex items-center gap-1.5 font-mono text-[10px] font-medium tracking-[.1em] text-ink-faint uppercase">
+              {type === "lugar" ? "Nombre" : "Encabezado"}
+              {type !== "lugar" && (
+                <span className="normal-case tracking-normal text-ink-faint">
+                  — lo escribió la IA a partir de &quot;{name}&quot;, edítalo si quieres
+                </span>
+              )}
+            </label>
+            <input
+              id="lc-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full rounded-[8px] border border-transparent bg-transparent px-0 py-1 text-[22px] font-semibold tracking-tight text-ink transition-colors focus:border-border-soft focus:bg-white focus:px-3 focus:outline-none"
+            />
+          </div>
 
-      <LamiraPreviewCard
-        type={type}
-        name={title}
-        categoryName={category?.name ?? null}
-        image={image}
-        dek={dek}
-        description={description}
-        content={content}
-        alertaStatus={extra.alertaStatus}
-        alcaldiaSlug={extra.alcaldiaSlug}
-        eventoStatus={extra.eventoStatus}
-        date={extra.date}
-        time={extra.time}
-        location={extra.location}
-        price={extra.price}
-        organizer={extra.organizer}
-        kind={extra.kind}
-        colonia={extra.colonia}
-      />
-
-      <div className="mt-5 flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
-        <div className="flex flex-col gap-1.5">
-          <span className={labelClass}>Imagen{image ? " (de la fuente citada)" : ""}</span>
+          <div className="flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+            <div className="flex flex-col gap-1.5">
+              <span className={labelClass}>Imagen{image ? " (de la fuente citada)" : ""}</span>
 
           {editingImage ? (
             <div className="flex flex-col gap-3 rounded-[10px] border border-border-soft bg-background p-3">
@@ -500,7 +482,7 @@ export function GenerateLamiraContentFlow({
               <label htmlFor="lc-dek" className={labelClass}>
                 Bajada (dek)
               </label>
-              <RichTextarea id="lc-dek" rows={2} value={dek} onChange={setDek} className={`${fieldClass} resize-none`} />
+              <RichTextarea id="lc-dek" rows={2} value={dek} onChange={setDek} />
             </div>
             <ContentBlocksField blocks={content} onChange={setContent} headingRequired={type === "guia"} />
             {type === "guia" && (
@@ -514,7 +496,7 @@ export function GenerateLamiraContentFlow({
             <label htmlFor="lc-description" className={labelClass}>
               Descripción
             </label>
-            <RichTextarea id="lc-description" rows={5} value={description} onChange={setDescription} className={`${fieldClass} resize-none`} />
+            <RichTextarea id="lc-description" rows={5} value={description} onChange={setDescription} />
           </div>
         )}
 
@@ -723,23 +705,26 @@ export function GenerateLamiraContentFlow({
           )}
         </div>
 
-        <SeoPanel seo={seo} onChange={setSeo} checksRun={checksRun} decision={decision} />
+            <SeoPanel seo={seo} onChange={setSeo} checksRun={checksRun} decision={decision} />
 
-        {meta.hasStatus ? (
-          <p className="rounded-lg bg-background px-3 py-2.5 text-[12.5px] leading-[1.5] text-ink-soft">
-            {decision === "auto-published"
-              ? "Este borrador pasó todos los checks automáticos — se creará como publicado."
-              : "Este borrador necesita revisión — se creará como borrador, no publicado."}
-          </p>
-        ) : (
-          <p className="rounded-lg bg-[#FEF6E7] px-3 py-2.5 text-[12.5px] leading-[1.5] text-[#9A6B12]">
-            Este tipo de contenido no tiene borrador — se publica de inmediato al crearlo. Revisa bien antes de continuar.
-          </p>
-        )}
+            {meta.hasStatus ? (
+              <p className="rounded-lg bg-background px-3 py-2.5 text-[12.5px] leading-[1.5] text-ink-soft">
+                {decision === "auto-published"
+                  ? "Este borrador pasó todos los checks automáticos — se creará como publicado."
+                  : "Este borrador necesita revisión — se creará como borrador, no publicado."}
+              </p>
+            ) : (
+              <p className="rounded-lg bg-[#FEF6E7] px-3 py-2.5 text-[12.5px] leading-[1.5] text-[#9A6B12]">
+                Este tipo de contenido no tiene borrador — se publica de inmediato al crearlo. Revisa bien antes de continuar.
+              </p>
+            )}
+          </div>
+        </div>
 
-        {error && <p className="rounded-lg bg-[#FDECEA] px-3 py-2 text-[13px] font-medium text-[#C4453A]">{error}</p>}
-
-        <div className="flex items-center gap-3 border-t border-border-soft pt-5">
+        {/* Barra de acciones fija al fondo del viewport (sticky, no fixed) —
+            siempre alcanzable sin tener que bajar hasta el final de un
+            formulario que ahora puede ser bastante largo. */}
+        <div className="sticky bottom-0 z-10 flex items-center gap-3 border-t border-border-soft bg-white/95 px-[26px] py-3.5 backdrop-blur-sm">
           <button
             type="button"
             onClick={handleCreate}
@@ -751,6 +736,34 @@ export function GenerateLamiraContentFlow({
           <button type="button" onClick={() => setStep("input")} className="text-[13px] font-medium text-ink-soft hover:text-brand">
             Empezar de nuevo
           </button>
+          {error && <span className="text-[12.5px] font-medium text-[#C4453A]">{error}</span>}
+        </div>
+      </div>
+
+      {/* Vista previa — a la derecha en pantallas grandes, pegada mientras se
+          hace scroll por el formulario (más largo ahora); abajo, apilada, en
+          móvil. */}
+      <div className="w-full flex-none border-t border-border-soft bg-white lg:w-[420px] lg:border-t-0 lg:border-l xl:w-[460px]">
+        <div className="p-[26px] lg:sticky lg:top-0">
+          <LamiraPreviewCard
+            type={type}
+            name={title}
+            categoryName={category?.name ?? null}
+            image={image}
+            dek={dek}
+            description={description}
+            content={content}
+            alertaStatus={extra.alertaStatus}
+            alcaldiaSlug={extra.alcaldiaSlug}
+            eventoStatus={extra.eventoStatus}
+            date={extra.date}
+            time={extra.time}
+            location={extra.location}
+            price={extra.price}
+            organizer={extra.organizer}
+            kind={extra.kind}
+            colonia={extra.colonia}
+          />
         </div>
       </div>
     </div>

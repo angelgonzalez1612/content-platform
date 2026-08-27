@@ -84,13 +84,9 @@ export function ContentBlocksField({
             <div className="flex flex-col gap-2">
               {block.paragraphs.map((p, pi) => (
                 <div key={pi} className="flex items-start gap-2">
-                  <RichTextarea
-                    value={p}
-                    onChange={(v) => updateParagraph(bi, pi, v)}
-                    rows={3}
-                    placeholder="Párrafo…"
-                    className={`${fieldClass} flex-1 resize-none`}
-                  />
+                  <div className="min-w-0 flex-1">
+                    <RichTextarea value={p} onChange={(v) => updateParagraph(bi, pi, v)} rows={3} placeholder="Párrafo…" />
+                  </div>
                   <button
                     type="button"
                     onClick={() => removeParagraph(bi, pi)}

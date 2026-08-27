@@ -127,7 +127,7 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
           <label htmlFor="l-description" className={labelClass}>
             Descripción
           </label>
-          <RichTextarea id="l-description" required rows={4} value={form.description} onChange={(v) => set("description", v)} className={`${fieldClass} resize-none`} />
+          <RichTextarea id="l-description" required rows={4} value={form.description} onChange={(v) => set("description", v)} />
         </div>
 
         <div className="grid grid-cols-2 gap-4">

@@ -1,32 +1,49 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect } from "react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Highlight from "@tiptap/extension-highlight";
+import Placeholder from "@tiptap/extension-placeholder";
+import { plainToEditorHtml, editorHtmlToPlain } from "@/lib/rich-text-markdown";
 
-interface Marker {
-  label: string;
-  button: string;
-  wrap: [string, string];
-  buttonClassName: string;
+const BOLD_ICON = "M6 4h6.5a3.5 3.5 0 0 1 0 7H6zM6 11h7.5a3.5 3.5 0 0 1 0 7H6z";
+const ITALIC_ICON = "M11 4h6M7 20h6M14 4L10 20";
+const HIGHLIGHT_ICON = "M9 15l6-6M4 20l3-1 9-9-2-2-9 9-1 3zM15 5l4 4";
+
+function ToolbarButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: string; label: string }) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      aria-pressed={active}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      className={`grid size-7 flex-none place-items-center rounded-md border transition-colors ${
+        active ? "border-brand bg-accent text-accent-fg" : "border-transparent text-ink-soft hover:border-border-soft hover:bg-background hover:text-ink"
+      }`}
+    >
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d={icon} />
+      </svg>
+    </button>
+  );
 }
 
-// **negritas** / *cursiva* / ==color de acento== — mismo Markdown mínimo que
-// interpreta renderInline() en la vista previa y en la-mira real. En vez de
-// pedirle al humano que memorice/escriba la sintaxis, estos botones envuelven
-// la selección actual del textarea — igual que "+ Párrafo"/"+ Bloque" son
-// botones, no instrucciones de texto.
-const MARKERS: Marker[] = [
-  { label: "Negritas", button: "B", wrap: ["**", "**"], buttonClassName: "font-bold" },
-  { label: "Cursiva", button: "I", wrap: ["*", "*"], buttonClassName: "italic" },
-  { label: "Color de acento", button: "A", wrap: ["==", "=="], buttonClassName: "text-brand font-semibold" },
-];
-
+/**
+ * Editor de texto WYSIWYG (TipTap) para párrafos/descripciones — negritas,
+ * cursiva y acento se ven aplicados de verdad mientras se escribe, no como
+ * `**`/`*`/`==` sueltos en el texto. El formato de almacenamiento no cambia:
+ * plainToEditorHtml()/editorHtmlToPlain() traducen hacia/desde el mismo texto
+ * plano de siempre — ni el backend ni la-mira necesitaron tocarse para esto.
+ */
 export function RichTextarea({
   id,
   value,
   onChange,
   rows = 3,
   placeholder,
-  className,
   required,
 }: {
   id?: string;
@@ -34,42 +51,43 @@ export function RichTextarea({
   onChange: (value: string) => void;
   rows?: number;
   placeholder?: string;
-  className?: string;
   required?: boolean;
 }) {
-  const ref = useRef<HTMLTextAreaElement>(null);
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({ heading: false, bulletList: false, orderedList: false, blockquote: false, codeBlock: false, horizontalRule: false }),
+      Highlight.configure({ HTMLAttributes: { class: "accent-mark" } }),
+      Placeholder.configure({ placeholder: placeholder ?? "" }),
+    ],
+    content: plainToEditorHtml(value),
+    immediatelyRender: false,
+    onUpdate: ({ editor }) => onChange(editorHtmlToPlain(editor.getHTML())),
+    editorProps: {
+      attributes: { id: id ?? "" },
+    },
+  });
 
-  function applyMarker(prefix: string, suffix: string) {
-    const el = ref.current;
-    if (!el) return;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const selected = value.slice(start, end) || "texto";
-    const next = value.slice(0, start) + prefix + selected + suffix + value.slice(end);
-    onChange(next);
-    requestAnimationFrame(() => {
-      el.focus();
-      el.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
-    });
+  // Sincroniza cuando `value` cambia desde AFUERA del editor (ej. "Mejorar con
+  // IA" reemplaza el texto, o se carga un borrador ya generado) — sin esto el
+  // editor se quedaría mostrando el texto viejo.
+  useEffect(() => {
+    if (!editor) return;
+    const current = editorHtmlToPlain(editor.getHTML());
+    if (current !== value) editor.commands.setContent(plainToEditorHtml(value), { emitUpdate: false });
+  }, [value, editor]);
+
+  if (!editor) {
+    return <div className="rounded-[10px] border border-border bg-white" style={{ minHeight: `${rows * 1.6}em` }} />;
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-1">
-        {MARKERS.map((m) => (
-          <button
-            key={m.label}
-            type="button"
-            title={m.label}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => applyMarker(m.wrap[0], m.wrap[1])}
-            className={`grid size-6 place-items-center rounded border border-border-soft bg-white text-[12px] hover:border-ink-faint ${m.buttonClassName}`}
-          >
-            {m.button}
-          </button>
-        ))}
+    <div className={`rounded-[10px] border border-border bg-white transition-colors focus-within:border-ink-faint ${required && !value.trim() ? "border-[#F0B8B4]" : ""}`}>
+      <div className="flex items-center gap-1 border-b border-border-soft px-2 py-1.5">
+        <ToolbarButton active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()} icon={BOLD_ICON} label="Negritas" />
+        <ToolbarButton active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()} icon={ITALIC_ICON} label="Cursiva" />
+        <ToolbarButton active={editor.isActive("highlight")} onClick={() => editor.chain().focus().toggleHighlight().run()} icon={HIGHLIGHT_ICON} label="Color de acento" />
       </div>
-      <textarea ref={ref} id={id} required={required} value={value} onChange={(e) => onChange(e.target.value)} rows={rows} placeholder={placeholder} className={className} />
+      <EditorContent editor={editor} style={{ minHeight: `${rows * 1.6}em` }} className="px-3 py-2 text-[13.5px] leading-[1.6] text-ink [&_.ProseMirror]:outline-none" />
     </div>
   );
 }

@@ -144,7 +144,7 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
           <label htmlFor="e-description" className={labelClass}>
             Descripción
           </label>
-          <RichTextarea id="e-description" required rows={4} value={form.description} onChange={(v) => set("description", v)} className={`${fieldClass} resize-none`} />
+          <RichTextarea id="e-description" required rows={4} value={form.description} onChange={(v) => set("description", v)} />
         </div>
 
         <div className="flex flex-col gap-1.5">

@@ -218,18 +218,9 @@ export function LamiraPreviewCard({
           {isRichContent && content.length === 0 && <p className="mt-4 text-[13px] text-ink-faint italic">Sin cuerpo todavía — se completa arriba, en el editor de bloques.</p>}
 
           {type !== "lugar" && (
-            <div className="mt-5 flex flex-col gap-1 border-t border-border-soft pt-3 text-[11px] text-ink-faint">
-              <p>Puedes darle formato a cualquier párrafo — se ve reflejado arriba y también en la página real:</p>
-              <p>
-                <code className="rounded bg-background px-1 py-0.5 font-mono">**negritas**</code>
-                {" · "}
-                <code className="rounded bg-background px-1 py-0.5 font-mono">*cursiva*</code>
-                {" · "}
-                <code className="rounded bg-background px-1 py-0.5 font-mono">==color de acento==</code>
-                {" · "}
-                MAYÚSCULAS se escriben directo, sin sintaxis especial.
-              </p>
-            </div>
+            <p className="mt-5 border-t border-border-soft pt-3 text-[11px] text-ink-faint">
+              El formato que le des a un párrafo (negritas, cursiva, color de acento) en el editor de abajo se ve reflejado arriba y también en la página real.
+            </p>
           )}
         </article>
       </div>

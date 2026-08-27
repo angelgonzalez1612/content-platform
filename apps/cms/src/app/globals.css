@@ -90,3 +90,26 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Editor WYSIWYG (rich-textarea.tsx) — ==acento== se ve como texto de color
+   de marca, no como el highlight amarillo por default de la extensión. */
+.accent-mark {
+  background: transparent;
+  color: var(--color-brand);
+  font-weight: 600;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--color-ink-faint);
+}
+
+.ProseMirror p {
+  margin: 0;
+}
+.ProseMirror p + p {
+  margin-top: 0.75em;
+}
