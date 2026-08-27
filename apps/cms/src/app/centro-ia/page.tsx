@@ -4,6 +4,7 @@ import { getCmsCategories } from "@/lib/cms-api";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { GeneratePlaceFlow } from "@/components/cms/generate-place-flow";
 import { GenerateLamiraContentFlow } from "@/components/cms/lamira/generate-lamira-content-flow";
+import { GenerateEventFlow } from "@/components/cms/planazo/generate-event-flow";
 import { PublishFlow } from "@/components/cms/publish-flow";
 import { SiteTabs } from "@/components/cms/site-tabs";
 
@@ -44,8 +45,10 @@ export default async function CentroIaPage({
       </div>
       {isLamira ? (
         <GenerateLamiraContentFlow type={type} categories={categories} initialName={name} initialHints={hints} />
+      ) : rawType === "evento-planazo" ? (
+        <GenerateEventFlow categories={categories} initialName={name} />
       ) : (
-        <GeneratePlaceFlow categories={categories} />
+        <GeneratePlaceFlow categories={categories} initialName={name} />
       )}
     </CmsShell>
   );

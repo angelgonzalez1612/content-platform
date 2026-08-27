@@ -6,6 +6,7 @@ import {
   categories,
   sites,
   places,
+  events,
   noticias,
   alertas,
   guias,
@@ -323,6 +324,83 @@ export class AiDraftService {
     return { draft: output as Record<string, unknown>, checksRun, decision, image: null, categoryId: category?.id ?? '', site: 'planazo', contentType: 'place' };
   }
 
+  /** "Mejorar" para eventos de Planazo (evento-planazo) — mismo patrón que
+   * improvePlace: sin fieldSchema.shape en el schema que ve el modelo
+   * (protección estructural, no solo de prompt, contra que "invente" datos
+   * verificables), solo toca descripción+SEO. */
+  async improvePlanazoEvento(id: string, dto: ImproveRequestDto, actorId?: string): Promise<DraftResult> {
+    const existing = await this.db.query.events.findFirst({
+      where: eq(events.id, id),
+      with: { category: true },
+    });
+    if (!existing) throw new NotFoundException(`Evento "${id}" no existe`);
+
+    const category = existing.category;
+    const typeConfig = getContentTypeConfig('evento-planazo');
+    const fullSchema = z.object({ seo: z.object(seoShape), ...typeConfig.editorialShape });
+
+    const originalFacts: Record<string, unknown> = { ...existing.categoryData };
+
+    const userPrompt = [
+      `Tipo de contenido: ${typeConfig.label}`,
+      `Nombre: ${existing.name}`,
+      `Descripción actual: ${existing.description ?? '(vacía — redáctala desde cero con lo que sabes del nombre)'}`,
+      `Categoría: ${category?.name ?? '(sin categoría)'}`,
+      dto.instructions ? `Instrucción del editor: ${dto.instructions}` : '',
+      '',
+      'Tu trabajo es MEJORAR la redacción y el SEO. No te pido ningún dato verificable (fecha, hora, lugar) — esos ya están capturados aparte y no forman parte de tu respuesta.',
+      Object.keys(originalFacts).length
+        ? `Para contexto, así están hoy los datos verificables de este evento (no forman parte de tu respuesta, son solo referencia): ${JSON.stringify(originalFacts)}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const improveSystemPrompt = `${typeConfig.systemPrompt}\n\nEstás MEJORANDO contenido existente, no creando desde cero: expande texto genérico/ambiguo. Tu respuesta solo lleva los campos editoriales (descripción, SEO) que te pide el schema — nunca fecha, hora, lugar ni ningún otro dato verificable.`;
+
+    const output = await this.providers.get(dto.provider).generateStructured({
+      systemPrompt: improveSystemPrompt,
+      userPrompt,
+      schema: fullSchema,
+      schemaName: 'evento-planazo_improve',
+    });
+
+    const { checksRun, decision } = this.checks.run({
+      mode: 'improve',
+      requiredFields: [...typeConfig.requiredEditorialFields],
+      factFields: category ? factKeys(category.fieldSchema) : [],
+      draftData: output as Record<string, unknown>,
+      originalFacts,
+      seo: (output as { seo?: { title?: string; description?: string } }).seo,
+      hasImageWithAlt: undefined, // Planazo evento no modela imagen todavía — no bloquea
+      slugAvailable: true, // el slug no cambia en "improve"
+      bodyText: JSON.stringify(output),
+    });
+
+    const planazoSite = await this.db.query.sites.findFirst({ where: eq(sites.slug, 'planazo') });
+
+    await this.db.insert(contentAuditLog).values({
+      siteId: planazoSite!.id,
+      contentType: 'evento-planazo',
+      contentId: id,
+      categoryId: category?.id,
+      mode: 'improve',
+      sourceContext: { instructions: dto.instructions ?? null },
+      inputFacts: originalFacts,
+      aiModel: dto.provider === 'claude-cli' ? 'claude-cli' : 'gpt-4o-mini',
+      aiOutput: output as Record<string, unknown>,
+      checksRun,
+      decision,
+      // Los eventos de Planazo no tienen workflow de borrador (se publican de
+      // inmediato al crearse) — "mejorar" nunca cambia ese status.
+      statusBefore: existing.status,
+      statusAfter: existing.status,
+      actorId: actorId ?? null,
+    });
+
+    return { draft: output as Record<string, unknown>, checksRun, decision, image: null, categoryId: category?.id ?? '', site: 'planazo', contentType: 'evento-planazo' };
+  }
+
   /** Los 6 tipos de la-mira con CRUD real (Fase 2) — 'place' sigue por separado
    * arriba porque su categoría es una relación N:M (placeCategories), no una
    * columna categoryId directa como en estos. `queryKey` es el nombre que usa
@@ -378,6 +456,7 @@ export class AiDraftService {
    * categoryData jsonb, seo jsonb) ya es idéntica entre sí. */
   async improveContent(type: string, id: string, dto: ImproveRequestDto, actorId?: string): Promise<DraftResult> {
     if (type === 'place') return this.improvePlace(id, dto, actorId);
+    if (type === 'evento-planazo') return this.improvePlanazoEvento(id, dto, actorId);
     return this.improveLamiraContent(type, id, dto, actorId);
   }
 

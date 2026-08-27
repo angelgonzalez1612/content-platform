@@ -142,10 +142,8 @@ export function GenerateEventFlow({
         return;
       }
 
-      // No hay todavía una pantalla de edición dedicada para eventos de
-      // Planazo (a diferencia de place/la-mira) — de vuelta al listado.
-      await res.json();
-      router.push(`/contenido?site=planazo`);
+      const created = await res.json();
+      router.push(`/contenido/planazo-evento/${created.id}`);
     } catch {
       setError("No se pudo conectar con el servidor.");
       setStep("review");

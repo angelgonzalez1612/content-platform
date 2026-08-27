@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { apiConfig } from "@planazo/config";
-import type { Place, PlaceDetail, Category, Seo, Noticia, Alerta, Guia, LamiraEvento, LamiraLugar, Reportaje } from "@planazo/types";
+import type { Place, PlaceDetail, Category, Seo, Noticia, Alerta, Guia, LamiraEvento, LamiraLugar, Reportaje, PlanazoEvent } from "@planazo/types";
 
 async function cmsFetch(path: string, init?: RequestInit) {
   const cookieStore = await cookies();
@@ -121,4 +121,13 @@ export async function getCmsLamiraLugar(id: string): Promise<LamiraLugar | null>
 }
 export async function getCmsReportaje(id: string): Promise<Reportaje | null> {
   return safeOne<Reportaje>(`/cms/lamira/reportajes/${id}`);
+}
+
+/** Eventos de Planazo (evento-planazo) — mismo patrón que places/la-mira. */
+export async function getCmsEvents(): Promise<PlanazoEvent[]> {
+  return safeList<PlanazoEvent>("/cms/events");
+}
+
+export async function getCmsEvent(id: string): Promise<PlanazoEvent | null> {
+  return safeOne<PlanazoEvent>(`/cms/events/${id}`);
 }
