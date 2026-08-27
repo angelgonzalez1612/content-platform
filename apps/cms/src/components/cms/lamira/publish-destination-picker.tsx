@@ -36,7 +36,12 @@ function suggestType(text: string): string {
     )
   )
     return "alerta";
-  if (/\b(concierto|festival|feria|exposici[oó]n|boletos|entradas|inaugura)\b/.test(t)) return "evento";
+  if (
+    /\b(concierto|festival|feria|exposici[oó]n|boletos|entradas|inaugura\w*|presenta(r[aá]n?|n)?|espect[aá]culo|funci[oó]n|recital|obra de teatro|muestra|bail[ea]s?|gira)\b/.test(
+      t,
+    )
+  )
+    return "evento";
   if (/\b(c[oó]mo\s|tr[aá]mite|requisitos|pasos para)\b/.test(t)) return "guia";
   if (/\b(parque|museo|plaza|monumento|estaci[oó]n de|colonia)\b/.test(t)) return "lugar";
   return "noticia";
