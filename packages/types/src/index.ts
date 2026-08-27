@@ -81,6 +81,16 @@ export interface AiDraftResult {
   contentType: string;
 }
 
+// Un resultado de búsqueda de imágenes de uso libre (Wikimedia Commons) —
+// ver ImageSearchService en apps/api. El crédito siempre viene de metadata
+// real de la fuente, nunca se inventa.
+export interface ImageSearchResult {
+  url: string;
+  thumbUrl: string;
+  credit: string;
+  sourcePageUrl: string;
+}
+
 // ── Los 6 tipos de contenido editorial de la-mira ───────────────────────────
 // Reflejan 1:1 sus tablas en apps/api/src/db/schema/lamira.ts — cada uno
 // deliberadamente con su propia forma, sin interfaz base compartida (ver
@@ -94,6 +104,9 @@ export interface TocEntry {
 export interface ContentBlock {
   heading?: string | null;
   paragraphs: string[];
+  // Imagen embebida en este bloque (opcional) — elegida por búsqueda o URL
+  // manual en el CMS, nunca generada/inventada por la IA.
+  image?: { url: string; credit: string } | null;
 }
 
 export interface Noticia {
@@ -161,7 +174,7 @@ export interface Guia {
   quickFacts: { label: string; value: string }[];
   seo: Seo | null;
   toc: TocEntry[];
-  content: { id: string; heading: string; paragraphs: string[] }[];
+  content: { id: string; heading: string; paragraphs: string[]; image?: { url: string; credit: string } | null }[];
   faq: { question: string; answer: string }[];
   imageUrl: string | null;
   imageCredit: string | null;

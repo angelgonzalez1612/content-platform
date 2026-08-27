@@ -1,15 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
+import { RichTextarea } from "@/components/cms/rich-textarea";
+import { ImageSearchPicker } from "@/components/cms/lamira/image-search-picker";
 
 export interface ContentBlockValue {
   heading: string | null;
   paragraphs: string[];
+  // Imagen embebida en este bloque (opcional) — mismo shape {url, credit} que
+  // la imagen principal del artículo, elegida por búsqueda o URL manual,
+  // NUNCA generada por la IA.
+  image?: { url: string; credit: string } | null;
 }
 
 /** Editor del cuerpo de noticias/reportajes/guías — bloques de {heading?,
- * paragraphs[]}. El `id` de cada bloque de Guía se deriva del heading al
- * guardar (ver *-form.tsx), no se edita aquí. */
+ * paragraphs[], image?}. El `id` de cada bloque de Guía se deriva del heading
+ * al guardar (ver *-form.tsx), no se edita aquí. */
 export function ContentBlocksField({
   blocks,
   onChange,
@@ -19,6 +26,8 @@ export function ContentBlocksField({
   onChange: (blocks: ContentBlockValue[]) => void;
   headingRequired?: boolean;
 }) {
+  const [editingImageFor, setEditingImageFor] = useState<number | null>(null);
+
   function updateBlock(i: number, patch: Partial<ContentBlockValue>) {
     onChange(blocks.map((b, bi) => (bi === i ? { ...b, ...patch } : b)));
   }
@@ -75,9 +84,9 @@ export function ContentBlocksField({
             <div className="flex flex-col gap-2">
               {block.paragraphs.map((p, pi) => (
                 <div key={pi} className="flex items-start gap-2">
-                  <textarea
+                  <RichTextarea
                     value={p}
-                    onChange={(e) => updateParagraph(bi, pi, e.target.value)}
+                    onChange={(v) => updateParagraph(bi, pi, v)}
                     rows={3}
                     placeholder="Párrafo…"
                     className={`${fieldClass} flex-1 resize-none`}
@@ -100,6 +109,39 @@ export function ContentBlocksField({
                 + Párrafo
               </button>
             </div>
+
+            {editingImageFor === bi ? (
+              <div className="flex flex-col gap-2 rounded-[10px] border border-border-soft bg-white p-3">
+                <ImageSearchPicker initialQuery={block.heading ?? ""} onSelect={(img) => { updateBlock(bi, { image: img }); setEditingImageFor(null); }} />
+                <button type="button" onClick={() => setEditingImageFor(null)} className="self-start text-[12px] font-medium text-ink-soft hover:text-brand">
+                  Cancelar
+                </button>
+              </div>
+            ) : block.image ? (
+              <div className="flex items-start gap-3 rounded-[10px] border border-border-soft bg-white p-3">
+                {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
+                <img src={block.image.url} alt="" className="h-16 w-24 flex-none rounded-[8px] object-cover" />
+                <div className="flex min-w-0 flex-1 flex-col gap-1 pt-0.5">
+                  <p className="truncate text-[11.5px] text-ink-soft">{block.image.credit}</p>
+                  <div className="flex items-center gap-3">
+                    <button type="button" onClick={() => setEditingImageFor(bi)} className="text-[11.5px] font-medium text-ink-soft hover:text-brand">
+                      Reemplazar
+                    </button>
+                    <button type="button" onClick={() => updateBlock(bi, { image: null })} className="text-[11.5px] font-medium text-ink-soft hover:text-negative">
+                      Quitar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditingImageFor(bi)}
+                className="self-start rounded-lg border border-dashed border-border bg-white px-3 py-1.5 text-[12px] font-medium text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
+              >
+                + Imagen en este bloque
+              </button>
+            )}
           </div>
         ))}
       </div>

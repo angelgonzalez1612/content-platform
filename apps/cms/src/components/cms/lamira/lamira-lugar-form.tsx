@@ -9,6 +9,7 @@ import { CategoryFieldsSection } from "@/components/cms/category-fields-section"
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
+import { RichTextarea } from "@/components/cms/rich-textarea";
 
 const KIND_OPTIONS: Array<{ value: LugarKind; label: string }> = [
   { value: "parque", label: "Parque" },
@@ -126,7 +127,7 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
           <label htmlFor="l-description" className={labelClass}>
             Descripción
           </label>
-          <textarea id="l-description" required rows={4} value={form.description} onChange={(e) => set("description", e.target.value)} className={`${fieldClass} resize-none`} />
+          <RichTextarea id="l-description" required rows={4} value={form.description} onChange={(v) => set("description", v)} className={`${fieldClass} resize-none`} />
         </div>
 
         <div className="grid grid-cols-2 gap-4">

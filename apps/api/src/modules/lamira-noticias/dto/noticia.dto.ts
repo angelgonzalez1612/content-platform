@@ -5,7 +5,8 @@ const seoSchema = z
   .nullable()
   .optional();
 const tocSchema = z.array(z.object({ id: z.string(), label: z.string() }));
-const contentSchema = z.array(z.object({ heading: z.string().nullable().optional(), paragraphs: z.array(z.string()) }));
+const blockImageSchema = z.object({ url: z.string(), credit: z.string() }).nullable().optional();
+const contentSchema = z.array(z.object({ heading: z.string().nullable().optional(), paragraphs: z.array(z.string()), image: blockImageSchema }));
 
 export const queryNoticiasSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),

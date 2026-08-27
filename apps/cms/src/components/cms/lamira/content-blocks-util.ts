@@ -24,13 +24,13 @@ export function buildToc(blocks: ContentBlockValue[]): { id: string; label: stri
 
 /** Para Guía, `content[].id` es requerido (a diferencia de Noticia/Reportaje) —
  * se deriva del heading (siempre presente ahí) al guardar. */
-export function withBlockIds(blocks: ContentBlockValue[]): { id: string; heading: string; paragraphs: string[] }[] {
+export function withBlockIds(blocks: ContentBlockValue[]): { id: string; heading: string; paragraphs: string[]; image?: { url: string; credit: string } | null }[] {
   const seen = new Map<string, number>();
   return blocks.map((b) => {
     const base = slugify(b.heading ?? "") || "seccion";
     const count = (seen.get(base) ?? 0) + 1;
     seen.set(base, count);
-    return { id: count > 1 ? `${base}-${count}` : base, heading: b.heading ?? "", paragraphs: b.paragraphs };
+    return { id: count > 1 ? `${base}-${count}` : base, heading: b.heading ?? "", paragraphs: b.paragraphs, image: b.image };
   });
 }
 

@@ -12,6 +12,8 @@ import { TagsField } from "@/components/cms/tags-field";
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { buildToc, withBlockIds } from "@/components/cms/lamira/content-blocks-util";
 import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
+import { ImageSearchPicker } from "@/components/cms/lamira/image-search-picker";
+import { RichTextarea } from "@/components/cms/rich-textarea";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
 type Step = "input" | "generating" | "review" | "creating";
@@ -132,15 +134,21 @@ export function GenerateLamiraContentFlow({
   // (si el scraping no encontró ninguna) agregar una a mano en la revisión.
   const [image, setImage] = useState<{ url: string; credit: string } | null>(initialDraft?.image ?? null);
   const [editingImage, setEditingImage] = useState(false);
+  const [imageEditMode, setImageEditMode] = useState<"search" | "url">("search");
   const [imageDraft, setImageDraft] = useState({ url: "", credit: "" });
 
   function startEditImage() {
     setImageDraft(image ?? { url: "", credit: "" });
+    setImageEditMode("search");
     setEditingImage(true);
   }
   function saveImage() {
     if (!imageDraft.url.trim()) return;
     setImage({ url: imageDraft.url.trim(), credit: imageDraft.credit.trim() });
+    setEditingImage(false);
+  }
+  function selectSearchedImage(picked: { url: string; credit: string }) {
+    setImage(picked);
     setEditingImage(false);
   }
 
@@ -414,27 +422,51 @@ export function GenerateLamiraContentFlow({
           <span className={labelClass}>Imagen{image ? " (de la fuente citada)" : ""}</span>
 
           {editingImage ? (
-            <div className="flex flex-col gap-2 rounded-[10px] border border-border-soft bg-background p-3">
-              <div className="flex flex-col gap-1">
-                <label htmlFor="img-url" className="text-[11px] font-medium text-ink-faint">
-                  URL de la imagen
-                </label>
-                <input id="img-url" value={imageDraft.url} onChange={(e) => setImageDraft((d) => ({ ...d, url: e.target.value }))} placeholder="https://…" className={fieldClass} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="img-credit" className="text-[11px] font-medium text-ink-faint">
-                  Crédito
-                </label>
-                <input id="img-credit" value={imageDraft.credit} onChange={(e) => setImageDraft((d) => ({ ...d, credit: e.target.value }))} placeholder="ej. Foto: MILENIO" className={fieldClass} />
-              </div>
-              <div className="flex items-center gap-3">
-                <button type="button" onClick={saveImage} disabled={!imageDraft.url.trim()} className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-pressed disabled:opacity-50">
-                  Guardar imagen
+            <div className="flex flex-col gap-3 rounded-[10px] border border-border-soft bg-background p-3">
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setImageEditMode("search")}
+                  className={`rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors ${imageEditMode === "search" ? "bg-accent text-accent-fg" : "text-ink-soft hover:text-ink"}`}
+                >
+                  Buscar imágenes
                 </button>
-                <button type="button" onClick={() => setEditingImage(false)} className="text-[12px] font-medium text-ink-soft hover:text-brand">
-                  Cancelar
+                <button
+                  type="button"
+                  onClick={() => setImageEditMode("url")}
+                  className={`rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors ${imageEditMode === "url" ? "bg-accent text-accent-fg" : "text-ink-soft hover:text-ink"}`}
+                >
+                  Pegar URL
                 </button>
               </div>
+
+              {imageEditMode === "search" ? (
+                <ImageSearchPicker initialQuery={title || name} onSelect={selectSearchedImage} />
+              ) : (
+                <>
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="img-url" className="text-[11px] font-medium text-ink-faint">
+                      URL de la imagen
+                    </label>
+                    <input id="img-url" value={imageDraft.url} onChange={(e) => setImageDraft((d) => ({ ...d, url: e.target.value }))} placeholder="https://…" className={fieldClass} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="img-credit" className="text-[11px] font-medium text-ink-faint">
+                      Crédito
+                    </label>
+                    <input id="img-credit" value={imageDraft.credit} onChange={(e) => setImageDraft((d) => ({ ...d, credit: e.target.value }))} placeholder="ej. Foto: MILENIO" className={fieldClass} />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button type="button" onClick={saveImage} disabled={!imageDraft.url.trim()} className="self-start rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-pressed disabled:opacity-50">
+                      Guardar imagen
+                    </button>
+                  </div>
+                </>
+              )}
+
+              <button type="button" onClick={() => setEditingImage(false)} className="self-start text-[12px] font-medium text-ink-soft hover:text-brand">
+                Cancelar
+              </button>
             </div>
           ) : image ? (
             <div className="flex items-start gap-3 rounded-[10px] border border-border-soft bg-background p-3">
@@ -468,7 +500,7 @@ export function GenerateLamiraContentFlow({
               <label htmlFor="lc-dek" className={labelClass}>
                 Bajada (dek)
               </label>
-              <textarea id="lc-dek" rows={2} value={dek} onChange={(e) => setDek(e.target.value)} className={`${fieldClass} resize-none`} />
+              <RichTextarea id="lc-dek" rows={2} value={dek} onChange={setDek} className={`${fieldClass} resize-none`} />
             </div>
             <ContentBlocksField blocks={content} onChange={setContent} headingRequired={type === "guia"} />
             {type === "guia" && (
@@ -482,7 +514,7 @@ export function GenerateLamiraContentFlow({
             <label htmlFor="lc-description" className={labelClass}>
               Descripción
             </label>
-            <textarea id="lc-description" rows={5} value={description} onChange={(e) => setDescription(e.target.value)} className={`${fieldClass} resize-none`} />
+            <RichTextarea id="lc-description" rows={5} value={description} onChange={setDescription} className={`${fieldClass} resize-none`} />
           </div>
         )}
 

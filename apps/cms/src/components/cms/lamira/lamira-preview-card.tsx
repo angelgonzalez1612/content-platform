@@ -195,6 +195,13 @@ export function LamiraPreviewCard({
                 <div key={i} className="contents">
                   <div className="flex flex-col gap-1.5">
                     {block.heading && <h3 className="font-serif text-[16px] font-semibold text-ink">{block.heading}</h3>}
+                    {block.image && (
+                      <figure className="my-1">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
+                        <img src={block.image.url} alt="" className="w-full rounded-[8px] object-cover" />
+                        <figcaption className="mt-1 text-[11px] text-ink-faint">{block.image.credit}</figcaption>
+                      </figure>
+                    )}
                     {block.paragraphs.map((p, j) => (
                       <p key={j} className="text-[14px] leading-[1.65] text-ink-soft">
                         {renderInline(p)}

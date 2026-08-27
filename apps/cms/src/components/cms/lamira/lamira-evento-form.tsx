@@ -9,6 +9,7 @@ import { CategoryFieldsSection } from "@/components/cms/category-fields-section"
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
+import { RichTextarea } from "@/components/cms/rich-textarea";
 
 const STATUS_OPTIONS: Array<{ value: EventoStatus; label: string }> = [
   { value: "proximo", label: "Próximo" },
@@ -143,7 +144,7 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
           <label htmlFor="e-description" className={labelClass}>
             Descripción
           </label>
-          <textarea id="e-description" required rows={4} value={form.description} onChange={(e) => set("description", e.target.value)} className={`${fieldClass} resize-none`} />
+          <RichTextarea id="e-description" required rows={4} value={form.description} onChange={(v) => set("description", v)} className={`${fieldClass} resize-none`} />
         </div>
 
         <div className="flex flex-col gap-1.5">

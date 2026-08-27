@@ -7,6 +7,7 @@ import { ChecksService } from './checks.service';
 import { AiDraftService } from './ai-draft.service';
 import { ProviderRegistry } from './provider-registry.service';
 import { ArticleScraperService } from './article-scraper.service';
+import { ImageSearchService } from './image-search.service';
 import { CategoriesModule } from '../categories/categories.module';
 
 @Module({
@@ -20,6 +21,7 @@ import { CategoriesModule } from '../categories/categories.module';
     ProviderRegistry,
     ChecksService,
     ArticleScraperService,
+    ImageSearchService,
     AiDraftService,
   ],
 })

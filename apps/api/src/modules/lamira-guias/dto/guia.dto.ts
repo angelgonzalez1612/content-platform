@@ -4,6 +4,7 @@ const seoSchema = z
   .object({ title: z.string().optional(), description: z.string().optional(), canonical: z.string().optional(), ogImage: z.string().optional() })
   .nullable()
   .optional();
+const blockImageSchema = z.object({ url: z.string(), credit: z.string() }).nullable().optional();
 
 export const queryGuiasSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
@@ -22,7 +23,7 @@ export const createGuiaSchema = z.object({
   quickFacts: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
   seo: seoSchema,
   toc: z.array(z.object({ id: z.string(), label: z.string() })).optional(),
-  content: z.array(z.object({ id: z.string(), heading: z.string(), paragraphs: z.array(z.string()) })).optional(),
+  content: z.array(z.object({ id: z.string(), heading: z.string(), paragraphs: z.array(z.string()), image: blockImageSchema })).optional(),
   faq: z.array(z.object({ question: z.string(), answer: z.string() })).optional(),
   imageUrl: z.string().nullable().optional(),
   imageCredit: z.string().nullable().optional(),
@@ -42,7 +43,7 @@ export const updateGuiaSchema = z
     quickFacts: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
     seo: seoSchema,
     toc: z.array(z.object({ id: z.string(), label: z.string() })).optional(),
-    content: z.array(z.object({ id: z.string(), heading: z.string(), paragraphs: z.array(z.string()) })).optional(),
+    content: z.array(z.object({ id: z.string(), heading: z.string(), paragraphs: z.array(z.string()), image: blockImageSchema })).optional(),
     faq: z.array(z.object({ question: z.string(), answer: z.string() })).optional(),
     imageUrl: z.string().nullable().optional(),
     imageCredit: z.string().nullable().optional(),

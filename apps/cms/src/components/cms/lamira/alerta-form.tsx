@@ -10,6 +10,7 @@ import { PairListField } from "@/components/cms/pair-list-field";
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
+import { RichTextarea } from "@/components/cms/rich-textarea";
 
 const STATUS_OPTIONS: Array<{ value: AlertaStatus; label: string }> = [
   { value: "activa", label: "Activa" },
@@ -123,7 +124,7 @@ export function AlertaForm({ categories, existing }: { categories: Category[]; e
           <label htmlFor="a-description" className={labelClass}>
             Descripción
           </label>
-          <textarea id="a-description" required rows={4} value={form.description} onChange={(e) => set("description", e.target.value)} className={`${fieldClass} resize-none`} />
+          <RichTextarea id="a-description" required rows={4} value={form.description} onChange={(v) => set("description", v)} className={`${fieldClass} resize-none`} />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
