@@ -8,6 +8,7 @@ export const updateEventSchema = z
     endDate: z.coerce.date().nullable().optional(),
     placeId: z.string().nullable().optional(),
     locationName: z.string().nullable().optional(),
+    categoryId: z.string().nullable().optional(),
     status: z.enum(['draft', 'in_review', 'scheduled', 'published', 'archived']).optional(),
     categoryData: z.record(z.string(), z.unknown()).optional(),
     seo: z

@@ -68,6 +68,7 @@ export class EventsService {
         endDate: dto.endDate ?? null,
         placeId: dto.placeId ?? null,
         locationName: dto.locationName ?? null,
+        categoryId: dto.categoryId ?? null,
         status: dto.status,
         categoryData: dto.categoryData ?? {},
         seo: dto.seo ?? null,

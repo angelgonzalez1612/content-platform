@@ -18,7 +18,7 @@ import {
 import { ProviderRegistry } from './provider-registry.service';
 import { ChecksService, type CheckResult, type AiDecision } from './checks.service';
 import { buildFieldSchemaZod, factKeys } from './field-schema-builder';
-import { getContentTypeConfig } from './content-types';
+import { CONTENT_TYPES, getContentTypeConfig } from './content-types';
 import { DraftRequestDto, ImproveRequestDto } from './dto/draft-request.dto';
 import { ArticleScraperService, type ScrapedArticle } from './article-scraper.service';
 import { CategoriesService } from '../categories/categories.service';
@@ -55,6 +55,11 @@ export interface DraftResult {
   // categoryId, es la que la IA clasificó sola (ver classifyCategory). El
   // CMS la usa para dejarla preseleccionada, editable, en la revisión.
   categoryId: string;
+  // Sitio + tipo con los que se generó — si el caller no mandó site/contentType
+  // (flujo de Publicar desde content-radar), son los que la IA clasificó sola
+  // (ver classifyContentType). El CMS los usa para saber qué formulario mostrar.
+  site: 'la-mira' | 'planazo';
+  contentType: string;
 }
 
 // Orquesta el agente editorial: arma el schema dinámico (tipo de contenido +
@@ -95,10 +100,13 @@ export class AiDraftService {
   // clasifica sola, con el mismo material (tema + artículo completo) que va
   // a usar para redactar. Sigue siendo 100% editable después: dto.categoryId
   // es opcional justo para permitir que el humano la fuerce si hace falta.
-  private async classifyCategory(dto: DraftRequestDto, scrapedArticle: ScrapedArticle | null): Promise<string> {
-    const siteCategories = await this.categoriesService.findAll(dto.site);
+  // `site` va aparte (no como dto.site) porque para cuando se llama aquí ya
+  // está resuelto — provisto por el caller o recién clasificado por
+  // classifyContentType — y dto.site puede seguir siendo opcional en el tipo.
+  private async classifyCategory(site: 'la-mira' | 'planazo', dto: DraftRequestDto, scrapedArticle: ScrapedArticle | null): Promise<string> {
+    const siteCategories = await this.categoriesService.findAll(site);
     if (siteCategories.length === 0) {
-      throw new BadRequestException(`El sitio "${dto.site}" no tiene categorías configuradas.`);
+      throw new BadRequestException(`El sitio "${site}" no tiene categorías configuradas.`);
     }
 
     const categoryIds = siteCategories.map((c) => c.id) as [string, ...string[]];
@@ -115,7 +123,7 @@ export class AiDraftService {
       .join('\n\n');
 
     const categoryList = siteCategories.map((c) => `- ${c.id}: ${c.name}`).join('\n');
-    const siteLabel = dto.site === 'la-mira' ? 'La Mira, un periódico digital hiperlocal de la Ciudad de México' : 'Planazo, una guía de planes y lugares de la Ciudad de México';
+    const siteLabel = site === 'la-mira' ? 'La Mira, un periódico digital hiperlocal de la Ciudad de México' : 'Planazo, una guía de planes y lugares de la Ciudad de México';
 
     const output = await this.providers.get(dto.provider).generateStructured({
       systemPrompt: `Eres un editor que clasifica contenido para ${siteLabel}. Tu único trabajo es elegir, de la lista de categorías reales que te doy, la que mejor encaja con el tema — nunca inventes una categoría que no esté en la lista.`,
@@ -127,16 +135,58 @@ export class AiDraftService {
     return (output as { categoryId: string }).categoryId;
   }
 
-  async draft(dto: DraftRequestDto): Promise<DraftResult> {
-    const typeConfig = getContentTypeConfig(dto.contentType);
+  // Cuando el humano llega desde el botón Publicar de content-radar, ya no
+  // trae `site`/`contentType` fijos (antes se forzaba todo a La Mira, aunque
+  // el tema encajara mejor en Planazo — ej. un evento real). Se clasifican
+  // los dos JUNTOS en un solo paso, sobre el registro completo de tipos
+  // (CONTENT_TYPES, ambos sitios) — el `site` de un tipo se deriva de cuál
+  // ganó, no se pregunta aparte, porque razonar directo sobre "¿qué tipo de
+  // pieza es esto?" es más concreto para el modelo que un "¿qué sitio?"
+  // abstracto primero.
+  private async classifyContentType(dto: DraftRequestDto, scrapedArticle: ScrapedArticle | null): Promise<{ site: 'la-mira' | 'planazo'; contentType: string }> {
+    const entries = Object.values(CONTENT_TYPES);
+    const keys = entries.map((e) => e.contentType) as [string, ...string[]];
+    const classifySchema = z.object({
+      contentType: z.enum(keys).describe('El tipo de contenido que mejor encaja — debe ser exactamente uno de los ids de la lista.'),
+    });
 
+    const material = [
+      `Tema/título: ${dto.name}`,
+      dto.hints ? `Notas del editor: ${dto.hints}` : '',
+      scrapedArticle ? `Artículo completo de la fuente citada:\n"""\n${scrapedArticle.text}\n"""` : '',
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+
+    const typeList = entries.map((e) => `- ${e.contentType} (${e.site === 'la-mira' ? 'La Mira' : 'Planazo'} — ${e.label}): ${e.classifyHint}`).join('\n');
+
+    const output = await this.providers.get(dto.provider).generateStructured({
+      systemPrompt:
+        'Eres un editor que decide en qué sitio y bajo qué tipo de contenido publicar un tema, entre dos publicaciones digitales de la Ciudad de México: La Mira (periodismo hiperlocal — noticias, alertas, guías, eventos y lugares con angle noticioso) y Planazo (directorio evergreen de planes — lugares y eventos recomendados, sin angle de cobertura). Elige el tipo que mejor encaja — nunca inventes uno que no esté en la lista.',
+      userPrompt: `${material}\n\nTipos disponibles (responde con el id de exactamente uno de ellos):\n${typeList}`,
+      schema: classifySchema,
+      schemaName: 'content_type_classification',
+    });
+
+    const contentType = (output as { contentType: string }).contentType;
+    return { site: getContentTypeConfig(contentType).site, contentType };
+  }
+
+  async draft(dto: DraftRequestDto): Promise<DraftResult> {
     // Fase 2 del plan de rediseño del pipeline (content-radar → Centro IA):
     // en vez de que la IA solo vea el titular citado en `hints`, se lee el
     // artículo completo de esa fuente — más material real, tanto para
-    // clasificar la categoría como para redactar.
+    // clasificar sitio/tipo/categoría como para redactar.
     const scrapedArticle = await this.scrapeSourceFromHints(dto.hints);
 
-    const categoryId = dto.categoryId ?? (await this.classifyCategory(dto, scrapedArticle));
+    let site = dto.site;
+    let contentType = dto.contentType;
+    if (!site || !contentType) {
+      ({ site, contentType } = await this.classifyContentType(dto, scrapedArticle));
+    }
+
+    const typeConfig = getContentTypeConfig(contentType);
+    const categoryId = dto.categoryId ?? (await this.classifyCategory(site, dto, scrapedArticle));
     const category = await this.db.query.categories.findFirst({ where: eq(categories.id, categoryId) });
     if (!category) throw new BadRequestException(`Categoría "${categoryId}" no existe`);
 
@@ -169,7 +219,7 @@ export class AiDraftService {
       systemPrompt: typeConfig.systemPrompt,
       userPrompt,
       schema: fullSchema,
-      schemaName: `${dto.contentType}_draft`,
+      schemaName: `${contentType}_draft`,
     });
 
     const { checksRun, decision } = this.checks.run({
@@ -189,7 +239,7 @@ export class AiDraftService {
     const image =
       scrapedArticle?.imageUrl && sourceLabel ? { url: scrapedArticle.imageUrl, credit: `Foto: ${sourceLabel}` } : null;
 
-    return { draft: output as Record<string, unknown>, checksRun, decision, image, categoryId: category.id };
+    return { draft: output as Record<string, unknown>, checksRun, decision, image, categoryId: category.id, site, contentType };
   }
 
   /** Solo implementado para 'place' por ahora — es el único tipo con carga/guardado
@@ -270,7 +320,7 @@ export class AiDraftService {
 
     // "Mejorar" edita contenido ya existente — no toca la imagen (eso vive
     // aparte, en el registro que ya se creó); Fase 4 solo cubre el draft nuevo.
-    return { draft: output as Record<string, unknown>, checksRun, decision, image: null, categoryId: category?.id ?? '' };
+    return { draft: output as Record<string, unknown>, checksRun, decision, image: null, categoryId: category?.id ?? '', site: 'planazo', contentType: 'place' };
   }
 
   /** Los 6 tipos de la-mira con CRUD real (Fase 2) — 'place' sigue por separado
@@ -413,6 +463,6 @@ export class AiDraftService {
 
     // "Mejorar" edita contenido ya existente — no toca la imagen (eso vive
     // aparte, en el registro que ya se creó); Fase 4 solo cubre el draft nuevo.
-    return { draft: output as Record<string, unknown>, checksRun, decision, image: null, categoryId: category?.id ?? '' };
+    return { draft: output as Record<string, unknown>, checksRun, decision, image: null, categoryId: category?.id ?? '', site: 'la-mira', contentType: type };
   }
 }

@@ -37,6 +37,27 @@ interface DraftResponse {
   decision: AiDecision;
   image: { url: string; credit: string } | null;
   categoryId: string;
+  site: "la-mira" | "planazo";
+  contentType: string;
+}
+
+function parseDraftFields(draft: Record<string, unknown>) {
+  const { dek, content, faq, description, seo, ...rest } = draft as {
+    dek?: string;
+    content?: ContentBlockValue[];
+    faq?: { question: string; answer: string }[];
+    description?: string;
+    seo?: Seo;
+    [k: string]: unknown;
+  };
+  return {
+    dek: dek ?? "",
+    description: description ?? "",
+    content: (content ?? []).map((b) => ({ heading: b.heading ?? null, paragraphs: b.paragraphs })),
+    faq: faq ?? [],
+    seo: seo ?? {},
+    categoryData: rest,
+  };
 }
 
 export function GenerateLamiraContentFlow({
@@ -44,15 +65,21 @@ export function GenerateLamiraContentFlow({
   categories,
   initialName,
   initialHints,
+  initialDraft,
 }: {
   type: string;
   categories: Category[];
   initialName?: string;
   initialHints?: string;
+  // Cuando viene de PublishFlow (Publicar desde content-radar sin sitio/tipo
+  // fijo), el borrador ya se generó ahí — este componente arranca directo en
+  // "review" con estos datos, sin pedirle al humano que genere de nuevo.
+  initialDraft?: DraftResponse;
 }) {
   const router = useRouter();
   const meta = TYPE_META[type];
-  const [step, setStep] = useState<Step>("input");
+  const initialParsed = initialDraft ? parseDraftFields(initialDraft.draft) : null;
+  const [step, setStep] = useState<Step>(initialDraft ? "review" : "input");
   const [name, setName] = useState(initialName ?? "");
   const [hints, setHints] = useState(initialHints ?? "");
   const [provider, setProvider] = useState<ProviderId>("openai");
@@ -60,21 +87,21 @@ export function GenerateLamiraContentFlow({
   // partir del tema (ver AiDraftService.classifyCategory), y llega aquí ya
   // resuelta en la respuesta del draft. Sigue siendo 100% editable en la
   // revisión, justo debajo, por si la IA se equivocó.
-  const [categoryId, setCategoryId] = useState("");
-  const [categoryWasAiChosen, setCategoryWasAiChosen] = useState(false);
+  const [categoryId, setCategoryId] = useState(initialDraft?.categoryId ?? "");
+  const [categoryWasAiChosen, setCategoryWasAiChosen] = useState(!!initialDraft);
   const [error, setError] = useState("");
 
-  const [dek, setDek] = useState("");
-  const [description, setDescription] = useState("");
-  const [content, setContent] = useState<ContentBlockValue[]>([]);
-  const [faq, setFaq] = useState<{ question: string; answer: string }[]>([]);
-  const [seo, setSeo] = useState<Seo>({});
-  const [categoryData, setCategoryData] = useState<Record<string, unknown>>({});
-  const [checksRun, setChecksRun] = useState<CheckResult[]>([]);
-  const [decision, setDecision] = useState<AiDecision>("needs-review");
+  const [dek, setDek] = useState(initialParsed?.dek ?? "");
+  const [description, setDescription] = useState(initialParsed?.description ?? "");
+  const [content, setContent] = useState<ContentBlockValue[]>(initialParsed?.content ?? []);
+  const [faq, setFaq] = useState<{ question: string; answer: string }[]>(initialParsed?.faq ?? []);
+  const [seo, setSeo] = useState<Seo>(initialParsed?.seo ?? {});
+  const [categoryData, setCategoryData] = useState<Record<string, unknown>>(initialParsed?.categoryData ?? {});
+  const [checksRun, setChecksRun] = useState<CheckResult[]>(initialDraft?.checksRun ?? []);
+  const [decision, setDecision] = useState<AiDecision>(initialDraft?.decision ?? "needs-review");
   // Imagen de la fuente citada, con crédito — viene del scraping (Fase 4 del
   // plan), nunca la genera la IA. El humano puede quitarla en la revisión.
-  const [image, setImage] = useState<{ url: string; credit: string } | null>(null);
+  const [image, setImage] = useState<{ url: string; credit: string } | null>(initialDraft?.image ?? null);
 
   // Campos que la IA no genera (son datos verificables) — el humano los llena
   // en la revisión. Para alerta/evento/lugar son obligatorios de verdad
@@ -129,20 +156,13 @@ export function GenerateLamiraContentFlow({
       }
 
       const data: DraftResponse = await res.json();
-      const { dek: draftDek, content: draftContent, faq: draftFaq, description: draftDescription, seo: draftSeo, ...rest } = data.draft as {
-        dek?: string;
-        content?: ContentBlockValue[];
-        faq?: { question: string; answer: string }[];
-        description?: string;
-        seo?: Seo;
-        [k: string]: unknown;
-      };
-      setDek(draftDek ?? "");
-      setDescription(draftDescription ?? "");
-      setContent((draftContent ?? []).map((b) => ({ heading: b.heading ?? null, paragraphs: b.paragraphs })));
-      setFaq(draftFaq ?? []);
-      setSeo(draftSeo ?? {});
-      setCategoryData(rest);
+      const parsed = parseDraftFields(data.draft);
+      setDek(parsed.dek);
+      setDescription(parsed.description);
+      setContent(parsed.content);
+      setFaq(parsed.faq);
+      setSeo(parsed.seo);
+      setCategoryData(parsed.categoryData);
       setChecksRun(data.checksRun);
       setDecision(data.decision);
       setImage(data.image);

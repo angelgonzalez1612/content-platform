@@ -7,6 +7,7 @@ export const createEventSchema = z.object({
   endDate: z.coerce.date().nullable().optional(),
   placeId: z.string().nullable().optional(),
   locationName: z.string().nullable().optional(),
+  categoryId: z.string().nullable().optional(),
   status: z.enum(['draft', 'in_review', 'scheduled', 'published', 'archived']).default('draft'),
   categoryData: z.record(z.string(), z.unknown()).optional(),
   seo: z

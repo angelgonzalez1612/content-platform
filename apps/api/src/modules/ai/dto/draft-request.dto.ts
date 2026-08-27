@@ -2,8 +2,12 @@ import { z } from 'zod';
 import { AI_PROVIDER_IDS } from '../provider-registry.service';
 
 export const draftRequestSchema = z.object({
-  site: z.enum(['la-mira', 'planazo']),
-  contentType: z.string().min(1),
+  // site/contentType opcionales: si se omiten AMBOS (flujo de Publicar desde
+  // content-radar, que ya no fija el destino de antemano), AiDraftService los
+  // clasifica juntos con IA (ver classifyContentType). Los flujos manuales del
+  // CMS (SiteTabs → Centro IA de un sitio específico) los siguen mandando fijos.
+  site: z.enum(['la-mira', 'planazo']).optional(),
+  contentType: z.string().min(1).optional(),
   categoryId: z.string().min(1).optional(), // si se omite, la IA la clasifica sola (ver AiDraftService.classifyCategory)
   name: z.string().min(1),
   hints: z.string().optional(),

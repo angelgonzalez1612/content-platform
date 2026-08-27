@@ -14,6 +14,13 @@ import { z } from 'zod';
 export interface ContentTypeConfig {
   contentType: string;
   label: string;
+  // A qué sitio pertenece este tipo — usado por AiDraftService.classifyContentType
+  // para decidir sitio+tipo en un solo paso cuando el caller no los manda (flujo
+  // de Publicar desde content-radar, que ya no fija el destino de antemano).
+  site: 'la-mira' | 'planazo';
+  // Descripción corta (1 línea) de cuándo encaja este tipo — es lo que ve el
+  // clasificador junto al contentType, no el humano.
+  classifyHint: string;
   editorialShape: z.ZodRawShape;
   requiredEditorialFields: string[];
   systemPrompt: string;
@@ -32,6 +39,8 @@ export const CONTENT_TYPES: Record<string, ContentTypeConfig> = {
   place: {
     contentType: 'place',
     label: 'Lugar (Planazo)',
+    site: 'planazo',
+    classifyHint: 'Ficha de negocio/lugar para el directorio evergreen de Planazo — el tema ES un lugar puntual (restaurante, bar, museo, parque…), no una noticia de coyuntura ni un evento con fecha.',
     editorialShape: {
       description: z
         .string()
@@ -49,6 +58,8 @@ Reglas estrictas:
   noticia: {
     contentType: 'noticia',
     label: 'Noticia (la-mira)',
+    site: 'la-mira',
+    classifyHint: 'Hecho puntual con vigencia corta — algo que pasó o se anunció, sin ser una disrupción activa urgente.',
     editorialShape: {
       dek: z.string().describe('Bajada de 1-2 líneas, resume la noticia sin repetir el título.'),
       content: z
@@ -62,6 +73,8 @@ Reglas estrictas:
   alerta: {
     contentType: 'alerta',
     label: 'Alerta (la-mira)',
+    site: 'la-mira',
+    classifyHint: 'Disrupción activa EN CURSO ahora mismo (bloqueo, cierre, riesgo de seguridad, clima severo) que amerita urgencia — no un hecho ya cerrado.',
     editorialShape: {
       description: z.string().describe('1-3 párrafos, explica la situación con lo que se sabe hasta ahora.'),
     },
@@ -71,6 +84,8 @@ Reglas estrictas:
   guia: {
     contentType: 'guia',
     label: 'Guía (la-mira)',
+    site: 'la-mira',
+    classifyHint: 'Contenido evergreen tipo trámite/how-to ("cómo tramitar X", "qué hacer si Y") — no tiene fecha de vigencia.',
     editorialShape: {
       dek: z.string().describe('Bajada de 1-2 líneas, resume qué resuelve la guía.'),
       content: z
@@ -85,15 +100,35 @@ Reglas estrictas:
   evento: {
     contentType: 'evento',
     label: 'Evento (la-mira)',
+    site: 'la-mira',
+    classifyHint: 'Evento noticioso de una sola vez o de agenda pública (marcha, festival grande, anuncio oficial) — angle de periodismo/cobertura, no una recomendación evergreen de plan. Si el evento está ligado a un negocio/lugar recurrente (bar, foro, restaurante) y el angle es "qué hacer", usa evento-planazo en vez de este.',
     editorialShape: {
       description: z.string().describe('1-2 párrafos que inviten a asistir, sin inventar fecha/hora/lugar/precio — esos ya están capturados aparte.'),
     },
     requiredEditorialFields: ['description'],
     systemPrompt: LAMIRA_BASE_PROMPT,
   },
+  'evento-planazo': {
+    contentType: 'evento-planazo',
+    label: 'Evento (Planazo)',
+    site: 'planazo',
+    classifyHint: 'Evento como recomendación de plan (angle "qué hacer"), típicamente ligado a un lugar/negocio recurrente — para la guía evergreen de Planazo, no para cobertura noticiosa. Si el evento es más bien noticia de agenda pública/cobertura, usa evento (la-mira) en vez de este.',
+    editorialShape: {
+      description: z.string().describe('1-2 párrafos que inviten a asistir, tono de recomendación de plan — sin inventar fecha/hora/lugar/precio, esos ya están capturados aparte.'),
+    },
+    requiredEditorialFields: ['description'],
+    systemPrompt: `Eres redactor editorial de Planazo, una guía de planes y lugares de la Ciudad de México.
+
+Reglas estrictas:
+- Solo escribes con la información que te da el editor. NUNCA inventes fecha, hora, lugar, precio ni otros datos verificables que no te dieron — eso lo completa un humano después.
+- El tono es directo y útil, como alguien que te está recomendando un plan, no como un anuncio ni como cobertura noticiosa.
+- Responde siempre en español de México.`,
+  },
   lugar: {
     contentType: 'lugar',
     label: 'Lugar (la-mira)',
+    site: 'la-mira',
+    classifyHint: 'Reseña/cobertura de un lugar con angle noticioso (apertura, cierre, hecho reciente) — no una ficha de directorio evergreen (para eso existe "place" en Planazo).',
     editorialShape: {
       description: z.string().describe('1-2 párrafos que describan el lugar para alguien que nunca ha ido.'),
     },
@@ -103,6 +138,8 @@ Reglas estrictas:
   reportaje: {
     contentType: 'reportaje',
     label: 'Reportaje (la-mira)',
+    site: 'la-mira',
+    classifyHint: 'Análisis largo, con más contexto y profundidad — no una noticia de último momento ni una nota corta.',
     editorialShape: {
       dek: z.string().describe('Bajada de 1-2 líneas, resume el ángulo del reportaje sin repetir el título.'),
       content: z

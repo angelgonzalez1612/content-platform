@@ -11,6 +11,7 @@ interface EventRow {
   startDate: Date | string;
   endDate: Date | string | null;
   locationName: string | null;
+  categoryId: string | null;
   status: PlanazoEvent['status'];
   categoryData: Record<string, unknown>;
   seo: PlanazoEvent['seo'];
@@ -30,6 +31,7 @@ export function toPlanazoEvent(row: EventRow): PlanazoEvent {
     endDate: toIsoOrNull(row.endDate),
     locationName: row.locationName,
     place: row.place ? toPlaceSummary(row.place) : null,
+    categoryId: row.categoryId,
     status: row.status,
     categoryData: row.categoryData,
     seo: row.seo ?? null,

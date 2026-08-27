@@ -146,6 +146,7 @@ export const articlePlacesRelations = relations(articlePlaces, ({ one }) => ({
 
 export const eventsRelations = relations(events, ({ one }) => ({
   place: one(places, { fields: [events.placeId], references: [places.id] }),
+  category: one(categories, { fields: [events.categoryId], references: [categories.id] }),
 }));
 
 export const promotionsRelations = relations(promotions, ({ one }) => ({

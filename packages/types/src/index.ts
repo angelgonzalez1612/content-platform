@@ -73,6 +73,12 @@ export interface AiDraftResult {
   // La categoría con la que se generó el draft — clasificada por la IA
   // cuando el caller no mandó categoryId. El CMS la preselecciona, editable.
   categoryId: string;
+  // Sitio + tipo de contenido con el que se generó — clasificados por la IA
+  // cuando el caller no mandó `site`/`contentType` (flujo de Publicar desde
+  // content-radar, que ya no fija el destino de antemano). El CMS los usa
+  // para saber qué formulario de revisión mostrar.
+  site: 'la-mira' | 'planazo';
+  contentType: string;
 }
 
 // ── Los 6 tipos de contenido editorial de la-mira ───────────────────────────
@@ -351,6 +357,7 @@ export interface PlanazoEvent {
   endDate: string | null;
   locationName: string | null;
   place: Place | null;
+  categoryId: string | null;
   status: ContentStatus;
   categoryData: Record<string, unknown>;
   seo: Seo | null;

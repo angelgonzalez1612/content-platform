@@ -28,17 +28,17 @@ interface DraftResponse {
   contentType: string;
 }
 
-function parsePlaceDraft(draft: Record<string, unknown>) {
-  const { seo, description, suggestedTags, ...rest } = draft as {
-    seo?: Seo;
-    description?: string;
-    suggestedTags?: string[];
-    [key: string]: unknown;
-  };
-  return { seo: seo ?? {}, description: description ?? "", tags: suggestedTags ?? [], categoryData: rest };
+function parseEventDraft(draft: Record<string, unknown>) {
+  const { seo, description, ...rest } = draft as { seo?: Seo; description?: string; [key: string]: unknown };
+  return { seo: seo ?? {}, description: description ?? "", categoryData: rest };
 }
 
-export function GeneratePlaceFlow({
+// Evento de Planazo — recomendación de plan ligada (opcionalmente) a un lugar
+// recurrente, distinto del "evento" de la-mira (cobertura noticiosa, ver
+// content-types.ts). Antes de este cambio Planazo no tenía NINGÚN flujo de
+// creación de eventos con IA — solo `place` — así que este componente es
+// nuevo por completo, calcado de GeneratePlaceFlow.
+export function GenerateEventFlow({
   categories,
   initialName,
   initialDraft,
@@ -51,24 +51,28 @@ export function GeneratePlaceFlow({
   initialDraft?: DraftResponse;
 }) {
   const router = useRouter();
-  const initialParsed = initialDraft ? parsePlaceDraft(initialDraft.draft) : null;
+  const initialParsed = initialDraft ? parseEventDraft(initialDraft.draft) : null;
   const [step, setStep] = useState<Step>(initialDraft ? "review" : "input");
   const [name, setName] = useState(initialName ?? "");
   const [hints, setHints] = useState("");
   const [provider, setProvider] = useState<ProviderId>("openai");
-  // La categoría ya no la elige el humano de entrada — la clasifica la IA a
-  // partir del tema (ver AiDraftService.classifyCategory). Sigue siendo 100%
-  // editable en la revisión, justo debajo, por si la IA se equivocó.
   const [categoryId, setCategoryId] = useState(initialDraft?.categoryId ?? "");
   const [categoryWasAiChosen, setCategoryWasAiChosen] = useState(!!initialDraft);
   const [error, setError] = useState("");
 
   const [description, setDescription] = useState(initialParsed?.description ?? "");
-  const [tags, setTags] = useState<string[]>(initialParsed?.tags ?? []);
   const [seo, setSeo] = useState<Seo>(initialParsed?.seo ?? {});
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(initialParsed?.categoryData ?? {});
   const [checksRun, setChecksRun] = useState<CheckResult[]>(initialDraft?.checksRun ?? []);
   const [decision, setDecision] = useState<AiDecision>(initialDraft?.decision ?? "needs-review");
+
+  // Datos verificables — la IA nunca los inventa, los completa el humano
+  // aquí antes de crear (los eventos de Planazo no tienen workflow de
+  // borrador: se publican de inmediato al crearse, igual que alerta/evento/
+  // lugar de la-mira).
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [locationName, setLocationName] = useState("");
 
   const category = categories.find((c) => c.id === categoryId) ?? null;
 
@@ -84,7 +88,7 @@ export function GeneratePlaceFlow({
         headers: { "Content-Type": "application/json" },
         // categoryId se omite a propósito: sin ella, el backend clasifica sola
         // la categoría (ver AiDraftService.classifyCategory) — llega en data.categoryId abajo.
-        body: JSON.stringify({ site: "planazo", contentType: "place", name, hints: hints || undefined, provider }),
+        body: JSON.stringify({ site: "planazo", contentType: "evento-planazo", name, hints: hints || undefined, provider }),
       });
 
       if (!res.ok) {
@@ -95,9 +99,8 @@ export function GeneratePlaceFlow({
       }
 
       const data: DraftResponse = await res.json();
-      const parsed = parsePlaceDraft(data.draft);
+      const parsed = parseEventDraft(data.draft);
       setDescription(parsed.description);
-      setTags(parsed.tags);
       setSeo(parsed.seo);
       setCategoryData(parsed.categoryData);
       setChecksRun(data.checksRun);
@@ -116,29 +119,33 @@ export function GeneratePlaceFlow({
     setError("");
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/places`, {
+      const res = await fetch(`${apiConfig.baseUrl}/cms/events`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
           description,
-          categorySlug: category?.slug,
-          tags,
-          status: decision === "auto-published" ? "published" : "draft",
+          startDate,
+          endDate: endDate || null,
+          locationName: locationName || null,
+          categoryId: categoryId || null,
+          status: "published",
           categoryData,
           seo,
         }),
       });
 
       if (!res.ok) {
-        setError("No se pudo crear el lugar.");
+        setError("No se pudo crear el evento — revisa que la fecha esté llena.");
         setStep("review");
         return;
       }
 
-      const created = await res.json();
-      router.push(`/contenido/${created.id}`);
+      // No hay todavía una pantalla de edición dedicada para eventos de
+      // Planazo (a diferencia de place/la-mira) — de vuelta al listado.
+      await res.json();
+      router.push(`/contenido?site=planazo`);
     } catch {
       setError("No se pudo conectar con el servidor.");
       setStep("review");
@@ -151,39 +158,38 @@ export function GeneratePlaceFlow({
         <div className="mx-auto mb-4 grid size-[46px] place-items-center rounded-2xl border border-[#FFE2CC] bg-accent">
           <Icon d={SPARK_ICON} size={22} strokeWidth={1.6} className="text-brand" />
         </div>
-        <h1 className="mb-1.5 text-[24px] font-semibold tracking-tight">¿Sobre qué lugar escribimos?</h1>
+        <h1 className="mb-1.5 text-[24px] font-semibold tracking-tight">¿Sobre qué evento escribimos?</h1>
         <p className="mx-auto mb-7 max-w-[46ch] text-[13.5px] leading-[1.6] text-ink-soft">
-          Dame el nombre de un lugar real, la categoría y lo que ya sabes de él. Escribo la descripción y los campos
-          propios de la categoría — la dirección, teléfono y precio los completas tú, para no inventar datos que
-          puedan estar mal.
+          Dame el nombre del evento y lo que ya sabes de él. Escribo la descripción — la fecha, hora y lugar los
+          completas tú, para no inventar datos que puedan estar mal.
         </p>
 
         <form onSubmit={handleGenerate} className="flex flex-col gap-4 text-left">
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="place-name" className={labelClass}>
-              Nombre del lugar
+            <label htmlFor="event-name" className={labelClass}>
+              Nombre del evento
             </label>
             <input
-              id="place-name"
+              id="event-name"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="ej. Café Nin, Roma Norte"
+              placeholder="ej. Noche de jazz en Foro Indie Rocks"
               className={fieldClass}
               disabled={step === "generating"}
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="place-hints" className={labelClass}>
+            <label htmlFor="event-hints" className={labelClass}>
               Lo que ya sabes (opcional)
             </label>
             <textarea
-              id="place-hints"
+              id="event-hints"
               rows={3}
               value={hints}
               onChange={(e) => setHints(e.target.value)}
-              placeholder="ej. cafetería de especialidad, terraza chica, buena para trabajar"
+              placeholder="ej. entrada libre, cupo limitado, ambiente relajado"
               className={`${fieldClass} resize-none`}
               disabled={step === "generating"}
             />
@@ -245,11 +251,11 @@ export function GeneratePlaceFlow({
 
       <div className="flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="gen-description" className={labelClass}>
+          <label htmlFor="event-description" className={labelClass}>
             Descripción
           </label>
           <textarea
-            id="gen-description"
+            id="event-description"
             rows={5}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -259,7 +265,7 @@ export function GeneratePlaceFlow({
 
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
-            <label htmlFor="place-review-category" className={labelClass}>
+            <label htmlFor="event-review-category" className={labelClass}>
               Categoría
             </label>
             {categoryWasAiChosen && (
@@ -270,7 +276,7 @@ export function GeneratePlaceFlow({
             )}
           </div>
           <select
-            id="place-review-category"
+            id="event-review-category"
             value={categoryId}
             onChange={(e) => {
               setCategoryId(e.target.value);
@@ -288,36 +294,35 @@ export function GeneratePlaceFlow({
 
         <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 
-        <div className="flex flex-col gap-1.5">
-          <span className={labelClass}>Etiquetas sugeridas</span>
-          <div className="flex flex-wrap gap-1.5">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-[12px]"
-              >
-                {tag}
-                <button
-                  type="button"
-                  onClick={() => setTags((t) => t.filter((x) => x !== tag))}
-                  aria-label={`Quitar ${tag}`}
-                  className="text-ink-faint hover:text-negative"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
+        {/* Campos verificables — la IA no los genera, ver comentario arriba. */}
+        <div className="flex flex-col gap-4 rounded-[12px] border border-border-soft bg-background p-4">
+          <span className="font-mono text-[10px] font-medium tracking-[.1em] text-ink-faint uppercase">Datos que tienes que completar tú</span>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="ev-start" className={labelClass}>
+                Fecha y hora de inicio
+              </label>
+              <input id="ev-start" type="datetime-local" required value={startDate} onChange={(e) => setStartDate(e.target.value)} className={fieldClass} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="ev-end" className={labelClass}>
+                Fecha y hora de fin (opcional)
+              </label>
+              <input id="ev-end" type="datetime-local" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={fieldClass} />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="ev-location" className={labelClass}>
+              Lugar
+            </label>
+            <input id="ev-location" value={locationName} onChange={(e) => setLocationName(e.target.value)} placeholder="ej. Foro Indie Rocks, Condesa" className={fieldClass} />
           </div>
         </div>
 
         <SeoPanel seo={seo} onChange={setSeo} checksRun={checksRun} decision={decision} />
 
-        <p className="rounded-lg bg-background px-3 py-2.5 text-[12.5px] leading-[1.5] text-ink-soft">
-          Dirección, teléfono y precio quedan en blanco a propósito — la IA no los inventó. Complétalos en la
-          pantalla de edición después de crear el borrador.
-          {decision === "auto-published"
-            ? " Este borrador pasó todos los checks automáticos — se creará como publicado."
-            : " Este borrador necesita revisión — se creará como borrador, no publicado."}
+        <p className="rounded-lg bg-[#FEF6E7] px-3 py-2.5 text-[12.5px] leading-[1.5] text-[#9A6B12]">
+          Este tipo de contenido no tiene borrador — se publica de inmediato al crearlo. Revisa bien antes de continuar.
         </p>
 
         {error && <p className="rounded-lg bg-[#FDECEA] px-3 py-2 text-[13px] font-medium text-[#C4453A]">{error}</p>}
@@ -329,13 +334,9 @@ export function GeneratePlaceFlow({
             disabled={step === "creating"}
             className="rounded-[10px] bg-brand px-4 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_1px_2px_rgba(253,105,13,.35)] transition-[transform,box-shadow,background-color] duration-200 hover:-translate-y-px hover:bg-brand-pressed hover:shadow-[0_10px_24px_-10px_rgba(253,105,13,.55)] disabled:translate-y-0 disabled:cursor-default disabled:opacity-60 disabled:shadow-none"
           >
-            {step === "creating" ? "Creando…" : decision === "auto-published" ? "Crear y publicar" : "Crear como borrador"}
+            {step === "creating" ? "Creando…" : "Crear y publicar"}
           </button>
-          <button
-            type="button"
-            onClick={() => setStep("input")}
-            className="text-[13px] font-medium text-ink-soft hover:text-brand"
-          >
+          <button type="button" onClick={() => setStep("input")} className="text-[13px] font-medium text-ink-soft hover:text-brand">
             Empezar de nuevo
           </button>
         </div>
