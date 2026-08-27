@@ -88,8 +88,13 @@ export class AiDraftService {
       `Categoría: ${category.name}`,
       `Nombre/título: ${dto.name}`,
       dto.hints ? `Notas del editor: ${dto.hints}` : 'Notas del editor: (ninguna)',
+      // Fase 3 del plan: el artículo completo va marcado explícitamente como
+      // "material de referencia" — es insumo factual, NO una fuente para
+      // copiar/parafrasear. La regla completa vive en LAMIRA_BASE_PROMPT
+      // (content-types.ts); se repite aquí, junto al texto mismo, porque un
+      // recordatorio pegado al contenido real se respeta más que uno lejano.
       scrapedArticle
-        ? `\nArtículo completo de la fuente citada (leído en vivo, para que tengas más contexto que solo el titular):\n"""\n${scrapedArticle.text}\n"""`
+        ? `\nMaterial de referencia — artículo completo de la fuente citada, leído en vivo. SOLO para informarte de los hechos: no lo copies, no lo parafrasees de cerca, no repitas su estructura. Redacta tu propia nota, con tus propias palabras:\n"""\n${scrapedArticle.text}\n"""`
         : '',
       '',
       'Genera también seo.title (≤60 caracteres) y seo.description (120-160 caracteres) para esta pieza.',
