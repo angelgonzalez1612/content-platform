@@ -177,7 +177,6 @@ function buildRow(slug: string, headerInner: string, body: string, muted: boolea
 
 export interface RenderedReport {
   leadingHtml: string;
-  jumpNavHtml: string;
   heroHtml: string;
   accordionHtml: string;
   referenceHtml: string;
@@ -206,7 +205,6 @@ export async function renderReport(rawMarkdown: string): Promise<RenderedReport>
   const sectionParts = firstIsSection ? parts : parts.slice(1);
 
   let heroHtml = "";
-  const jumpChips: string[] = [];
   const accordionRows: string[] = [];
   const referenceRows: string[] = [];
 
@@ -230,19 +228,11 @@ export async function renderReport(rawMarkdown: string): Promise<RenderedReport>
     // sin abrir la fila). Las 2 filas de referencia sí lo conservan.
     const rowLabel = isReference ? headerInner : headerInner.replace(/\s*<span class="count-pill">\d+<\/span>/, "");
     const row = buildRow(slug, rowLabel, body, isReference);
-    if (isReference) {
-      referenceRows.push(row);
-    } else {
-      accordionRows.push(row);
-      jumpChips.push(`<a class="chip" href="#${slug}">${escapeHtml(heading.label)}</a>`);
-    }
+    (isReference ? referenceRows : accordionRows).push(row);
   });
-
-  const jumpNavHtml = jumpChips.length === 0 ? "" : `<nav class="cr-jump">${jumpChips.join("")}</nav>`;
 
   return {
     leadingHtml,
-    jumpNavHtml,
     heroHtml,
     accordionHtml: accordionRows.join(""),
     referenceHtml: referenceRows.join(""),

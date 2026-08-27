@@ -73,7 +73,7 @@ export default async function ContentRadarPage({
   }
 
   const raw = await readReportFile(activeFile);
-  const { leadingHtml, jumpNavHtml, heroHtml, accordionHtml, referenceHtml } = await renderReport(raw);
+  const { leadingHtml, heroHtml, accordionHtml, referenceHtml } = await renderReport(raw);
 
   return (
     <CmsShell user={session} title="Content Radar">
@@ -85,7 +85,6 @@ export default async function ContentRadarPage({
         <div className="cr-content report">
           {leadingHtml && <div className="cr-summary" dangerouslySetInnerHTML={{ __html: leadingHtml }} />}
           {heroHtml && <div dangerouslySetInnerHTML={{ __html: heroHtml }} />}
-          {jumpNavHtml && <div dangerouslySetInnerHTML={{ __html: jumpNavHtml }} />}
           {accordionHtml && <div className="cr-accordion" dangerouslySetInnerHTML={{ __html: accordionHtml }} />}
           {referenceHtml && (
             <section className="cr-reference">

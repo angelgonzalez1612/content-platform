@@ -147,37 +147,6 @@
   font-size: 0.62rem;
 }
 
-/* ── acceso rápido a categorías ─────────────────────────────────────── */
-/* Fijo (sticky) justo debajo de la barra de reporte mientras se hace scroll —
-   con 22 filas de categoría, poder saltar a una sin tener que subir hasta
-   arriba de todo es lo que lo hace útil. */
-.cr-scope .cr-jump {
-  position: sticky;
-  top: 56px;
-  z-index: 20;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0.85rem 0;
-  margin-bottom: 0.75rem;
-  background: var(--color-background);
-  border-bottom: 1px solid var(--color-border);
-}
-.cr-scope .chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.3rem 0.65rem;
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background: var(--color-card);
-  color: var(--color-ink-soft);
-  text-decoration: none;
-  font-size: 0.76rem;
-  font-weight: 500;
-  transition: border-color 0.12s ease, color 0.12s ease;
-}
-.cr-scope .chip:hover { border-color: var(--color-brand-pressed); color: var(--color-accent-fg); }
-
 /* ── categorías (filas colapsables) ─────────────────────────────────────
    Antes cada categoría era una tarjeta gigante siempre expandida — 25
    muros de texto mezclando noticias/videos/frases, había que scrollear
