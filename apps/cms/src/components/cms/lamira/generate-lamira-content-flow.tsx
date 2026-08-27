@@ -202,7 +202,10 @@ export function GenerateLamiraContentFlow({
           datos verificables (fecha, ubicación, cifras) los completas tú.
         </p>
 
-        <form onSubmit={handleGenerate} className="flex flex-col gap-4 text-left">
+        <form
+          onSubmit={handleGenerate}
+          className="flex flex-col gap-5 rounded-[16px] border border-border bg-white p-6 text-left shadow-[0_1px_2px_rgba(23,20,17,.03)] sm:p-7"
+        >
           <div className="flex flex-col gap-1.5">
             <label htmlFor="lc-name" className={labelClass}>
               {meta.nameLabel}
@@ -224,9 +227,17 @@ export function GenerateLamiraContentFlow({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="lc-hints" className={labelClass}>
-              Lo que ya sabes (fuentes, contexto de content-radar, etc.)
-            </label>
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="lc-hints" className={labelClass}>
+                Lo que ya sabes (fuentes, contexto, etc.)
+              </label>
+              {initialHints && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 font-mono text-[10px] font-medium tracking-[.04em] text-accent-fg uppercase">
+                  <Icon d={SPARK_ICON} size={10} strokeWidth={2} />
+                  Desde Content Radar
+                </span>
+              )}
+            </div>
             <textarea
               id="lc-hints"
               rows={4}
@@ -238,7 +249,7 @@ export function GenerateLamiraContentFlow({
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <span className={labelClass}>Proveedor de IA</span>
             <div className="flex gap-2">
               {PROVIDERS.map((p) => (
