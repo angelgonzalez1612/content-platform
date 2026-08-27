@@ -24,9 +24,18 @@ const TYPES = [
 // elección totalmente a ciegas cuando el título no deja claro qué tipo es
 // (ej. "Cierre en Reforma" suena a Alerta más que a Noticia genérica).
 // Sigue siendo 100% editable; esto solo pre-selecciona y marca "Sugerido".
+// Vocabulario ajustado contra titulares REALES de content-radar (no
+// supuestos) — el primer intento usaba palabras de libro de texto
+// ("riesgo", "desalojo") que casi nunca aparecen; el tráfico/vialidad de
+// CDMX se reporta con "bloqueos", "vial", "caos", "colapsa", "marchas".
 function suggestType(text: string): string {
   const t = text.toLowerCase();
-  if (/\b(cierre|cerrad[oa]|corte|riesgo|accidente|choque|incendio|balacera|alerta|evacua|desalojo)\b/.test(t)) return "alerta";
+  if (
+    /\b(cierre|cerrad[oa]|corte|riesgo|accidente|choque|incendio|balacera|alerta|evacua|desalojo|bloqueo|bloqueos|vial|caos|colapsa|colapso|manifestaci[oó]n(es)?|march(a|as)|protesta(s)?)\b/.test(
+      t,
+    )
+  )
+    return "alerta";
   if (/\b(concierto|festival|feria|exposici[oó]n|boletos|entradas|inaugura)\b/.test(t)) return "evento";
   if (/\b(c[oó]mo\s|tr[aá]mite|requisitos|pasos para)\b/.test(t)) return "guia";
   if (/\b(parque|museo|plaza|monumento|estaci[oó]n de|colonia)\b/.test(t)) return "lugar";
