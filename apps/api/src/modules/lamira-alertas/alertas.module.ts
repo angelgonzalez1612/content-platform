@@ -6,5 +6,6 @@ import { AlertasService } from './alertas.service';
 @Module({
   controllers: [AlertasController, CmsAlertasController],
   providers: [AlertasService],
+  exports: [AlertasService], // AutomationModule lo usa para crear alertas solo
 })
 export class AlertasModule {}

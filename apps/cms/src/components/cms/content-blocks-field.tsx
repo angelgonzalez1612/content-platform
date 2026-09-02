@@ -21,10 +21,14 @@ export function ContentBlocksField({
   blocks,
   onChange,
   headingRequired = false,
+  articleImages,
 }: {
   blocks: ContentBlockValue[];
   onChange: (blocks: ContentBlockValue[]) => void;
   headingRequired?: boolean;
+  // Imágenes candidatas del artículo scrapeado (ver GenerateLamiraContentFlow)
+  // — se ofrecen también aquí para usarlas dentro de un bloque específico.
+  articleImages?: { url: string; credit: string }[];
 }) {
   const [editingImageFor, setEditingImageFor] = useState<number | null>(null);
 
@@ -52,6 +56,14 @@ export function ContentBlocksField({
   }
   function removeParagraph(bi: number, pi: number) {
     updateBlock(bi, { paragraphs: blocks[bi].paragraphs.filter((_, ppi) => ppi !== pi) });
+  }
+  function moveParagraph(bi: number, pi: number, dir: -1 | 1) {
+    const paragraphs = blocks[bi].paragraphs;
+    const pj = pi + dir;
+    if (pj < 0 || pj >= paragraphs.length) return;
+    const next = [...paragraphs];
+    [next[pi], next[pj]] = [next[pj], next[pi]];
+    updateBlock(bi, { paragraphs: next });
   }
 
   return (
@@ -87,14 +99,27 @@ export function ContentBlocksField({
                   <div className="min-w-0 flex-1">
                     <RichTextarea value={p} onChange={(v) => updateParagraph(bi, pi, v)} rows={3} placeholder="Párrafo…" />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => removeParagraph(bi, pi)}
-                    disabled={block.paragraphs.length === 1}
-                    className="mt-2 flex-none rounded-md px-1.5 py-1 text-ink-faint hover:text-negative disabled:opacity-30"
-                  >
-                    ×
-                  </button>
+                  <div className="mt-2 flex flex-none flex-col items-center gap-0.5">
+                    <button type="button" onClick={() => moveParagraph(bi, pi, -1)} disabled={pi === 0} className="rounded-md px-1.5 py-0.5 text-[11px] text-ink-faint hover:text-ink disabled:opacity-30">
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveParagraph(bi, pi, 1)}
+                      disabled={pi === block.paragraphs.length - 1}
+                      className="rounded-md px-1.5 py-0.5 text-[11px] text-ink-faint hover:text-ink disabled:opacity-30"
+                    >
+                      ↓
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeParagraph(bi, pi)}
+                      disabled={block.paragraphs.length === 1}
+                      className="rounded-md px-1.5 py-0.5 text-ink-faint hover:text-negative disabled:opacity-30"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               ))}
               <button
@@ -108,7 +133,11 @@ export function ContentBlocksField({
 
             {editingImageFor === bi ? (
               <div className="flex flex-col gap-2 rounded-[10px] border border-border-soft bg-white p-3">
-                <ImageSearchPicker initialQuery={block.heading ?? ""} onSelect={(img) => { updateBlock(bi, { image: img }); setEditingImageFor(null); }} />
+                <ImageSearchPicker
+                  initialQuery={block.heading ?? ""}
+                  articleImages={articleImages}
+                  onSelect={(img) => { updateBlock(bi, { image: img }); setEditingImageFor(null); }}
+                />
                 <button type="button" onClick={() => setEditingImageFor(null)} className="self-start text-[12px] font-medium text-ink-soft hover:text-brand">
                   Cancelar
                 </button>

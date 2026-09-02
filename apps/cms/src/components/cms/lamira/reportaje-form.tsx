@@ -12,6 +12,9 @@ import { SeoPanel } from "@/components/cms/seo-panel";
 import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
 import { buildToc, summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
+import { ImageField } from "@/components/cms/lamira/image-field";
+import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
+import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
 
 const STATUS_OPTIONS: Array<{ value: ContentStatus; label: string }> = [
   { value: "draft", label: "Borrador" },
@@ -32,6 +35,7 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
     readingTime: existing?.readingTime ?? "5 min de lectura",
     status: existing?.status ?? ("draft" as ContentStatus),
     sourceKind: existing?.sourceKind ?? "",
+    sourceUrl: existing?.sourceUrl ?? "",
     imageCaption: existing?.imageCaption ?? "",
   });
   const [tags, setTags] = useState<string[]>(existing?.tags ?? []);
@@ -40,6 +44,9 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
   );
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(existing?.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(existing?.seo ?? {});
+  const [image, setImage] = useState<{ url: string; credit: string } | null>(
+    existing?.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
+  );
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -68,8 +75,7 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
     setImproveResult(null);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function save(status: ContentStatus) {
     setSaving(true);
     setError("");
 
@@ -79,10 +85,13 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
       categoryId: form.categoryId || null,
       authorSlug: form.authorSlug,
       readingTime: form.readingTime,
-      status: form.status,
+      status,
       tags,
       sourceKind: form.sourceKind || null,
+      sourceUrl: form.sourceUrl || null,
       imageCaption: form.imageCaption,
+      imageUrl: image?.url ?? null,
+      imageCredit: image?.credit ?? null,
       toc: buildToc(content),
       content,
       categoryData,
@@ -104,6 +113,7 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
       }
 
       if (isEdit) {
+        setForm((f) => ({ ...f, status }));
         setSavedAt(Date.now());
         setSaving(false);
         router.refresh();
@@ -117,7 +127,38 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
     }
   }
 
-  return (
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    save(form.status);
+  }
+
+  function handlePublish() {
+    save("published");
+  }
+
+  const preview = (
+    <LamiraPreviewCard
+      type="reportaje"
+      name={form.title}
+      categoryName={category?.name ?? null}
+      image={image}
+      dek={form.dek}
+      description=""
+      content={content}
+      alertaStatus="activa"
+      alcaldiaSlug=""
+      eventoStatus="proximo"
+      date=""
+      time=""
+      location=""
+      price=""
+      organizer=""
+      kind="parque"
+      colonia=""
+    />
+  );
+
+  const left = (
     <div className="flex flex-col gap-4">
       {isEdit && (
         <ImproveWithAiPanel contentType="reportaje" contentId={existing.id} expanded={improving} onToggle={() => setImproving((v) => !v)} onResult={setImproveResult} />
@@ -142,6 +183,8 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
           </label>
           <input id="r-title" required value={form.title} onChange={(e) => set("title", e.target.value)} className={fieldClass} />
         </div>
+
+        <ImageField image={image} onChange={setImage} searchQuery={form.title} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="r-dek" className={labelClass}>
@@ -200,6 +243,34 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
           </div>
         </div>
 
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="r-source-url" className={labelClass}>
+            URL de la fuente
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="r-source-url"
+              value={form.sourceUrl}
+              onChange={(e) => set("sourceUrl", e.target.value)}
+              placeholder="https://…"
+              className={`${fieldClass} flex-1`}
+            />
+            {form.sourceUrl && (
+              <a
+                href={form.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-none rounded-lg border border-border bg-white px-3 py-2.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
+              >
+                Abrir ↗
+              </a>
+            )}
+          </div>
+          <p className="text-[11.5px] leading-[1.4] text-ink-faint">
+            El artículo original del que salió el tema — cuando lo crea la automatización, se llena solo.
+          </p>
+        </div>
+
         <SeoPanel seo={seo} onChange={setSeo} />
 
         <div className="flex flex-col gap-1.5">
@@ -225,9 +296,21 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
           >
             {saving ? "Guardando…" : isEdit ? "Guardar cambios" : "Crear reportaje"}
           </button>
+          {isEdit && form.status !== "published" && (
+            <button
+              type="button"
+              onClick={handlePublish}
+              disabled={saving}
+              className="rounded-[10px] border border-[#B7E4C7] bg-[#EAF7EF] px-4 py-2.5 text-[13.5px] font-semibold text-[#2E9E5B] transition-colors hover:bg-[#DFF3E6] disabled:cursor-default disabled:opacity-60"
+            >
+              Publicar
+            </button>
+          )}
           {savedAt && <span className="font-mono text-[12px] text-positive">Guardado ✓</span>}
         </div>
       </form>
     </div>
   );
+
+  return <EditPreviewLayout left={left} preview={preview} />;
 }

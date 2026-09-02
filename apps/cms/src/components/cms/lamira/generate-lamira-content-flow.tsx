@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
 import type { Category, CheckResult, AiDecision, Seo, AlertaStatus, EventoStatus, LugarKind } from "@planazo/types";
@@ -12,12 +12,17 @@ import { TagsField } from "@/components/cms/tags-field";
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { buildToc, withBlockIds } from "@/components/cms/lamira/content-blocks-util";
 import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
-import { ImageSearchPicker } from "@/components/cms/lamira/image-search-picker";
+import { ImageField } from "@/components/cms/lamira/image-field";
+import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
 import { RichTextarea } from "@/components/cms/rich-textarea";
+import { PublishSuccessPanel } from "@/components/cms/publish-success-panel";
+import { ExpandDraftPanel } from "@/components/cms/expand-draft-panel";
+import { markContentRadarPublished } from "@/lib/mark-content-radar-published";
+import { useOpenAiAvailable } from "@/lib/use-openai-available";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
-type Step = "input" | "generating" | "review" | "creating";
-type ProviderId = "openai" | "claude-cli";
+type Step = "input" | "generating" | "review" | "creating" | "published";
+type ProviderId = "openai" | "claude-cli" | "codex-cli";
 
 // Duplicado a propósito de la-mira/src/data/mock/authors.ts (repos separados,
 // sin paquete de tipos compartido — mismo patrón que api-types.ts allá).
@@ -40,6 +45,7 @@ const AUTHOR_OPTIONS: Array<{ slug: string; label: string }> = [
 const PROVIDERS: Array<{ id: ProviderId; label: string; hint: string }> = [
   { id: "openai", label: "OpenAI", hint: "Salida estructurada garantizada · cuesta por token" },
   { id: "claude-cli", label: "Claude (tu sesión)", hint: "Usa tu suscripción Pro/Max ya conectada · más lento" },
+  { id: "codex-cli", label: "Codex (tu sesión)", hint: "Usa tu sesión de ChatGPT ya conectada · más lento" },
 ];
 
 const TYPE_META: Record<string, { label: string; nameLabel: string; namePlaceholder: string; endpoint: string; editPath: string; hasStatus: boolean }> = {
@@ -56,6 +62,12 @@ interface DraftResponse {
   checksRun: CheckResult[];
   decision: AiDecision;
   image: { url: string; credit: string } | null;
+  // Otras imágenes candidatas encontradas en el cuerpo del artículo scrapeado
+  // (mismo crédito que `image`) — se ofrecen como alternativa en el buscador.
+  articleImages: { url: string; credit: string }[];
+  // Palabras clave que generó la IA para buscar en Wikimedia/Openverse — las
+  // frases largas del titular no dan coincidencias ahí, esto sí.
+  imageSearchQuery: string;
   categoryId: string;
   site: "la-mira" | "planazo";
   contentType: string;
@@ -91,6 +103,7 @@ export function GenerateLamiraContentFlow({
   initialName,
   initialHints,
   initialDraft,
+  crossSitePublish,
 }: {
   type: string;
   categories: Category[];
@@ -100,14 +113,26 @@ export function GenerateLamiraContentFlow({
   // fijo), el borrador ya se generó ahí — este componente arranca directo en
   // "review" con estos datos, sin pedirle al humano que genere de nuevo.
   initialDraft?: DraftResponse;
+  // Solo lo manda PublishFlow (ver ahí): al crear con esto presente, en vez
+  // de navegar de inmediato se muestra una pantalla de éxito con la opción
+  // de generar TAMBIÉN una segunda pieza para el otro sitio, reusando el
+  // mismo tema/hints — dos publicaciones reales, no una sola duplicada.
+  crossSitePublish?: { otherSiteLabel: string; onPublishOther: () => void; publishingOther?: boolean };
 }) {
   const router = useRouter();
   const meta = TYPE_META[type];
   const initialParsed = initialDraft ? parseDraftFields(initialDraft.draft) : null;
   const [step, setStep] = useState<Step>(initialDraft ? "review" : "input");
+  const [publishedHref, setPublishedHref] = useState("");
   const [name, setName] = useState(initialName ?? "");
   const [hints, setHints] = useState(initialHints ?? "");
   const [provider, setProvider] = useState<ProviderId>("openai");
+  const openaiAvailable = useOpenAiAvailable();
+  const providers = PROVIDERS.filter((p) => p.id !== "openai" || openaiAvailable === true);
+
+  useEffect(() => {
+    if (openaiAvailable === false && provider === "openai") setProvider("claude-cli");
+  }, [openaiAvailable, provider]);
   // La categoría ya no la elige el humano de entrada — la clasifica la IA a
   // partir del tema (ver AiDraftService.classifyCategory), y llega aquí ya
   // resuelta en la respuesta del draft. Sigue siendo 100% editable en la
@@ -115,6 +140,14 @@ export function GenerateLamiraContentFlow({
   const [categoryId, setCategoryId] = useState(initialDraft?.categoryId ?? "");
   const [categoryWasAiChosen, setCategoryWasAiChosen] = useState(!!initialDraft);
   const [error, setError] = useState("");
+  // "lugar" exige alcaldiaSlug de verdad en el backend (único de los 3 tipos
+  // sin borrador que lo requiere — alerta/evento lo dejan opcional). El botón
+  // "Crear" no vive en un <form>, así que el atributo `required` del <select>
+  // nunca se valida solo — sin este chequeo, se manda el POST vacío y el
+  // usuario solo ve el mensaje crudo del servidor, sin saber a qué campo
+  // apunta ni por qué no puede avanzar.
+  const [missingAlcaldia, setMissingAlcaldia] = useState(false);
+  const [expandOpen, setExpandOpen] = useState(false);
 
   // El encabezado publicado — para noticia/alerta/guia/evento/reportaje lo
   // escribe la IA (distinto del tema/semilla que se dio en `name`); para
@@ -133,24 +166,8 @@ export function GenerateLamiraContentFlow({
   // plan), nunca la genera la IA. El humano puede quitarla, reemplazarla o
   // (si el scraping no encontró ninguna) agregar una a mano en la revisión.
   const [image, setImage] = useState<{ url: string; credit: string } | null>(initialDraft?.image ?? null);
-  const [editingImage, setEditingImage] = useState(false);
-  const [imageEditMode, setImageEditMode] = useState<"search" | "url">("search");
-  const [imageDraft, setImageDraft] = useState({ url: "", credit: "" });
-
-  function startEditImage() {
-    setImageDraft(image ?? { url: "", credit: "" });
-    setImageEditMode("search");
-    setEditingImage(true);
-  }
-  function saveImage() {
-    if (!imageDraft.url.trim()) return;
-    setImage({ url: imageDraft.url.trim(), credit: imageDraft.credit.trim() });
-    setEditingImage(false);
-  }
-  function selectSearchedImage(picked: { url: string; credit: string }) {
-    setImage(picked);
-    setEditingImage(false);
-  }
+  const [articleImages, setArticleImages] = useState<{ url: string; credit: string }[]>(initialDraft?.articleImages ?? []);
+  const [imageSearchQuery, setImageSearchQuery] = useState(initialDraft?.imageSearchQuery ?? "");
 
   // Campos que la IA no genera (son datos verificables) — el humano los llena
   // en la revisión. Para alerta/evento/lugar son obligatorios de verdad
@@ -216,6 +233,8 @@ export function GenerateLamiraContentFlow({
       setChecksRun(data.checksRun);
       setDecision(data.decision);
       setImage(data.image);
+      setArticleImages(data.articleImages ?? []);
+      setImageSearchQuery(data.imageSearchQuery ?? "");
       setCategoryId(data.categoryId);
       setCategoryWasAiChosen(true);
       setStep("review");
@@ -226,6 +245,12 @@ export function GenerateLamiraContentFlow({
   }
 
   async function handleCreate() {
+    if (type === "lugar" && !extra.alcaldiaSlug) {
+      setMissingAlcaldia(true);
+      setError("Falta la Alcaldía / municipio del lugar — es un dato requerido, selecciónalo arriba antes de crear.");
+      return;
+    }
+    setMissingAlcaldia(false);
     setStep("creating");
     setError("");
 
@@ -244,13 +269,13 @@ export function GenerateLamiraContentFlow({
         payload = { title, dek, categoryId: categoryId || null, authorSlug: extra.authorSlug, status, tags: extra.tags.length ? extra.tags : ["Reportaje"], imageCaption: extra.imageCaption || "Pendiente", toc: buildToc(content), content, categoryData, seo, ...imageFields };
         break;
       case "alerta":
-        payload = { title, alertaStatus: extra.alertaStatus, categoryId: categoryId || null, alcaldiaSlug: extra.alcaldiaSlug || null, description, categoryData, seo, ...imageFields };
+        payload = { title, alertaStatus: extra.alertaStatus, categoryId: categoryId || null, alcaldiaSlug: extra.alcaldiaSlug || null, description, categoryData, seo, content, ...imageFields };
         break;
       case "evento":
-        payload = { title, tag: extra.tag || "Evento", categoryId: categoryId || null, eventoStatus: extra.eventoStatus, date: extra.date, time: extra.time, location: extra.location, alcaldiaSlug: extra.alcaldiaSlug || null, price: extra.price, description, organizer: extra.organizer, categoryData, seo, ...imageFields };
+        payload = { title, tag: extra.tag || "Evento", categoryId: categoryId || null, eventoStatus: extra.eventoStatus, date: extra.date, time: extra.time, location: extra.location, alcaldiaSlug: extra.alcaldiaSlug || null, price: extra.price, description, organizer: extra.organizer, categoryData, seo, content, ...imageFields };
         break;
       case "lugar":
-        payload = { name: title, kind: extra.kind, categoryId: categoryId || null, alcaldiaSlug: extra.alcaldiaSlug, colonia: extra.colonia || null, description, categoryData, seo, ...imageFields };
+        payload = { name: title, kind: extra.kind, categoryId: categoryId || null, alcaldiaSlug: extra.alcaldiaSlug, colonia: extra.colonia || null, description, categoryData, seo, content, ...imageFields };
         break;
       default:
         payload = {};
@@ -265,17 +290,40 @@ export function GenerateLamiraContentFlow({
       });
 
       if (!res.ok) {
-        setError("No se pudo crear — revisa que los campos requeridos abajo estén llenos.");
+        // El servidor ya dice qué campo falló de verdad (ver ZodExceptionFilter
+        // en la API) — mostrar eso en vez de un mensaje genérico que obliga a
+        // adivinar cuál de todos los campos "requeridos abajo" es el que falta.
+        const body = (await res.json().catch(() => null)) as { message?: string } | null;
+        setError(body?.message ?? "No se pudo crear — revisa que los campos requeridos abajo estén llenos.");
         setStep("review");
         return;
       }
 
       const created = await res.json();
-      router.push(`/contenido/lamira/${meta.editPath}/${created.id}`);
+      if (initialName) markContentRadarPublished({ title: initialName, site: "la-mira", contentType: type, contentId: created.id });
+      const href = `/contenido/lamira/${meta.editPath}/${created.id}`;
+      if (crossSitePublish) {
+        setPublishedHref(href);
+        setStep("published");
+      } else {
+        router.push(href);
+      }
     } catch {
       setError("No se pudo conectar con el servidor.");
       setStep("review");
     }
+  }
+
+  if (step === "published") {
+    return (
+      <PublishSuccessPanel
+        name={title || name}
+        viewHref={publishedHref}
+        otherSiteLabel={crossSitePublish?.otherSiteLabel}
+        onPublishOther={crossSitePublish?.onPublishOther}
+        publishingOther={crossSitePublish?.publishingOther}
+      />
+    );
   }
 
   if (step === "input" || step === "generating") {
@@ -300,8 +348,15 @@ export function GenerateLamiraContentFlow({
           className="flex flex-col gap-5 rounded-[16px] border border-border bg-white p-6 text-left shadow-[0_1px_2px_rgba(23,20,17,.03)] sm:p-7"
         >
           <div className="flex flex-col gap-1.5">
+            {/* "Tema / título" en vez de "Título de la noticia"/"de la
+                alerta"/etc. — misma etiqueta que usa PublishFlow (el punto de
+                entrada cuando el sitio/tipo todavía no se sabe), para que
+                ambas pantallas de "¿Sobre qué escribimos?" se sientan como
+                la misma. "Lugar" es la excepción real: ahí no se escribe un
+                tema que la IA convierte en encabezado, es el nombre propio
+                del lugar (la IA nunca lo reescribe). */}
             <label htmlFor="lc-name" className={labelClass}>
-              {meta.nameLabel}
+              {type === "lugar" ? meta.nameLabel : "Tema / título"}
             </label>
             <input id="lc-name" required value={name} onChange={(e) => setName(e.target.value)} placeholder={meta.namePlaceholder} className={fieldClass} disabled={step === "generating"} />
           </div>
@@ -333,7 +388,7 @@ export function GenerateLamiraContentFlow({
           <div className="flex flex-col gap-2">
             <span className={labelClass}>Proveedor de IA</span>
             <div className="flex gap-2">
-              {PROVIDERS.map((p) => (
+              {providers.map((p) => (
                 <button
                   key={p.id}
                   type="button"
@@ -404,82 +459,13 @@ export function GenerateLamiraContentFlow({
             </div>
 
             <div className="flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
-              <div className="flex flex-col gap-1.5">
-                <span className={labelClass}>Imagen{image ? " (de la fuente citada)" : ""}</span>
-
-                {editingImage ? (
-                  <div className="flex flex-col gap-3 rounded-[10px] border border-border-soft bg-background p-3">
-                    <div className="flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setImageEditMode("search")}
-                        className={`rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors ${imageEditMode === "search" ? "bg-accent text-accent-fg" : "text-ink-soft hover:text-ink"}`}
-                      >
-                        Buscar imágenes
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setImageEditMode("url")}
-                        className={`rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors ${imageEditMode === "url" ? "bg-accent text-accent-fg" : "text-ink-soft hover:text-ink"}`}
-                      >
-                        Pegar URL
-                      </button>
-                    </div>
-
-                    {imageEditMode === "search" ? (
-                      <ImageSearchPicker initialQuery={title || name} onSelect={selectSearchedImage} />
-                    ) : (
-                      <>
-                        <div className="flex flex-col gap-1">
-                          <label htmlFor="img-url" className="text-[11px] font-medium text-ink-faint">
-                            URL de la imagen
-                          </label>
-                          <input id="img-url" value={imageDraft.url} onChange={(e) => setImageDraft((d) => ({ ...d, url: e.target.value }))} placeholder="https://…" className={fieldClass} />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <label htmlFor="img-credit" className="text-[11px] font-medium text-ink-faint">
-                            Crédito
-                          </label>
-                          <input id="img-credit" value={imageDraft.credit} onChange={(e) => setImageDraft((d) => ({ ...d, credit: e.target.value }))} placeholder="ej. Foto: MILENIO" className={fieldClass} />
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <button type="button" onClick={saveImage} disabled={!imageDraft.url.trim()} className="self-start rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-pressed disabled:opacity-50">
-                            Guardar imagen
-                          </button>
-                        </div>
-                      </>
-                    )}
-
-                    <button type="button" onClick={() => setEditingImage(false)} className="self-start text-[12px] font-medium text-ink-soft hover:text-brand">
-                      Cancelar
-                    </button>
-                  </div>
-                ) : image ? (
-                  <div className="flex items-start gap-3 rounded-[10px] border border-border-soft bg-background p-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
-                    <img src={image.url} alt="" className="h-20 w-28 flex-none rounded-[8px] object-cover" />
-                    <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-0.5">
-                      <p className="truncate text-[12px] text-ink-soft">{image.credit || "(sin crédito)"}</p>
-                      <div className="flex items-center gap-3">
-                        <button type="button" onClick={startEditImage} className="text-[12px] font-medium text-ink-soft hover:text-brand">
-                          Reemplazar
-                        </button>
-                        <button type="button" onClick={() => setImage(null)} className="text-[12px] font-medium text-ink-soft hover:text-negative">
-                          Quitar imagen
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={startEditImage}
-                    className="self-start rounded-lg border border-dashed border-border bg-background px-3 py-2 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
-                  >
-                    + Agregar imagen
-                  </button>
-                )}
-              </div>
+              <ImageField
+                image={image}
+                onChange={setImage}
+                searchQuery={imageSearchQuery || title || name}
+                articleImages={articleImages}
+                label={`Imagen${image ? " (de la fuente citada)" : ""}`}
+              />
 
               {isRichContent ? (
                 <>
@@ -489,7 +475,7 @@ export function GenerateLamiraContentFlow({
                     </label>
                     <RichTextarea id="lc-dek" rows={2} value={dek} onChange={setDek} />
                   </div>
-                  <ContentBlocksField blocks={content} onChange={setContent} headingRequired={type === "guia"} />
+                  <ContentBlocksField blocks={content} onChange={setContent} headingRequired={type === "guia"} articleImages={articleImages} />
                   {type === "guia" && (
                     <div className="rounded-[10px] border border-dashed border-border-soft p-3 text-[12px] text-ink-faint">
                       Preguntas frecuentes: la IA no las generó en el borrador — agrégalas después de crear, en la pantalla de edición.
@@ -504,6 +490,19 @@ export function GenerateLamiraContentFlow({
                   <RichTextarea id="lc-description" rows={5} value={description} onChange={setDescription} />
                 </div>
               )}
+
+              {!isRichContent && content.length > 0 && <ContentBlocksField blocks={content} onChange={setContent} articleImages={articleImages} />}
+
+              <ExpandDraftPanel
+                contentType={type}
+                name={title || name}
+                description={isRichContent ? dek : description}
+                content={content}
+                categoryId={categoryId}
+                expanded={expandOpen}
+                onToggle={() => setExpandOpen((v) => !v)}
+                onApply={(merged) => { setContent(merged); setExpandOpen(false); }}
+              />
 
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center gap-2">
@@ -609,9 +608,9 @@ export function GenerateLamiraContentFlow({
                       </div>
                       <div className="flex flex-col gap-1.5">
                         <label htmlFor="ex-alcaldia" className={labelClass}>
-                          Alcaldía (slug) <span className="normal-case font-normal text-ink-faint">(opcional)</span>
+                          Alcaldía / municipio <span className="normal-case font-normal text-ink-faint">(opcional)</span>
                         </label>
-                        <input id="ex-alcaldia" value={extra.alcaldiaSlug} onChange={(e) => setExtraField("alcaldiaSlug", e.target.value)} placeholder="ej. cuauhtemoc" className={fieldClass} />
+                        <AlcaldiaSelect id="ex-alcaldia" value={extra.alcaldiaSlug} onChange={(slug) => setExtraField("alcaldiaSlug", slug)} />
                       </div>
                     </div>
                     <p className="text-[11.5px] leading-[1.4] text-ink-faint">
@@ -678,9 +677,9 @@ export function GenerateLamiraContentFlow({
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label htmlFor="ex-evt-alcaldia" className={labelClass}>
-                        Alcaldía (slug)
+                        Alcaldía / municipio
                       </label>
-                      <input id="ex-evt-alcaldia" value={extra.alcaldiaSlug} onChange={(e) => setExtraField("alcaldiaSlug", e.target.value)} placeholder="ej. cuauhtemoc" className={`${fieldClass} max-w-[260px]`} />
+                      <AlcaldiaSelect id="ex-evt-alcaldia" value={extra.alcaldiaSlug} onChange={(slug) => setExtraField("alcaldiaSlug", slug)} />
                     </div>
                   </>
                 )}
@@ -702,9 +701,18 @@ export function GenerateLamiraContentFlow({
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label htmlFor="ex-lugar-alcaldia" className={labelClass}>
-                        Alcaldía (slug)
+                        Alcaldía / municipio
                       </label>
-                      <input id="ex-lugar-alcaldia" required value={extra.alcaldiaSlug} onChange={(e) => setExtraField("alcaldiaSlug", e.target.value)} placeholder="ej. cuauhtemoc" className={fieldClass} />
+                      <AlcaldiaSelect
+                        id="ex-lugar-alcaldia"
+                        required
+                        invalid={missingAlcaldia && !extra.alcaldiaSlug}
+                        value={extra.alcaldiaSlug}
+                        onChange={(slug) => {
+                          setExtraField("alcaldiaSlug", slug);
+                          if (slug) setMissingAlcaldia(false);
+                        }}
+                      />
                     </div>
                   </div>
                 )}

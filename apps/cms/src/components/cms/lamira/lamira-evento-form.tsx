@@ -5,11 +5,15 @@ import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
 import type { LamiraEvento, EventoStatus, Category, Seo } from "@planazo/types";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
+import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
 import { CategoryFieldsSection } from "@/components/cms/category-fields-section";
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
 import { RichTextarea } from "@/components/cms/rich-textarea";
+import { ImageField } from "@/components/cms/lamira/image-field";
+import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
+import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
 
 const STATUS_OPTIONS: Array<{ value: EventoStatus; label: string }> = [
   { value: "proximo", label: "Próximo" },
@@ -37,6 +41,9 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
   });
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(existing?.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(existing?.seo ?? {});
+  const [image, setImage] = useState<{ url: string; credit: string } | null>(
+    existing?.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
+  );
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -77,6 +84,8 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
       description: form.description,
       organizer: form.organizer,
       officialUrl: form.officialUrl || null,
+      imageUrl: image?.url ?? null,
+      imageCredit: image?.credit ?? null,
       categoryData,
       seo,
     };
@@ -109,7 +118,29 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
     }
   }
 
-  return (
+  const preview = (
+    <LamiraPreviewCard
+      type="evento"
+      name={form.title}
+      categoryName={category?.name ?? null}
+      image={image}
+      dek=""
+      description={form.description}
+      content={[]}
+      alertaStatus="activa"
+      alcaldiaSlug={form.alcaldiaSlug}
+      eventoStatus={form.eventoStatus}
+      date={form.date}
+      time={form.time}
+      location={form.location}
+      price={form.price}
+      organizer={form.organizer}
+      kind="parque"
+      colonia=""
+    />
+  );
+
+  const left = (
     <div className="flex flex-col gap-4">
       {isEdit && (
         <ImproveWithAiPanel contentType="evento" contentId={existing.id} expanded={improving} onToggle={() => setImproving((v) => !v)} onResult={setImproveResult} />
@@ -139,6 +170,8 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
             <input id="e-tag" required value={form.tag} onChange={(e) => set("tag", e.target.value)} placeholder="ej. GRATIS" className={fieldClass} />
           </div>
         </div>
+
+        <ImageField image={image} onChange={setImage} searchQuery={form.title} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="e-description" className={labelClass}>
@@ -192,9 +225,9 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
           </div>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="e-alcaldia" className={labelClass}>
-              Alcaldía (slug)
+              Alcaldía / municipio
             </label>
-            <input id="e-alcaldia" value={form.alcaldiaSlug} onChange={(e) => set("alcaldiaSlug", e.target.value)} placeholder="ej. cuauhtemoc" className={fieldClass} />
+            <AlcaldiaSelect id="e-alcaldia" value={form.alcaldiaSlug} onChange={(slug) => set("alcaldiaSlug", slug)} />
           </div>
         </div>
 
@@ -243,4 +276,6 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
       </form>
     </div>
   );
+
+  return <EditPreviewLayout left={left} preview={preview} />;
 }

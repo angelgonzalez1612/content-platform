@@ -70,6 +70,12 @@ export interface AiDraftResult {
   checksRun: CheckResult[];
   decision: AiDecision;
   image: { url: string; credit: string } | null;
+  // Otras imágenes reales del mismo artículo scrapeado — candidatas extra
+  // para usar en algún bloque de contenido.
+  articleImages: { url: string; credit: string }[];
+  // Palabras clave que la IA generó para buscar una imagen libre — el CMS
+  // las usa como query por default en el picker de búsqueda.
+  imageSearchQuery: string;
   // La categoría con la que se generó el draft — clasificada por la IA
   // cuando el caller no mandó categoryId. El CMS la preselecciona, editable.
   categoryId: string;
@@ -81,14 +87,15 @@ export interface AiDraftResult {
   contentType: string;
 }
 
-// Un resultado de búsqueda de imágenes de uso libre (Wikimedia Commons) —
-// ver ImageSearchService en apps/api. El crédito siempre viene de metadata
-// real de la fuente, nunca se inventa.
+// Un resultado de búsqueda de imágenes de uso libre (Wikimedia Commons u
+// Openverse) — ver ImageSearchService en apps/api. El crédito siempre viene
+// de metadata real de la fuente, nunca se inventa.
 export interface ImageSearchResult {
   url: string;
   thumbUrl: string;
   credit: string;
   sourcePageUrl: string;
+  source: 'wikimedia' | 'openverse';
 }
 
 // ── Los 6 tipos de contenido editorial de la-mira ───────────────────────────
@@ -125,6 +132,7 @@ export interface Noticia {
   status: ContentStatus;
   sourceKind: string | null;
   externalSource: string | null;
+  sourceUrl: string | null;
   youtubeId: string | null;
   tags: string[];
   seo: Seo | null;
@@ -156,6 +164,9 @@ export interface Alerta {
   imageUrl: string | null;
   imageCredit: string | null;
   categoryData: Record<string, unknown>;
+  // Cuerpo extendido opcional, igual que Place (ver comentario ahí) — agregado
+  // con "Mejorar con IA" (modo "Agregar contenido"), nunca por el draft inicial.
+  content: ContentBlock[];
   createdAt: string;
 }
 
@@ -204,6 +215,7 @@ export interface LamiraEvento {
   imageUrl: string | null;
   imageCredit: string | null;
   categoryData: Record<string, unknown>;
+  content: ContentBlock[];
   createdAt: string;
 }
 
@@ -223,6 +235,7 @@ export interface LamiraLugar {
   imageUrl: string | null;
   imageCredit: string | null;
   categoryData: Record<string, unknown>;
+  content: ContentBlock[];
   createdAt: string;
 }
 
@@ -239,6 +252,7 @@ export interface Reportaje {
   status: ContentStatus;
   tags: string[];
   sourceKind: string | null;
+  sourceUrl: string | null;
   seo: Seo | null;
   imageCaption: string;
   imageUrl: string | null;
@@ -265,6 +279,9 @@ export interface Photo {
   id: string;
   url: string;
   alt: string | null;
+  // Atribución real de la fuente (Wikimedia/Openverse/URL manual) — separado
+  // de `alt`, que sigue siendo texto de accesibilidad.
+  credit: string | null;
   position: number;
 }
 
@@ -326,6 +343,7 @@ export interface Place {
   name: string;
   description: string | null;
   zone: string | null;
+  alcaldiaSlug: string | null;
   latitude: string | null;
   longitude: string | null;
   address: string | null;
@@ -341,6 +359,12 @@ export interface Place {
   photos: Photo[];
   categoryData: Record<string, unknown>;
   seo: Seo | null;
+  // Cuerpo extendido opcional, agregado con "Mejorar con IA" (modo "Agregar
+  // contenido") — la ficha corta (`description`) sigue siendo el resumen.
+  content: ContentBlock[];
+  // Si el sitio real deja abrir el modal de galería al hacer clic en la foto
+  // — apagado por defecto (ver PlacesService), el editor lo prende a mano.
+  allowPhotoModal: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -366,14 +390,22 @@ export interface PlanazoEvent {
   slug: string;
   name: string;
   description: string | null;
-  startDate: string;
+  // Nullable (2026-08-30): un evento generado desde un tema de agenda ("qué
+  // hacer este finde") puede no tener una sola fecha/hora real.
+  startDate: string | null;
   endDate: string | null;
   locationName: string | null;
+  alcaldiaSlug: string | null;
   place: Place | null;
   categoryId: string | null;
+  category: { id: string; name: string; slug: string } | null;
   status: ContentStatus;
   categoryData: Record<string, unknown>;
   seo: Seo | null;
+  // Imagen propia del evento — independiente de la del `place` vinculado.
+  imageUrl: string | null;
+  imageCredit: string | null;
+  content: ContentBlock[];
 }
 
 export const PLACE_CATEGORY_SLUGS = ['comer', 'cafes', 'bares', 'cultura', 'aire-libre', 'tecnologia'] as const;

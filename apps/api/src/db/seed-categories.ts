@@ -51,18 +51,13 @@ const CATEGORIES: CategorySeed[] = [
       { key: 'reservaciones_requeridas', label: 'Reservaciones requeridas', type: 'boolean' },
     ],
   },
-  {
-    slug: 'cine-tv',
-    name: 'Cine y TV',
-    site: null,
-    fieldSchema: [
-      { key: 'clasificacion', label: 'Clasificación', type: 'select', options: ['A', 'B', 'B15', 'C', 'D'], isFact: true },
-      { key: 'duracion_minutos', label: 'Duración (min)', type: 'number', isFact: true },
-      { key: 'plataforma_streaming', label: 'Plataforma de streaming', type: 'text', isFact: true },
-      { key: 'genero', label: 'Género', type: 'text' },
-      { key: 'reparto', label: 'Reparto', type: 'text', isFact: true },
-    ],
-  },
+  // "Cine y TV" dejó de ser compartida (2026-08-28): "Plataforma de
+  // streaming" tiene sentido para una nota de La Mira reseñando una
+  // película/serie, pero contradice la premisa de Planazo (un plan es algo
+  // que sales a hacer, no ver streaming en casa). Se separó en dos
+  // categorías — misma idea, campos distintos — en vez de forzar un shape
+  // genérico. Ver migrate-cine-tv-planazo.mjs para la reasignación de los
+  // lugares de Planazo que ya usaban la categoría compartida.
   {
     slug: 'musica',
     name: 'Música',
@@ -76,6 +71,17 @@ const CATEGORIES: CategorySeed[] = [
   },
 
   // ── Exclusivas Planazo ───────────────────────────────────────────────
+  {
+    slug: 'cine-tv-planazo',
+    name: 'Cine y TV',
+    site: 'planazo',
+    fieldSchema: [
+      { key: 'clasificacion', label: 'Clasificación', type: 'select', options: ['A', 'B', 'B15', 'C', 'D'], isFact: true },
+      { key: 'duracion_minutos', label: 'Duración (min)', type: 'number', isFact: true },
+      { key: 'genero', label: 'Género', type: 'text' },
+      { key: 'reparto', label: 'Reparto', type: 'text', isFact: true },
+    ],
+  },
   {
     slug: 'cafes',
     name: 'Cafés',
@@ -148,6 +154,28 @@ const CATEGORIES: CategorySeed[] = [
 
   // ── Exclusivas la-mira ───────────────────────────────────────────────
   { slug: 'ciudad', name: 'Ciudad', site: 'la-mira', fieldSchema: [] },
+  // Agregadas para cerrar el hueco de categoría de guias/lugares que quedó
+  // documentado desde la Fase 6 (migración de contenido mock): ninguna de
+  // las categorías editoriales de arriba describe bien un trámite o un
+  // lugar físico — forzarlos ahí habría sido incorrecto, no un descuido.
+  { slug: 'tramites', name: 'Trámites y servicios', site: 'la-mira', fieldSchema: [] },
+  { slug: 'lugares', name: 'Lugares', site: 'la-mira', fieldSchema: [] },
+  {
+    // Mismo id que la antigua categoría compartida (el upsert de abajo
+    // busca por slug sin filtrar site_id cuando `site` viene definido) — el
+    // contenido de La Mira que ya la usaba sigue apuntando al mismo id, sin
+    // migración necesaria de ese lado.
+    slug: 'cine-tv',
+    name: 'Cine y TV',
+    site: 'la-mira',
+    fieldSchema: [
+      { key: 'clasificacion', label: 'Clasificación', type: 'select', options: ['A', 'B', 'B15', 'C', 'D'], isFact: true },
+      { key: 'duracion_minutos', label: 'Duración (min)', type: 'number', isFact: true },
+      { key: 'plataforma_streaming', label: 'Plataforma de streaming', type: 'text', isFact: true },
+      { key: 'genero', label: 'Género', type: 'text' },
+      { key: 'reparto', label: 'Reparto', type: 'text', isFact: true },
+    ],
+  },
   {
     slug: 'seguridad',
     name: 'Seguridad',

@@ -13,6 +13,7 @@ interface ReportajeRow {
   status: Reportaje['status'];
   tags: string[];
   sourceKind: string | null;
+  sourceUrl: string | null;
   seo: Reportaje['seo'];
   imageCaption: string;
   imageUrl: string | null;
@@ -39,6 +40,7 @@ export function toReportaje(row: ReportajeRow): Reportaje {
     status: row.status,
     tags: row.tags,
     sourceKind: row.sourceKind,
+    sourceUrl: row.sourceUrl,
     seo: row.seo ?? null,
     imageCaption: row.imageCaption,
     imageUrl: row.imageUrl,

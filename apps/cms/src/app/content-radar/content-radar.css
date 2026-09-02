@@ -4,8 +4,6 @@
    Todo va prefijado bajo .cr-scope para no chocar con clases del resto del CMS. */
 
 .cr-scope {
-  --cr-amber-bg: #fff2e8;
-  --cr-amber-border: #ffe2cc;
   --cr-green-bg: #eaf7ef;
   --cr-green-border: #cde5d3;
   font-size: 14px;
@@ -90,11 +88,11 @@
 
 /* ── "Radar del día" (Lo más caliente) ──────────────────────────────────
    No es una categoría más — es el resumen cross-categoría, el punto de
-   entrada real del reporte. Cuadrícula de tarjetas chicas (no muros de
-   texto) en vez de otra fila perdida en la lista, con fondo/borde propios
-   (mismo acento de marca que antes tenía "card-hot", ahora protagonista en
-   vez de escondido) — compacta a propósito: son 8 temas, no hace falta que
-   cada uno ocupe media pantalla. */
+   entrada real del reporte, por eso vive en su propia sección con su propio
+   título. Pero el formato de cada tema es EL MISMO acordeón que usa cada
+   categoría (.cr-row/.cr-accordion, ver más abajo) — antes eran tarjetas
+   ámbar siempre expandidas en cuadrícula; ahora es la misma lista vertical
+   colapsable, mismo look en toda la página. */
 .cr-scope .cr-hero { margin-bottom: 1.75rem; }
 .cr-scope .cr-hero-heading {
   display: flex;
@@ -108,52 +106,37 @@
   color: var(--color-ink);
 }
 .cr-scope .cr-hero-hint { font-size: 0.76rem; font-weight: 400; color: var(--color-ink-soft); }
-/* minmax() calcula su mínimo contra el ancho real del contenedor de grid —
-   min-width:0 evita que ese mínimo empuje el panel completo más ancho que
-   el espacio que le dejó el sidebar (colapsado 64px ↔ expandido 246px). */
-.cr-scope .cr-hero-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 0.6rem;
-  min-width: 0;
-}
-.cr-scope .cr-hero-tile {
-  background: var(--cr-amber-bg);
-  border: 1px solid var(--cr-amber-border);
-  border-top: 3px solid var(--color-brand);
-  border-radius: 10px;
-  padding: 0.65rem 0.8rem 0.75rem;
-  min-width: 0;
-}
-.cr-scope .cr-hero-tile .rank { color: var(--color-brand); }
-/* El resto de la tipografía la hereda de .report (h3/ul/li/publish-btn) —
-   aquí solo se reduce lo que hace que la tarjeta se sienta "grande". */
-.cr-scope .cr-hero-tile h3 {
-  margin: 0 0 0.35rem;
-  padding-top: 0;
-  border-top: none;
-  font-size: 0.82rem;
-  gap: 0.4rem;
-}
-.cr-scope .cr-hero-tile .rank { font-size: 0.72rem; min-width: 1em; }
-.cr-scope .cr-hero-tile ul { margin: 0; gap: 0.25rem; }
-.cr-scope .cr-hero-tile li { font-size: 0.72rem; line-height: 1.35; }
-.cr-scope .cr-hero-tile h3 + ul > li:first-child { font-size: 0.68rem; gap: 0.3rem; }
-.cr-scope .cr-hero-tile .origin-badge,
-.cr-scope .cr-hero-tile .geo-tag,
-.cr-scope .cr-hero-tile .tag { font-size: 0.6rem; padding: 0.03em 0.4em; }
-.cr-scope .cr-hero-tile a.publish-btn {
-  padding: 0.12rem 0.5rem;
-  font-size: 0.62rem;
+
+/* ── grupo de categorías (por sitio) ─────────────────────────────────────
+   Antes las ~20 categorías eran una sola lista sin más estructura que el
+   orden del reporte, en una página sin límite de ancho — mucho scroll
+   vertical. Agrupadas por sitio real (Compartidas/La Mira/Planazo/Otras, ver
+   GROUP_ORDER en render.ts) y con un <select> (ver GroupSelect) que muestra
+   solo el grupo elegido — ver "La Mira" ya no implica scrollear pasando los
+   otros 3 grupos primero. */
+.cr-scope .cr-group-select-row { display: flex; align-items: center; gap: 0.6rem; margin: 0 0 0.9rem; }
+.cr-scope .cr-group-select-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--color-ink-soft);
 }
 
 /* ── categorías (filas colapsables) ─────────────────────────────────────
    Antes cada categoría era una tarjeta gigante siempre expandida — 25
    muros de texto mezclando noticias/videos/frases, había que scrollear
    muchísimo. <details> es nativo (sin JS): colapsada por defecto, solo
-   nombre + conteo visibles hasta que se hace clic. */
-.cr-scope .cr-accordion { display: flex; flex-direction: column; gap: 0.5rem; }
-.cr-scope .cr-accordion + .cr-accordion { margin-top: 0.5rem; }
+   nombre + conteo visibles hasta que se hace clic. Grid en vez de columna
+   única: en pantallas anchas (esta página no tiene max-width) una lista de
+   20 filas colapsadas cortas desperdiciaba todo el ancho sobrante; ahora se
+   acomodan solas en tantas columnas como quepan, cada una con su propio
+   alto (una fila abierta no estira a sus vecinas de la misma fila). */
+.cr-scope .cr-accordion {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 460px));
+  align-items: start;
+  gap: 0.6rem;
+}
 .cr-scope .cr-row {
   background: var(--color-card);
   border: 1px solid var(--color-border);
@@ -186,9 +169,29 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+/* A qué sitio real del CMS corresponde esta categoría (La Mira/Planazo/
+   ambos) — normal-case a propósito, .cr-row-name fuerza mayúsculas y aquí
+   se quiere legible como nombre de sitio, no como parte del título. */
+.cr-scope .cr-row-site-badge {
+  flex: none;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 600;
+  font-size: 0.68rem;
+  padding: 0.1em 0.55em;
+  border-radius: 999px;
+  background: var(--color-border-soft);
+  color: var(--color-ink-soft);
+}
+.cr-scope .cr-row-site-badge-shared { background: var(--cr-green-bg); color: #2e7d42; }
 .cr-scope .cr-row-chevron { flex: none; color: var(--color-ink-faint); transition: transform 0.15s ease; }
 .cr-scope .cr-row[open] .cr-row-chevron { transform: rotate(180deg); }
 .cr-scope .cr-row-body { padding: 0 1.1rem 1.4rem; border-top: 1px solid var(--color-border-soft); padding-top: 1.1rem; }
+/* "Radar del día" mete el <h3> (rank+título+Publicar) directo dentro del
+   summary, en vez de un .cr-row-name — se resetean los estilos que .report
+   h3 trae pensados para ir dentro del cuerpo (margen, borde superior) y se
+   evita heredar la mono de .cr-row-summary. */
+.cr-scope .cr-row-summary h3 { flex: 1; min-width: 0; margin: 0; padding-top: 0; border-top: none; font-family: var(--font-sans); }
 
 /* ── tendencias generales (referencia, no accionable) ───────────────────
    "Qué busca la gente"/"Lo más buscado ahora" son listas de frases/términos
@@ -279,6 +282,27 @@
    en categorías sin tema numerado, ej. Tráfico, Clima, Cultura). */
 .cr-scope .report li a.publish-btn-sm { flex: none; align-self: baseline; padding: 0.1rem 0.5rem; font-size: 0.64rem; opacity: 0.85; }
 .cr-scope .report li a.publish-btn-sm:hover { opacity: 1; }
+/* Tema ya publicado (ver ContentRadarPublishedService) — mismo tono que
+   "Publicado" en StatusBadge (apps/cms/src/components/cms/status-badge.tsx),
+   para que se lea igual en cualquier pantalla del CMS. Es un <span>, no un
+   <a>: ya no es una acción, así que no hereda el estilo de .publish-btn
+   (selector `a.publish-btn`, no aplica aquí a propósito). */
+.cr-scope .report .publish-btn-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: #eaf7ef;
+  color: #2e9e5b;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: default;
+}
+.cr-scope .report h3 .publish-btn-done { flex: none; align-self: flex-start; }
+.cr-scope .report li .publish-btn-done.publish-btn-sm { padding: 0.1rem 0.5rem; font-size: 0.64rem; }
 .cr-scope .sub-label { margin: 1.35rem 0 0.6rem; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-ink-soft); font-family: var(--font-mono); }
 .cr-scope .sub-label-hint { display: inline-block; margin-left: 0.4rem; text-transform: none; font-weight: 400; letter-spacing: normal; opacity: 0.8; }
 

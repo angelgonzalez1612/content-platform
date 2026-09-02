@@ -7,6 +7,10 @@ import type { ContentStatus, Category, Seo } from "@planazo/types";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { CategoryFieldsSection } from "@/components/cms/category-fields-section";
 import { SeoPanel } from "@/components/cms/seo-panel";
+import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
+import { ImageField } from "@/components/cms/lamira/image-field";
+import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
+import { PlanazoPreviewCard } from "@/components/cms/planazo/planazo-preview-card";
 
 const STATUS_OPTIONS: Array<{ value: ContentStatus; label: string }> = [
   { value: "draft", label: "Borrador" },
@@ -21,6 +25,7 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
     description: "",
     categoryId: categories[0]?.id ?? "",
     zone: "",
+    alcaldiaSlug: "",
     address: "",
     priceLevel: null as number | null,
     price: null as number | null,
@@ -28,11 +33,13 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
     phone: "",
     website: "",
     status: "draft" as ContentStatus,
+    allowPhotoModal: false,
   });
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>({});
   const [seo, setSeo] = useState<Seo>({});
+  const [image, setImage] = useState<{ url: string; credit: string } | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
 
@@ -62,6 +69,7 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
           name: form.name,
           description: form.description || null,
           zone: form.zone || null,
+          alcaldiaSlug: form.alcaldiaSlug || null,
           address: form.address || null,
           priceLevel: form.priceLevel,
           price: form.price,
@@ -71,6 +79,8 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
           status: form.status,
           categoryData,
           seo,
+          photo: image,
+          allowPhotoModal: form.allowPhotoModal,
         }),
       });
 
@@ -88,7 +98,21 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
     }
   }
 
-  return (
+  const preview = (
+    <PlanazoPreviewCard
+      kind="lugar"
+      name={form.name}
+      categoryLabel={category?.name ?? ""}
+      image={image}
+      address={form.address}
+      zone={form.zone}
+      price={form.price}
+      tags={tags}
+      description={form.description}
+    />
+  );
+
+  const left = (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
       <div className="flex flex-col gap-1.5">
         <label htmlFor="c-name" className={labelClass}>
@@ -135,14 +159,37 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
         </select>
       </div>
 
+      <ImageField image={image} onChange={setImage} />
+
+      <label className="flex items-start gap-2.5 rounded-[10px] border border-border-soft bg-background p-3">
+        <input
+          type="checkbox"
+          checked={form.allowPhotoModal}
+          onChange={(e) => set("allowPhotoModal", e.target.checked)}
+          className="mt-0.5 size-4 accent-brand"
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="text-[13px] font-medium text-ink">Foto ampliable</span>
+          <span className="text-[11.5px] text-ink-faint">
+            Apagado por defecto — actívalo solo si la foto real del lugar amerita verse en pantalla completa. Si está apagado, la foto en el sitio no es clickeable.
+          </span>
+        </span>
+      </label>
+
       <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="c-zone" className={labelClass}>
             Zona / colonia
           </label>
           <input id="c-zone" value={form.zone} onChange={(e) => set("zone", e.target.value)} placeholder="ej. Roma Norte" className={fieldClass} />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="c-alcaldia" className={labelClass}>
+            Alcaldía / municipio
+          </label>
+          <AlcaldiaSelect id="c-alcaldia" value={form.alcaldiaSlug} onChange={(slug) => set("alcaldiaSlug", slug)} />
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="c-address" className={labelClass}>
@@ -290,4 +337,6 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
       </div>
     </form>
   );
+
+  return <EditPreviewLayout left={left} preview={preview} />;
 }

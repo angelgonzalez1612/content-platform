@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import type { AlertaStatus, EventoStatus, LugarKind } from "@planazo/types";
 import type { ContentBlockValue } from "@/components/cms/content-blocks-field";
+import { LAMIRA_TYPE_PATH } from "@/lib/lamira-paths";
+import { getLocationNameBySlug } from "@/lib/locations";
 
 const KIND_LABEL: Record<LugarKind, string> = {
   parque: "Parque",
@@ -120,7 +122,7 @@ export function LamiraPreviewCard({
   colonia,
 }: LamiraPreviewProps) {
   const isRichContent = type === "noticia" || type === "guia" || type === "reportaje";
-  const path = type === "lugar" ? "lugares" : type === "evento" ? "eventos" : type === "guia" ? "guias" : type === "reportaje" ? "reportajes" : type === "alerta" ? "alertas" : "noticias";
+  const path = LAMIRA_TYPE_PATH[type] ?? "noticias";
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -150,7 +152,7 @@ export function LamiraPreviewCard({
           {type === "alerta" && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${ALERTA_STATUS_META[alertaStatus].className}`}>{ALERTA_STATUS_META[alertaStatus].label}</span>
-              {alcaldiaSlug && <span className="text-[12px] text-ink-faint">{alcaldiaSlug}</span>}
+              {alcaldiaSlug && <span className="text-[12px] text-ink-faint">{getLocationNameBySlug(alcaldiaSlug) ?? alcaldiaSlug}</span>}
             </div>
           )}
 
@@ -168,7 +170,7 @@ export function LamiraPreviewCard({
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-ink-soft">
               <span>{KIND_LABEL[kind]}</span>
               {colonia && <span>{colonia}</span>}
-              {alcaldiaSlug && <span>{alcaldiaSlug}</span>}
+              {alcaldiaSlug && <span>{getLocationNameBySlug(alcaldiaSlug) ?? alcaldiaSlug}</span>}
             </div>
           )}
 
@@ -189,7 +191,7 @@ export function LamiraPreviewCard({
             </div>
           )}
 
-          {isRichContent && content.length > 0 && (
+          {content.length > 0 && (
             <div className="mt-5 flex flex-col gap-4 border-t border-border-soft pt-5">
               {content.map((block, i) => (
                 <div key={i} className="contents">

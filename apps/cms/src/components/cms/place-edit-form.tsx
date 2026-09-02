@@ -9,6 +9,11 @@ import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { CategoryFieldsSection } from "@/components/cms/category-fields-section";
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
+import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
+import { ImageField } from "@/components/cms/lamira/image-field";
+import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
+import { PlanazoPreviewCard } from "@/components/cms/planazo/planazo-preview-card";
+import { ContentBlocksField, type ContentBlockValue } from "@/components/cms/content-blocks-field";
 
 const STATUS_OPTIONS: Array<{ value: PlaceDetail["status"]; label: string }> = [
   { value: "draft", label: "Borrador" },
@@ -30,6 +35,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
     name: place.name,
     description: place.description ?? "",
     zone: place.zone ?? "",
+    alcaldiaSlug: place.alcaldiaSlug ?? "",
     address: place.address ?? "",
     priceLevel: place.priceLevel,
     price: place.price,
@@ -37,23 +43,27 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
     phone: place.phone ?? "",
     website: place.website ?? "",
     status: place.status,
+    allowPhotoModal: place.allowPhotoModal,
   });
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(place.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(place.seo ?? {});
+  const cover = place.photos[0];
+  const [image, setImage] = useState<{ url: string; credit: string } | null>(cover ? { url: cover.url, credit: cover.credit ?? "" } : null);
+  const [content, setContent] = useState<ContentBlockValue[]>((place.content ?? []).map((b) => ({ ...b, heading: b.heading ?? null })));
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState("");
 
   const [improving, setImproving] = useState(false);
   const [improveResult, setImproveResult] = useState<{ draft: ImproveDraft; checksRun: CheckResult[]; decision: AiDecision } | null>(null);
+  const [improveMode, setImproveMode] = useState<"rewrite" | "expand">("rewrite");
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }));
     setSavedAt(null);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function save(status: PlaceDetail["status"]) {
     setSaving(true);
     setError("");
 
@@ -61,15 +71,19 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
       name: form.name,
       description: form.description || null,
       zone: form.zone || null,
+      alcaldiaSlug: form.alcaldiaSlug || null,
       address: form.address || null,
       priceLevel: form.priceLevel,
       price: form.price,
       rating: form.rating,
       phone: form.phone || null,
       website: form.website || null,
-      status: form.status,
+      status,
       categoryData,
       seo,
+      photo: image,
+      content,
+      allowPhotoModal: form.allowPhotoModal,
     };
 
     try {
@@ -85,6 +99,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
         return;
       }
 
+      setForm((f) => ({ ...f, status }));
       setSavedAt(Date.now());
       router.refresh();
     } catch {
@@ -94,8 +109,23 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
     }
   }
 
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    save(form.status);
+  }
+
+  function handlePublish() {
+    save("published");
+  }
+
   function applyImprovement() {
     if (!improveResult) return;
+    if (improveMode === "expand") {
+      const newContent = improveResult.draft.content as ContentBlockValue[] | undefined;
+      if (newContent) setContent(newContent);
+      setImproveResult(null);
+      return;
+    }
     const { description, seo: improvedSeo, ...rest } = improveResult.draft;
     if (description) set("description", description);
     if (improvedSeo) setSeo(improvedSeo);
@@ -104,21 +134,40 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
     setImproveResult(null);
   }
 
-  return (
+  const preview = (
+    <PlanazoPreviewCard
+      kind="lugar"
+      name={form.name}
+      categoryLabel={category?.name ?? ""}
+      image={image}
+      address={form.address}
+      zone={form.zone}
+      price={form.price}
+      tags={place.tags.map((t) => t.name)}
+      description={form.description}
+      content={content}
+    />
+  );
+
+  const left = (
     <div className="flex flex-col gap-4">
       <ImproveWithAiPanel
         contentType="place"
         contentId={place.id}
         expanded={improving}
         onToggle={() => setImproving((v) => !v)}
-        onResult={setImproveResult}
+        onResult={(result, mode) => {
+          setImproveResult(result);
+          setImproveMode(mode);
+        }}
+        supportsExpand
       />
 
       {improveResult && (
         <div className="flex flex-col gap-4 rounded-[14px] border border-brand bg-accent p-5">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] font-medium tracking-[.1em] text-accent-fg uppercase">
-              Borrador mejorado — revisa antes de aplicar
+              {improveMode === "expand" ? "Contenido nuevo — revisa antes de aplicar" : "Borrador mejorado — revisa antes de aplicar"}
             </span>
             <span
               className={`rounded-full px-2.5 py-1 font-mono text-[10px] font-medium ${
@@ -129,16 +178,31 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 text-[13px]">
-            <div>
-              <span className={labelClass}>Descripción actual</span>
-              <p className="mt-1 text-ink-soft">{form.description || "(vacía)"}</p>
+          {improveMode === "expand" ? (
+            <div className="flex flex-col gap-3 text-[13px]">
+              {((improveResult.draft.content as ContentBlockValue[] | undefined) ?? []).slice(content.length).map((block, i) => (
+                <div key={i} className="rounded-[10px] border border-[#FFE2CC] bg-white p-3">
+                  {block.heading && <p className="font-semibold text-ink">{block.heading}</p>}
+                  {block.paragraphs.map((p, pi) => (
+                    <p key={pi} className="mt-1.5 text-ink-soft">
+                      {p}
+                    </p>
+                  ))}
+                </div>
+              ))}
             </div>
-            <div>
-              <span className={labelClass}>Descripción mejorada</span>
-              <p className="mt-1 text-ink">{improveResult.draft.description as string}</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 text-[13px]">
+              <div>
+                <span className={labelClass}>Descripción actual</span>
+                <p className="mt-1 text-ink-soft">{form.description || "(vacía)"}</p>
+              </div>
+              <div>
+                <span className={labelClass}>Descripción mejorada</span>
+                <p className="mt-1 text-ink">{improveResult.draft.description as string}</p>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex flex-col gap-1.5">
             {improveResult.checksRun.map((c) => (
@@ -198,14 +262,45 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
           <p className="text-[13.5px] text-ink">{category?.name ?? "Sin categoría"}</p>
         </div>
 
+        <ImageField image={image} onChange={setImage} />
+
+        <label className="flex items-start gap-2.5 rounded-[10px] border border-border-soft bg-background p-3">
+          <input
+            type="checkbox"
+            checked={form.allowPhotoModal}
+            onChange={(e) => set("allowPhotoModal", e.target.checked)}
+            className="mt-0.5 size-4 accent-brand"
+          />
+          <span className="flex flex-col gap-0.5">
+            <span className="text-[13px] font-medium text-ink">Foto ampliable</span>
+            <span className="text-[11.5px] text-ink-faint">
+              Apagado por defecto — actívalo solo si la foto real del lugar amerita verse en pantalla completa. Si está apagado, la foto en el sitio no es clickeable.
+            </span>
+          </span>
+        </label>
+
+        <div className="flex flex-col gap-1.5">
+          <span className={labelClass}>Contenido extendido (opcional)</span>
+          <p className="text-[11.5px] text-ink-faint">
+            Secciones adicionales que se muestran debajo de la descripción — pueden agregarse a mano o con &quot;Agregar contenido&quot; en Mejorar con IA, arriba.
+          </p>
+          <ContentBlocksField blocks={content} onChange={setContent} />
+        </div>
+
         <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="zone" className={labelClass}>
               Zona / colonia
             </label>
             <input id="zone" value={form.zone} onChange={(e) => set("zone", e.target.value)} placeholder="ej. Roma Norte" className={fieldClass} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="place-alcaldia" className={labelClass}>
+              Alcaldía / municipio
+            </label>
+            <AlcaldiaSelect id="place-alcaldia" value={form.alcaldiaSlug} onChange={(slug) => set("alcaldiaSlug", slug)} />
           </div>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="address" className={labelClass}>
@@ -309,9 +404,21 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
           >
             {saving ? "Guardando…" : "Guardar cambios"}
           </button>
+          {form.status !== "published" && (
+            <button
+              type="button"
+              onClick={handlePublish}
+              disabled={saving}
+              className="rounded-[10px] border border-[#B7E4C7] bg-[#EAF7EF] px-4 py-2.5 text-[13.5px] font-semibold text-[#2E9E5B] transition-colors hover:bg-[#DFF3E6] disabled:cursor-default disabled:opacity-60"
+            >
+              Publicar
+            </button>
+          )}
           {savedAt && <span className="font-mono text-[12px] text-positive">Guardado ✓</span>}
         </div>
       </form>
     </div>
   );
+
+  return <EditPreviewLayout left={left} preview={preview} />;
 }

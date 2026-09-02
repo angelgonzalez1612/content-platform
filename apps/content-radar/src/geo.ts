@@ -117,11 +117,10 @@ function stateName(code: string): string | null {
 // Heurística por keywords, igual que classifyOrigin — no es geolocalización real.
 // Municipio solo se detecta dentro de la Zona Metropolitana del Valle de México
 // (CDMX + conurbados de Edomex); fuera de ahí solo se resuelve hasta el estado.
-export function classifyGeo(topic: TrendTopic): GeoClassification {
-  const haystack = normalize(
-    [topic.title, ...topic.newsItems.flatMap((n) => [n.title, n.snippet ?? ""])].join(" ")
-  );
-
+// Núcleo compartido entre classifyGeo (por tema, con más texto disponible) y
+// classifyGeoFromTitle (por nota individual, ver report.ts) — misma heurística,
+// distinta cantidad de texto de entrada.
+function classifyGeoText(haystack: string): GeoClassification {
   for (const m of MUNICIPIOS_BY_SPECIFICITY) {
     if (m.keywords.some((kw) => containsKeyword(haystack, kw))) {
       return { entidad: stateName(m.stateCode), municipio: m.name };
@@ -135,4 +134,18 @@ export function classifyGeo(topic: TrendTopic): GeoClassification {
   }
 
   return { entidad: null, municipio: null };
+}
+
+export function classifyGeo(topic: TrendTopic): GeoClassification {
+  const haystack = normalize(
+    [topic.title, ...topic.newsItems.flatMap((n) => [n.title, n.snippet ?? ""])].join(" ")
+  );
+  return classifyGeoText(haystack);
+}
+
+// Para una nota individual (Google News CDMX, "De la fuente", YouTube) — solo se
+// tiene el título, no un snippet extra, así que clasifica peor que classifyGeo
+// (menos texto = más "sin ubicación"), pero sigue siendo la misma heurística.
+export function classifyGeoFromTitle(title: string): GeoClassification {
+  return classifyGeoText(normalize(title));
 }

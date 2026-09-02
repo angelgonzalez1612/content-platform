@@ -5,11 +5,15 @@ import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
 import type { LamiraLugar, LugarKind, Category, Seo } from "@planazo/types";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
+import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
 import { CategoryFieldsSection } from "@/components/cms/category-fields-section";
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
 import { RichTextarea } from "@/components/cms/rich-textarea";
+import { ImageField } from "@/components/cms/lamira/image-field";
+import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
+import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
 
 const KIND_OPTIONS: Array<{ value: LugarKind; label: string }> = [
   { value: "parque", label: "Parque" },
@@ -34,6 +38,9 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
   });
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(existing?.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(existing?.seo ?? {});
+  const [image, setImage] = useState<{ url: string; credit: string } | null>(
+    existing?.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
+  );
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -68,6 +75,8 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
       alcaldiaSlug: form.alcaldiaSlug,
       colonia: form.colonia || null,
       description: form.description,
+      imageUrl: image?.url ?? null,
+      imageCredit: image?.credit ?? null,
       categoryData,
       seo,
     };
@@ -100,7 +109,29 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
     }
   }
 
-  return (
+  const preview = (
+    <LamiraPreviewCard
+      type="lugar"
+      name={form.name}
+      categoryName={category?.name ?? null}
+      image={image}
+      dek=""
+      description={form.description}
+      content={[]}
+      alertaStatus="activa"
+      alcaldiaSlug={form.alcaldiaSlug}
+      eventoStatus="proximo"
+      date=""
+      time=""
+      location=""
+      price=""
+      organizer=""
+      kind={form.kind}
+      colonia={form.colonia}
+    />
+  );
+
+  const left = (
     <div className="flex flex-col gap-4">
       {isEdit && (
         <ImproveWithAiPanel contentType="lugar" contentId={existing.id} expanded={improving} onToggle={() => setImproving((v) => !v)} onResult={setImproveResult} />
@@ -122,6 +153,8 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
           </label>
           <input id="l-name" required value={form.name} onChange={(e) => set("name", e.target.value)} className={fieldClass} />
         </div>
+
+        <ImageField image={image} onChange={setImage} searchQuery={form.name} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="l-description" className={labelClass}>
@@ -162,9 +195,9 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="l-alcaldia" className={labelClass}>
-              Alcaldía (slug)
+              Alcaldía / municipio
             </label>
-            <input id="l-alcaldia" required value={form.alcaldiaSlug} onChange={(e) => set("alcaldiaSlug", e.target.value)} placeholder="ej. cuauhtemoc" className={fieldClass} />
+            <AlcaldiaSelect id="l-alcaldia" required value={form.alcaldiaSlug} onChange={(slug) => set("alcaldiaSlug", slug)} />
           </div>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="l-colonia" className={labelClass}>
@@ -191,4 +224,6 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
       </form>
     </div>
   );
+
+  return <EditPreviewLayout left={left} preview={preview} />;
 }

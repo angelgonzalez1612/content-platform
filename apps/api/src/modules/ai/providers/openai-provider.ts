@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
+import { AiSettingsService } from '../ai-settings.service';
 import {
   CATEGORY_SLUGS,
   type ContentProvider,
@@ -30,29 +31,36 @@ Reglas estrictas:
 
 @Injectable()
 export class OpenAiProvider implements ContentProvider {
+  private cachedKey: string | null = null;
   private client: OpenAI | null = null;
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly aiSettings: AiSettingsService,
+  ) {}
 
   // Built lazily — constructing the SDK client eagerly would throw at app
   // boot (crashing the whole API, not just this feature) whenever the key
-  // isn't set yet, e.g. on a fresh clone before .env is filled in.
-  private getClient(): OpenAI {
-    if (this.client) return this.client;
-
-    const apiKey = this.config.get<string>('OPENAI_API_KEY');
+  // isn't set yet, e.g. on a fresh clone before .env/Configuración están
+  // llenos. La key guardada desde la pantalla de Configuración (ai_settings)
+  // manda sobre OPENAI_API_KEY del .env si ambas existen; se re-resuelve en
+  // cada llamada (barato) para recoger cambios sin reiniciar el proceso.
+  private async getClient(): Promise<OpenAI> {
+    const apiKey = (await this.aiSettings.getOpenAiApiKey()) ?? this.config.get<string>('OPENAI_API_KEY');
     if (!apiKey) {
       throw new InternalServerErrorException(
-        'OPENAI_API_KEY no está configurada en el backend. Agrégala a apps/api/.env.',
+        'OPENAI_API_KEY no está configurada. Agrégala en Configuración → Inteligencia Artificial, o en apps/api/.env.',
       );
     }
 
+    if (this.client && this.cachedKey === apiKey) return this.client;
+    this.cachedKey = apiKey;
     this.client = new OpenAI({ apiKey });
     return this.client;
   }
 
   async generatePlaceDraft(input: PlaceDraftInput): Promise<PlaceDraftOutput> {
-    const client = this.getClient();
+    const client = await this.getClient();
 
     const userPrompt = [
       `Nombre del lugar: ${input.name}`,
@@ -82,7 +90,7 @@ export class OpenAiProvider implements ContentProvider {
   async generateStructured<Schema extends z.ZodTypeAny>(
     input: StructuredGenerateInput<Schema>,
   ): Promise<z.infer<Schema>> {
-    const client = this.getClient();
+    const client = await this.getClient();
 
     const completion = await client.chat.completions.parse({
       model: OPENAI_MODEL,

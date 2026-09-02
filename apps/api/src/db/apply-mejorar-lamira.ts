@@ -70,7 +70,7 @@ async function main() {
       process.stdout.write(`[${processed}] ${spec.type} "${label}" (${row.slug})... `);
 
       try {
-        const result = await aiDraft.improveContent(spec.type, row.id, { provider: 'claude-cli' });
+        const result = await aiDraft.improveContent(spec.type, row.id, { provider: 'claude-cli', mode: 'rewrite' });
 
         if (result.decision === 'auto-published') {
           const fields = spec.applyFields(result.draft);

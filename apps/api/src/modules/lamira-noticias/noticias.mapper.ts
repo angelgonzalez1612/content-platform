@@ -16,6 +16,7 @@ interface NoticiaRow {
   status: Noticia['status'];
   sourceKind: string | null;
   externalSource: string | null;
+  sourceUrl: string | null;
   youtubeId: string | null;
   tags: string[];
   seo: Noticia['seo'];
@@ -50,6 +51,7 @@ export function toNoticia(row: NoticiaRow): Noticia {
     status: row.status,
     sourceKind: row.sourceKind,
     externalSource: row.externalSource,
+    sourceUrl: row.sourceUrl,
     youtubeId: row.youtubeId,
     tags: row.tags,
     seo: row.seo ?? null,

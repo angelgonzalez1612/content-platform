@@ -3,7 +3,7 @@ import { idColumn, createdAtColumn } from './columns.helpers';
 import { CONTENT_STATUS_VALUES, ALERTA_STATUS_VALUES, EVENTO_STATUS_VALUES, LUGAR_KIND_VALUES } from './enums';
 import { sites } from './sites';
 import { categories } from './taxonomy';
-import type { Seo } from '@planazo/types';
+import type { Seo, ContentBlock } from '@planazo/types';
 
 // Los 6 tipos de contenido editorial de la-mira, reflejando 1:1 las
 // interfaces ya definidas en la-mira/src/lib/types.ts (Noticia, Alerta,
@@ -16,10 +16,6 @@ import type { Seo } from '@planazo/types';
 interface TocEntry {
   id: string;
   label: string;
-}
-interface ContentBlock {
-  heading?: string | null;
-  paragraphs: string[];
 }
 
 export const noticias = sqliteTable('noticias', {
@@ -40,6 +36,11 @@ export const noticias = sqliteTable('noticias', {
   status: text('status', { enum: CONTENT_STATUS_VALUES }).default('draft').notNull(),
   sourceKind: text('source_kind'), // 'demo' | 'institucional' | 'editorial'
   externalSource: text('external_source'),
+  // URL del artículo original citado (Milenio, Reforma, etc.) del que salió
+  // el tema en Content Radar y con el que la IA redactó la pieza — capturada
+  // sola cuando la crea la automatización (ver AiDraftService.draft /
+  // AutomationRunnerService.createContent), editable a mano en el formulario.
+  sourceUrl: text('source_url'),
   youtubeId: text('youtube_id'),
   tags: text('tags', { mode: 'json' }).$type<string[]>().notNull().default([]),
   seo: text('seo', { mode: 'json' }).$type<Seo>(),
@@ -76,6 +77,10 @@ export const alertas = sqliteTable('alertas', {
   imageUrl: text('image_url'), // Fase 4 — ver comentario en noticias arriba.
   imageCredit: text('image_credit'),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
+  // Cuerpo extendido opcional — mismo patrón que noticias/reportajes/places
+  // (ver AiDraftService, modo 'expand'), agregado por un editor después del
+  // draft inicial, nunca generado de entrada.
+  content: text('content', { mode: 'json' }).$type<ContentBlock[]>().notNull().default([]),
   createdAt: createdAtColumn(),
 });
 
@@ -134,6 +139,7 @@ export const lamiraEventos = sqliteTable('lamira_eventos', {
   imageUrl: text('image_url'), // Fase 4 — ver comentario en noticias arriba.
   imageCredit: text('image_credit'),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
+  content: text('content', { mode: 'json' }).$type<ContentBlock[]>().notNull().default([]),
   createdAt: createdAtColumn(),
 });
 
@@ -157,6 +163,7 @@ export const lamiraLugares = sqliteTable('lamira_lugares', {
   imageUrl: text('image_url'), // Fase 4 — ver comentario en noticias arriba.
   imageCredit: text('image_credit'),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
+  content: text('content', { mode: 'json' }).$type<ContentBlock[]>().notNull().default([]),
   createdAt: createdAtColumn(),
 });
 
@@ -177,6 +184,7 @@ export const reportajes = sqliteTable('reportajes', {
   status: text('status', { enum: CONTENT_STATUS_VALUES }).default('draft').notNull(),
   tags: text('tags', { mode: 'json' }).$type<string[]>().notNull().default([]), // requerido en el original
   sourceKind: text('source_kind'),
+  sourceUrl: text('source_url'), // ver comentario en noticias arriba.
   seo: text('seo', { mode: 'json' }).$type<Seo>(),
   imageCaption: text('image_caption').notNull(),
   imageUrl: text('image_url'), // Fase 4 — ver comentario en noticias arriba.

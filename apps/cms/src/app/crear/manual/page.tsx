@@ -31,7 +31,7 @@ export default async function CrearManualPage({ searchParams }: { searchParams: 
     const categories = await getCmsCategories("la-mira");
     return (
       <CmsShell user={session} title={LAMIRA_TYPE_LABEL[type]}>
-        <div className="mx-auto max-w-[760px] p-[26px] pb-[60px]">
+        <div className="p-[26px] pb-[60px]">
           <h1 className="mb-1 text-[22px] font-semibold tracking-tight">{LAMIRA_TYPE_LABEL[type]}</h1>
           <p className="mb-5 text-[13.5px] text-ink-soft">Llena la ficha completa — se crea como borrador salvo que cambies el estado.</p>
           {type === "noticia" && <NoticiaForm categories={categories} />}
@@ -49,7 +49,7 @@ export default async function CrearManualPage({ searchParams }: { searchParams: 
 
   return (
     <CmsShell user={session} title="Crear manualmente">
-      <div className="mx-auto max-w-[640px] p-[26px] pb-[60px]">
+      <div className="p-[26px] pb-[60px]">
         <h1 className="mb-1 text-[22px] font-semibold tracking-tight">Nuevo lugar</h1>
         <p className="mb-5 text-[13.5px] text-ink-soft">Llena la ficha completa — se crea como borrador.</p>
         <PlaceCreateForm categories={categories} />

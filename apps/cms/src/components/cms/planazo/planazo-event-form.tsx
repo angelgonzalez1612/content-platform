@@ -9,6 +9,19 @@ import { CategoryFieldsSection } from "@/components/cms/category-fields-section"
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
+import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
+import { ImageField } from "@/components/cms/lamira/image-field";
+import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
+import { PlanazoPreviewCard } from "@/components/cms/planazo/planazo-preview-card";
+
+// `startDate` es el valor crudo de un <input type="datetime-local"> ("2026-09-01T18:00") — para la vista previa.
+function toDateLabelPreview(startDate: string): string {
+  if (!startDate) return "";
+  const date = new Date(startDate);
+  if (Number.isNaN(date.getTime())) return "";
+  const label = new Intl.DateTimeFormat("es-MX", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(date);
+  return `${label.charAt(0).toUpperCase()}${label.slice(1)}`;
+}
 
 const STATUS_OPTIONS: Array<{ value: PlanazoEvent["status"]; label: string }> = [
   { value: "draft", label: "Borrador" },
@@ -32,11 +45,15 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
     startDate: toLocalInput(existing.startDate),
     endDate: toLocalInput(existing.endDate),
     locationName: existing.locationName ?? "",
+    alcaldiaSlug: existing.alcaldiaSlug ?? "",
     categoryId: existing.categoryId ?? categories[0]?.id ?? "",
     status: existing.status,
   });
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(existing.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(existing.seo ?? {});
+  const [image, setImage] = useState<{ url: string; credit: string } | null>(
+    existing.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
+  );
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -59,19 +76,21 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
     setImproveResult(null);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function save(status: PlanazoEvent["status"]) {
     setSaving(true);
     setError("");
 
     const payload = {
       name: form.name,
       description: form.description,
-      startDate: form.startDate,
+      startDate: form.startDate || null,
       endDate: form.endDate || null,
       locationName: form.locationName || null,
+      alcaldiaSlug: form.alcaldiaSlug || null,
       categoryId: form.categoryId || null,
-      status: form.status,
+      imageUrl: image?.url ?? null,
+      imageCredit: image?.credit ?? null,
+      status,
       categoryData,
       seo,
     };
@@ -90,6 +109,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
         return;
       }
 
+      setForm((f) => ({ ...f, status }));
       setSavedAt(Date.now());
       setSaving(false);
       router.refresh();
@@ -99,7 +119,28 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
     }
   }
 
-  return (
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    save(form.status);
+  }
+
+  function handlePublish() {
+    save("published");
+  }
+
+  const preview = (
+    <PlanazoPreviewCard
+      kind="evento"
+      name={form.name}
+      categoryLabel={category?.name ?? ""}
+      image={image}
+      locationName={form.locationName}
+      dateLabel={toDateLabelPreview(form.startDate)}
+      description={form.description}
+    />
+  );
+
+  const left = (
     <div className="flex flex-col gap-4">
       <ImproveWithAiPanel contentType="evento-planazo" contentId={existing.id} expanded={improving} onToggle={() => setImproving((v) => !v)} onResult={setImproveResult} />
 
@@ -140,14 +181,16 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
           </select>
         </div>
 
+        <ImageField image={image} onChange={setImage} />
+
         <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="pe-start" className={labelClass}>
-              Fecha y hora de inicio
+              Fecha y hora de inicio <span className="normal-case font-normal text-ink-faint">(opcional)</span>
             </label>
-            <input id="pe-start" type="datetime-local" required value={form.startDate} onChange={(e) => set("startDate", e.target.value)} className={fieldClass} />
+            <input id="pe-start" type="datetime-local" value={form.startDate} onChange={(e) => set("startDate", e.target.value)} className={fieldClass} />
           </div>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="pe-end" className={labelClass}>
@@ -157,11 +200,19 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
           </div>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="pe-location" className={labelClass}>
-            Lugar
-          </label>
-          <input id="pe-location" value={form.locationName} onChange={(e) => set("locationName", e.target.value)} placeholder="ej. Foro Indie Rocks, Condesa" className={fieldClass} />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="pe-location" className={labelClass}>
+              Lugar <span className="normal-case font-normal text-ink-faint">(opcional)</span>
+            </label>
+            <input id="pe-location" value={form.locationName} onChange={(e) => set("locationName", e.target.value)} placeholder="ej. Foro Indie Rocks, Condesa" className={fieldClass} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="pe-alcaldia" className={labelClass}>
+              Alcaldía / municipio
+            </label>
+            <AlcaldiaSelect id="pe-alcaldia" value={form.alcaldiaSlug} onChange={(slug) => set("alcaldiaSlug", slug)} />
+          </div>
         </div>
 
         <SeoPanel seo={seo} onChange={setSeo} />
@@ -189,9 +240,21 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
           >
             {saving ? "Guardando…" : "Guardar cambios"}
           </button>
+          {form.status !== "published" && (
+            <button
+              type="button"
+              onClick={handlePublish}
+              disabled={saving}
+              className="rounded-[10px] border border-[#B7E4C7] bg-[#EAF7EF] px-4 py-2.5 text-[13.5px] font-semibold text-[#2E9E5B] transition-colors hover:bg-[#DFF3E6] disabled:cursor-default disabled:opacity-60"
+            >
+              Publicar
+            </button>
+          )}
           {savedAt && <span className="font-mono text-[12px] text-positive">Guardado ✓</span>}
         </div>
       </form>
     </div>
   );
+
+  return <EditPreviewLayout left={left} preview={preview} />;
 }

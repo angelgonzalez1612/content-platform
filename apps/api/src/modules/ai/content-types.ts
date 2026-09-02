@@ -42,6 +42,22 @@ const titleShape = {
     ),
 };
 
+// Compartido por los 8 tipos — una frase corta de 2-4 PALABRAS CLAVE (no una
+// oración, no el título) para buscar una imagen libre en bancos como
+// Wikimedia Commons/Openverse. Existe aparte del título/tema porque esos
+// suelen ser frases largas y muy específicas que esos buscadores no
+// encuentran por coincidencia exacta — palabras clave genéricas (el sujeto
+// visual: un lugar, un objeto, una escena) sí encuentran resultados reales.
+const imageQueryShape = {
+  imageSearchQuery: z
+    .string()
+    .min(1)
+    .max(60)
+    .describe(
+      '2-4 palabras clave en español o inglés (lo que dé mejor resultado) que describan la imagen ideal para esta pieza — el sujeto visual concreto (ej. "tráfico Ciudad de México", "mercado CDMX", "Bosque de Chapultepec"), NO una oración ni el título — bancos de imágenes libres no encuentran frases largas.',
+    ),
+};
+
 const LAMIRA_BASE_PROMPT = `Eres redactor de la-mira, un periódico digital hiperlocal de la Ciudad de México.
 
 Reglas estrictas:
@@ -62,8 +78,9 @@ export const CONTENT_TYPES: Record<string, ContentTypeConfig> = {
         .string()
         .describe('80-120 palabras, editorial, en español de México, para una guía de planes de CDMX.'),
       suggestedTags: z.array(z.string()).min(1).max(5),
+      ...imageQueryShape,
     },
-    requiredEditorialFields: ['description', 'suggestedTags'],
+    requiredEditorialFields: ['description', 'suggestedTags', 'imageSearchQuery'],
     systemPrompt: `Eres redactor editorial de Planazo, una guía de planes y lugares de la Ciudad de México.
 
 Reglas estrictas:
@@ -83,8 +100,9 @@ Reglas estrictas:
         .array(z.object({ heading: z.string().nullable(), paragraphs: z.array(z.string()) }))
         .min(1)
         .describe('Cuerpo de la nota en bloques; heading es opcional (null si no aplica).'),
+      ...imageQueryShape,
     },
-    requiredEditorialFields: ['title', 'dek', 'content'],
+    requiredEditorialFields: ['title', 'dek', 'content', 'imageSearchQuery'],
     systemPrompt: LAMIRA_BASE_PROMPT,
   },
   alerta: {
@@ -95,8 +113,9 @@ Reglas estrictas:
     editorialShape: {
       ...titleShape,
       description: z.string().describe('1-3 párrafos, explica la situación con lo que se sabe hasta ahora.'),
+      ...imageQueryShape,
     },
-    requiredEditorialFields: ['title', 'description'],
+    requiredEditorialFields: ['title', 'description', 'imageSearchQuery'],
     systemPrompt: LAMIRA_BASE_PROMPT,
   },
   guia: {
@@ -112,8 +131,9 @@ Reglas estrictas:
         .min(1)
         .describe('Cuerpo de la guía en bloques con heading obligatorio.'),
       faq: z.array(z.object({ question: z.string(), answer: z.string() })).describe('Preguntas frecuentes reales sobre el trámite.'),
+      ...imageQueryShape,
     },
-    requiredEditorialFields: ['title', 'dek', 'content'],
+    requiredEditorialFields: ['title', 'dek', 'content', 'imageSearchQuery'],
     systemPrompt: `${LAMIRA_BASE_PROMPT}\n\nEsta pieza es una guía de trámite ("evergreen"), no una noticia — quickFacts y officialSource ya están capturados aparte y no debes repetirlos ni contradecirlos en el cuerpo.`,
   },
   evento: {
@@ -124,8 +144,9 @@ Reglas estrictas:
     editorialShape: {
       ...titleShape,
       description: z.string().describe('1-2 párrafos que inviten a asistir, sin inventar fecha/hora/lugar/precio — esos ya están capturados aparte.'),
+      ...imageQueryShape,
     },
-    requiredEditorialFields: ['title', 'description'],
+    requiredEditorialFields: ['title', 'description', 'imageSearchQuery'],
     systemPrompt: LAMIRA_BASE_PROMPT,
   },
   'evento-planazo': {
@@ -135,8 +156,9 @@ Reglas estrictas:
     classifyHint: 'Evento como recomendación de plan (angle "qué hacer"), típicamente ligado a un lugar/negocio recurrente — para la guía evergreen de Planazo, no para cobertura noticiosa. Si el evento es más bien noticia de agenda pública/cobertura, usa evento (la-mira) en vez de este.',
     editorialShape: {
       description: z.string().describe('1-2 párrafos que inviten a asistir, tono de recomendación de plan — sin inventar fecha/hora/lugar/precio, esos ya están capturados aparte.'),
+      ...imageQueryShape,
     },
-    requiredEditorialFields: ['description'],
+    requiredEditorialFields: ['description', 'imageSearchQuery'],
     systemPrompt: `Eres redactor editorial de Planazo, una guía de planes y lugares de la Ciudad de México.
 
 Reglas estrictas:
@@ -151,8 +173,9 @@ Reglas estrictas:
     classifyHint: 'Reseña/cobertura de un lugar con angle noticioso (apertura, cierre, hecho reciente) — no una ficha de directorio evergreen (para eso existe "place" en Planazo).',
     editorialShape: {
       description: z.string().describe('1-2 párrafos que describan el lugar para alguien que nunca ha ido.'),
+      ...imageQueryShape,
     },
-    requiredEditorialFields: ['description'],
+    requiredEditorialFields: ['description', 'imageSearchQuery'],
     systemPrompt: LAMIRA_BASE_PROMPT,
   },
   reportaje: {
@@ -167,8 +190,9 @@ Reglas estrictas:
         .array(z.object({ heading: z.string().nullable(), paragraphs: z.array(z.string()) }))
         .min(1)
         .describe('Cuerpo del reportaje en bloques; heading es opcional (null si no aplica).'),
+      ...imageQueryShape,
     },
-    requiredEditorialFields: ['title', 'dek', 'content'],
+    requiredEditorialFields: ['title', 'dek', 'content', 'imageSearchQuery'],
     systemPrompt: `${LAMIRA_BASE_PROMPT}\n\nEsta pieza es un reportaje de análisis (más largo, más contexto), no una noticia de último momento.`,
   },
 };

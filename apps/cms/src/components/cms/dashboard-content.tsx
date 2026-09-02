@@ -9,6 +9,7 @@ import {
   getTopArticles,
 } from "@/data/dashboard";
 import { Icon } from "@/components/icon";
+import { AutomationActivityCard } from "@/components/cms/automation-activity-card";
 
 function greeting(hour: number): string {
   if (hour < 12) return "Buenos días";
@@ -72,6 +73,8 @@ export function DashboardContent({ user }: { user: AuthUser }) {
           </div>
         ))}
       </div>
+
+      <AutomationActivityCard />
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(420px,1fr))] items-start gap-4">
         <div className="flex flex-col gap-4">

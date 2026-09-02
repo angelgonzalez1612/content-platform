@@ -15,6 +15,7 @@ interface AlertaRow {
   imageUrl: string | null;
   imageCredit: string | null;
   categoryData: Record<string, unknown>;
+  content: Alerta['content'];
   createdAt: Date | string;
 }
 
@@ -36,6 +37,7 @@ export function toAlerta(row: AlertaRow): Alerta {
     imageUrl: row.imageUrl,
     imageCredit: row.imageCredit,
     categoryData: row.categoryData,
+    content: row.content,
     createdAt: toIso(row.createdAt),
   };
 }

@@ -12,6 +12,9 @@ import { SeoPanel } from "@/components/cms/seo-panel";
 import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
 import { withBlockIds, summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
+import { ImageField } from "@/components/cms/lamira/image-field";
+import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
+import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
 
 const STATUS_OPTIONS: Array<{ value: ContentStatus; label: string }> = [
   { value: "draft", label: "Borrador" },
@@ -50,10 +53,13 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
   const [quickFacts, setQuickFacts] = useState(existing?.quickFacts ?? []);
   const [faq, setFaq] = useState(existing?.faq ?? []);
   const [content, setContent] = useState<ContentBlockValue[]>(
-    existing?.content.map((b) => ({ heading: b.heading, paragraphs: b.paragraphs })) ?? [{ heading: "", paragraphs: [""] }],
+    existing?.content.map((b) => ({ heading: b.heading, paragraphs: b.paragraphs, image: b.image })) ?? [{ heading: "", paragraphs: [""] }],
   );
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(existing?.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(existing?.seo ?? {});
+  const [image, setImage] = useState<{ url: string; credit: string } | null>(
+    existing?.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
+  );
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -84,8 +90,7 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
     setImproveResult(null);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function save(status: ContentStatus) {
     setSaving(true);
     setError("");
 
@@ -95,11 +100,13 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
       groupSlug: form.groupSlug,
       categoryId: form.categoryId || null,
       readingTime: form.readingTime,
-      status: form.status,
+      status,
       officialSource: form.officialSourceLabel && form.officialSourceUrl ? { label: form.officialSourceLabel, url: form.officialSourceUrl } : null,
       quickFacts,
       content: withBlockIds(content),
       faq,
+      imageUrl: image?.url ?? null,
+      imageCredit: image?.credit ?? null,
       categoryData,
       seo,
     };
@@ -119,6 +126,7 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
       }
 
       if (isEdit) {
+        setForm((f) => ({ ...f, status }));
         setSavedAt(Date.now());
         setSaving(false);
         router.refresh();
@@ -132,7 +140,38 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
     }
   }
 
-  return (
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    save(form.status);
+  }
+
+  function handlePublish() {
+    save("published");
+  }
+
+  const preview = (
+    <LamiraPreviewCard
+      type="guia"
+      name={form.title}
+      categoryName={category?.name ?? null}
+      image={image}
+      dek={form.dek}
+      description=""
+      content={content}
+      alertaStatus="activa"
+      alcaldiaSlug=""
+      eventoStatus="proximo"
+      date=""
+      time=""
+      location=""
+      price=""
+      organizer=""
+      kind="parque"
+      colonia=""
+    />
+  );
+
+  const left = (
     <div className="flex flex-col gap-4">
       {isEdit && (
         <ImproveWithAiPanel contentType="guia" contentId={existing.id} expanded={improving} onToggle={() => setImproving((v) => !v)} onResult={setImproveResult} />
@@ -157,6 +196,8 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
           </label>
           <input id="g-title" required value={form.title} onChange={(e) => set("title", e.target.value)} className={fieldClass} />
         </div>
+
+        <ImageField image={image} onChange={setImage} searchQuery={form.title} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="g-dek" className={labelClass}>
@@ -270,9 +311,21 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
           >
             {saving ? "Guardando…" : isEdit ? "Guardar cambios" : "Crear guía"}
           </button>
+          {isEdit && form.status !== "published" && (
+            <button
+              type="button"
+              onClick={handlePublish}
+              disabled={saving}
+              className="rounded-[10px] border border-[#B7E4C7] bg-[#EAF7EF] px-4 py-2.5 text-[13.5px] font-semibold text-[#2E9E5B] transition-colors hover:bg-[#DFF3E6] disabled:cursor-default disabled:opacity-60"
+            >
+              Publicar
+            </button>
+          )}
           {savedAt && <span className="font-mono text-[12px] text-positive">Guardado ✓</span>}
         </div>
       </form>
     </div>
   );
+
+  return <EditPreviewLayout left={left} preview={preview} />;
 }

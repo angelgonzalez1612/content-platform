@@ -1,0 +1,1 @@
+ALTER TABLE `places` ADD `content` text DEFAULT '[]' NOT NULL;

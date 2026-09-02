@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { apiConfig } from "@planazo/config";
 import type { Category, CheckResult, AiDecision } from "@planazo/types";
 import { Icon } from "@/components/icon";
@@ -8,13 +8,15 @@ import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { GenerateLamiraContentFlow } from "@/components/cms/lamira/generate-lamira-content-flow";
 import { GeneratePlaceFlow } from "@/components/cms/generate-place-flow";
 import { GenerateEventFlow } from "@/components/cms/planazo/generate-event-flow";
+import { useOpenAiAvailable } from "@/lib/use-openai-available";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
-type ProviderId = "openai" | "claude-cli";
+type ProviderId = "openai" | "claude-cli" | "codex-cli";
 
 const PROVIDERS: Array<{ id: ProviderId; label: string; hint: string }> = [
   { id: "openai", label: "OpenAI", hint: "Salida estructurada garantizada · cuesta por token" },
   { id: "claude-cli", label: "Claude (tu sesión)", hint: "Usa tu suscripción Pro/Max ya conectada · más lento" },
+  { id: "codex-cli", label: "Codex (tu sesión)", hint: "Usa tu sesión de ChatGPT ya conectada · más lento" },
 ];
 
 const SITE_LABEL: Record<"la-mira" | "planazo", string> = { "la-mira": "La Mira", planazo: "Planazo" };
@@ -34,6 +36,8 @@ interface DraftResponse {
   checksRun: CheckResult[];
   decision: AiDecision;
   image: { url: string; credit: string } | null;
+  articleImages: { url: string; credit: string }[];
+  imageSearchQuery: string;
   categoryId: string;
   site: "la-mira" | "planazo";
   contentType: string;
@@ -58,8 +62,15 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
   const [hints, setHints] = useState(initialHints ?? "");
   const [provider, setProvider] = useState<ProviderId>("openai");
   const [generating, setGenerating] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const [error, setError] = useState("");
   const [resolved, setResolved] = useState<Resolved | null>(null);
+  const openaiAvailable = useOpenAiAvailable();
+  const providers = PROVIDERS.filter((p) => p.id !== "openai" || openaiAvailable === true);
+
+  useEffect(() => {
+    if (openaiAvailable === false && provider === "openai") setProvider("claude-cli");
+  }, [openaiAvailable, provider]);
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
@@ -94,26 +105,104 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
     }
   }
 
+  // Vuelve a pedir el borrador, ahora con `site`/`contentType` fijos (la IA
+  // no clasifica cuando ya vienen en el body, ver AiDraftService.draft) — se
+  // usa cuando la IA clasificó mal y el humano ya sabe a qué sitio va de
+  // verdad. Un tipo por default razonable por sitio (noticia/lugar); el
+  // humano lo puede cambiar después, en la revisión, igual que siempre.
+  async function switchSite(targetSite: "la-mira" | "planazo") {
+    setSwitching(true);
+    setError("");
+    try {
+      const res = await fetch(`${apiConfig.baseUrl}/cms/ai/draft`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          hints: hints || undefined,
+          provider,
+          site: targetSite,
+          contentType: targetSite === "la-mira" ? "noticia" : "place",
+        }),
+      });
+
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { message?: string } | null;
+        setError(body?.message ?? "No se pudo generar el borrador para el otro sitio.");
+        setSwitching(false);
+        return;
+      }
+
+      const data: DraftResponse = await res.json();
+      const catRes = await fetch(`${apiConfig.baseUrl}/cms/categories?site=${data.site}`, { credentials: "include" });
+      const categories: Category[] = catRes.ok ? await catRes.json() : [];
+
+      setResolved({ name, categories, draftResponse: data });
+    } catch {
+      setError("No se pudo conectar con el servidor.");
+    } finally {
+      setSwitching(false);
+    }
+  }
+
   if (resolved) {
     const { site, contentType } = resolved.draftResponse;
+    const otherSite = site === "la-mira" ? "planazo" : "la-mira";
+    // Se manda a los 3 flujos por igual — solo ellos deciden si lo usan
+    // (ver "publicado" ahí): al terminar de crear, en vez de navegar de
+    // inmediato ofrecen generar TAMBIÉN una segunda pieza para `otherSite`,
+    // reusando el mismo tema/hints ya escritos arriba.
+    const crossSitePublish = {
+      otherSiteLabel: SITE_LABEL[otherSite],
+      onPublishOther: () => switchSite(otherSite),
+      publishingOther: switching,
+    };
     return (
       <div className="flex flex-col lg:h-full">
         {/* Franja angosta solo para el badge — el flujo de abajo NO hereda
             este ancho, usa toda la página (GenerateLamiraContentFlow trae su
             propia revisión de pantalla dividida). */}
-        <div className="flex-none px-[26px] pt-[26px]">
+        <div className="flex-none flex flex-wrap items-center gap-2.5 px-[26px] pt-[26px]">
+          {/* La IA clasificó sitio+tipo+categoría leyendo el artículo — esto
+              es solo informativo, no un selector: antes un clic aquí volvía a
+              llamar a la IA y reescribía el borrador desde cero (título,
+              descripción, todo), lo cual confundía porque se veía como un
+              simple cambio de vista previa. Si la IA se equivocó de sitio, la
+              corrección real es "Empezar de nuevo" (abajo) y regenerar ya con
+              el tema/hints tal cual — no un botón que parece inofensivo. */}
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-[12px] font-semibold text-ink">
+            {SITE_LABEL[site]}
+          </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-background px-2.5 py-1 font-mono text-[10px] font-medium tracking-[.04em] text-ink-faint uppercase">
             <Icon d={SPARK_ICON} size={10} strokeWidth={2} />
-            Se publica en {SITE_LABEL[site]} · {TYPE_LABEL[contentType] ?? contentType}
+            {TYPE_LABEL[contentType] ?? contentType}
           </span>
+          {error && <span className="text-[12px] font-medium text-[#C4453A]">{error}</span>}
         </div>
         <div className="lg:min-h-0 lg:flex-1">
           {site === "la-mira" ? (
-            <GenerateLamiraContentFlow type={contentType} categories={resolved.categories} initialName={resolved.name} initialDraft={resolved.draftResponse} />
+            <GenerateLamiraContentFlow
+              type={contentType}
+              categories={resolved.categories}
+              initialName={resolved.name}
+              initialDraft={resolved.draftResponse}
+              crossSitePublish={crossSitePublish}
+            />
           ) : contentType === "place" ? (
-            <GeneratePlaceFlow categories={resolved.categories} initialName={resolved.name} initialDraft={resolved.draftResponse} />
+            <GeneratePlaceFlow
+              categories={resolved.categories}
+              initialName={resolved.name}
+              initialDraft={resolved.draftResponse}
+              crossSitePublish={crossSitePublish}
+            />
           ) : (
-            <GenerateEventFlow categories={resolved.categories} initialName={resolved.name} initialDraft={resolved.draftResponse} />
+            <GenerateEventFlow
+              categories={resolved.categories}
+              initialName={resolved.name}
+              initialDraft={resolved.draftResponse}
+              crossSitePublish={crossSitePublish}
+            />
           )}
         </div>
       </div>
@@ -132,9 +221,12 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
         </span>
       )}
       <h1 className="mb-1.5 text-[24px] font-semibold tracking-tight">¿Sobre qué escribimos?</h1>
+      {/* Mismo párrafo que la pantalla de "¿Sobre qué escribimos?" cuando el
+          tipo ya está fijo (ver GenerateLamiraContentFlow) — para que ambos
+          puntos de entrada se sientan como la misma pantalla. */}
       <p className="mx-auto mb-7 max-w-[46ch] text-[13.5px] leading-[1.6] text-ink-soft">
-        Dame el tema y lo que ya sabes. La IA decide en qué sitio y bajo qué tipo de contenido va (La Mira o
-        Planazo), y qué categoría le corresponde — lo revisas todo antes de crear.
+        Dame el tema y lo que ya sabes — por ejemplo, un titular y fuente de content-radar. Escribo el borrador; los
+        datos verificables (fecha, ubicación, cifras) los completas tú.
       </p>
 
       <form onSubmit={handleGenerate} className="flex flex-col gap-5 rounded-[16px] border border-border bg-white p-6 text-left shadow-[0_1px_2px_rgba(23,20,17,.03)] sm:p-7">
@@ -158,12 +250,16 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
             className={`${fieldClass} resize-none`}
             disabled={generating}
           />
+          <p className="text-[11.5px] text-ink-faint">
+            La IA decide en qué sitio (La Mira o Planazo), bajo qué tipo de contenido y qué categoría — todo lo
+            revisas después de generar.
+          </p>
         </div>
 
         <div className="flex flex-col gap-2">
           <span className={labelClass}>Proveedor de IA</span>
           <div className="flex gap-2">
-            {PROVIDERS.map((p) => (
+            {providers.map((p) => (
               <button
                 key={p.id}
                 type="button"

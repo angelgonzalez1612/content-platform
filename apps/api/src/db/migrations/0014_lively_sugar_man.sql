@@ -1,0 +1,1 @@
+ALTER TABLE `automation_rules` ADD `expand_if_short` integer DEFAULT false NOT NULL;

@@ -1,8 +1,14 @@
-import { sqliteTable, text, real, integer, primaryKey } from 'drizzle-orm/sqlite-core';
+import {
+  sqliteTable,
+  text,
+  real,
+  integer,
+  primaryKey,
+} from 'drizzle-orm/sqlite-core';
 import { idColumn, createdAtColumn } from './columns.helpers';
 import { CONTENT_STATUS_VALUES } from './enums';
 import { categories, tags, services } from './taxonomy';
-import type { Seo } from '@planazo/types';
+import type { Seo, ContentBlock } from '@planazo/types';
 
 export const places = sqliteTable('places', {
   id: idColumn(),
@@ -11,6 +17,9 @@ export const places = sqliteTable('places', {
   description: text('description'),
   /** Neighborhood/colonia — distinct from the full street address. */
   zone: text('zone'),
+  /** Alcaldía de CDMX o municipio conurbado del Edomex — mismo catálogo y
+   * mismos slugs que usa La Mira (ver apps/cms/src/lib/locations.ts). */
+  alcaldiaSlug: text('alcaldia_slug'),
   // text, not real — matches Postgres numeric-without-mode's string return
   // type, which @planazo/types and places.service.ts already assume.
   latitude: text('latitude'),
@@ -28,8 +37,26 @@ export const places = sqliteTable('places', {
     .notNull(),
   // Campos extra según el field_schema de la categoría asignada (ej. si algún
   // día una categoría de Place quiere un campo propio). Vacío ({}) por defecto.
-  categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
+  categoryData: text('category_data', { mode: 'json' })
+    .$type<Record<string, unknown>>()
+    .notNull()
+    .default({}),
   seo: text('seo', { mode: 'json' }).$type<Seo>(),
+  // Cuerpo extendido opcional — mismo shape {heading?, paragraphs[], image?}
+  // que noticia/guia/reportaje de La Mira (ver schema/lamira.ts). La ficha
+  // corta (`description`) sigue siendo el resumen; esto es contenido
+  // adicional que un editor agrega después (ver AiDraftService.improvePlace,
+  // modo 'expand') — nunca lo genera el draft inicial.
+  content: text('content', { mode: 'json' })
+    .$type<ContentBlock[]>()
+    .notNull()
+    .default([]),
+  // Apagado por defecto a propósito — antes CUALQUIER foto abría el modal de
+  // galería en el sitio real, aunque fuera una imagen genérica de banco. El
+  // editor lo prende cuando la foto real del lugar amerita verse en grande.
+  allowPhotoModal: integer('allow_photo_modal', { mode: 'boolean' })
+    .notNull()
+    .default(false),
   createdAt: createdAtColumn(),
   updatedAt: createdAtColumn('updated_at'),
 });
@@ -80,6 +107,10 @@ export const photos = sqliteTable('photos', {
     .references(() => places.id, { onDelete: 'cascade' }),
   url: text('url').notNull(),
   alt: text('alt'),
+  // Atribución real de la fuente (ej. "Foto: Wikimedia Commons — Autor X") —
+  // separado de `alt` (texto de accesibilidad, ya usado como tal en las 15+
+  // vistas reales de planazo_fronted) para no mezclar los dos conceptos.
+  credit: text('credit'),
   position: integer('position').default(0).notNull(),
   createdAt: createdAtColumn(),
 });

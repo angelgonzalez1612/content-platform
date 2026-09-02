@@ -5,12 +5,16 @@ import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
 import type { Alerta, AlertaStatus, Category, Seo } from "@planazo/types";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
+import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
 import { CategoryFieldsSection } from "@/components/cms/category-fields-section";
 import { PairListField } from "@/components/cms/pair-list-field";
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
 import { RichTextarea } from "@/components/cms/rich-textarea";
+import { ImageField } from "@/components/cms/lamira/image-field";
+import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
+import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
 
 const STATUS_OPTIONS: Array<{ value: AlertaStatus; label: string }> = [
   { value: "activa", label: "Activa" },
@@ -31,6 +35,9 @@ export function AlertaForm({ categories, existing }: { categories: Category[]; e
   const [updates, setUpdates] = useState(existing?.updates ?? []);
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(existing?.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(existing?.seo ?? {});
+  const [image, setImage] = useState<{ url: string; credit: string } | null>(
+    existing?.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
+  );
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -65,6 +72,8 @@ export function AlertaForm({ categories, existing }: { categories: Category[]; e
       alcaldiaSlug: form.alcaldiaSlug || null,
       description: form.description,
       updates,
+      imageUrl: image?.url ?? null,
+      imageCredit: image?.credit ?? null,
       categoryData,
       seo,
     };
@@ -97,7 +106,29 @@ export function AlertaForm({ categories, existing }: { categories: Category[]; e
     }
   }
 
-  return (
+  const preview = (
+    <LamiraPreviewCard
+      type="alerta"
+      name={form.title}
+      categoryName={category?.name ?? null}
+      image={image}
+      dek=""
+      description={form.description}
+      content={[]}
+      alertaStatus={form.alertaStatus}
+      alcaldiaSlug={form.alcaldiaSlug}
+      eventoStatus="proximo"
+      date=""
+      time=""
+      location=""
+      price=""
+      organizer=""
+      kind="parque"
+      colonia=""
+    />
+  );
+
+  const left = (
     <div className="flex flex-col gap-4">
       {isEdit && (
         <ImproveWithAiPanel contentType="alerta" contentId={existing.id} expanded={improving} onToggle={() => setImproving((v) => !v)} onResult={setImproveResult} />
@@ -119,6 +150,8 @@ export function AlertaForm({ categories, existing }: { categories: Category[]; e
           </label>
           <input id="a-title" required value={form.title} onChange={(e) => set("title", e.target.value)} className={fieldClass} />
         </div>
+
+        <ImageField image={image} onChange={setImage} searchQuery={form.title} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="a-description" className={labelClass}>
@@ -142,9 +175,9 @@ export function AlertaForm({ categories, existing }: { categories: Category[]; e
           </div>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="a-alcaldia" className={labelClass}>
-              Alcaldía (slug)
+              Alcaldía / municipio
             </label>
-            <input id="a-alcaldia" value={form.alcaldiaSlug} onChange={(e) => set("alcaldiaSlug", e.target.value)} placeholder="ej. cuauhtemoc" className={fieldClass} />
+            <AlcaldiaSelect id="a-alcaldia" value={form.alcaldiaSlug} onChange={(slug) => set("alcaldiaSlug", slug)} />
           </div>
         </div>
 
@@ -194,4 +227,6 @@ export function AlertaForm({ categories, existing }: { categories: Category[]; e
       </form>
     </div>
   );
+
+  return <EditPreviewLayout left={left} preview={preview} />;
 }

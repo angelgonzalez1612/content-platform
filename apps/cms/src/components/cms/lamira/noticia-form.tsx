@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
 import type { Noticia, ContentStatus, Category, Seo } from "@planazo/types";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
+import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
 import { CategoryFieldsSection } from "@/components/cms/category-fields-section";
 import { ContentBlocksField, type ContentBlockValue } from "@/components/cms/content-blocks-field";
 import { TagsField } from "@/components/cms/tags-field";
@@ -12,6 +13,9 @@ import { SeoPanel } from "@/components/cms/seo-panel";
 import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
 import { buildToc, summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
+import { ImageField } from "@/components/cms/lamira/image-field";
+import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
+import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
 
 const STATUS_OPTIONS: Array<{ value: ContentStatus; label: string }> = [
   { value: "draft", label: "Borrador" },
@@ -35,6 +39,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
     status: existing?.status ?? ("draft" as ContentStatus),
     sourceKind: existing?.sourceKind ?? "",
     externalSource: existing?.externalSource ?? "",
+    sourceUrl: existing?.sourceUrl ?? "",
     youtubeId: existing?.youtubeId ?? "",
     imageCaption: existing?.imageCaption ?? "",
     featured: existing?.featured ?? false,
@@ -46,6 +51,9 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
   );
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(existing?.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(existing?.seo ?? {});
+  const [image, setImage] = useState<{ url: string; credit: string } | null>(
+    existing?.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
+  );
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -74,8 +82,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
     setImproveResult(null);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function save(status: ContentStatus) {
     setSaving(true);
     setError("");
 
@@ -87,14 +94,17 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
       colonia: form.colonia || null,
       authorSlug: form.authorSlug,
       readingTime: form.readingTime,
-      status: form.status,
+      status,
       sourceKind: form.sourceKind || null,
       externalSource: form.externalSource || null,
+      sourceUrl: form.sourceUrl || null,
       youtubeId: form.youtubeId || null,
       tags,
       toc: buildToc(content),
       content,
       imageCaption: form.imageCaption || null,
+      imageUrl: image?.url ?? null,
+      imageCredit: image?.credit ?? null,
       featured: form.featured,
       tag: form.tag || null,
       categoryData,
@@ -116,6 +126,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
       }
 
       if (isEdit) {
+        setForm((f) => ({ ...f, status }));
         setSavedAt(Date.now());
         setSaving(false);
         router.refresh();
@@ -129,7 +140,38 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
     }
   }
 
-  return (
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    save(form.status);
+  }
+
+  function handlePublish() {
+    save("published");
+  }
+
+  const preview = (
+    <LamiraPreviewCard
+      type="noticia"
+      name={form.title}
+      categoryName={category?.name ?? null}
+      image={image}
+      dek={form.dek}
+      description=""
+      content={content}
+      alertaStatus="activa"
+      alcaldiaSlug={form.alcaldiaSlug}
+      eventoStatus="proximo"
+      date=""
+      time=""
+      location=""
+      price=""
+      organizer=""
+      kind="parque"
+      colonia={form.colonia}
+    />
+  );
+
+  const left = (
     <div className="flex flex-col gap-4">
       {isEdit && (
         <ImproveWithAiPanel contentType="noticia" contentId={existing.id} expanded={improving} onToggle={() => setImproving((v) => !v)} onResult={setImproveResult} />
@@ -155,6 +197,8 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
           <input id="n-title" required value={form.title} onChange={(e) => set("title", e.target.value)} className={fieldClass} />
         </div>
 
+        <ImageField image={image} onChange={setImage} searchQuery={form.title} />
+
         <div className="flex flex-col gap-1.5">
           <label htmlFor="n-dek" className={labelClass}>
             Bajada (dek)
@@ -177,9 +221,9 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
           </div>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="n-alcaldia" className={labelClass}>
-              Alcaldía (slug)
+              Alcaldía / municipio
             </label>
-            <input id="n-alcaldia" value={form.alcaldiaSlug} onChange={(e) => set("alcaldiaSlug", e.target.value)} placeholder="ej. cuauhtemoc" className={fieldClass} />
+            <AlcaldiaSelect id="n-alcaldia" value={form.alcaldiaSlug} onChange={(slug) => set("alcaldiaSlug", slug)} />
           </div>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="n-colonia" className={labelClass}>
@@ -223,6 +267,34 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
             </label>
             <input id="n-external-source" value={form.externalSource} onChange={(e) => set("externalSource", e.target.value)} placeholder="ej. Con información de Reforma" className={fieldClass} />
           </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="n-source-url" className={labelClass}>
+            URL de la fuente
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="n-source-url"
+              value={form.sourceUrl}
+              onChange={(e) => set("sourceUrl", e.target.value)}
+              placeholder="https://…"
+              className={`${fieldClass} flex-1`}
+            />
+            {form.sourceUrl && (
+              <a
+                href={form.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-none rounded-lg border border-border bg-white px-3 py-2.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
+              >
+                Abrir ↗
+              </a>
+            )}
+          </div>
+          <p className="text-[11.5px] leading-[1.4] text-ink-faint">
+            El artículo original del que salió el tema — cuando la crea la automatización, se llena solo.
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -282,9 +354,21 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
           >
             {saving ? "Guardando…" : isEdit ? "Guardar cambios" : "Crear noticia"}
           </button>
+          {isEdit && form.status !== "published" && (
+            <button
+              type="button"
+              onClick={handlePublish}
+              disabled={saving}
+              className="rounded-[10px] border border-[#B7E4C7] bg-[#EAF7EF] px-4 py-2.5 text-[13.5px] font-semibold text-[#2E9E5B] transition-colors hover:bg-[#DFF3E6] disabled:cursor-default disabled:opacity-60"
+            >
+              Publicar
+            </button>
+          )}
           {savedAt && <span className="font-mono text-[12px] text-positive">Guardado ✓</span>}
         </div>
       </form>
     </div>
   );
+
+  return <EditPreviewLayout left={left} preview={preview} />;
 }

@@ -1,11 +1,45 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { getCmsCategories } from "@/lib/cms-api";
 import { CmsShell } from "@/components/cms/cms-shell";
-import { listReports, parseFileName, readReportFile, renderReport } from "@planazo/content-radar/render";
-import { DEFAULT_SITE_ID } from "@planazo/content-radar/sites";
+import { listReports, parseFileName, readReportFile, renderReport, normalizeTitle, type CategorySiteMap, type CrSite } from "@planazo/content-radar/render";
+import { DEFAULT_SITE_ID, getSite } from "@planazo/content-radar/sites";
+import { getContentRadarPublishedTitles } from "@/lib/cms-api";
 import { refreshContentRadar } from "./actions";
 import { ReportPicker } from "./report-picker";
+import { GroupSelect } from "./group-select";
 import "./content-radar.css";
+
+// A qué sitio real (La Mira/Planazo/ambos) corresponde cada categoría de
+// content-radar — se resuelve aquí (única capa con acceso a la tabla real
+// `categories`) cruzando SiteCategory.cmsCategorySlugs contra las categorías
+// reales de cada sitio, y se le pasa ya resuelto a renderReport (que no
+// conoce la DB). Una categoría del CMS aparece en la lista de un sitio si es
+// exclusiva de ese sitio O compartida (siteId null) — así que un slug que
+// aparece en ambas listas ya es, de por sí, la señal de que es compartida.
+async function buildCategorySiteMap(): Promise<CategorySiteMap> {
+  const [lamiraCats, planazoCats] = await Promise.all([getCmsCategories("la-mira"), getCmsCategories("planazo")]);
+  const slugToSites = new Map<string, Set<CrSite>>();
+  for (const [site, cats] of [
+    ["la-mira", lamiraCats],
+    ["planazo", planazoCats],
+  ] as const) {
+    for (const c of cats) {
+      if (!slugToSites.has(c.slug)) slugToSites.set(c.slug, new Set());
+      slugToSites.get(c.slug)!.add(site);
+    }
+  }
+
+  const map: CategorySiteMap = new Map();
+  for (const category of getSite(DEFAULT_SITE_ID).categories) {
+    const sites = new Set<CrSite>();
+    for (const slug of category.cmsCategorySlugs ?? []) {
+      for (const site of slugToSites.get(slug) ?? []) sites.add(site);
+    }
+    if (sites.size > 0) map.set(category.label, sites);
+  }
+  return map;
+}
 
 // Content Radar vive nativo aquí — antes era un server Express aparte
 // (apps/content-radar, puerto 4310) embebido por iframe; ahora esta página
@@ -72,8 +106,13 @@ export default async function ContentRadarPage({
     );
   }
 
-  const raw = await readReportFile(activeFile);
-  const { leadingHtml, heroHtml, accordionHtml, referenceHtml } = await renderReport(raw);
+  const [raw, categorySiteMap, publishedTitlesList] = await Promise.all([
+    readReportFile(activeFile),
+    buildCategorySiteMap(),
+    getContentRadarPublishedTitles(),
+  ]);
+  const publishedTitles = new Set(publishedTitlesList.map(normalizeTitle));
+  const { leadingHtml, heroHtml, accordionGroups, referenceHtml } = await renderReport(raw, categorySiteMap, publishedTitles);
 
   return (
     <CmsShell user={session} title="Content Radar">
@@ -85,7 +124,12 @@ export default async function ContentRadarPage({
         <div className="cr-content report">
           {leadingHtml && <div className="cr-summary" dangerouslySetInnerHTML={{ __html: leadingHtml }} />}
           {heroHtml && <div dangerouslySetInnerHTML={{ __html: heroHtml }} />}
-          {accordionHtml && <div className="cr-accordion" dangerouslySetInnerHTML={{ __html: accordionHtml }} />}
+          {/* Antes: una sola lista de ~20 categorías sin más orden que el del
+              reporte. Agrupadas por a qué sitio corresponden (mismo dato que
+              ya calcula el badge de cada fila), y un <select> muestra solo
+              el grupo elegido — sin él, ver "La Mira" implicaba scrollear
+              pasando Compartidas/Planazo/Otras primero. */}
+          <GroupSelect groups={accordionGroups} />
           {referenceHtml && (
             <section className="cr-reference">
               <h2 className="cr-reference-heading">Tendencias generales</h2>

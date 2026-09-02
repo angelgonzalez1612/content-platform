@@ -1,0 +1,1 @@
+ALTER TABLE `places` ADD `allow_photo_modal` integer DEFAULT false NOT NULL;

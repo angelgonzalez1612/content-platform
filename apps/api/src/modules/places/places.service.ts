@@ -1,9 +1,21 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { and, eq, inArray } from 'drizzle-orm';
 import { slugify } from '@planazo/shared';
 import type { Place, PlaceDetail } from '@planazo/types';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
-import { places, categories, tags, placeCategories, placeTags } from '../../db/schema';
+import {
+  places,
+  categories,
+  tags,
+  placeCategories,
+  placeTags,
+  photos,
+} from '../../db/schema';
 import { QueryPlacesDto } from './dto/query-places.dto';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { CreatePlaceDto } from './dto/create-place.dto';
@@ -22,16 +34,30 @@ export class PlacesService {
     const conditions = [eq(places.status, 'published')];
 
     if (query.category) {
-      const category = await this.db.query.categories.findFirst({ where: eq(categories.slug, query.category) });
+      const category = await this.db.query.categories.findFirst({
+        where: eq(categories.slug, query.category),
+      });
       if (!category) return [];
-      const idsInCategory = this.db.select({ placeId: placeCategories.placeId }).from(placeCategories).where(eq(placeCategories.categoryId, category.id));
+      const idsInCategory = this.db
+        .select({ placeId: placeCategories.placeId })
+        .from(placeCategories)
+        .where(eq(placeCategories.categoryId, category.id));
       conditions.push(inArray(places.id, idsInCategory));
     }
 
+    if (query.alcaldiaSlug) {
+      conditions.push(eq(places.alcaldiaSlug, query.alcaldiaSlug));
+    }
+
     if (query.tag) {
-      const tag = await this.db.query.tags.findFirst({ where: eq(tags.slug, query.tag) });
+      const tag = await this.db.query.tags.findFirst({
+        where: eq(tags.slug, query.tag),
+      });
       if (!tag) return [];
-      const idsWithTag = this.db.select({ placeId: placeTags.placeId }).from(placeTags).where(eq(placeTags.tagId, tag.id));
+      const idsWithTag = this.db
+        .select({ placeId: placeTags.placeId })
+        .from(placeTags)
+        .where(eq(placeTags.tagId, tag.id));
       conditions.push(inArray(places.id, idsWithTag));
     }
 
@@ -109,23 +135,51 @@ export class PlacesService {
   }
 
   async update(id: string, patch: UpdatePlaceDto): Promise<PlaceDetail> {
-    const existing = await this.db.query.places.findFirst({ where: eq(places.id, id) });
+    const existing = await this.db.query.places.findFirst({
+      where: eq(places.id, id),
+    });
     if (!existing) {
       throw new NotFoundException(`Place "${id}" not found`);
     }
 
+    // `photo` no es una columna de `places` (vive en la tabla `photos`,
+    // ver PlacesService.create) — se maneja aparte para no mandarla al
+    // `.set()` de abajo. `undefined` (campo ausente) deja la foto intacta;
+    // `null` explícito la quita.
+    const { photo, ...placeFields } = patch;
+
     await this.db
       .update(places)
-      .set({ ...patch, updatedAt: new Date() })
+      .set({ ...placeFields, updatedAt: new Date() })
       .where(eq(places.id, id));
+
+    if (photo !== undefined) {
+      // Solo la portada (position 0) — el resto de la galería, si la hay
+      // (ej. los 102 lugares migrados del mock), no se toca desde aquí.
+      await this.db
+        .delete(photos)
+        .where(and(eq(photos.placeId, id), eq(photos.position, 0)));
+      if (photo) {
+        await this.db.insert(photos).values({
+          placeId: id,
+          url: photo.url,
+          credit: photo.credit ?? null,
+          position: 0,
+        });
+      }
+    }
 
     return this.findByIdForCms(id);
   }
 
   async create(dto: CreatePlaceDto): Promise<PlaceDetail> {
-    const category = await this.db.query.categories.findFirst({ where: eq(categories.slug, dto.categorySlug) });
+    const category = await this.db.query.categories.findFirst({
+      where: eq(categories.slug, dto.categorySlug),
+    });
     if (!category) {
-      throw new BadRequestException(`Categoría "${dto.categorySlug}" no existe`);
+      throw new BadRequestException(
+        `Categoría "${dto.categorySlug}" no existe`,
+      );
     }
 
     const slug = await this.uniqueSlug(dto.name);
@@ -137,26 +191,47 @@ export class PlacesService {
         name: dto.name,
         description: dto.description ?? null,
         zone: dto.zone ?? null,
+        alcaldiaSlug: dto.alcaldiaSlug ?? null,
         address: dto.address ?? null,
         priceLevel: dto.priceLevel ?? null,
         price: dto.price ?? null,
         rating: dto.rating ?? null,
         status: dto.status,
         categoryData: dto.categoryData ?? {},
+        content: dto.content ?? [],
+        allowPhotoModal: dto.allowPhotoModal ?? false,
         seo: dto.seo ?? null,
       })
       .returning({ id: places.id });
 
-    await this.db.insert(placeCategories).values({ placeId: inserted.id, categoryId: category.id });
+    await this.db
+      .insert(placeCategories)
+      .values({ placeId: inserted.id, categoryId: category.id });
+
+    if (dto.photo?.url) {
+      await this.db.insert(photos).values({
+        placeId: inserted.id,
+        url: dto.photo.url,
+        credit: dto.photo.credit ?? null,
+        position: 0,
+      });
+    }
 
     for (const tagName of dto.tags ?? []) {
       const tagSlug = slugify(tagName);
-      let tag = await this.db.query.tags.findFirst({ where: eq(tags.slug, tagSlug) });
+      let tag = await this.db.query.tags.findFirst({
+        where: eq(tags.slug, tagSlug),
+      });
       if (!tag) {
-        const [insertedTag] = await this.db.insert(tags).values({ name: tagName, slug: tagSlug }).returning();
+        const [insertedTag] = await this.db
+          .insert(tags)
+          .values({ name: tagName, slug: tagSlug })
+          .returning();
         tag = insertedTag;
       }
-      await this.db.insert(placeTags).values({ placeId: inserted.id, tagId: tag.id });
+      await this.db
+        .insert(placeTags)
+        .values({ placeId: inserted.id, tagId: tag.id });
     }
 
     return this.findByIdForCms(inserted.id);
@@ -166,7 +241,11 @@ export class PlacesService {
     const base = slugify(name);
     let candidate = base;
     let attempt = 1;
-    while (await this.db.query.places.findFirst({ where: eq(places.slug, candidate) })) {
+    while (
+      await this.db.query.places.findFirst({
+        where: eq(places.slug, candidate),
+      })
+    ) {
       attempt += 1;
       candidate = `${base}-${attempt}`;
     }

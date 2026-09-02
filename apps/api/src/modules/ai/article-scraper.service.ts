@@ -6,6 +6,17 @@ import { Readability } from '@mozilla/readability';
 export interface ScrapedArticle {
   text: string;
   imageUrl?: string;
+  // Otras imágenes reales dentro del cuerpo del artículo (además del
+  // og:image) — candidatas extra para el picker de imágenes del CMS, con el
+  // mismo crédito que la principal (misma fuente citada). Tope de 5, sin
+  // garantía de que existan — muchos artículos solo traen una imagen.
+  additionalImageUrls: string[];
+  // Nombre de la fuente para créditos automáticos cuando se pide "solo la
+  // imagen" de una URL cualquiera (ver AiDraftService.fetchImageFromUrl) —
+  // og:site_name si el sitio lo declara, si no el hostname sin "www.".
+  // Siempre presente (a diferencia de imageUrl): sirve como crédito aunque
+  // el sitio no traiga imagen.
+  siteName: string;
 }
 
 const USER_AGENT =
@@ -45,10 +56,15 @@ export class ArticleScraperService {
       const page = await browser.newPage({ userAgent: USER_AGENT });
       page.setDefaultTimeout(FETCH_TIMEOUT_MS);
 
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
+      await page.goto(url, {
+        waitUntil: 'domcontentloaded',
+        timeout: NAV_TIMEOUT_MS,
+      });
       // Google News resuelve con JS después del load inicial — un pequeño margen
       // extra para que termine de navegar a la nota real antes de leer la URL.
-      await page.waitForLoadState('networkidle', { timeout: NAV_TIMEOUT_MS }).catch(() => undefined);
+      await page
+        .waitForLoadState('networkidle', { timeout: NAV_TIMEOUT_MS })
+        .catch(() => undefined);
 
       const finalUrl = page.url();
       const html = await page.content();
@@ -57,7 +73,9 @@ export class ArticleScraperService {
 
       return this.extract(html, finalUrl);
     } catch (err) {
-      this.logger.warn(`No se pudo scrapear "${url}": ${(err as Error).message}`);
+      this.logger.warn(
+        `No se pudo scrapear "${url}": ${(err as Error).message}`,
+      );
       return null;
     } finally {
       if (browser) await browser.close().catch(() => undefined);
@@ -73,11 +91,63 @@ export class ArticleScraperService {
     if (!text || text.length < 200) return null;
 
     const imageUrl = this.extractOgImage(dom.window.document);
-    return { text: text.slice(0, MAX_ARTICLE_CHARS), imageUrl };
+    const additionalImageUrls = this.extractBodyImages(
+      article?.content ?? '',
+      url,
+      imageUrl,
+    );
+    const siteName = this.extractSiteName(dom.window.document, url);
+    return {
+      text: text.slice(0, MAX_ARTICLE_CHARS),
+      imageUrl,
+      additionalImageUrls,
+      siteName,
+    };
   }
 
   private extractOgImage(doc: Document): string | undefined {
-    const og = doc.querySelector('meta[property="og:image"]')?.getAttribute('content');
+    const og = doc
+      .querySelector('meta[property="og:image"]')
+      ?.getAttribute('content');
     return og?.trim() || undefined;
+  }
+
+  private extractSiteName(doc: Document, url: string): string {
+    const og = doc
+      .querySelector('meta[property="og:site_name"]')
+      ?.getAttribute('content')
+      ?.trim();
+    if (og) return og;
+    try {
+      return new URL(url).hostname.replace(/^www\./, '');
+    } catch {
+      return 'fuente externa';
+    }
+  }
+
+  // Imágenes reales dentro del cuerpo ya limpiado por Readability (article.content)
+  // — candidatas extra para el picker del CMS además del og:image. Regex simple
+  // sobre HTML ya confiable (Readability ya quitó nav/ads/comentarios) en vez de
+  // levantar otro DOM completo solo para esto.
+  private extractBodyImages(
+    contentHtml: string,
+    baseUrl: string,
+    exclude?: string,
+  ): string[] {
+    const found: string[] = [];
+    for (const match of contentHtml.matchAll(/<img[^>]+src="([^"]+)"/g)) {
+      const src = match[1];
+      if (!src || src.startsWith('data:')) continue;
+      let resolved: string;
+      try {
+        resolved = new URL(src, baseUrl).toString();
+      } catch {
+        continue;
+      }
+      if (resolved === exclude || found.includes(resolved)) continue;
+      found.push(resolved);
+      if (found.length >= 5) break;
+    }
+    return found;
   }
 }

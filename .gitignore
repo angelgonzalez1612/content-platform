@@ -17,3 +17,8 @@ coverage
 .agents/skills/
 *.sqlite
 *.sqlite-*
+
+# Imágenes subidas a mano desde el CMS (ver ImageUploadService) — locales,
+# no versionadas, cada entorno tiene las suyas.
+apps/api/uploads/
+*.tsbuildinfo

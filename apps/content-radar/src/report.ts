@@ -9,7 +9,7 @@ import type { WeatherNow } from "./weather";
 import { weatherLabel } from "./weather";
 import type { TmdbItem } from "./tmdb";
 import { classifyOrigin } from "./origin";
-import { classifyGeo } from "./geo";
+import { classifyGeo, classifyGeoFromTitle } from "./geo";
 import { todayLocal } from "./date";
 
 // Span con HTML crudo (marked deja pasar HTML inline en markdown) para poder darle
@@ -26,6 +26,19 @@ function originBadge(topic: ScoredTopic): string {
 function geoBadge(topic: ScoredTopic): string {
   if (classifyOrigin(topic) !== "nacional") return "";
   const { entidad, municipio } = classifyGeo(topic);
+  if (!entidad) return "";
+  const text = municipio ? `${entidad} · ${municipio}` : entidad;
+  return ` <span class="geo-tag">${text}</span>`;
+}
+
+// Mismo badge que geoBadge, pero para una nota individual dentro de una
+// categoría (Google News CDMX, "De la fuente", YouTube) — solo se tiene el
+// título, no el contexto completo del tema, así que clasifica peor (más
+// "sin ubicación") pero deja ver de un vistazo qué alcaldía/municipio toca
+// cada nota, sin abrir el acordeón. Vacío si no detecta nada — no se rellena
+// con "Sin ubicación" para no ensuciar cada fila.
+function itemGeoBadge(title: string): string {
+  const { entidad, municipio } = classifyGeoFromTitle(title);
   if (!entidad) return "";
   const text = municipio ? `${entidad} · ${municipio}` : entidad;
   return ` <span class="geo-tag">${text}</span>`;
@@ -143,7 +156,7 @@ function renderCdmxNews(items: NewsItem[]): string[] {
   // La línea en blanco después del <p> es obligatoria: sin ella, marked trata la
   // lista siguiente como texto plano dentro del bloque HTML en vez de parsearla.
   const lines: string[] = [subLabel("Google News CDMX"), ""];
-  items.forEach((n) => lines.push(`- [${n.title}](${n.url}) — ${n.source}`));
+  items.forEach((n) => lines.push(`- [${n.title}](${n.url}) — ${n.source}${itemGeoBadge(n.title)}`));
   lines.push("");
   return lines;
 }
@@ -186,7 +199,7 @@ function renderWeather(weather: WeatherNow | null): string[] {
 function renderDirectNews(items: DirectNewsItem[]): string[] {
   if (items.length === 0) return [];
   const lines: string[] = [subLabel("De la fuente"), ""];
-  items.forEach((n) => lines.push(`- [${n.title}](${n.url}) — ${n.source}`));
+  items.forEach((n) => lines.push(`- [${n.title}](${n.url}) — ${n.source}${itemGeoBadge(n.title)}`));
   lines.push("");
   return lines;
 }
@@ -196,7 +209,7 @@ function renderDirectNews(items: DirectNewsItem[]): string[] {
 function renderYoutubeVideos(videos: YoutubeVideo[]): string[] {
   if (videos.length === 0) return [];
   const lines: string[] = [subLabel("Videos en YouTube"), ""];
-  videos.forEach((v) => lines.push(`- [${v.title}](${v.url}) — ${v.channel}`));
+  videos.forEach((v) => lines.push(`- [${v.title}](${v.url}) — ${v.channel}${itemGeoBadge(v.title)}`));
   lines.push("");
   return lines;
 }

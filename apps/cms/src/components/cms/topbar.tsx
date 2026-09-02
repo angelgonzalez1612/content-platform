@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { AuthUser } from "@planazo/types";
+import { apiConfig } from "@planazo/config";
 import { getBreadcrumb } from "@/data/dashboard";
 import { Icon } from "@/components/icon";
 import { UserMenu } from "@/components/cms/user-menu";
@@ -20,6 +22,21 @@ export function Topbar({
 }) {
   const pathname = usePathname();
   const crumbs = getBreadcrumb(pathname, title);
+
+  const [automation, setAutomation] = useState<{ activeRulesCount: number; isRunning: boolean } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${apiConfig.baseUrl}/cms/automation/status`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { activeRulesCount?: number; isRunning?: boolean } | null) => {
+        if (!cancelled && data) setAutomation({ activeRulesCount: data.activeRulesCount ?? 0, isRunning: !!data.isRunning });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <header className="flex h-[60px] flex-none items-center gap-3 border-b border-border bg-white/86 px-[22px] backdrop-blur-sm">
@@ -39,10 +56,17 @@ export function Topbar({
       </nav>
       <div className="flex-1" />
       <div className="flex items-center gap-1.5">
-        <div className="flex items-center gap-1.5 rounded-lg border border-[#D8EFDF] bg-[#F4FBF6] px-2.5 py-[5px]">
-          <span className="size-[5px] animate-[pz-pulse_2.4s_ease-in-out_infinite] rounded-full bg-positive" />
-          <span className="text-[11.5px] font-medium text-[#2A7A4A]">4 automatizaciones activas</span>
-        </div>
+        {automation && (
+          <Link
+            href="/automatizaciones"
+            className="flex items-center gap-1.5 rounded-lg border border-[#D8EFDF] bg-[#F4FBF6] px-2.5 py-[5px] transition-colors hover:border-positive"
+          >
+            <span className="size-[5px] animate-[pz-pulse_2.4s_ease-in-out_infinite] rounded-full bg-positive" />
+            <span className="text-[11.5px] font-medium text-[#2A7A4A]">
+              {automation.isRunning ? "Ejecutando ahora…" : `${automation.activeRulesCount} automatizacion${automation.activeRulesCount === 1 ? "" : "es"} activa${automation.activeRulesCount === 1 ? "" : "s"}`}
+            </span>
+          </Link>
+        )}
         <button
           type="button"
           title="Notificaciones"

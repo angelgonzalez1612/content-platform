@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { apiConfig } from "@planazo/config";
 import type { CheckResult, AiDecision } from "@planazo/types";
 import { Icon } from "@/components/icon";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
+import { useOpenAiAvailable } from "@/lib/use-openai-available";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
 
-type ProviderId = "openai" | "claude-cli";
+type ProviderId = "openai" | "claude-cli" | "codex-cli";
 
 const PROVIDERS: Array<{ id: ProviderId; label: string }> = [
   { id: "openai", label: "OpenAI" },
   { id: "claude-cli", label: "Claude (tu sesión)" },
+  { id: "codex-cli", label: "Codex (tu sesión)" },
 ];
 
 interface ImproveResult {
@@ -29,17 +31,29 @@ export function ImproveWithAiPanel({
   expanded,
   onToggle,
   onResult,
+  supportsExpand = false,
 }: {
   contentType: string;
   contentId: string;
   expanded: boolean;
   onToggle: () => void;
-  onResult: (result: ImproveResult) => void;
+  onResult: (result: ImproveResult, mode: "rewrite" | "expand") => void;
+  // Solo 'place' lo implementa por ahora (ver AiDraftService.improvePlace,
+  // modo 'expand') — los otros 7 tipos que usan este panel no ofrecen el
+  // segundo modo, se quedan exactamente como estaban.
+  supportsExpand?: boolean;
 }) {
   const [provider, setProvider] = useState<ProviderId>("openai");
+  const [mode, setMode] = useState<"rewrite" | "expand">("rewrite");
   const [instructions, setInstructions] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const openaiAvailable = useOpenAiAvailable();
+  const providers = PROVIDERS.filter((p) => p.id !== "openai" || openaiAvailable === true);
+
+  useEffect(() => {
+    if (openaiAvailable === false && provider === "openai") setProvider("claude-cli");
+  }, [openaiAvailable, provider]);
 
   async function handleImprove() {
     setLoading(true);
@@ -49,7 +63,7 @@ export function ImproveWithAiPanel({
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, instructions: instructions || undefined }),
+        body: JSON.stringify({ provider, mode, instructions: instructions || undefined }),
       });
 
       if (!res.ok) {
@@ -58,7 +72,7 @@ export function ImproveWithAiPanel({
         return;
       }
 
-      onResult(await res.json());
+      onResult(await res.json(), mode);
     } catch {
       setError("No se pudo conectar con el servidor.");
     } finally {
@@ -82,15 +96,38 @@ export function ImproveWithAiPanel({
 
       {expanded && (
         <div className="flex flex-col gap-4 border-t border-border-soft p-5">
+          {supportsExpand && (
+            <div className="inline-flex items-center self-start rounded-full border border-border bg-background p-0.5">
+              {(
+                [
+                  { id: "rewrite", label: "Mejorar redacción" },
+                  { id: "expand", label: "Agregar contenido" },
+                ] as const
+              ).map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setMode(m.id)}
+                  className={`rounded-full px-3 py-1 text-[12px] font-semibold transition-colors ${
+                    mode === m.id ? "bg-white text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           <p className="text-[12.5px] leading-[1.5] text-ink-soft">
-            El agente reescribe la descripción y el SEO para mejorar texto genérico o ambiguo — nunca cambia
-            dirección, teléfono, precio ni otros datos verificables sin que tú lo apruebes.
+            {mode === "expand"
+              ? "El agente escribe 1-3 secciones NUEVAS (encabezado + párrafos) para agregar al final del contenido — nunca inventa dirección, teléfono, precio ni otros datos verificables. Tú decides si las aplicas."
+              : "El agente reescribe la descripción y el SEO para mejorar texto genérico o ambiguo — nunca cambia dirección, teléfono, precio ni otros datos verificables sin que tú lo apruebes."}
           </p>
 
           <div className="flex flex-col gap-1.5">
             <span className={labelClass}>Proveedor de IA</span>
             <div className="flex gap-2">
-              {PROVIDERS.map((p) => (
+              {providers.map((p) => (
                 <button
                   key={p.id}
                   type="button"
@@ -114,7 +151,7 @@ export function ImproveWithAiPanel({
               rows={2}
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
-              placeholder="ej. hazla más atractiva para familias con niños"
+              placeholder={mode === "expand" ? "ej. agrega una sección sobre el ambiente y otra sobre para quién es bueno" : "ej. hazla más atractiva para familias con niños"}
               className={`${fieldClass} resize-none`}
             />
           </div>
@@ -132,6 +169,8 @@ export function ImproveWithAiPanel({
                 <Icon d={SPARK_ICON} size={14} strokeWidth={1.8} className="animate-spin" />
                 Generando… {provider === "claude-cli" && "(puede tardar ~30s)"}
               </>
+            ) : mode === "expand" ? (
+              "Generar contenido nuevo"
             ) : (
               "Generar mejora"
             )}

@@ -13,6 +13,8 @@ const ROUTES: Record<string, string> = {
   plantillas: "/plantillas",
   contenido: "/contenido",
   "content-radar": "/content-radar",
+  automatizaciones: "/automatizaciones",
+  config: "/configuracion",
 };
 
 interface TooltipState {

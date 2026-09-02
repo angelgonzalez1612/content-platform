@@ -4,6 +4,8 @@ const seoSchema = z
   .object({ title: z.string().optional(), description: z.string().optional(), canonical: z.string().optional(), ogImage: z.string().optional() })
   .nullable()
   .optional();
+const blockImageSchema = z.object({ url: z.string(), credit: z.string() }).nullable().optional();
+const contentSchema = z.array(z.object({ heading: z.string().nullable().optional(), paragraphs: z.array(z.string()), image: blockImageSchema })).optional();
 
 const KIND_VALUES = ['parque', 'plaza', 'museo', 'monumento', 'colonia', 'estacion-metro', 'estacion-metrobus'] as const;
 
@@ -24,6 +26,7 @@ export const createLamiraLugarSchema = z.object({
   imageUrl: z.string().nullable().optional(),
   imageCredit: z.string().nullable().optional(),
   categoryData: z.record(z.string(), z.unknown()).optional(),
+  content: contentSchema,
 });
 export type CreateLamiraLugarDto = z.infer<typeof createLamiraLugarSchema>;
 
@@ -39,6 +42,7 @@ export const updateLamiraLugarSchema = z
     imageUrl: z.string().nullable().optional(),
     imageCredit: z.string().nullable().optional(),
     categoryData: z.record(z.string(), z.unknown()).optional(),
+    content: contentSchema,
   })
   .strict();
 export type UpdateLamiraLugarDto = z.infer<typeof updateLamiraLugarSchema>;

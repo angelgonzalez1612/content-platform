@@ -11,6 +11,14 @@ export interface SiteCategory {
   // Feeds RSS directos de medios (no vía Google News) para esta categoría. Opcional:
   // solo se agrega donde ya verificamos en vivo que el feed existe y trae lo esperado.
   directRss?: { url: string; source: string }[];
+  // Slug(s) de la categoría real del CMS (tabla `categories`, ver
+  // apps/api/src/db/seed-categories.ts) a la que corresponde esta categoría
+  // de content-radar — para saber si aplica a La Mira, Planazo o ambos (una
+  // categoría compartida en el CMS, siteId null) al mostrar el reporte. Un
+  // array porque a veces un tema de content-radar junta lo que en el CMS son
+  // 2 categorías separadas (ej. "Metro y Metrobús" → metro + metrobus).
+  // Ausente/vacío = sin categoría real equivalente (ej. "Noticias Locales").
+  cmsCategorySlugs?: string[];
 }
 
 export interface SiteConfig {
@@ -35,6 +43,7 @@ const CDMX: SiteConfig = {
     {
       slug: "trafico",
       label: "Tráfico",
+      cmsCategorySlugs: ["trafico"],
       keywords: [
         "trafico",
         "tráfico",
@@ -54,6 +63,7 @@ const CDMX: SiteConfig = {
     {
       slug: "metro-metrobus",
       label: "Metro y Metrobús",
+      cmsCategorySlugs: ["metro", "metrobus"],
       keywords: ["metro", "metrobus", "metrobús", "cablebus", "cablebús", "stc", "tren ligero", "rtp"],
       cdmxQuery: "Metro CDMX OR Metrobús CDMX",
       searchSeed: "cierre de metro cdmx ",
@@ -92,6 +102,7 @@ const CDMX: SiteConfig = {
     {
       slug: "eventos",
       label: "Eventos",
+      cmsCategorySlugs: ["eventos"],
       keywords: [
         "concierto",
         "festival",
@@ -111,6 +122,7 @@ const CDMX: SiteConfig = {
     {
       slug: "seguridad",
       label: "Seguridad y Alertas",
+      cmsCategorySlugs: ["seguridad"],
       keywords: ["seguridad", "robo", "asalto", "balacera", "operativo", "secuestro", "homicidio", "ssc", "fiscalia", "fiscalía"],
       cdmxQuery: "seguridad CDMX OR C5 CDMX",
       searchSeed: "seguridad en cdmx ",
@@ -118,6 +130,7 @@ const CDMX: SiteConfig = {
     {
       slug: "clima",
       label: "Clima",
+      cmsCategorySlugs: ["clima"],
       keywords: ["clima", "lluvia", "lluvias", "granizo", "tormenta", "calor", "frio", "frío", "alerta atmosferica", "alerta atmosférica"],
       cdmxQuery: "clima CDMX OR lluvias CDMX",
       searchSeed: "clima cdmx ",
@@ -125,6 +138,7 @@ const CDMX: SiteConfig = {
     {
       slug: "economia",
       label: "Economía",
+      cmsCategorySlugs: ["economia"],
       keywords: ["economia", "economía", "precios", "inflacion", "inflación", "empleo", "negocio", "comercio", "pemex"],
       cdmxQuery: "economía CDMX",
       searchSeed: "economía cdmx ",
@@ -136,6 +150,7 @@ const CDMX: SiteConfig = {
     {
       slug: "tecnologia",
       label: "Tecnología",
+      cmsCategorySlugs: ["tecnologia"],
       keywords: ["tecnologia", "tecnología", "inteligencia artificial", "ia", "app", "startup", "gadget"],
       cdmxQuery: "tecnología CDMX startups",
       searchSeed: "tecnología cdmx ",
@@ -143,6 +158,7 @@ const CDMX: SiteConfig = {
     {
       slug: "deportes",
       label: "Deportes",
+      cmsCategorySlugs: ["deportes"],
       keywords: [
         "futbol",
         "fútbol",
@@ -177,6 +193,7 @@ const CDMX: SiteConfig = {
     {
       slug: "comer",
       label: "Comer",
+      cmsCategorySlugs: ["comer"],
       keywords: ["restaurante", "restaurantes", "comida", "gastronomia", "gastronomía", "chef", "brunch", "taqueria", "taquería"],
       cdmxQuery: "restaurantes nuevos CDMX OR aperturas CDMX comida",
       searchSeed: "dónde comer en cdmx ",
@@ -184,6 +201,7 @@ const CDMX: SiteConfig = {
     {
       slug: "cafes",
       label: "Cafés",
+      cmsCategorySlugs: ["cafes"],
       keywords: ["cafe", "café", "cafeteria", "cafetería", "coffee"],
       cdmxQuery: "cafés nuevos CDMX",
       searchSeed: "mejores cafés en cdmx ",
@@ -191,6 +209,7 @@ const CDMX: SiteConfig = {
     {
       slug: "bares",
       label: "Bares",
+      cmsCategorySlugs: ["bares"],
       keywords: ["bar", "bares", "cantina", "coctel", "cóctel", "cerveceria", "cervecería", "mezcal", "antro"],
       cdmxQuery: "bares nuevos CDMX OR vida nocturna CDMX",
       searchSeed: "mejores bares en cdmx ",
@@ -198,6 +217,7 @@ const CDMX: SiteConfig = {
     {
       slug: "cultura",
       label: "Cultura",
+      cmsCategorySlugs: ["cultura"],
       keywords: ["museo", "teatro", "arte", "galeria", "galería", "danza", "exposicion", "exposición"],
       cdmxQuery: "museos CDMX OR exposiciones CDMX OR teatro CDMX",
       searchSeed: "qué museos visitar en cdmx ",
@@ -206,6 +226,7 @@ const CDMX: SiteConfig = {
     {
       slug: "aire-libre",
       label: "Aire libre",
+      cmsCategorySlugs: ["aire-libre"],
       keywords: ["parque", "ciclismo", "senderismo", "picnic", "alberca", "camping", "excursion", "excursión"],
       cdmxQuery: "parques CDMX OR actividades aire libre CDMX",
       searchSeed: "parques para visitar en cdmx ",
@@ -213,6 +234,7 @@ const CDMX: SiteConfig = {
     {
       slug: "gaming",
       label: "Gaming",
+      cmsCategorySlugs: ["gaming"],
       keywords: ["videojuego", "videojuegos", "gamer", "esports", "playstation", "xbox", "nintendo"],
       cdmxQuery: "videojuegos México OR esports México",
       searchSeed: "torneos de videojuegos en méxico ",
@@ -220,6 +242,7 @@ const CDMX: SiteConfig = {
     {
       slug: "viajes",
       label: "Viajes",
+      cmsCategorySlugs: ["viajes"],
       keywords: ["viaje", "viajes", "turismo", "vuelo", "aeropuerto", "destino"],
       cdmxQuery: "viajes desde CDMX OR turismo México",
       searchSeed: "viajes desde cdmx ",
@@ -227,6 +250,7 @@ const CDMX: SiteConfig = {
     {
       slug: "cine-tv",
       label: "Cine y TV",
+      cmsCategorySlugs: ["cine-tv", "cine-tv-planazo"],
       keywords: ["cine", "pelicula", "película", "serie", "streaming", "netflix", "estreno"],
       cdmxQuery: "estrenos cine México OR series streaming México",
       searchSeed: "estrenos de cine en méxico ",
@@ -234,6 +258,7 @@ const CDMX: SiteConfig = {
     {
       slug: "geek",
       label: "Geek",
+      cmsCategorySlugs: ["geek"],
       keywords: ["comic", "cómic", "anime", "manga", "cosplay", "marvel"],
       cdmxQuery: "cultura geek México OR anime México",
       searchSeed: "convenciones geek en méxico ",
@@ -241,6 +266,7 @@ const CDMX: SiteConfig = {
     {
       slug: "mascotas",
       label: "Mascotas",
+      cmsCategorySlugs: ["mascotas"],
       keywords: ["mascota", "mascotas", "perro", "perros", "gato", "gatos", "veterinaria", "adopcion", "adopción"],
       cdmxQuery: "mascotas CDMX",
       searchSeed: "lugares pet friendly en cdmx ",
@@ -248,6 +274,7 @@ const CDMX: SiteConfig = {
     {
       slug: "musica",
       label: "Música",
+      cmsCategorySlugs: ["musica"],
       keywords: ["concierto", "musica", "música", "banda", "album", "álbum"],
       cdmxQuery: "conciertos CDMX",
       searchSeed: "conciertos en cdmx ",

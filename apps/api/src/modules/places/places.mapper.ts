@@ -1,7 +1,13 @@
-import type { Place, PlaceDetail, FieldSchemaEntry } from '@planazo/types';
+import type { Place, PlaceDetail, FieldSchemaEntry, ContentBlock } from '@planazo/types';
 
 type PlaceCategoryRow = {
-  category: { id: string; name: string; slug: string; siteId: string | null; fieldSchema: FieldSchemaEntry[] };
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+    siteId: string | null;
+    fieldSchema: FieldSchemaEntry[];
+  };
 };
 type PlaceTagRow = { tag: { id: string; name: string; slug: string } };
 type PlaceServiceRow = { service: { id: string; name: string; slug: string } };
@@ -12,6 +18,7 @@ interface PlaceRow {
   name: string;
   description: string | null;
   zone: string | null;
+  alcaldiaSlug: string | null;
   latitude: string | null;
   longitude: string | null;
   address: string | null;
@@ -24,12 +31,15 @@ interface PlaceRow {
   status: Place['status'];
   categoryData: Record<string, unknown>;
   seo: Place['seo'];
+  content: ContentBlock[];
+  allowPhotoModal: boolean;
   createdAt: Date | string;
   updatedAt: Date | string;
   photos: Array<{
     id: string;
     url: string;
     alt: string | null;
+    credit: string | null;
     position: number;
   }>;
   placeCategories: PlaceCategoryRow[];
@@ -79,6 +89,7 @@ export function toPlaceSummary(row: PlaceRow): Place {
     name: row.name,
     description: row.description,
     zone: row.zone,
+    alcaldiaSlug: row.alcaldiaSlug,
     latitude: row.latitude,
     longitude: row.longitude,
     address: row.address,
@@ -94,6 +105,8 @@ export function toPlaceSummary(row: PlaceRow): Place {
     photos: row.photos,
     categoryData: row.categoryData,
     seo: row.seo ?? null,
+    content: row.content,
+    allowPhotoModal: row.allowPhotoModal,
     createdAt: toIso(row.createdAt),
     updatedAt: toIso(row.updatedAt),
   };
