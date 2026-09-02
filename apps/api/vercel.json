@@ -1,4 +1,5 @@
 {
-  "buildCommand": "pnpm run build",
-  "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
+  "buildCommand": "cd ../.. && pnpm turbo run build --filter=@planazo/api",
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "crons": [{ "path": "/api/cron/automation", "schedule": "*/15 * * * *" }]
 }

@@ -14,11 +14,13 @@ export type DrizzleDb = LibSQLDatabase<typeof schema>;
       provide: DRIZZLE,
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        // Local file-based SQLite (via libsql) — no external DB service needed
-        // while the schema is still being designed. Postgres/Supabase comes
-        // back once the shape stabilizes; see DATABASE_URL comment in .env.example.
+        // Local file-based SQLite (via libsql) en desarrollo — mismo driver que
+        // Turso en producción, así que pasar a producción es solo cambiar
+        // DATABASE_URL a una URL libsql:// remota y setear DATABASE_AUTH_TOKEN
+        // (Turso lo requiere; un archivo local no usa auth, por eso es opcional).
         const url = config.get<string>('DATABASE_URL') ?? 'file:./data/dev.sqlite';
-        const client = createClient({ url });
+        const authToken = config.get<string>('DATABASE_AUTH_TOKEN');
+        const client = createClient(authToken ? { url, authToken } : { url });
         return drizzle(client, { schema });
       },
     },

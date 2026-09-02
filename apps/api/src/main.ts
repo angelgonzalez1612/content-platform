@@ -1,22 +1,25 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
-import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { configureApp } from './bootstrap';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  configureApp(app);
+
   const config = app.get(ConfigService);
-
-  app.setGlobalPrefix('api');
-  app.use(cookieParser());
-
-  const origins = config
-    .get<string>('CORS_ORIGIN')!
-    .split(',')
-    .map((origin) => origin.trim());
-  app.enableCors({ origin: origins, credentials: true });
-
   const port = config.get<number>('PORT') ?? 3001;
   await app.listen(port);
+
+  // HMR del watch de Nest (ver webpack-hmr.config.js) — reemplaza el módulo
+  // en el mismo proceso en vez de matar/relanzar el proceso compilado, que
+  // en esta máquina crasheaba todo `pnpm dev` seguido (taskkill fallando al
+  // reiniciar). `module` solo existe bajo el builder de webpack.
+  const hot = (module as unknown as { hot?: { accept(): void; dispose(cb: () => void): void } }).hot;
+  if (hot) {
+    hot.accept();
+    hot.dispose(() => app.close());
+  }
 }
 void bootstrap();
