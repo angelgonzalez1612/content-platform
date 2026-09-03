@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import 'dotenv/config';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { NestFactory } from '@nestjs/core';
-import { ExpressAdapter } from '@nestjs/platform-express';
+import { ExpressAdapter, NestExpressApplication } from '@nestjs/platform-express';
 import express, { type Express } from 'express';
 // IMPORTANTE: importa el JS ya compilado por `nest build` (tsc), NUNCA el
 // TypeScript fuente. El bundler de funciones de Vercel usa esbuild, que no
@@ -19,7 +19,7 @@ async function getApp(): Promise<Express> {
   if (cachedApp) return cachedApp;
 
   const expressApp = express();
-  const app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), { bufferLogs: false });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, new ExpressAdapter(expressApp), { bufferLogs: false });
   configureApp(app);
   await app.init();
 

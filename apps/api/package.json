@@ -41,7 +41,7 @@
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
-    "@nestjs/schedule": "^12.0.1",
+    "@nestjs/schedule": "^6.1.3",
     "@planazo/content-radar": "workspace:^",
     "@planazo/shared": "workspace:^",
     "@planazo/types": "workspace:^",
