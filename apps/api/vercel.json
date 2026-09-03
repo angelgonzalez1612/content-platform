@@ -1,7 +1,7 @@
 {
   "framework": null,
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
-  "buildCommand": "node node_modules/typescript/bin/tsc -p tsconfig.json",
+  "buildCommand": "cd apps/api && node node_modules/typescript/bin/tsc -p tsconfig.json",
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
   "crons": [{ "path": "/api/cron/automation", "schedule": "0 14 * * *" }]
 }
