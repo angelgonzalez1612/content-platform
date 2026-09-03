@@ -5,10 +5,9 @@
     "moduleResolution": "nodenext",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "strict": true,
-    "resolveJsonModule": true,
     "strict": false,
     "noImplicitAny": false,
+    "resolveJsonModule": true,
     "outDir": "dist",
     "types": ["node"]
   },
