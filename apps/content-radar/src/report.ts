@@ -1,16 +1,16 @@
-import type { SiteConfig } from "./sites.js";
-import type { ScoredTopic } from "./relevance.js";
-import type { CategoryNews, NewsItem } from "./cdmxNews.js";
-import type { CategoryPhrases, WeightedPhrase } from "./suggest.js";
-import type { CategoryDirectNews, DirectNewsItem } from "./directNews.js";
-import type { CategoryYoutubeVideos, YoutubeVideo } from "./youtube.js";
-import type { BingKeywordStat, CategoryBingStat } from "./bingKeywords.js";
-import type { WeatherNow } from "./weather.js";
-import { weatherLabel } from "./weather.js";
-import type { TmdbItem } from "./tmdb.js";
-import { classifyOrigin } from "./origin.js";
-import { classifyGeo, classifyGeoFromTitle } from "./geo.js";
-import { todayLocal } from "./date.js";
+import type { SiteConfig } from "./sites";
+import type { ScoredTopic } from "./relevance";
+import type { CategoryNews, NewsItem } from "./cdmxNews";
+import type { CategoryPhrases, WeightedPhrase } from "./suggest";
+import type { CategoryDirectNews, DirectNewsItem } from "./directNews";
+import type { CategoryYoutubeVideos, YoutubeVideo } from "./youtube";
+import type { BingKeywordStat, CategoryBingStat } from "./bingKeywords";
+import type { WeatherNow } from "./weather";
+import { weatherLabel } from "./weather";
+import type { TmdbItem } from "./tmdb";
+import { classifyOrigin } from "./origin";
+import { classifyGeo, classifyGeoFromTitle } from "./geo";
+import { todayLocal } from "./date";
 
 // Span con HTML crudo (marked deja pasar HTML inline en markdown) para poder darle
 // color propio — verde/neutro — en vez del gris genérico de los \`code\` badges.

@@ -1,8 +1,8 @@
 import { marked } from "marked";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import { REPORTS_DIR } from "./run.js";
-import { HOTTEST_HEADING, SEARCH_PHRASES_HEADING, TOP_SEARCHES_HEADING } from "./report.js";
+import { REPORTS_DIR } from "./run";
+import { HOTTEST_HEADING, SEARCH_PHRASES_HEADING, TOP_SEARCHES_HEADING } from "./report";
 
 // Todo lo que convierte un reporte .md de content-radar en HTML interactivo
 // (temas rankeados, botones Publicar, tarjetas por categoría, chips de

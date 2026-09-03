@@ -1,5 +1,5 @@
-import type { TrendTopic } from "./trends.js";
-import type { SiteConfig } from "./sites.js";
+import type { TrendTopic } from "./trends";
+import type { SiteConfig } from "./sites";
 
 export interface ScoredTopic extends TrendTopic {
   categories: string[];

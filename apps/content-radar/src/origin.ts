@@ -1,5 +1,5 @@
-import type { TrendTopic } from "./trends.js";
-import { normalize } from "./relevance.js";
+import type { TrendTopic } from "./trends";
+import { normalize } from "./relevance";
 
 export type Origin = "nacional" | "internacional";
 
