@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "postinstall": "playwright install chromium",
+    "postinstall": "node -e \"if (!process.env.VERCEL) require('node:child_process').execSync('playwright install chromium', { stdio: 'inherit' })\"",
     "build": "tsc -p tsconfig.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
