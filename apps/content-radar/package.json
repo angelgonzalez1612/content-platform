@@ -12,7 +12,7 @@
   },
   "scripts": {
     "trends": "tsx src/index.ts",
-    "build": "rm -rf dist && tsc -p tsconfig.build.json && node -e \"require('fs').writeFileSync('dist/package.json', JSON.stringify({type:'module'}))\"",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && node -e \"require('fs').writeFileSync('dist/package.json', JSON.stringify({type:'module'}))\" && node -e \"console.log('RENDER_JS_HEAD:', require('fs').readFileSync('dist/render.js','utf8').slice(0,80))\"",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
