@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { SiteConfig } from "./sites";
-import { todayLocal } from "./date";
+import type { SiteConfig } from "./sites.js";
+import { todayLocal } from "./date.js";
 
 // YouTube Data API v3 es gratis y NO cobra por exceder la cuota — simplemente rechaza
 // llamadas (403 quotaExceeded) hasta que se resetea a medianoche hora Pacífico. Aun así,

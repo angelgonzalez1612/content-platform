@@ -1,18 +1,18 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { getTrendingNow } from "./trends";
-import { getCdmxNewsByCategory } from "./cdmxNews";
-import { getDirectNewsByCategory } from "./directNews";
-import { getCategorySearchPhrases, getSearchPhrases } from "./suggest";
-import { getCdmxWeather } from "./weather";
-import { getYoutubeByCategory } from "./youtube";
-import { getBingStatsByCategory } from "./bingKeywords";
-import { getTmdbTrending } from "./tmdb";
-import { todayLocal } from "./date";
-import { scoreTopics } from "./relevance";
-import { buildMarkdownReport } from "./report";
-import { getSite } from "./sites";
+import { getTrendingNow } from "./trends.js";
+import { getCdmxNewsByCategory } from "./cdmxNews.js";
+import { getDirectNewsByCategory } from "./directNews.js";
+import { getCategorySearchPhrases, getSearchPhrases } from "./suggest.js";
+import { getCdmxWeather } from "./weather.js";
+import { getYoutubeByCategory } from "./youtube.js";
+import { getBingStatsByCategory } from "./bingKeywords.js";
+import { getTmdbTrending } from "./tmdb.js";
+import { todayLocal } from "./date.js";
+import { scoreTopics } from "./relevance.js";
+import { buildMarkdownReport } from "./report.js";
+import { getSite } from "./sites.js";
 
 // Resuelto contra la ubicación real del archivo (no contra process.cwd()) —
 // este módulo lo importan tanto el CLI (cwd = apps/content-radar) como el CMS

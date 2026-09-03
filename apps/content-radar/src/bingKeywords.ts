@@ -1,4 +1,4 @@
-import type { SiteConfig } from "./sites";
+import type { SiteConfig } from "./sites.js";
 
 // Bing Webmaster API (endpoint JSON/HTTP, no el SOAP/POX que Microsoft retira el
 // 31 de agosto de 2026 — verificado en vivo, misma URL con "/json/" es la que

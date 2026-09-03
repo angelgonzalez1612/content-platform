@@ -1,5 +1,5 @@
-import type { TrendTopic } from "./trends";
-import { containsKeyword, normalize } from "./relevance";
+import type { TrendTopic } from "./trends.js";
+import { containsKeyword, normalize } from "./relevance.js";
 
 export interface GeoClassification {
   entidad: string | null;

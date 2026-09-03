@@ -6,8 +6,11 @@ import { AutomationRunnerService } from './automation-runner.service';
 // @Interval en memoria de AutomationRunnerService, que en un serverless
 // function no sirve (el proceso no queda vivo entre invocaciones, así que
 // un setInterval registrado nunca llega a dispararse solo). Vercel llama
-// este endpoint cada 15 min con un header Authorization: Bearer <CRON_SECRET>
-// automático — sin CRON_SECRET configurado, este endpoint rechaza todo.
+// este endpoint una vez al día (el plan Hobby no permite cron más seguido —
+// para eso hace falta Pro) con un header Authorization: Bearer <CRON_SECRET>
+// automático — sin CRON_SECRET configurado, este endpoint rechaza todo. El
+// botón "Ejecutar ahora" del CMS sigue disponible para correrlo manualmente
+// las veces que quieras el resto del día.
 @Controller('cron')
 export class AutomationCronController {
   constructor(

@@ -11,8 +11,8 @@
 // cmsCategorySlugs) para armar el categorySiteMap completo, mismo criterio
 // que buildCategorySiteMap() en apps/cms/src/app/content-radar/page.tsx.
 // stdout: JSON { fileName, topics }.
-import { listReports, readReportFile, extractTopics, extractSearchPhrases } from "./render";
-import { DEFAULT_SITE_ID, getSite } from "./sites";
+import { listReports, readReportFile, extractTopics, extractSearchPhrases } from "./render.js";
+import { DEFAULT_SITE_ID, getSite } from "./sites.js";
 
 async function main() {
   let input = "";

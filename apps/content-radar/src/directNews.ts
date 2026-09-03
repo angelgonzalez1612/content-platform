@@ -1,5 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
-import type { SiteConfig } from "./sites";
+import type { SiteConfig } from "./sites.js";
 
 // RSS directo de medios (no vía Google News): más control de calidad, feeds abiertos
 // de siempre, sin intermediario ni riesgo de que nos bloqueen como pasó con Reddit.

@@ -1,7 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
-import { execFile } from 'node:child_process';
-import path from 'node:path';
 import { slugify } from '@planazo/shared';
 import type { Category, ContentBlock, Seo } from '@planazo/types';
 import { AiDraftService, type DraftResult } from '../ai/ai-draft.service';
@@ -64,8 +62,8 @@ export interface PendingTopic {
 }
 
 // Mismo criterio que ContentRadarPublishedService/render.ts (normaliza antes
-// de comparar por título) — reimplementado aquí porque no se puede importar
-// nada de @planazo/content-radar en runtime (ver comentario en run() abajo).
+// de comparar por título) — copiado en vez de importado para no acoplar esta
+// comparación puntual a todo lo que arrastra el módulo de render.
 function normalizeTitle(title: string): string {
   return title.trim().replace(/\s+/g, ' ').toLowerCase();
 }
@@ -117,10 +115,8 @@ export class AutomationRunnerService {
 
   // Solo la mitad "conoce la DB" del cruce sitio↔categoría — la otra mitad
   // (qué categorías de content-radar existen y su cmsCategorySlugs) vive en
-  // apps/content-radar/src/sites.ts, que este proceso no puede importar en
-  // runtime (ver comentario en run() abajo) — se manda esto por stdin al
-  // subproceso, que termina el cruce ahí (mismo criterio que
-  // buildCategorySiteMap() en apps/cms/src/app/content-radar/page.tsx).
+  // apps/content-radar/src/sites.ts, cruzada en extractTopics() (mismo
+  // criterio que buildCategorySiteMap() en apps/cms/src/app/content-radar/page.tsx).
   private async buildSlugToSites(): Promise<Record<string, string[]>> {
     const [lamiraCats, planazoCats] = await Promise.all([
       this.categories.findAll('la-mira'),
@@ -139,42 +135,42 @@ export class AutomationRunnerService {
     return Object.fromEntries([...map].map(([slug, sites]) => [slug, [...sites]]));
   }
 
-  // apps/content-radar es un paquete ESM puro sin paso de build ("type":
-  // "module" en su package.json, exports apuntan directo a .ts) — solo se
-  // ejecuta bien vía un loader TS-aware (tsx, o el bundler de Next.js en el
-  // CMS). El runtime plano de Nest/Node no reescribe extensiones al resolver
-  // imports relativos, así que importar render.ts directo desde aquí revienta
-  // en producción aunque compile limpio. Se invoca como subproceso en su
-  // lugar — mismo mecanismo (tsx) que ya usa Task Scheduler para la corrida
-  // diaria de content-radar (ver apps/content-radar/src/run.ts).
+  // apps/content-radar es un paquete ESM puro ("type":"module") — desde este
+  // proceso CommonJS (compilado con nodenext) un require() estático no puede
+  // cargarlo directo. import() dinámico sí puede (es el mecanismo oficial de
+  // interop CJS→ESM de Node) — antes esto se resolvía con un subproceso tsx,
+  // pero eso asumía que el binario tsx quedara disponible en el entorno de
+  // ejecución, y en la función serverless de Vercel no queda empaquetado
+  // (ENOENT). content-radar ahora compila a JS real (ver su package.json) —
+  // import() directo funciona en local y en producción por igual, sin
+  // depender de ningún binario externo.
   private async extractTopics(): Promise<{ fileName: string | null; topics: ExtractedTopic[]; searchPhrases: string[] }> {
-    const contentRadarDir = require.resolve('@planazo/content-radar/package.json').replace(/[/\\]package\.json$/, '');
-    const tsxBin = path.join(contentRadarDir, 'node_modules', '.bin', process.platform === 'win32' ? 'tsx.cmd' : 'tsx');
+    const [{ listReports, readReportFile, extractTopics: extractTopicsFromReport, extractSearchPhrases }, { DEFAULT_SITE_ID, getSite }] =
+      await Promise.all([
+        import('@planazo/content-radar/render') as Promise<typeof import('@planazo/content-radar/render')>,
+        import('@planazo/content-radar/sites') as Promise<typeof import('@planazo/content-radar/sites')>,
+      ]);
+
     const slugToSites = await this.buildSlugToSites();
+    // Mismo cruce que hacía automation-extract-cli.ts: categorías de
+    // content-radar → qué sitio(s) del CMS las cubren, vía cmsCategorySlugs.
+    const categorySiteMap = new Map<string, Set<string>>();
+    for (const category of getSite(DEFAULT_SITE_ID).categories) {
+      const sites = new Set<string>();
+      for (const slug of category.cmsCategorySlugs ?? []) {
+        for (const site of slugToSites[slug] ?? []) sites.add(site);
+      }
+      if (sites.size > 0) categorySiteMap.set(category.label, sites);
+    }
 
-    const stdout = await new Promise<string>((resolve, reject) => {
-      // shell:true es obligatorio en Windows para poder correr un .cmd — sin
-      // riesgo real aquí, los args son literales fijos, nada del input del
-      // caller (topics, hints, etc.) pasa por este comando.
-      const child = execFile(tsxBin, ['src/automation-extract-cli.ts'], {
-        cwd: contentRadarDir,
-        maxBuffer: 1024 * 1024 * 20,
-        windowsHide: true,
-        shell: true,
-      });
-      let out = '';
-      let errOut = '';
-      child.stdout?.on('data', (d: Buffer) => (out += d.toString()));
-      child.stderr?.on('data', (d: Buffer) => (errOut += d.toString()));
-      child.on('error', reject);
-      child.on('close', (code) => {
-        if (code !== 0) reject(new Error(`content-radar automation-extract-cli salió con código ${code}: ${errOut.slice(0, 500)}`));
-        else resolve(out);
-      });
-      child.stdin?.end(JSON.stringify(slugToSites));
-    });
+    const files = await listReports(DEFAULT_SITE_ID);
+    const fileName = files[0] ?? null;
+    if (!fileName) return { fileName: null, topics: [], searchPhrases: [] };
 
-    return JSON.parse(stdout) as { fileName: string | null; topics: ExtractedTopic[]; searchPhrases: string[] };
+    const raw = await readReportFile(fileName);
+    const topics = (await extractTopicsFromReport(raw, categorySiteMap as never)) as ExtractedTopic[];
+    const searchPhrases = extractSearchPhrases(raw);
+    return { fileName, topics, searchPhrases };
   }
 
   /** Corrida real — expuesta aparte de runScheduled() para que el endpoint
