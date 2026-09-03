@@ -1,7 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { chromium } from 'playwright';
-import { JSDOM } from 'jsdom';
-import { Readability } from '@mozilla/readability';
+// jsdom carga (transitivamente) un paquete ESM-only que Node no puede
+// require() — en local no importa, pero en el runtime serverless de Vercel
+// esto tronaba el arranque de TODO el API con ERR_REQUIRE_ESM, aunque nadie
+// hubiera llamado a scrape() todavía (Nest resuelve todos los imports al
+// bootstrear). import() dinámico dentro de extract() difiere esa carga
+// hasta el primer scrape real, sin bloquear el arranque.
+import type { JSDOM as JSDOMType } from 'jsdom';
+import type { Readability as ReadabilityType } from '@mozilla/readability';
 
 export interface ScrapedArticle {
   text: string;
@@ -71,7 +77,7 @@ export class ArticleScraperService {
       await browser.close();
       browser = null;
 
-      return this.extract(html, finalUrl);
+      return await this.extract(html, finalUrl);
     } catch (err) {
       this.logger.warn(
         `No se pudo scrapear "${url}": ${(err as Error).message}`,
@@ -82,7 +88,9 @@ export class ArticleScraperService {
     }
   }
 
-  private extract(html: string, url: string): ScrapedArticle | null {
+  private async extract(html: string, url: string): Promise<ScrapedArticle | null> {
+    const { JSDOM }: { JSDOM: typeof JSDOMType } = await import('jsdom');
+    const { Readability }: { Readability: typeof ReadabilityType } = await import('@mozilla/readability');
     const dom = new JSDOM(html, { url });
     const article = new Readability(dom.window.document).parse();
     const text = article?.textContent?.trim();
