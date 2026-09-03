@@ -1,5 +1,6 @@
 {
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
   "buildCommand": "cd ../.. && pnpm turbo run build --filter=@planazo/api",
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
-  "crons": [{ "path": "/api/cron/automation", "schedule": "*/15 * * * *" }]
+  "crons": [{ "path": "/api/cron/automation", "schedule": "0 14 * * *" }]
 }
