@@ -2,9 +2,12 @@
 // componentes cliente de /automatizaciones — separado para que el cliente no
 // arrastre next/headers solo por importar estos tipos.
 
-// Solo estos 5 tipos se pueden crear de principio a fin sin un humano — ver
-// AUTOMATABLE_CONTENT_TYPES en apps/api/src/modules/automation/dto/automation-rule.dto.ts.
-export const AUTOMATABLE_CONTENT_TYPES = ["noticia", "alerta", "reportaje", "place", "evento-planazo"] as const;
+// Estos 6 tipos se pueden generar en automático — ver AUTOMATABLE_CONTENT_TYPES
+// en apps/api/src/modules/automation/dto/automation-rule.dto.ts. evento-planazo
+// y planazo-guia siempre caen en revisión humana antes de publicarse (ver
+// checks.service.ts), pero igual se generan solos — a diferencia de guía/
+// evento/lugar de La Mira, que ni eso.
+export const AUTOMATABLE_CONTENT_TYPES = ["noticia", "alerta", "reportaje", "place", "evento-planazo", "planazo-guia"] as const;
 export type AutomatableContentType = (typeof AUTOMATABLE_CONTENT_TYPES)[number];
 
 export interface AutomationRule {

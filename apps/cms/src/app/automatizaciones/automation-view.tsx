@@ -26,6 +26,7 @@ const TYPE_LABEL: Record<AutomatableContentType, string> = {
   reportaje: "Reportaje (La Mira)",
   place: "Lugar (Planazo)",
   "evento-planazo": "Evento (Planazo)",
+  "planazo-guia": "Guía (Planazo)",
 };
 const TYPE_SITE: Record<AutomatableContentType, "la-mira" | "planazo"> = {
   noticia: "la-mira",
@@ -33,6 +34,7 @@ const TYPE_SITE: Record<AutomatableContentType, "la-mira" | "planazo"> = {
   reportaje: "la-mira",
   place: "planazo",
   "evento-planazo": "planazo",
+  "planazo-guia": "planazo",
 };
 const SITE_LABEL: Record<"la-mira" | "planazo", string> = { "la-mira": "La Mira", planazo: "Planazo" };
 const PROVIDER_LABEL: Record<AutomationRule["provider"], string> = {
@@ -144,7 +146,10 @@ export function AutomationView({
   const [runResult, setRunResult] = useState<{ evaluated: number; created: number } | null>(null);
   const [siteFilter, setSiteFilter] = useState<"all" | "la-mira" | "planazo" | "ambos">("all");
   const [phraseTab, setPhraseTab] = useState<"pending" | "processed">("pending");
-  const [rightTab, setRightTab] = useState<"bitacora" | "phrases">("bitacora");
+  // "Qué busca la gente" ya no es una pestaña de la bitácora — vive junto a
+  // Reglas, con su propio filtro por sitio (mismo patrón que siteFilter de
+  // arriba, aplicado a esta fuente en vez de a las reglas).
+  const [phraseSiteFilter, setPhraseSiteFilter] = useState<"all" | "la-mira" | "planazo">("all");
   const [outcomeFilter, setOutcomeFilter] = useState<"all" | AutomationRun["outcome"]>("all");
   const [dateFrom, setDateFrom] = useState(""); // yyyy-mm-dd, vacío = sin tope
   const [dateTo, setDateTo] = useState("");
@@ -309,12 +314,28 @@ export function AutomationView({
   });
   const runFiltersActive = outcomeFilter !== "all" || !!dateFrom || !!dateTo;
 
-  // Apartado nuevo: frases reales de "Qué busca la gente" (Content Radar) —
-  // separado de la cola/bitácora de arriba (que mezcla todo) para que se vea
-  // aparte qué está pasando específicamente con esta fuente más arriesgada.
-  const phrasePending = queue?.pending.filter((p) => p.source === "search-phrase") ?? [];
-  const phraseRuns = runs.filter((r) => r.source === "search-phrase");
+  // Apartado propio de "Qué busca la gente" (Content Radar) — separado de la
+  // bitácora de arriba (que mezcla todo) para que se vea aparte qué está
+  // pasando específicamente con esta fuente más arriesgada, y vive junto a
+  // Reglas en vez de compartir pestaña con la bitácora.
+  const phrasePendingAll = queue?.pending.filter((p) => p.source === "search-phrase") ?? [];
+  const phraseRunsAll = runs.filter((r) => r.source === "search-phrase");
   const rulesWithPhrases = rules.filter((r) => r.includeSearchPhrases);
+
+  // Mismo patrón que siteTabs (Reglas) — Todos/La Mira/Planazo con conteo,
+  // ocultando una pestaña en 0. Solo filtra "Ya procesadas" (AutomationRun
+  // trae `site`, ya clasificado): "Pendientes de hoy" son temas en bruto
+  // (PendingTopic) que todavía no se clasifican por sitio — nadie sabe a cuál
+  // pertenecen hasta que se procesan, así que se muestran igual sin importar
+  // la pestaña elegida.
+  const phraseSiteTabs = [
+    { key: "all" as const, label: "Todos", count: phraseRunsAll.length },
+    { key: "la-mira" as const, label: "La Mira", count: phraseRunsAll.filter((r) => r.site === "la-mira").length },
+    { key: "planazo" as const, label: "Planazo", count: phraseRunsAll.filter((r) => r.site === "planazo").length },
+  ].filter((t) => t.key === "all" || t.count > 0);
+
+  const phrasePending = phrasePendingAll;
+  const phraseRuns = phraseSiteFilter === "all" ? phraseRunsAll : phraseRunsAll.filter((r) => r.site === phraseSiteFilter);
 
   return (
     <div className="p-[26px] pb-[60px]">
@@ -391,7 +412,7 @@ export function AutomationView({
           <div className="flex flex-col gap-1.5">
             <span className={labelClass}>Tipos de contenido</span>
             <p className="text-[11.5px] leading-[1.4] text-ink-faint">
-              Vacío = cualquiera de estos (la IA clasifica). Solo estos 5 tipos se pueden publicar solos — guía, evento y lugar de La Mira
+              Vacío = cualquiera de estos (la IA clasifica). Solo estos 6 tipos se pueden generar en automático — guía, evento y lugar de La Mira
               necesitan datos que un humano tiene que llenar a mano, así que no aparecen aquí.
             </p>
             <div className="flex flex-wrap gap-2">
@@ -527,6 +548,7 @@ export function AutomationView({
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_1fr] lg:items-start">
+        <div className="flex flex-col gap-6">
         <div className="flex flex-col overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
           <div className="flex items-center justify-between border-b border-border-soft px-5 py-3.5">
             <h2 className="text-[15px] font-semibold tracking-tight">Reglas</h2>
@@ -601,132 +623,130 @@ export function AutomationView({
         </div>
 
         <div className="flex flex-col overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft px-4 py-2.5">
-            <div className="flex flex-wrap gap-1.5">
+          <div className="border-b border-border-soft px-5 py-3.5">
+            <h2 className="text-[15px] font-semibold tracking-tight">Qué busca la gente (frases reales)</h2>
+            <p className="mt-0.5 text-[11.5px] leading-[1.4] text-ink-faint">
+              Frases reales de autocompletado de Google, tomadas del reporte de Content Radar — sin artículo que citar, la IA redacta
+              directo respondiendo la intención de búsqueda.{" "}
+              {rulesWithPhrases.length === 0
+                ? "Ninguna regla las incluye todavía."
+                : `${rulesWithPhrases.length} regla(s) las incluye(n): ${rulesWithPhrases.map((r) => r.name).join(", ")}.`}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5 border-b border-border-soft px-3 py-2.5">
+            {phraseSiteTabs.map((t) => (
               <button
+                key={t.key}
                 type="button"
-                onClick={() => setRightTab("bitacora")}
-                className={`rounded-full border px-3 py-1 text-[12.5px] font-medium transition-colors ${
-                  rightTab === "bitacora" ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
+                onClick={() => setPhraseSiteFilter(t.key)}
+                className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
+                  phraseSiteFilter === t.key ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
                 }`}
               >
-                Bitácora — qué hizo la IA
+                {t.label}
+                <span
+                  className={`rounded-full px-1.5 font-mono text-[10.5px] ${phraseSiteFilter === t.key ? "bg-white/60" : "bg-background text-ink-faint"}`}
+                >
+                  {t.count}
+                </span>
               </button>
-              <button
-                type="button"
-                onClick={() => setRightTab("phrases")}
-                className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12.5px] font-medium transition-colors ${
-                  rightTab === "phrases" ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
-                }`}
-              >
-                Qué busca la gente (frases reales)
-                {queue && (
-                  <span className={`rounded-full px-1.5 font-mono text-[10.5px] ${rightTab === "phrases" ? "bg-white/60" : "bg-background text-ink-faint"}`}>
-                    {phrasePending.length}
-                  </span>
-                )}
-              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-1.5 border-b border-border-soft px-4 py-2.5">
+            <button
+              type="button"
+              onClick={() => setPhraseTab("pending")}
+              className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
+                phraseTab === "pending" ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
+              }`}
+            >
+              Pendientes de hoy
+              <span className={`rounded-full px-1.5 font-mono text-[10.5px] ${phraseTab === "pending" ? "bg-white/60" : "bg-background text-ink-faint"}`}>
+                {phrasePending.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPhraseTab("processed")}
+              className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
+                phraseTab === "processed" ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
+              }`}
+            >
+              Ya procesadas
+              <span className={`rounded-full px-1.5 font-mono text-[10.5px] ${phraseTab === "processed" ? "bg-white/60" : "bg-background text-ink-faint"}`}>
+                {phraseRuns.length}
+              </span>
+            </button>
+          </div>
+
+          {phraseTab === "pending" ? (
+            !queue ? (
+              <p className="px-4 py-3.5 text-[12px] text-ink-faint">Cargando…</p>
+            ) : phrasePending.length === 0 ? (
+              <p className="px-4 py-3.5 text-[12px] text-ink-faint">
+                Sin frases pendientes hoy — o ya se evaluaron todas, o ninguna regla activa las incluye.
+              </p>
+            ) : (
+              <div className="max-h-[400px] overflow-y-auto">
+                {phrasePending.map((p) => (
+                  <div key={p.title} className="flex items-center gap-2 border-b border-border-soft px-4 py-2 last:border-b-0">
+                    <p className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-ink">{p.title}</p>
+                    {!p.hasCandidateRule && (
+                      <span className="flex-none rounded-md bg-background px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">sin regla</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )
+          ) : phraseRuns.length === 0 ? (
+            <p className="px-4 py-3.5 text-[12px] text-ink-faint">Todavía no se ha generado contenido a partir de estas frases.</p>
+          ) : (
+            <div className="max-h-[400px] overflow-y-auto">
+              {phraseRuns.slice(0, 30).map((run) => {
+                const meta = OUTCOME_META[run.outcome];
+                const live = run.outcome === "published" ? publicUrl(run) : null;
+                const href = !live ? contentHref(run.contentType, run.contentId) : null;
+                return (
+                  <div key={run.id} className="flex items-center gap-2 border-b border-border-soft px-4 py-2 last:border-b-0">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[12.5px] font-medium text-ink">{run.topic}</p>
+                      <p className="truncate text-[11px] text-ink-faint">{run.ruleName ?? "—"}</p>
+                    </div>
+                    <span
+                      className="flex-none rounded-md px-1.5 py-0.5 font-mono text-[10px] font-medium"
+                      style={{ background: meta.bg, color: meta.fg }}
+                    >
+                      {meta.label}
+                    </span>
+                    {live ? (
+                      <ViewPublishedLink compact href={live} available />
+                    ) : (
+                      href && (
+                        <Link href={href} className="flex-none text-[12px] font-medium text-brand hover:text-brand-pressed">
+                          Ver →
+                        </Link>
+                      )
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            {rightTab === "bitacora" && runs.length > 0 && (
+          )}
+        </div>
+        </div>
+
+        <div className="flex flex-col overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft px-5 py-3.5">
+            <h2 className="text-[15px] font-semibold tracking-tight">Bitácora — qué hizo la IA</h2>
+            {runs.length > 0 && (
               <span className="font-mono text-[11px] text-ink-faint">
                 {runFiltersActive ? `${filteredRuns.length} de ${runs.length}` : `${runs.length} corrida(s)`}
               </span>
             )}
           </div>
 
-          {rightTab === "phrases" ? (
-            <>
-              <p className="border-b border-border-soft px-4 py-2.5 text-[11.5px] text-ink-faint">
-                Frases reales de autocompletado de Google, tomadas del reporte de Content Radar — sin artículo que citar, la IA redacta
-                directo respondiendo la intención de búsqueda.{" "}
-                {rulesWithPhrases.length === 0
-                  ? "Ninguna regla las incluye todavía."
-                  : `${rulesWithPhrases.length} regla(s) las incluye(n): ${rulesWithPhrases.map((r) => r.name).join(", ")}.`}
-              </p>
-
-              <div className="flex gap-1.5 border-b border-border-soft px-4 py-2.5">
-                <button
-                  type="button"
-                  onClick={() => setPhraseTab("pending")}
-                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
-                    phraseTab === "pending" ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
-                  }`}
-                >
-                  Pendientes de hoy
-                  <span className={`rounded-full px-1.5 font-mono text-[10.5px] ${phraseTab === "pending" ? "bg-white/60" : "bg-background text-ink-faint"}`}>
-                    {phrasePending.length}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPhraseTab("processed")}
-                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
-                    phraseTab === "processed" ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
-                  }`}
-                >
-                  Ya procesadas
-                  <span className={`rounded-full px-1.5 font-mono text-[10.5px] ${phraseTab === "processed" ? "bg-white/60" : "bg-background text-ink-faint"}`}>
-                    {phraseRuns.length}
-                  </span>
-                </button>
-              </div>
-
-              {phraseTab === "pending" ? (
-                !queue ? (
-                  <p className="px-4 py-3.5 text-[12px] text-ink-faint">Cargando…</p>
-                ) : phrasePending.length === 0 ? (
-                  <p className="px-4 py-3.5 text-[12px] text-ink-faint">
-                    Sin frases pendientes hoy — o ya se evaluaron todas, o ninguna regla activa las incluye.
-                  </p>
-                ) : (
-                  <div className="max-h-[560px] overflow-y-auto">
-                    {phrasePending.map((p) => (
-                      <div key={p.title} className="flex items-center gap-2 border-b border-border-soft px-4 py-2 last:border-b-0">
-                        <p className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-ink">{p.title}</p>
-                        {!p.hasCandidateRule && (
-                          <span className="flex-none rounded-md bg-background px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">sin regla</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )
-              ) : phraseRuns.length === 0 ? (
-                <p className="px-4 py-3.5 text-[12px] text-ink-faint">Todavía no se ha generado contenido a partir de estas frases.</p>
-              ) : (
-                <div className="max-h-[560px] overflow-y-auto">
-                  {phraseRuns.slice(0, 30).map((run) => {
-                    const meta = OUTCOME_META[run.outcome];
-                    const live = run.outcome === "published" ? publicUrl(run) : null;
-                    const href = !live ? contentHref(run.contentType, run.contentId) : null;
-                    return (
-                      <div key={run.id} className="flex items-center gap-2 border-b border-border-soft px-4 py-2 last:border-b-0">
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[12.5px] font-medium text-ink">{run.topic}</p>
-                          <p className="truncate text-[11px] text-ink-faint">{run.ruleName ?? "—"}</p>
-                        </div>
-                        <span
-                          className="flex-none rounded-md px-1.5 py-0.5 font-mono text-[10px] font-medium"
-                          style={{ background: meta.bg, color: meta.fg }}
-                        >
-                          {meta.label}
-                        </span>
-                        {live ? (
-                          <ViewPublishedLink compact href={live} available />
-                        ) : (
-                          href && (
-                            <Link href={href} className="flex-none text-[12px] font-medium text-brand hover:text-brand-pressed">
-                              Ver →
-                            </Link>
-                          )
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </>
-          ) : (
-            <>
           {runs.length > 0 && (
             <div className="flex flex-col gap-2 border-b border-border-soft px-4 py-2.5">
               <div className="flex flex-wrap gap-1.5">
@@ -816,8 +836,6 @@ export function AutomationView({
                 );
               })}
             </div>
-          )}
-            </>
           )}
         </div>
       </div>

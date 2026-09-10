@@ -59,6 +59,7 @@
     "db:reactivate-que-busca-la-gente": "ts-node -r tsconfig-paths/register src/db/reactivate-que-busca-la-gente.ts",
     "db:fix-seo-length-round1": "ts-node -r tsconfig-paths/register src/db/fix-seo-length-round1.ts",
     "db:unpublish-hospital-reportaje": "ts-node -r tsconfig-paths/register src/db/unpublish-hospital-reportaje.ts",
+    "db:fix-qbg-search-phrases-flag": "ts-node -r tsconfig-paths/register src/db/fix-qbg-search-phrases-flag.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
