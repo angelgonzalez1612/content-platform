@@ -6,7 +6,7 @@ import { z } from 'zod';
 // que no tienen un default razonable, así que ni siquiera se puede CREAR la
 // fila sin un humano — no es una cuestión de "no autopublicar", es que la
 // automatización no tiene con qué llenarlos. Ver AutomationRunnerService.
-export const AUTOMATABLE_CONTENT_TYPES = ['noticia', 'alerta', 'reportaje', 'place', 'evento-planazo'] as const;
+export const AUTOMATABLE_CONTENT_TYPES = ['noticia', 'alerta', 'reportaje', 'place', 'evento-planazo', 'planazo-guia'] as const;
 
 // Sin .default(...) a propósito — es la base que updateAutomationRuleSchema
 // parte con .partial(), y Zod SÍ aplica el .default() de un campo cuando la

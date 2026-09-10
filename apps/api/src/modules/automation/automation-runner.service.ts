@@ -13,6 +13,7 @@ import { EventsService } from '../events/events.service';
 import { NoticiasService } from '../lamira-noticias/noticias.service';
 import { AlertasService } from '../lamira-alertas/alertas.service';
 import { ReportajesService } from '../lamira-reportajes/reportajes.service';
+import { PlanazoGuidesService } from '../planazo-guides/guides.service';
 import { AutomationRulesService } from './automation-rules.service';
 import { AUTOMATABLE_CONTENT_TYPES } from './dto/automation-rule.dto';
 import type { AutomationRuleRow } from '../../db/schema';
@@ -144,6 +145,7 @@ export class AutomationRunnerService {
     private readonly noticias: NoticiasService,
     private readonly alertas: AlertasService,
     private readonly reportajes: ReportajesService,
+    private readonly guides: PlanazoGuidesService,
   ) {}
 
   @Interval(CHECK_INTERVAL_MS)
@@ -610,6 +612,32 @@ export class AutomationRunnerService {
           status,
           categoryData,
           seo,
+        });
+        return { id: created.id, slug: created.slug };
+      }
+      case 'planazo-guia': {
+        const { title, description, intro, sections, readTime, excerpt, imageSearchQuery: _q, seo: _seo } = draft as {
+          title?: string;
+          description?: string;
+          intro?: string;
+          sections?: { heading: string; body: string; placeSlug: string | null }[];
+          readTime?: string;
+          excerpt?: string | null;
+          imageSearchQuery?: string;
+          seo?: Seo;
+        };
+        const created = await this.guides.create({
+          title: (title as string) ?? name,
+          description: (description as string) ?? '',
+          intro: intro ?? null,
+          sections: sections ?? [],
+          categoryLabel: category.name,
+          readTime: (readTime as string) ?? '',
+          imageUrl: result.image?.url ?? null,
+          imageAlt: result.image ? ((title as string) ?? name) : null,
+          imageCredit: result.image?.credit ?? null,
+          excerpt: excerpt ?? null,
+          status,
         });
         return { id: created.id, slug: created.slug };
       }

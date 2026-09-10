@@ -56,6 +56,7 @@
     "db:dedupe-lamira-round3": "ts-node -r tsconfig-paths/register src/db/dedupe-lamira-round3.ts",
     "db:backfill-photo-alt": "ts-node -r tsconfig-paths/register src/db/backfill-photo-alt.ts",
     "db:delete-bad-events-round2": "ts-node -r tsconfig-paths/register src/db/delete-bad-events-round2.ts",
+    "db:reactivate-que-busca-la-gente": "ts-node -r tsconfig-paths/register src/db/reactivate-que-busca-la-gente.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {

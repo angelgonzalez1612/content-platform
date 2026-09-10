@@ -39,6 +39,7 @@ const MIN_WORDS_BY_TYPE: Record<string, number> = {
   noticia: 300,
   reportaje: 300,
   guia: 300,
+  'planazo-guia': 300, // evergreen, con sections[] — mismo criterio que guia (la-mira)
   place: 60, // objetivo editorial: 80-120 palabras (content-types.ts)
   alerta: 50, // objetivo editorial: 1-3 párrafos
   evento: 40, // objetivo editorial: 1-2 párrafos
@@ -137,26 +138,32 @@ export class ChecksService {
       blocking: true,
     });
 
-    // 5. Revisión humana obligatoria para evento-planazo (2026-09-10): las
-    // reglas de esa categoría (Gaming/Música/Geek/Cine-TV/Viajes/Eventos —
-    // Planazo) generan borradores bien formados — pasan completitud/SEO/
-    // longitud sin problema — a partir de temas que a veces son cobertura de
-    // industria (ranking turístico, estudio de mercado), no una recomendación
-    // real de plan con fecha/lugar. El classifyHint de evento-planazo en
-    // content-types.ts ya dice "no para cobertura noticiosa", pero es una
-    // instrucción para la IA, no algo que un check determinístico pueda
-    // verificar todavía: `startDate` llega null incluso en piezas legítimas
-    // (ver createContent en automation-runner.service.ts, nunca lo llena),
-    // así que hoy no existe ninguna señal estructural real que distinga "es
-    // un plan" de "es una noticia". Mientras no exista esa señal, todo
-    // evento-planazo pasa por revisión humana sin excepción — mismo criterio
-    // que ya se aplicó a calidad-longitud: calidad/seguridad > volumen
-    // mientras se estabiliza el sitio para AdSense. Quitar este check en
-    // cuanto haya una forma confiable de distinguir ambos casos.
+    // 5. Revisión humana obligatoria para evento-planazo y planazo-guia
+    // (2026-09-10): las reglas de evento-planazo (Gaming/Música/Geek/Cine-TV/
+    // Viajes/Eventos — Planazo) generan borradores bien formados — pasan
+    // completitud/SEO/longitud sin problema — a partir de temas que a veces
+    // son cobertura de industria (ranking turístico, estudio de mercado), no
+    // una recomendación real de plan con fecha/lugar. El classifyHint de
+    // evento-planazo en content-types.ts ya dice "no para cobertura
+    // noticiosa", pero es una instrucción para la IA, no algo que un check
+    // determinístico pueda verificar todavía: `startDate` llega null incluso
+    // en piezas legítimas (ver createContent en automation-runner.service.ts,
+    // nunca lo llena), así que hoy no existe ninguna señal estructural real
+    // que distinga "es un plan" de "es una noticia". planazo-guia se agrega
+    // por una razón distinta pero con la misma conclusión: cita lugares
+    // reales por slug (ver sections en content-types.ts) — el saneo posterior
+    // en ai-draft.service.ts descarta un slug inventado, pero no puede
+    // verificar que el TEXTO de cada sección sea fiel al lugar real citado,
+    // eso sigue necesitando un ojo humano. Mientras no exista una señal
+    // confiable para ninguno de los dos casos, ambos pasan por revisión
+    // humana sin excepción — mismo criterio que ya se aplicó a
+    // calidad-longitud: calidad/seguridad > volumen mientras se estabiliza el
+    // sitio para AdSense. Quitar cada uno en cuanto haya esa señal.
+    const NEEDS_HUMAN_REVIEW = new Set(['evento-planazo', 'planazo-guia']);
     checksRun.push({
-      name: 'revision-humana-evento-planazo',
-      passed: input.contentType !== 'evento-planazo',
-      detail: input.contentType === 'evento-planazo' ? 'evento-planazo siempre requiere revisión humana antes de publicar' : undefined,
+      name: 'revision-humana',
+      passed: !NEEDS_HUMAN_REVIEW.has(input.contentType),
+      detail: NEEDS_HUMAN_REVIEW.has(input.contentType) ? `${input.contentType} siempre requiere revisión humana antes de publicar` : undefined,
       blocking: true,
     });
 

@@ -41,6 +41,7 @@ import {
 } from './article-scraper.service';
 import { ImageSearchService } from './image-search.service';
 import { CategoriesService } from '../categories/categories.service';
+import { PlacesService } from '../places/places.service';
 import type { ContentBlock } from '@planazo/types';
 
 // Sin límites de longitud aquí a propósito (a diferencia de una versión
@@ -119,7 +120,20 @@ export class AiDraftService {
     private readonly scraper: ArticleScraperService,
     private readonly categoriesService: CategoriesService,
     private readonly imageSearch: ImageSearchService,
+    private readonly places: PlacesService,
   ) {}
+
+  /**
+   * Catálogo real de lugares publicados para una categoría — usado SOLO por
+   * planazo-guia (ver draft() abajo) para que la IA cite negocios reales por
+   * slug en vez de inventar uno. `limit: 40` es suficiente contexto sin
+   * volver el prompt gigante; si la categoría no tiene ni un lugar real
+   * todavía, la guía se genera igual pero con placeSlug siempre en null.
+   */
+  private async realPlaceCatalog(categorySlug: string): Promise<{ name: string; slug: string }[]> {
+    const rows = await this.places.findAll({ category: categorySlug, limit: 40, offset: 0 });
+    return rows.map((p) => ({ name: p.name, slug: p.slug }));
+  }
 
   // La primera URL citada en `hints` (content-radar siempre la manda entre
   // paréntesis al final — ver injectPublishButtons/injectItemPublishButtons
@@ -290,6 +304,13 @@ export class AiDraftService {
       ...fieldSchema.shape,
     });
 
+    // planazo-guia cita lugares reales por slug en `sections` — sin este
+    // catálogo la IA no tiene de dónde elegir uno real (ver content-types.ts,
+    // 'planazo-guia'.systemPrompt). placeCatalog queda [] para el resto de
+    // tipos, sin costo real (el prompt de abajo simplemente no lo agrega).
+    const placeCatalog =
+      contentType === 'planazo-guia' ? await this.realPlaceCatalog(category.slug) : [];
+
     // Los tipos "de nota" (noticia/alerta/guia/evento/reportaje) llevan su
     // propio campo `title` en editorialShape (ver titleShape en content-types.ts)
     // — ahí dto.name es solo el tema/semilla que dispara la generación, NUNCA
@@ -322,6 +343,11 @@ export class AiDraftService {
       category.fieldSchema.length
         ? `Completa también estos campos propios de la categoría cuando la información lo permita (deja null los que no puedas saber con certeza, especialmente los marcados como dato verificable): ${category.fieldSchema.map((f) => `${f.key} (${f.label})`).join(', ')}.`
         : '',
+      contentType === 'planazo-guia'
+        ? placeCatalog.length
+          ? `\nCatálogo real de lugares publicados en "${category.name}" — usa SOLO estos slugs en sections[].placeSlug, o null si ninguno encaja:\n${placeCatalog.map((p) => `- ${p.name} (slug: ${p.slug})`).join('\n')}`
+          : `\nNo hay todavía ningún lugar real publicado en "${category.name}" — deja placeSlug en null en todas las secciones, nunca inventes uno.`
+        : '',
     ]
       .filter(Boolean)
       .join('\n');
@@ -332,6 +358,20 @@ export class AiDraftService {
       schema: fullSchema,
       schemaName: `${contentType}_draft`,
     });
+
+    // Red de seguridad estructural, no solo de prompt: aunque el modelo
+    // ignore la instrucción y "cite" un slug que no está en placeCatalog, se
+    // descarta aquí antes de que llegue a checks.run()/createContent — nunca
+    // se guarda una referencia a un lugar que no exista de verdad.
+    if (contentType === 'planazo-guia') {
+      const realSlugs = new Set(placeCatalog.map((p) => p.slug));
+      const sections = (output as { sections?: { placeSlug?: string | null }[] }).sections;
+      if (Array.isArray(sections)) {
+        for (const section of sections) {
+          if (section.placeSlug && !realSlugs.has(section.placeSlug)) section.placeSlug = null;
+        }
+      }
+    }
 
     const { checksRun, decision } = this.checks.run({
       mode: 'draft',

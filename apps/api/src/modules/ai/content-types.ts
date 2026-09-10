@@ -195,6 +195,45 @@ Reglas estrictas:
     requiredEditorialFields: ['title', 'dek', 'content', 'imageSearchQuery'],
     systemPrompt: `${LAMIRA_BASE_PROMPT}\n\nEsta pieza es un reportaje de análisis (más largo, más contexto), no una noticia de último momento.`,
   },
+  'planazo-guia': {
+    contentType: 'planazo-guia',
+    label: 'Guía (Planazo)',
+    site: 'planazo',
+    classifyHint: 'Tema evergreen tipo lista/guía — la clase de cosa que la gente teclea en un buscador ("los mejores X para Y", "qué hacer si Z", "dónde ir con W"), NO una noticia de coyuntura, NO un lugar puntual, NO un evento con fecha. Si el tema es una pregunta o búsqueda amplia en vez de una entidad puntual, es este tipo.',
+    editorialShape: {
+      ...titleShape,
+      description: z.string().describe('1-2 líneas, resume qué resuelve la guía (para meta/subtítulo).'),
+      intro: z.string().describe('1 párrafo de apertura, tono de amigo que ya lo hizo — por qué esta selección, no una introducción genérica.'),
+      // El editor (ai-draft.service.ts) inyecta la lista real de lugares
+      // disponibles para esta categoría en el prompt, con instrucción
+      // explícita de citar solo esos slugs o dejar null — placeSlug NUNCA se
+      // restringe aquí a un enum dinámico (el shape es estático por tipo),
+      // así que además se sanea después de generar: cualquier slug que no
+      // esté en el catálogo real provisto se descarta antes de guardar.
+      sections: z
+        .array(
+          z.object({
+            heading: z.string(),
+            body: z.string(),
+            placeSlug: z.string().nullable().describe('Slug EXACTO de un lugar de la lista de candidatos reales del prompt — null si ninguno encaja. Nunca un nombre inventado ni un slug que no esté en esa lista.'),
+          }),
+        )
+        .min(3)
+        .max(10)
+        .describe('Una sección por parada/tema — cada una con un hecho o ángulo distinto, nunca relleno genérico.'),
+      readTime: z.string().describe('ej. "6 min de lectura · 5 lugares" — calculado sobre tu propio contenido.'),
+      excerpt: z.string().nullable().describe('Gancho corto para compartir en redes — null si description ya sirve para eso.'),
+      ...imageQueryShape,
+    },
+    requiredEditorialFields: ['title', 'description', 'intro', 'sections', 'readTime', 'imageSearchQuery'],
+    systemPrompt: `Eres redactor editorial de Planazo, una guía de planes y lugares de la Ciudad de México.
+
+Reglas estrictas:
+- El prompt te da una lista de lugares REALES ya publicados en el catálogo, con su slug exacto. Cada sección que hable de un lugar específico debe usar uno de esos slugs, tal cual — nunca inventes un negocio ni un nombre que no esté en esa lista. Si no hay un lugar real que encaje para una sección, deja placeSlug en null.
+- No inventes precios, horarios ni datos verificables de un lugar que no estén ya en la lista provista.
+- Tono: directo, con calle, como alguien que ya salió a probar esto y te está recomendando — nunca un folleto turístico.
+- Responde siempre en español de México.`,
+  },
 };
 
 export function getContentTypeConfig(contentType: string): ContentTypeConfig {

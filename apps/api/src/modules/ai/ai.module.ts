@@ -13,9 +13,10 @@ import { ArticleScraperService } from './article-scraper.service';
 import { ImageSearchService } from './image-search.service';
 import { ImageUploadService } from './image-upload.service';
 import { CategoriesModule } from '../categories/categories.module';
+import { PlacesModule } from '../places/places.module';
 
 @Module({
-  imports: [CategoriesModule], // clasificación automática de categoría en AiDraftService
+  imports: [CategoriesModule, PlacesModule], // clasificación de categoría + catálogo real de lugares para planazo-guia, ambos en AiDraftService
   controllers: [AiController, AiSettingsController],
   providers: [
     // /cms/ai/generate-place (endpoint original) sigue OpenAI-only, sin tocar.

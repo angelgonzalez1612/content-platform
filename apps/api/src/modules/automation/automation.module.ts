@@ -11,9 +11,10 @@ import { EventsModule } from '../events/events.module';
 import { NoticiasModule } from '../lamira-noticias/noticias.module';
 import { AlertasModule } from '../lamira-alertas/alertas.module';
 import { ReportajesModule } from '../lamira-reportajes/reportajes.module';
+import { PlanazoGuidesModule } from '../planazo-guides/guides.module';
 
 @Module({
-  imports: [AiModule, CategoriesModule, ContentRadarPublishedModule, PlacesModule, EventsModule, NoticiasModule, AlertasModule, ReportajesModule],
+  imports: [AiModule, CategoriesModule, ContentRadarPublishedModule, PlacesModule, EventsModule, NoticiasModule, AlertasModule, ReportajesModule, PlanazoGuidesModule],
   controllers: [AutomationController, AutomationCronController],
   providers: [AutomationRulesService, AutomationRunnerService],
 })
