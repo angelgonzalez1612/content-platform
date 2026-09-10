@@ -1,0 +1,1248 @@
+[
+  {
+    "id": "g1",
+    "slug": "cafeterias-bonitas-cdmx",
+    "title": "7 cafeterías bonitas en CDMX (y para qué sirve cada una)",
+    "description": "Wifi de verdad, enchufes que no se pelean y café que aguanta una mañana entera de laptop — donde de verdad los hay.",
+    "intro": "Elegimos estos cafés por una razón práctica, aunque no todos sirven para lo mismo: algunos sí aguantan una jornada completa de laptop, otros son solo para un espresso de pie. Esto es para qué sirve cada uno, honestamente.",
+    "sections": [
+      {
+        "heading": "Almanegra: para un espresso rápido, no para acampar",
+        "body": "Sé honesto contigo mismo antes de llegar con la laptop: el espacio es chico y minimalista, pensado para que la atención esté en la taza, no en quedarte toda la mañana. Es la parada perfecta para un espresso serio de camino a otro lado, no el lugar donde vas a resolver el pendiente de trabajo del día.",
+        "placeSlug": "almanegra-cafe"
+      },
+      {
+        "heading": "El Jarocho: cero mesas, cero laptop",
+        "body": "Aquí no hay dónde sentarte con la computadora ni falta que hace: es café de pie o de banqueta, parte del ritual dominical de Coyoacán más que una cafetería de trabajo. Inclúyelo en la lista por lo que es —un alto rápido de café de olla antes de seguir caminando al Jardín Centenario—, no por sus enchufes, porque no tiene.",
+        "placeSlug": "cafe-el-jarocho"
+      },
+      {
+        "heading": "El Péndulo: abre hasta las 11 de la noche",
+        "body": "Abre de lunes a sábado de 8 de la mañana a 11 de la noche, domingos hasta las 10 — de los horarios más largos de la lista, bueno para quien trabaja tarde. Entre anaqueles de libros y varios pisos, es de los pocos lugares aquí donde de verdad puedes quedarte una tarde completa sin sentir que estorbas, cambiando de piso si buscas más silencio o más ambiente.",
+        "placeSlug": "cafebreria-el-pendulo"
+      },
+      {
+        "heading": "Avellaneda: para hablar de café, no para trabajar",
+        "body": "Con apenas cinco bancos de barra y dos mesas dobles, el espacio es demasiado chico para una sesión larga de laptop — y ese no es el plan aquí. Ve por la conversación de barista sobre el método de extracción, no por el wifi; si buscas mesa disponible para quedarte horas, este no es el café de la lista para eso.",
+        "placeSlug": "cafe-avellaneda"
+      },
+      {
+        "heading": "Buna: mejor para una sentada corta que para el día completo",
+        "body": "Tiene mesas al aire libre y buen café de origen mexicano, pero varias reseñas coinciden en que no es la opción ideal si el plan es laptop todo el día — funciona mejor para una hora o dos, no como oficina improvisada. Abre todos los días de 8 de la mañana a 7 de la noche.",
+        "placeSlug": "buna"
+      },
+      {
+        "heading": "Cardinal: sobremesa larga, no trabajo urgente",
+        "body": "El ambiente de casa vieja reconvertida está pensado para quedarte platicando con calma, con el Latte Rex y el croissant de coco como razones de peso para no tener prisa. Si el plan es trabajar, funciona mejor para tareas que no requieren concentración total —revisar correos, planear el día— que para un sprint de entregas.",
+        "placeSlug": "cardinal-casa-de-cafe"
+      },
+      {
+        "heading": "Chiquitito: el único realmente pensado para laptop todo el día",
+        "body": "De los siete, es el que aparece listado en directorios especializados de cafés para trabajar: wifi de alta velocidad y suficientes enchufes para no andar peleando por uno. Abre de 7:30 de la mañana a 8:30 de la noche. Si el plan de verdad es una jornada completa de laptop, empieza —y probablemente termina— aquí.",
+        "placeSlug": "chiquitito-cafe"
+      }
+    ],
+    "categoryLabel": "Cafés",
+    "readTime": "6 min de lectura · 7 lugares",
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1777893340498-eaf1e37e39d3?w=800&h=500&fit=crop&q=80&auto=format",
+      "alt": "Interior de cafetería moderna con plantas"
+    },
+    "placeSlugs": [
+      "almanegra-cafe",
+      "cafe-el-jarocho",
+      "cafebreria-el-pendulo",
+      "cafe-avellaneda",
+      "buna",
+      "cardinal-casa-de-cafe",
+      "chiquitito-cafe"
+    ]
+  },
+  {
+    "id": "g2",
+    "slug": "coyoacan-un-dia-completo",
+    "title": "Qué hacer en Coyoacán: un día completo, a pie",
+    "description": "De la Casa Azul al jardín botánico, sin subirte a un coche en todo el día.",
+    "intro": "Coyoacán se camina fácil si sabes el orden: empieza por la Casa Azul temprano, antes de que se forme la fila, sigue por el Museo de Culturas Populares y una parada de café en El Jarocho o Avellaneda, y cierra con el Jardín Botánico de la UNAM o el Universum antes de que caiga la tarde. Es una ruta pensada para no repetir camino ni depender de un coche — todo queda a pie o a una caminata corta.",
+    "categoryLabel": "Barrios",
+    "readTime": "8 min de lectura · 6 paradas",
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1579116317002-fd0cedb52425?w=800&h=500&fit=crop&q=80&auto=format",
+      "alt": "Calle colonial empedrada entre edificios"
+    },
+    "placeSlugs": [
+      "museo-frida-kahlo",
+      "museo-culturas-populares",
+      "jardin-botanico-unam",
+      "cafe-el-jarocho",
+      "cafe-avellaneda",
+      "universum"
+    ],
+    "sections": [
+      {
+        "heading": "Casa Azul: boletos solo en línea, y el precio depende de tu nacionalidad",
+        "body": "No hay taquilla: todos los boletos se compran por internet en museofridakahlo.org.mx, con horario asignado. El precio es distinto según nacionalidad, 160 pesos para mexicanos y 350 para extranjeros, y en temporada alta los horarios de la mañana se agotan con varios días de anticipación. Abre de martes a domingo, de 10 a 6 de la tarde; conviene comprar el primer horario del día para tener tiempo de hacer el resto de la ruta sin correr.",
+        "placeSlug": "museo-frida-kahlo"
+      },
+      {
+        "heading": "Culturas Populares: a poca distancia de la Casa Azul, sin salas fijas",
+        "body": "Está a pocos minutos caminando de la Casa Azul, dentro del mismo núcleo peatonal del centro de Coyoacán, así que funciona bien como segunda parada sin perder tiempo en traslados. A diferencia de Casa Azul no tiene salas permanentes, todo cambia según la exposición temporal en turno, así que vale la pena revisar qué hay montado antes de ir. Con 22 pesos de entrada (gratis los domingos), es la parada más barata de toda la ruta.",
+        "placeSlug": "museo-culturas-populares"
+      },
+      {
+        "heading": "Del centro de Coyoacán a CU: Pumabús gratis en vez de caminar media hora",
+        "body": "El Jardín Botánico está dentro de Ciudad Universitaria, a unos 2-3 km del centro de Coyoacán, caminable en 25 a 40 minutos, pero también se puede llegar en el Pumabús, el transporte interno gratuito de la UNAM: la ruta que conecta el Metrobús CU con el Jardín Botánico sigue hasta la zona cultural donde está Universum, en 15 a 20 minutos. Es la forma de cubrir ese tramo sin subirte a un coche ni gastar en taxi. Entrada gratuita, aunque cierra en los periodos vacacionales de la universidad.",
+        "placeSlug": "jardin-botanico-unam"
+      },
+      {
+        "heading": "El Jarocho: para tomar de pie entre museo y museo, no para sentarte",
+        "body": "No hay mesas ni pretensión: pides tu café de olla o capuchino en vaso, tu torta envuelta en papel, y sigues caminando, así que funciona mejor como parada de tránsito entre el centro de Coyoacán y el resto de la ruta que como sentada larga. Sigue siendo el original de Cuauhtémoc y Allende, cerca del Jardín Centenario, con la misma familia detrás desde 1953.",
+        "placeSlug": "cafe-el-jarocho"
+      },
+      {
+        "heading": "Avellaneda: si prefieres sentarte diez minutos y hablar de café",
+        "body": "A diferencia de El Jarocho, aquí sí hay dónde sentarse, aunque apenas (cinco bancos de barra y dos mesas dobles), y el punto no es la prisa sino la conversación: te explican la ficha técnica de cada método, Kalita, V60, Chemex, y el origen del grano. Buena opción si la ruta va lenta ese día y hay tiempo para una pausa real antes de seguir hacia Universum o el Jardín Botánico.",
+        "placeSlug": "cafe-avellaneda"
+      },
+      {
+        "heading": "Universum: la última parada, y conviene calcular bien el reloj",
+        "body": "Abre de miércoles a domingo, de 10 a 5 de la tarde, así que si el día empezó con el primer horario de Casa Azul (10 am) y se hicieron las otras cuatro paradas, hay que llegar a Universum con margen. Está dentro del mismo Circuito Cultural de CU que el Jardín Botánico, conectado por el mismo Pumabús. La entrada general cuesta 90 pesos, con descuento para estudiantes, maestros e INAPAM.",
+        "placeSlug": "universum"
+      }
+    ]
+  },
+  {
+    "id": "g3",
+    "slug": "mejores-terrazas-por-presupuesto",
+    "title": "Las mejores terrazas y bares de la ciudad, por presupuesto",
+    "description": "Rooftops, pulquerías y clubes de jazz para tomar algo con vista o con historia — desde $120 hasta $450 por persona.",
+    "intro": "De los 120 pesos de una pulquería centenaria a los 450 de una terraza con vista al Zócalo, esta lista está ordenada por lo que de verdad vas a gastar, no por moda. Incluye desde jazz en vivo en el sótano de un antiguo banco hasta rooftops clásicos — la idea es que sepas qué esperar de tu bolsillo antes de llegar.",
+    "categoryLabel": "Rooftops",
+    "readTime": "6 min de lectura · 7 lugares",
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1621275471769-e6aa344546d5?w=800&h=500&fit=crop&q=80&auto=format",
+      "alt": "Mesas y sillas en terraza al aire libre"
+    },
+    "placeSlugs": [
+      "pulqueria-las-duelistas",
+      "bosforo",
+      "zinco-jazz-club",
+      "terraza-catedral",
+      "baltra-bar",
+      "licoreria-limantour",
+      "handshake-speakeasy"
+    ],
+    "sections": [
+      {
+        "heading": "Las Duelistas: el vaso de curado cuesta menos que un café",
+        "body": "El vaso de curado ronda los 55 pesos y el litro completo 100, así que los 120 pesos de presupuesto para esta pulquería alcanzan de sobra para probar dos o tres de los más de 40 sabores en rotación — avena, apio y guayaba son los que preparan todos los días. No hay cover, no hace falta reservar y abre desde las 11 de la mañana, así que funciona bien como parada de media tarde en una caminata por el Centro, antes de que empiece el ajetreo de la noche.",
+        "placeSlug": "pulqueria-las-duelistas"
+      },
+      {
+        "heading": "Bósforo: pizarrón de mezcales que cambia cada semana",
+        "body": "La lista no es un menú fijo sino un pizarrón que se actualiza según lo que haya llegado esa semana de productores en Oaxaca, Guerrero, Michoacán y Durango, con unas 40 etiquetas rotando. Para controlar el gasto, la jugada es pedir cerveza o una jarra de mezcal para compartir en lugar de copeo individual, así el gasto real se acerca más a los 200-250 pesos por persona que a los 350 de la lista. Para acompañar, las quesadillas de hierba santa son la especialidad de la casa: suficientes para no llegar solo con alcohol al estómago.",
+        "placeSlug": "bosforo"
+      },
+      {
+        "heading": "Zinco: el más caro de esta lista, pero reconocido por DownBeat",
+        "body": "De los siete lugares de esta guía, Zinco es el que más justifica su precio con reconocimiento externo: en 2023, la revista DownBeat, la publicación de jazz más importante del mundo, lo incluyó como el único club mexicano entre los 106 mejores clubes de jazz del planeta. El espacio ayuda a entender por qué: ocupa las bóvedas subterráneas de un antiguo banco en Motolinia 20, con las puertas de acero originales todavía en el pasillo de entrada. No es la opción más barata de la lista, pero es la única con ese tipo de respaldo internacional.",
+        "placeSlug": "zinco-jazz-club"
+      },
+      {
+        "heading": "Terraza Catedral: entrada gratis entre semana",
+        "body": "De lunes a jueves no hay cover; el fin de semana el cargo ronda los 80 a 100 pesos por persona, cuando meten DJs invitados. El consumo promedio (cerveza, un coctel sencillo, algo de botana) se queda entre 300 y 500 pesos, lo que la vuelve una de las terrazas con vista más accesibles de la ciudad. La vista misma no tiene truco: la Catedral Metropolitana está prácticamente enfrente y el Palacio Nacional se ve de fondo, sin necesidad de gastar en coctelería de autor para disfrutarla.",
+        "placeSlug": "terraza-catedral"
+      },
+      {
+        "heading": "Baltra: coctel promedio de 240 pesos, con el sello de Limantour",
+        "body": "Baltra ocupa el lugar 45 en la lista The World's 50 Best Bars y en 2025 estrenó menú, \"Beber es un viaje\", con ocho cocteles nuevos inspirados en experiencias de viajeros: el Jet Lag (gin, Chardonnay, Cocchi Americano) y la Última Duda (mezcal, cold brew, cacao blanco) son dos de los que se quedaron. El coctel promedio cuesta 240 pesos, más barato que en Limantour o Handshake pese a compartir parte del mismo equipo detrás de la barra, con Adrián Borgaro entre los fundadores.",
+        "placeSlug": "baltra-bar"
+      },
+      {
+        "heading": "Limantour: reserva de 5 a 8, después es lista de espera",
+        "body": "Limantour toma reservaciones solo de 5 a 8 de la noche; después de esa hora, la entrada es por lista de espera según el orden de llegada, sin garantía de mesa o barra aunque hayas reservado antes. La estancia estándar es de dos horas. Si no hay urgencia por sentarte, llegar sin reservación entre semana suele funcionar mejor que pelear un lugar en fin de semana. La Margarita al Pastor, con un toque de taco al pastor en la mezcla, sigue siendo la que todos piden primero.",
+        "placeSlug": "licoreria-limantour"
+      },
+      {
+        "heading": "Handshake: la reserva pide tarjeta y cobra si no te presentas",
+        "body": "Cada coctel ronda entre 250 y 400 pesos y viene con una botana diseñada específicamente para acompañarlo, así que el precio incluye más que solo la bebida. Lo que hay que saber antes de reservar: cada reservación dura una hora y media, pide tarjeta de crédito como garantía, y si no te presentas cobran 250 pesos por persona. Para grupos de seis o más, la reservación se hace solo por correo. Es el lugar más caro de la lista, pero también el que más se cuida de que la mesa no se quede vacía.",
+        "placeSlug": "handshake-speakeasy"
+      }
+    ]
+  },
+  {
+    "id": "g4",
+    "slug": "planes-pet-friendly",
+    "title": "Planes pet friendly para salir con tu perro",
+    "description": "Cafés y parques donde tu perro entra tan a gusto como tú, verificados uno por uno.",
+    "intro": "No basta con que \"dejen entrar perros\" — esta selección prioriza espacio real para tu mascota, no solo tolerancia bajo la mesa. Esto es lo que hay que saber de cada lugar antes de ir con tu perro.",
+    "sections": [
+      {
+        "heading": "Almanegra Café: sí puedes llevar a tu perro",
+        "body": "Aunque no es una cafetería pensada específicamente para mascotas, sí es pet friendly: tu perro puede acompañarte, sobre todo en las mesas de la terraza al aire libre. No es el lugar para quedarte toda la tarde —el espacio es chico y el foco está en la calidad del café, no en la estancia larga—, así que funciona mejor como parada corta en medio de un paseo por la Roma Norte.",
+        "placeSlug": "almanegra-cafe"
+      },
+      {
+        "heading": "Parque México: la zona canina más grande de la ciudad",
+        "body": "Sobre Avenida México, la zona canina tiene 1,000 metros cuadrados —de las más grandes y mejor equipadas de la ciudad—, con tres fuentes de agua, piso de arcilla que filtra los desechos, y áreas separadas para razas chicas y grandes. Abre todos los días de 7 de la mañana a 10 de la noche, entrada libre. Es el punto de reunión de facto para los perros de la Condesa.",
+        "placeSlug": "parque-mexico"
+      },
+      {
+        "heading": "Bosque de Tlalpan: correa obligatoria y bolsas para la popó",
+        "body": "Se permite entrar con perro, pero con dos condiciones que aquí sí se piden en serio: correa puesta todo el tiempo y bolsas para recoger los desechos. Si vas con un perro que todavía no camina largas distancias, el circuito corto y plano es la opción; el de la Montaña, de casi seis kilómetros, es más para dueños (y perros) ya entrenados en trote.",
+        "placeSlug": "bosque-de-tlalpan"
+      },
+      {
+        "heading": "Enhorabuena Café: dirección y horario",
+        "body": "Está en Atlixco 13, en Condesa, y abre de lunes a viernes de 8 de la mañana a 8 de la noche, sábados de 9 a 7 y domingos de 9 a 5. No hay sistema de reservación en línea confirmado, así que si vas en grupo grande o fin de semana, mejor llamar antes para preguntar si hay mesa en el jardín.",
+        "placeSlug": "enhorabuena-cafe"
+      },
+      {
+        "heading": "Latte Pelitos: no solo perros, también gatos y hurones",
+        "body": "Aceptan perros, gatos, conejos y hasta hurones, siempre que vayan con correa o transportadora y se porten bien según las reglas escritas en el propio menú — la mascota es responsabilidad del dueño todo el tiempo. Es de los pocos lugares pet friendly que de verdad piensa más allá del perro promedio, con camitas y menú especial para cada tipo de visita peluda.",
+        "placeSlug": "latte-pelitos"
+      }
+    ],
+    "categoryLabel": "Pet friendly",
+    "readTime": "6 min de lectura · 5 lugares",
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1628105122995-972f14d650f9?w=800&h=500&fit=crop&q=80&auto=format",
+      "alt": "Perro corriendo en el pasto de un parque"
+    },
+    "placeSlugs": [
+      "almanegra-cafe",
+      "parque-mexico",
+      "bosque-de-tlalpan",
+      "enhorabuena-cafe",
+      "latte-pelitos"
+    ]
+  },
+  {
+    "id": "g5",
+    "slug": "planes-romanticos-para-una-cita",
+    "title": "Planes románticos para una cita perfecta",
+    "description": "De una copa de vino a una marisquería con estrella Michelin: opciones que no se sienten forzadas.",
+    "intro": "Ni todo tiene que ser una cena cara ni todo tiene que sentirse forzado. Esta lista mezcla presupuestos y planes — de un cine de autor entre semana a una marisquería con estrella Michelin, pasando por un museo tranquilo en San Ángel — para que la cita se sienta genuina y no como un guion que ya sabes cómo termina.",
+    "categoryLabel": "Citas",
+    "readTime": "6 min de lectura · 6 lugares",
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1688437307687-fe226bddfab1?w=800&h=500&fit=crop&q=80&auto=format",
+      "alt": "Mesa puesta con velas y platillos"
+    },
+    "placeSlugs": [
+      "panaderia-rosetta",
+      "contramar",
+      "terraza-catedral",
+      "handshake-speakeasy",
+      "cine-de-autor-cineteca",
+      "casa-estudio-rivera-kahlo"
+    ],
+    "sections": [
+      {
+        "heading": "Rosetta: antes de las 9 si quieren mesa sin pelear",
+        "body": "Sábado es el día más disputado: llegar antes de las 9 de la mañana es lo que separa una mesa tranquila de una fila de más de una hora. Entre semana abre desde las 7:30 y el ambiente es mucho más relajado, así que si la cita puede ser un desayuno de martes en vez de fin de semana, sale mejor. El rol de guayaba, el que la hizo famosa, casi siempre se agota, así que conviene pedirlo primero y dejar la plática para después.",
+        "placeSlug": "panaderia-rosetta"
+      },
+      {
+        "heading": "Contramar: es plan de comida, no de cena",
+        "body": "Contramar cierra entre 6:30 y 8:30 de la noche según el día, así que no es una opción de cena tardía, el plan real es una comida larga, con el pescado a la talla y las tostadas de atún como punto fijo del menú desde hace más de 25 años. Conviene reservar con varios días de anticipación, sobre todo en fin de semana, porque sigue siendo de las mesas más disputadas de Roma Norte. El Bib Gourmand que le dio la guía Michelin México 2025 confirma lo que ya se sabía: buena cocina, sin la etiqueta de precio de un restaurante con estrella.",
+        "placeSlug": "contramar"
+      },
+      {
+        "heading": "Terraza Catedral: para la vista, no para hablar de cerca",
+        "body": "Entre semana, antes de las 8 de la noche, es cuando de verdad se puede tener una conversación: los fines de semana meten DJs invitados y el volumen sube hasta el punto de que cuesta trabajo platicar. Si la cita es más de ver la Catedral Metropolitana de cerca con algo de tomar que de coctelería fina, este es el horario que funciona. Es informal, sin mantel ni etiqueta: cerveza, un coctel sencillo, algo de botana, y la vista del Centro Histórico desde arriba.",
+        "placeSlug": "terraza-catedral"
+      },
+      {
+        "heading": "Handshake: hay una puerta secreta dentro de la puerta secreta",
+        "body": "Ya entrar es parte de la cita: se llega a una puerta negra sin letrero, marcada solo con el número 13. Arriba, el ambiente es elegante, estilo Art Decó inspirado en los años de la Ley Seca; abajo, bajando dos pisos por una escalera y cruzando un pasillo, hay un segundo bar más íntimo y menos formal, con entrada disimulada como una puerta falsa. Es el tipo de detalle que funciona mejor en pareja que en grupo grande. El bar fue nombrado Mejor Bar del Mundo en 2024, así que la expectativa antes de entrar ya viene alta, la buena noticia es que el diseño está a la altura.",
+        "placeSlug": "handshake-speakeasy"
+      },
+      {
+        "heading": "Cineteca: si el plan es una función al aire libre con algo de tomar",
+        "body": "El Foro al Aire Libre Gabriel Figueroa tiene funciones casi todas las noches a partir de las 7, con una programación distinta a la de las salas techadas. La terraza de la Cineteca sirve vino y cerveza artesanal por copa, desde 50 a 70 pesos, así que se puede armar una cita completa (película más algo de tomar) sin salir del mismo lugar y sin gastar como en un bar. Abre todos los días, de 11:30 o 12:30 a 9 de la noche según si es fin de semana.",
+        "placeSlug": "cine-de-autor-cineteca"
+      },
+      {
+        "heading": "Casa Estudio Rivera-Kahlo: la versión sin fila de la Casa Azul",
+        "body": "A diferencia de la Casa Azul, aquí no hace falta boleto con horario ni hacer fila: la mayoría de la gente se va a Coyoacán, así que este museo en San Ángel se recorre casi sin prisa. Son en realidad tres construcciones de Juan O'Gorman, el estudio de Diego, el de Frida, y un laboratorio fotográfico entre los dos, unidas solo por un puente en la azotea. Entrada libre los domingos, 45 pesos el resto de la semana, de los planes más tranquilos y baratos de toda esta lista.",
+        "placeSlug": "casa-estudio-rivera-kahlo"
+      }
+    ]
+  },
+  {
+    "id": "g6",
+    "slug": "restaurantes-estrella-michelin-cdmx",
+    "title": "Restaurantes con estrella Michelin en CDMX",
+    "description": "De la taquería de banqueta a la mesa de autor: los cuatro restaurantes de la ciudad reconocidos por la Guía Michelin.",
+    "intro": "CDMX tiene cuatro restaurantes reconocidos por la Guía Michelin, y no todos cuestan ni se sienten igual: desde una taquería de banqueta con una estrella hasta las dos estrellas de Pujol y Quintonil. Esta lista los reúne para que compares antes de reservar — o de hacer fila, en el caso de la taquería.",
+    "categoryLabel": "Alta cocina",
+    "readTime": "5 min de lectura · 4 lugares",
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1663530761401-15eefb544889?w=800&h=500&fit=crop&q=80&auto=format",
+      "alt": "Chef sirviendo salsa sobre platillo emplatado"
+    },
+    "placeSlugs": [
+      "pujol",
+      "quintonil",
+      "contramar",
+      "taqueria-el-califa-de-leon"
+    ],
+    "sections": [
+      {
+        "heading": "Pujol: reserva con dos o tres meses de anticipación",
+        "body": "Pujol recomienda reservar el menú de comedor con dos meses de anticipación y el omakase de la barra con tres. La barra es la experiencia más codiciada: nueve tiempos de tacos, pero solo hay lugar para 12 personas por turno. Si cancelas con menos de 24 horas de aviso, cobran el menú completo por persona reservada. No es un lugar para decidir el mismo día, es de los que se planean con calendario en mano.",
+        "placeSlug": "pujol"
+      },
+      {
+        "heading": "Quintonil: el número 3 del mundo, con reserva de tres a cuatro semanas",
+        "body": "En 2025 subió al puesto 3 de The World's 50 Best Restaurants y fue nombrado el mejor restaurante de México, así que conviene reservar con tres o cuatro semanas de anticipación, más si el plan es fin de semana. No está en OpenTable: la reservación se hace directo por el sistema propio del restaurante. Cambios a una reservación ya hecha solo se aceptan con 72 horas de aviso, así que conviene tener la fecha bien decidida antes de apartar la mesa.",
+        "placeSlug": "quintonil"
+      },
+      {
+        "heading": "Contramar: aquí no hay estrella, es Bib Gourmand",
+        "body": "De los cuatro lugares de esta lista, Contramar es el único que no tiene estrella Michelin: en la edición 2025 de la guía entró como Bib Gourmand, la distinción a buena cocina con precio razonable, una categoría distinta a las estrellas que sí tienen Pujol, Quintonil y El Califa de León. En la práctica es la opción más accesible de la lista y la única donde no hace falta reservar con semanas de anticipación ni pagar precio de menú de degustación.",
+        "placeSlug": "contramar"
+      },
+      {
+        "heading": "El Califa de León: sin reservaciones, hasta dos horas de fila",
+        "body": "No aceptan reservaciones bajo ningún motivo: es por orden de llegada, y la fila puede llegar a las dos horas en las horas pico, con un límite de tres tacos por persona una vez que te toca la plancha. Mantuvo su estrella Michelin en la edición 2025 de la guía, la misma que ganó en 2024 cuando se convirtió en la primera taquería del mundo en tenerla. De los cuatro restaurantes de esta lista, es el único donde ir sin plan y hacer fila es, literalmente, el plan.",
+        "placeSlug": "taqueria-el-califa-de-leon"
+      }
+    ]
+  },
+  {
+    "id": "g7",
+    "slug": "mejores-bares-para-salir-de-copas",
+    "title": "Los mejores bares para salir de copas",
+    "description": "Del bar número uno del mundo a la mezcalería escondida en un sótano: la coctelería más premiada de la ciudad.",
+    "intro": "De Handshake, nombrado el mejor bar del mundo por The World's 50 Best Bars en 2024, a Bósforo, la mezcalería en penumbra que casi nadie encuentra a la primera: esta selección cubre la coctelería más premiada de la ciudad sin quedarse solo en los nombres obvios.",
+    "categoryLabel": "Bares",
+    "readTime": "5 min de lectura · 5 lugares",
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1778104959469-0861d423de46?w=800&h=500&fit=crop&q=80&auto=format",
+      "alt": "Coctel con rodaja de naranja y canela"
+    },
+    "placeSlugs": [
+      "handshake-speakeasy",
+      "licoreria-limantour",
+      "baltra-bar",
+      "bosforo",
+      "zinco-jazz-club"
+    ],
+    "sections": [
+      {
+        "heading": "Handshake: el Old Fashioned que tarda 48 horas en prepararse",
+        "body": "El Butter Mushroom Old Fashioned es de los cocteles insignia de la casa: bourbon, mantequilla clarificada y champiñón, con notas saladas poco comunes en un trago dulce. Es el tipo de coctel que resume el estilo de Eric Van Beek, director de bebidas del lugar: procesos de hasta 48 horas en el laboratorio propio del bar antes de que un trago llegue a la mesa. No es coctelería para tomar rápido, es coctelería para ver de cerca por qué The World's 50 Best Bars lo puso en el número 1 en 2024.",
+        "placeSlug": "handshake-speakeasy"
+      },
+      {
+        "heading": "Limantour: el nombre es una burla a un secretario de Hacienda",
+        "body": "El bar lleva el nombre de José Yves Limantour, secretario de Hacienda durante el Porfiriato que impuso el primer gravamen al alcohol en México, y se eligió como broma histórica, no como homenaje. Lo fundó Benjamín Padrón Novoa en 2011, después de un viaje por bares de Londres, y desde entonces ha estado diez años consecutivos en The World's 50 Best Bars, además de ganar el premio a Mejor Equipo de Bar del Mundo. El segundo piso es terraza y el único espacio del lugar donde se permite fumar.",
+        "placeSlug": "licoreria-limantour"
+      },
+      {
+        "heading": "Baltra: vitrinas con \"hallazgos\" de la expedición de Darwin",
+        "body": "El nombre viene de una isla volcánica de las Galápagos que Darwin visitó en su viaje de 1835, y la decoración sigue el guion al pie de la letra: papel tapiz victoriano, grabados de aves y especies marinas, y vitrinas con réplicas de hallazgos de expedición, cráneos, conchas, insectos disecados, como si fuera el estudio de un naturalista del siglo XIX. Abrió en 2015, del mismo equipo detrás de Limantour, y la genealogía se nota más en la calidad de la barra que en el ambiente, notablemente distinto al de su hermano mayor.",
+        "placeSlug": "baltra-bar"
+      },
+      {
+        "heading": "Bósforo: la primera mezcalería de la CDMX, con aire de farmacia antigua",
+        "body": "Abrió en 2005 como la primera mezcalería de la ciudad, cuando el mezcal todavía no era la moda que es hoy, y el espacio imita una farmacia de los años 50: frascos, luz tenue, entrepiso de madera. Entre las casi 40 etiquetas en rotación aparece de vez en cuando mezcal Tobalá hecho de agave silvestre, uno de los más difíciles de conseguir por lo lento que tarda en madurar la planta. Fue de los primeros lugares en tratar al mezcal como algo para degustar despacio, no para hacer caballito y ya.",
+        "placeSlug": "bosforo"
+      },
+      {
+        "heading": "Zinco: dentro hay un bar de cocteles escondido, El Q4rto",
+        "body": "Aunque el club es sobre todo jazz en vivo, adentro hay un segundo espacio, El Q4rto, un sound room dedicado a la coctelería de autor con tragos creados por Isaac Hoffmann, como el Not Fasioned (fat wash de mantequilla de chocolate y mezcal) o un Palomo con piña tatemada. Es la parte de Zinco que casi nadie busca a propósito, pensada para quien quiere algo más elaborado que la barra clásica del club mientras suena la música.",
+        "placeSlug": "zinco-jazz-club"
+      }
+    ]
+  },
+  {
+    "id": "g8",
+    "slug": "escapadas-de-un-dia-cerca-de-cdmx",
+    "title": "Qué hacer en un puente cerca de CDMX",
+    "description": "Tres Pueblos Mágicos y una zona arqueológica a una hora o menos de tres — para cuando el fin de semana se estira y quieres salir de la ciudad sin complicarte.",
+    "intro": "Los cuatro se pueden hacer de ida y vuelta en el día, sin quedarte a dormir: Tepotzotlán y Teotihuacán a una hora, Tepoztlán a hora y media, Valle de Bravo a dos horas y media. Cada uno tiene una razón distinta para ir —arte virreinal, arqueología, montaña o lago— así que elige según el plan que traigas, no solo la distancia. Tepotzotlán, el más cercano, hasta se puede hacer en Tren Suburbano desde Buenavista.",
+    "categoryLabel": "Escapadas",
+    "readTime": "6 min de lectura · 4 lugares",
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1568402102990-bc541580b59f?w=800&h=500&fit=crop&q=80&auto=format",
+      "alt": "Pirámides prehispánicas de Teotihuacán al atardecer"
+    },
+    "placeSlugs": [
+      "tepotzotlan",
+      "teotihuacan",
+      "tepoztlan",
+      "valle-de-bravo"
+    ],
+    "sections": [
+      {
+        "heading": "Tepotzotlán: tren + camión, sin necesidad de coche",
+        "body": "El Suburbano cubre Buenavista-Cuautitlán en 20-25 minutos por 16 pesos; de ahí, un camión local a la plaza de Tepotzotlán cuesta 8-10 pesos más y tarda otros 20 minutos. Es la escapada más barata y rápida de esta lista en transporte público, sin necesidad de coche. El museo abre de martes a domingo, de 9 a 6, y los domingos la entrada es gratis para mexicanos, sin cover ni añadido: solo hay que llegar temprano si quieres evitar el grueso de visitantes de fin de semana.",
+        "placeSlug": "tepotzotlan"
+      },
+      {
+        "heading": "Teotihuacán: camión cada 15 minutos desde Terminal Norte",
+        "body": "Autobuses Teotihuacán sale de la Terminal Central del Norte cada 15-20 minutos entre 6 de la mañana y 9 de la noche, cuesta 52 pesos y tarda alrededor de una hora, dejando en las puertas 1 y 2 de la zona arqueológica. Ir temprano no es solo para ganarle al calor: los grupos grandes de tour llegan a media mañana, así que las primeras dos horas después de abrir (8 am) son las más tranquilas para subir a la Pirámide del Sol sin fila.",
+        "placeSlug": "teotihuacan"
+      },
+      {
+        "heading": "Tepoztlán: el camión te deja en la caseta, no en el centro",
+        "body": "OCC y ADO salen de Terminal Taxqueña con salidas frecuentes, prácticamente cada 15 minutos los fines de semana, en un viaje de poco más de una hora. El camión no entra al pueblo: la parada es en la caseta de entrada, a unos 15 minutos caminando del zócalo. El mercado de fin de semana, el que de verdad mueve el pueblo, funciona sábado y domingo, entre semana Tepoztlán se vive mucho más tranquilo y sin los puestos.",
+        "placeSlug": "tepoztlan"
+      },
+      {
+        "heading": "Valle de Bravo: dos horas en camión, y el parapente mejor de noviembre a mayo",
+        "body": "Desde la Terminal Poniente hay salidas directas varias veces al día (7, 8, 11 am, 2, 4 y 7 pm), con un viaje de unas dos horas hasta la Cruz Roja de Valle de Bravo, cerca del centro. Si el plan incluye parapente, la temporada con mejores corrientes térmicas va de noviembre a mayo, el resto del año se vuela, pero con menos garantía de buenas condiciones. Un vuelo tándem con instructor certificado ronda entre 1,000 y 2,000 pesos por persona, según el operador, e incluye foto y video del vuelo.",
+        "placeSlug": "valle-de-bravo"
+      }
+    ]
+  },
+  {
+    "id": "g9",
+    "slug": "que-hacer-en-cdmx-en-dia-de-muertos",
+    "title": "Qué hacer en CDMX en Día de Muertos",
+    "description": "Coyoacán se llena de ofrendas y cempasúchil a finales de octubre — estos son los museos que vale la pena combinar con la caminata.",
+    "intro": "Coyoacán concentra buena parte del ambiente de la temporada, así que la ruta empieza ahí: el Museo de Culturas Populares, la Casa Azul y la Casa Estudio de Rivera y Kahlo quedan a poca distancia caminando entre sí. El Museo Nacional de Antropología, en Chapultepec, suele sumarse con programación propia — vale la pena combinarlo si tienes el día completo.",
+    "categoryLabel": "Temporada",
+    "readTime": "4 min de lectura · 4 lugares",
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1536266305399-b367feb671f9?w=800&h=500&fit=crop&q=80&auto=format",
+      "alt": "Vasijas de barro de colores en exhibición"
+    },
+    "placeSlugs": [
+      "museo-culturas-populares",
+      "museo-frida-kahlo",
+      "casa-estudio-rivera-kahlo",
+      "museo-nacional-de-antropologia"
+    ],
+    "sections": [
+      {
+        "heading": "Culturas Populares: la Feria de Día de Muertos se toma el museo entero",
+        "body": "Del 29 de octubre al 2 de noviembre, el museo se llena de puestos de artesanías, pan de muerto y flor de cempasúchil, con decenas de expositores de varios estados del país. Hay talleres gratuitos para aprender a hacer calaveras de azúcar o decorar un altar, además de danza folclórica y música en vivo. Es la versión más viva y menos solemne de la temporada en Coyoacán, más feria de barrio que museo tradicional.",
+        "placeSlug": "museo-culturas-populares"
+      },
+      {
+        "heading": "Casa Azul: la ofrenda anual dedicada a Frida, con talleres y cine gratis",
+        "body": "Cada temporada, la Casa Azul monta una ofrenda dedicada a Frida Kahlo, visible aproximadamente de finales de octubre a finales de noviembre, con temática distinta cada año. Alrededor de la ofrenda hay talleres, como el de elaboración de pan de muerto (con costo, materiales incluidos), y un ciclo de cine gratuito en noviembre sobre la relación de México con la muerte. Vale la pena revisar el calendario del museo antes de ir, porque la programación cambia de un año a otro.",
+        "placeSlug": "museo-frida-kahlo"
+      },
+      {
+        "heading": "Casa Estudio: la otra ofrenda a Frida, con taller de papel picado",
+        "body": "Aquí también se monta una ofrenda dedicada a Frida Kahlo cada temporada, en el mismo estudio donde pintó \"Lo que el agua me dio\". Hay taller de papel picado, el elemento que según la tradición ayuda a recibir a los difuntos con su movimiento y color, con costo simbólico. Como el resto del año, domingos la entrada es gratuita, así que si la visita cae en fin de semana conviene planear el día de muertos para un domingo y ahorrarse el boleto.",
+        "placeSlug": "casa-estudio-rivera-kahlo"
+      },
+      {
+        "heading": "Antropología: más de 30 años montando la ofrenda más grande de la ciudad",
+        "body": "Desde hace más de tres décadas, el museo invita cada año a una comunidad indígena distinta para montar la ofrenda de la temporada en el patio central, junto al Paraguas. La instalación recrea dos escenas, una casa con el altar familiar decorado con cempasúchil, y un panteón donde se recibe y despide a los difuntos, con cerca de 40 personas de la comunidad invitada preparando cada elemento. Música de banda de viento y narradores explican el significado de cada parte mientras se arma. Es la ofrenda con más escala de todas las que se pueden ver en la ciudad esa temporada.",
+        "placeSlug": "museo-nacional-de-antropologia"
+      }
+    ]
+  },
+  {
+    "id": "g10",
+    "slug": "planes-para-diciembre-en-cdmx",
+    "title": "Planes para diciembre en CDMX",
+    "description": "Terrazas para cerrar el año, cafés para el frío y parques para caminar entre posadas — planes para el mes más ocupado del calendario.",
+    "intro": "Diciembre en CDMX es de contrastes: hace frío de verdad por las noches, pero de día el sol sigue pegando fuerte. Esta lista mezcla una terraza con vista al Zócalo para las noches de fin de año, un café-librería para refugiarte del frío, y dos parques —uno en la Condesa, otro sobre pedregal volcánico en Tlalpan— para las caminatas de sobremesa.",
+    "categoryLabel": "Temporada",
+    "readTime": "4 min de lectura · 4 lugares",
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1621275471769-e6aa344546d5?w=800&h=500&fit=crop&q=80&auto=format",
+      "alt": "Terraza con mesas y vista de la ciudad"
+    },
+    "placeSlugs": [
+      "terraza-catedral",
+      "cafebreria-el-pendulo",
+      "parque-mexico",
+      "bosque-de-tlalpan"
+    ],
+    "sections": [
+      {
+        "heading": "Terraza Catedral: la vista incluye la decoración navideña del Zócalo",
+        "body": "Cada diciembre el Zócalo se llena de instalaciones luminosas, árbol de Navidad oficial y nacimiento monumental como parte de la programación decembrina del gobierno de la ciudad, y la terraza tiene vista directa a toda esa escenografía desde arriba. Es de los pocos lugares donde puedes ver las luces sin meterte entre la multitud que se junta abajo, en la plaza. Por el frío de las noches de diciembre conviene llegar con chamarra: la terraza es al aire libre y a esa altura el viento se siente más.",
+        "placeSlug": "terraza-catedral"
+      },
+      {
+        "heading": "El Péndulo: una de las librerías más bonitas del mundo, según The Guardian",
+        "body": "The Guardian la incluyó entre las diez librerías más bonitas del planeta, y en diciembre es cuando ese diseño (anaqueles altos, luz cálida, terraza cubierta) se agradece más: es refugio real contra el frío, no solo frase hecha. Sirve de desayuno a cena, así que funciona tanto para una mañana leyendo con café como para una cena ligera antes de seguir la noche. Con actividades y presentaciones de libros que se anuncian en su calendario en línea, vale la pena checar antes de ir por si hay algo programado esa noche.",
+        "placeSlug": "cafebreria-el-pendulo"
+      },
+      {
+        "heading": "Parque México: la mujer de la fuente tiene nombre, Luz Jiménez",
+        "body": "La Fuente de los Cántaros, una de las piezas más fotografiadas del parque, retrata a una mujer indígena cargando vasijas de agua con el rostro de Luz Jiménez, modelo nahua que posó para varios artistas posrevolucionarios y se volvió símbolo de la identidad mexicana de esa época. En 2025 el parque pasó por una restauración de cara al Mundial 2026 que conservó el diseño y los colores originales del kiosco, las fuentes y los muros. En diciembre, con el sol de día pero el fresco ya instalado, es de los mejores meses para una caminata larga sin el calor de otras épocas del año.",
+        "placeSlug": "parque-mexico"
+      },
+      {
+        "heading": "Bosque de Tlalpan: en diciembre, mejor a media mañana que al amanecer",
+        "body": "Por estar en la zona sur, más alta que el resto de la ciudad, las mañanas de diciembre bajan a 7-9°C, con neblina frecuente sobre el pedregal antes de que salga el sol. Si el plan es caminar el Circuito de la Montaña completo, media mañana es mejor momento que el amanecer: ya se disipó la niebla y el frío es más llevadero. Entrada gratis, abre desde las 5 de la mañana, aunque en diciembre no hay mucha razón para llegar tan temprano.",
+        "placeSlug": "bosque-de-tlalpan"
+      }
+    ]
+  },
+  {
+    "id": "g11",
+    "slug": "que-hacer-gratis-en-cdmx",
+    "title": "Qué hacer gratis en CDMX",
+    "description": "Del zoológico con pandas al tianguis del Chopo: ocho planes que no cuestan nada, para cuando la quincena no da para más.",
+    "intro": "Gratis no significa aburrido: aquí caben desde pandas hasta punk. Ocho planes en la ciudad que no cuestan un peso de entrada, y ninguno es premio de consolación — cada uno tiene algo que ni pagando encontrarías en otro lado. Esto es lo que hay que saber de cada uno antes de ir.",
+    "sections": [
+      {
+        "heading": "Zoológico de Chapultepec: la última panda de Latinoamérica",
+        "body": "Xin Xin, de 35 años, es hoy la única panda gigante que queda en toda Latinoamérica —y a diferencia de otros ejemplares prestados por China bajo acuerdo, ella le pertenece a México, lo que la hace única en la región. La jefa de Gobierno, Clara Brugada, ya negocia con China la llegada de un nuevo ejemplar, así que vale la pena ir mientras Xin Xin sigue siendo la protagonista. El resto del zoológico —leones, jirafas, el área de fauna mexicana— también es gratis, así que hazte un día completo.",
+        "placeSlug": "zoologico-de-chapultepec"
+      },
+      {
+        "heading": "Parque Lincoln: un aviario por 8 pesos",
+        "body": "El parque en sí es gratis, pero si quieres entrar al Aviario Abraham Lincoln —el santuario donde la PROFEPA reubica aves rescatadas del tráfico de especies— la cuota es de apenas 8 pesos. Adentro hay unas 240 aves de 23 especies, desde gorriones hasta cardenales, en un refugio chico pero denso. Abre de martes a domingo de 10:00 a 17:00 horas. Es el tipo de plan barato-de-verdad que se puede combinar con una caminata por el resto del parque sin gastar más.",
+        "placeSlug": "parque-lincoln"
+      },
+      {
+        "heading": "Alameda Central: la feria navideña volvió a su origen",
+        "body": "En diciembre, la feria de fin de año regresa a la Alameda —el lugar exacto donde nació esta tradición navideña en la ciudad— con atracciones abiertas incluso el 31 de diciembre y el 1 de enero. En esas mismas fechas, la ciudad instala pistas de hielo gratuitas en varios puntos, y la Alameda suele ser uno de ellos. Fuera de temporada navideña, sigue siendo el parque de siempre: bancas, fuentes y una vista directa al Palacio de Bellas Artes a un costado.",
+        "placeSlug": "alameda-central"
+      },
+      {
+        "heading": "Tianguis del Chopo: la hora exacta para ir",
+        "body": "Se instala desde las 11 de la mañana sobre la calle Aldama, pero la hora buena es entre las 12 y las 3 de la tarde, cuando toca una banda en vivo y el concierto se transmite por Radio Chopo. Se llega fácil en Metro Revolución o Metrobús Buenavista. En 2025 tuvo una edición especial de un solo día en el Estado de México, pero su sede sigue siendo, como siempre, esa misma calle de la colonia Guerrero — no se mudó.",
+        "placeSlug": "tianguis-cultural-del-chopo"
+      },
+      {
+        "heading": "Centro de Cultura Digital: más de 350 talleres y contando",
+        "body": "Desde que abrió, el centro ha dado más de 350 talleres gratuitos de tecnología y arte digital, para principiantes y para quien ya sabe. Los cursos nuevos se anuncian la segunda semana de cada mes en centroculturadigital.mx, donde también te inscribes en línea — conviene revisar seguido porque los cupos se llenan. Si no alcanzas lugar en un taller, la sala de cine y las exposiciones siguen siendo gratis sin necesidad de reservar nada.",
+        "placeSlug": "centro-de-cultura-digital"
+      },
+      {
+        "heading": "El Bazar Sábado: gratis para entrar, no para comprar",
+        "body": "Aquí el matiz importa: entrar y caminar entre los puestos no cuesta nada, pero los precios de las piezas —joyería de autor, textiles, cerámica— están por encima del promedio de otros mercados, aunque la calidad también lo está. Si vas con presupuesto de comprar algo, llega antes de las 10 de la mañana para la mejor selección, lleva efectivo en pesos (ayuda a negociar) y date el gusto de solo mirar si no piensas gastar — nadie te va a presionar.",
+        "placeSlug": "bazar-sabado-san-angel"
+      },
+      {
+        "heading": "Ciclotón: no necesitas registrarte",
+        "body": "A diferencia de una carrera, aquí no hay folio, ni fila, ni inscripción previa: llegas con tu bici, patines o tenis y te incorporas a la ruta por donde te quede más cerca, sin punto de salida ni de llegada obligatorio. Te sales cuando quieras, en el tramo que quieras. Es la manera más simple de probarlo la primera vez, sin comprometerte a los 40 kilómetros completos si no te sientes con ganas.",
+        "placeSlug": "cicloton-cdmx"
+      },
+      {
+        "heading": "Mercado El 100: qué pedir de desayuno",
+        "body": "Más de 50 productores certificados venden ahí sus verduras, quesos y pan, pero si vas con hambre lo que hay que pedir son los tamales de hongo, los tacos estilo hippie —rellenos de nopales y ensalada de trigo— y, para el calor, un hielo raspado sabor cardamomo o lima con pepino. Entrar es gratis, aunque claro que vas a querer comprar algo en cuanto huelas lo que se está cocinando.",
+        "placeSlug": "mercado-el-100"
+      }
+    ],
+    "categoryLabel": "Gratis",
+    "readTime": "8 min de lectura · 8 lugares",
+    "cover": {
+      "seed": "planazo-guia-gratis-cdmx",
+      "alt": "Qué hacer gratis en CDMX",
+      "width": 800,
+      "height": 450
+    },
+    "placeSlugs": [
+      "zoologico-de-chapultepec",
+      "parque-lincoln",
+      "alameda-central",
+      "tianguis-cultural-del-chopo",
+      "centro-de-cultura-digital",
+      "bazar-sabado-san-angel",
+      "cicloton-cdmx",
+      "mercado-el-100"
+    ]
+  },
+  {
+    "id": "g12",
+    "slug": "un-dia-en-la-roma-norte",
+    "title": "Un día en la Roma Norte, a pie",
+    "description": "Café por la mañana, mercado gastronómico al mediodía, jazz indie y bistrot Michelin por la noche — todo a menos de diez cuadras.",
+    "intro": "La Roma Norte se camina fácil si sabes el orden: un recorrido de menos de diez cuadras que va del café de la mañana al concierto de la noche, con paradas para comer, jugar y comprar cómics en medio. Esto es lo que hay que saber de cada parada antes de salir.",
+    "sections": [
+      {
+        "heading": "Almanegra Café: abre desde las 7:30 de la mañana",
+        "body": "Es de los pocos lugares de la Roma Norte que abre antes de las 8, los siete días de la semana, hasta las 9 de la noche. El grano cambia seguido —a veces es un arábica de Colima, de la Cofradía de Suchitlán—, y los baristas están para explicarte el origen y el método antes de que pidas, no después. Si no sabes qué pedir, di eso mismo: te van a preguntar cómo te gusta el café y de ahí arrancan.",
+        "placeSlug": "almanegra-cafe"
+      },
+      {
+        "heading": "Mercado Roma: qué pedir en cada nivel",
+        "body": "El horario cambia según el día —de 9 a 9 entre semana, hasta la 1:30 o 2 de la mañana de jueves a sábado, y solo hasta las 7:30 los domingos—, así que conviene checar antes de ir si el plan es de noche. Abajo, la torta de calamar de Barranca Valenciana y el falafel de Arbanus son de lo más pedido; si prefieres algo rápido, las empanadas de carne de Empanadería no fallan. Sube al Biergarten hasta el final, cuando ya decidiste qué comiste.",
+        "placeSlug": "mercado-roma"
+      },
+      {
+        "heading": "Global Cómics: cuándo abre y qué esperar",
+        "body": "El horario es irregular si no lo sabes de antemano: domingo y lunes solo de 12 a 5 de la tarde, martes a viernes de 10 a 8, sábado de 10 a 7. Casi cada semana organizan presentaciones de cómic, novela gráfica e ilustración con el autor presente — vale la pena revisar su Instagram (@globalcomics__novenoarte) antes de ir, por si coincide tu visita con una firma.",
+        "placeSlug": "global-comics"
+      },
+      {
+        "heading": "Tláloc: el acceso a la ludoteca cuesta 50 pesos",
+        "body": "La ficha de entrada a los más de 300 juegos es de 50 pesos por persona, aparte de lo que consumas de comida o bebida —las papas gajo y los licuados de cardamomo son lo más pedido del menú—. Cierra los lunes; el resto de la semana abre a las 3 de la tarde y de jueves a sábado se estira hasta las 11:30 de la noche. Los meseros están entrenados para explicarte cualquier juego desde cero, así que no hace falta llegar sabiendo las reglas.",
+        "placeSlug": "tlaloc-juegos-de-mesa"
+      },
+      {
+        "heading": "Foro Indie Rocks!: cuánto cuesta el boleto",
+        "body": "Los precios varían según el show, pero como referencia: preventa general desde 650 pesos, general el día del evento 750, y paquetes con meet & greet hasta 1,200. Las puertas suelen abrir a las 7 de la noche. Si prefieres comprar en taquilla física y no por Fever, atienden de miércoles a domingo de 2 a 9 de la noche en Zacatecas 43, a unos metros del foro.",
+        "placeSlug": "foro-indie-rocks"
+      },
+      {
+        "heading": "Máximo Bistrot: resérvalo con 48 horas de anticipación",
+        "body": "Si el plan es de fin de semana, la recomendación es reservar con al menos 48 horas de anticipación — entra rápido, sobre todo viernes y sábado. El menú cambia con lo que trae el mercado, pero platillos como los escamoles con caviar, la tarta de remolacha con caviar o la costilla de Wagyu con puré de papas han aparecido en la carta más de una vez. Es el cierre perfecto si el presupuesto del día ya se estiró para algo especial.",
+        "placeSlug": "maximo-bistrot"
+      }
+    ],
+    "categoryLabel": "Barrios",
+    "readTime": "8 min de lectura · 6 paradas",
+    "cover": {
+      "seed": "planazo-guia-roma-norte",
+      "alt": "Un día en la Roma Norte",
+      "width": 800,
+      "height": 450
+    },
+    "placeSlugs": [
+      "almanegra-cafe",
+      "mercado-roma",
+      "global-comics",
+      "tlaloc-juegos-de-mesa",
+      "foro-indie-rocks",
+      "maximo-bistrot"
+    ]
+  },
+  {
+    "id": "g13",
+    "slug": "centro-historico-en-un-dia",
+    "title": "Centro Histórico en un día: qué ver, comer y tomar",
+    "description": "De la Alameda al balazo de Pancho Villa marcado en el techo de una cantina: un recorrido a pie por el corazón de la ciudad.",
+    "intro": "El Centro Histórico se recorre mejor de mañana a noche, sin subirte a un coche: cultura antes del calor, comida a mediodía, y cantinas con historia cuando ya oscureció. Esto es lo que hay que saber de cada parada antes de salir.",
+    "sections": [
+      {
+        "heading": "Alameda Central: el punto de partida, antes de las 9",
+        "body": "Arranca aquí temprano, antes de las 9 de la mañana si puedes: el parque se llena rápido y a esa hora todavía tiene banquetas despejadas para caminar entre las fuentes sin esquivar gente. Cruzando la avenida, a un costado, ya está el Palacio de Bellas Artes — la ventaja de empezar por la Alameda es que llegas a la fila del palacio de las primeras, antes de que se forme.",
+        "placeSlug": "alameda-central"
+      },
+      {
+        "heading": "Palacio de Bellas Artes: qué hay en cartelera",
+        "body": "La taquilla abre de lunes a sábado de 11 a 6 de la tarde, y domingos desde las 8 de la mañana; si hay función, se extiende hasta agotar boletos de la última. Ahí tienen temporada la Compañía Nacional de Danza, la Ópera de Bellas Artes y la Orquesta Sinfónica Nacional — vale la pena checar la cartelera antes de ir, por si tu visita coincide con una función. Arriba de las escaleras, además de Rivera, Orozco y Siqueiros, hay murales de Tamayo, Roberto Montenegro y Jorge González Camarena, menos fotografiados pero igual de buenos.",
+        "placeSlug": "palacio-de-bellas-artes"
+      },
+      {
+        "heading": "Los Cocuyos: la hora sin fila y qué pedir",
+        "body": "El precio por taco va de 13 a 25 pesos, el suadero entre los más baratos. Si quieres evitar la fila que dejó la fama de Anthony Bourdain, ve justo después del mediodía entre semana — las horas de más gente son la noche. Y si prefieres el sabor en su punto, pide el suadero al final de la tarde: para entonces la carne ya llevó horas confitándose en su propia grasa.",
+        "placeSlug": "los-cocuyos"
+      },
+      {
+        "heading": "Azul Histórico: desayuno o cena, no a medias tintas",
+        "body": "Abre desayunos de 9 a 12 y comida/cena de 1 a 11 de la noche, los siete días. Del menú, los chiles en nogada, el mole negro oaxaqueño y los panuchos de cochinita son los platillos que más se repiten en las recomendaciones. Reserva si vas en fin de semana — el patio colonial no es grande y se llena rápido a la hora de la comida.",
+        "placeSlug": "azul-historico"
+      },
+      {
+        "heading": "Museo del Estanquillo: qué hay en exhibición ahora",
+        "body": "En 2026 el museo cumple 20 años, y lo está festejando con exposiciones fuertes: primero una retrospectiva de Elena Poniatowska con fotografías y documentos nunca antes vistos, y en noviembre una muestra conmemorativa con piezas inéditas de las más de 20,000 que tiene la colección. Como las exposiciones rotan seguido, vale la pena checar qué está montado antes de ir — el hilo conductor siempre es la mirada de Monsiváis sobre la cultura popular mexicana.",
+        "placeSlug": "museo-del-estanquillo"
+      },
+      {
+        "heading": "La Ópera Bar: qué pedir y qué preguntar",
+        "body": "Abre de lunes a sábado de 1 de la tarde a 12 de la noche, domingos solo hasta las 6. La recomendación clásica es un tequila con una botana de cortesía, aunque también hay comida de cantina completa —tacos, tortas, caldos— a precios más accesibles que el resto del Centro. Y no dejes de preguntarle al mesero por el agujero de bala en el techo: la respuesta siempre incluye la versión completa de la noche de Pancho Villa.",
+        "placeSlug": "la-opera-bar"
+      },
+      {
+        "heading": "Zinco Jazz Club: cover y reservación",
+        "body": "El cover cambia según el día: 200 pesos miércoles y jueves, 350 viernes y sábado, con música en vivo a partir de las 9 de la noche. Por la capacidad reducida del sótano, conviene reservar con anticipación — el consumo promedio, cover incluido, ronda los 600 pesos por persona. Si el presupuesto es lo primero, miércoles o jueves salen más baratos sin perderse la calidad del cartel.",
+        "placeSlug": "zinco-jazz-club"
+      }
+    ],
+    "categoryLabel": "Barrios",
+    "readTime": "9 min de lectura · 7 paradas",
+    "cover": {
+      "seed": "planazo-guia-centro-historico",
+      "alt": "Centro Histórico en un día",
+      "width": 800,
+      "height": 450
+    },
+    "placeSlugs": [
+      "alameda-central",
+      "palacio-de-bellas-artes",
+      "los-cocuyos",
+      "azul-historico",
+      "museo-del-estanquillo",
+      "la-opera-bar",
+      "zinco-jazz-club"
+    ]
+  },
+  {
+    "id": "g14",
+    "slug": "donde-ver-un-concierto-en-cdmx",
+    "title": "Dónde ver un concierto en CDMX: del foro chico al estadio",
+    "description": "De un sótano de jazz reconocido a nivel mundial a un recinto para 7,500 personas — la escena de música en vivo de la ciudad, por tamaño de escenario.",
+    "intro": "Del sótano de jazz al estadio: cinco formas distintas de ver música en vivo en la ciudad, según qué tan cerca quieras estar del escenario. Esto es lo que hay que saber de cada uno antes de comprar el boleto.",
+    "sections": [
+      {
+        "heading": "Zinco: reserva o no vas a entrar",
+        "body": "El club abre de miércoles a sábado desde las 9 de la noche, con jazz tradicional, bebop y ensambles de fusión que mezclan músicos del circuito nacional con instrumentistas internacionales de gira. Las reservaciones se toman por teléfono, de lunes a sábado de 10 de la mañana a 6 de la tarde, y son casi obligatorias: el sótano siempre está lleno. Revisa la cartelera antes de decidir la noche — cambia seguido y no todos los shows llenan igual.",
+        "placeSlug": "zinco-jazz-club"
+      },
+      {
+        "heading": "Salón Los Ángeles: solo abre martes y domingo",
+        "body": "Martes de 5 a 10 de la noche, domingo de 5 a 11 — son los únicos dos días de la semana que abre, así que no hay margen para improvisar. El domingo suele ser el más completo, con hasta tres orquestas en vivo tocando danzón y mambo. El cover cambia según el evento, pero la experiencia es la misma: llegas sin saber los pasos y sales rodeado de parejas que llevan décadas bailando ahí.",
+        "placeSlug": "salon-los-angeles-danzon"
+      },
+      {
+        "heading": "Foro Indie Rocks!: revisa la cartelera antes de planear la semana",
+        "body": "Con más de 36 conciertos programados solo para este ciclo, la agenda cambia constantemente entre rock alternativo, electrónica y pop indie — la mejor estrategia es no ir con un artista fijo en mente, sino revisar qué toca esa semana en indierocks.mx. La cifra de 1,200 personas solo se alcanza en shows grandes o durante el IR Week, los cinco días de festival que organizan desde 2017; el resto del año, la experiencia es más íntima.",
+        "placeSlug": "foro-indie-rocks"
+      },
+      {
+        "heading": "Lunario: dónde y cuándo comprar boletos",
+        "body": "Hay dos taquillas: la del Auditorio Nacional, de lunes a sábado de 10 a 7 de la noche (domingos de 11 a 6), sin cargo por servicio, y la del propio Lunario, que abre dos horas antes de cada show. Los precios varían mucho según el artista, pero como referencia van de 500 a 2,500 pesos, más caro en zona VIP. Compra con tiempo si el show es de alguien conocido — el formato cabaret de 500 a 1,200 lugares se agota rápido.",
+        "placeSlug": "lunario-auditorio-nacional"
+      },
+      {
+        "heading": "Pepsi Center WTC: cómo llegar sin coche",
+        "body": "La estación de Metrobús Poliforum queda a unos metros de la entrada, la opción más práctica si no quieres lidiar con el tráfico de la zona WTC-Nápoles en noche de show. Si vas en coche, el estacionamiento propio tiene lugar para más de 3,000 autos con entradas por Dakota, Montecito y Filadelfia, a 90 pesos por evento. Calcula tiempo extra de cualquier forma: la zona se satura antes y después de cada función.",
+        "placeSlug": "pepsi-center-wtc"
+      }
+    ],
+    "categoryLabel": "Música",
+    "readTime": "7 min de lectura · 5 foros",
+    "cover": {
+      "seed": "planazo-guia-conciertos-cdmx",
+      "alt": "Dónde ver un concierto en CDMX",
+      "width": 800,
+      "height": 450
+    },
+    "placeSlugs": [
+      "zinco-jazz-club",
+      "salon-los-angeles-danzon",
+      "foro-indie-rocks",
+      "lunario-auditorio-nacional",
+      "pepsi-center-wtc"
+    ]
+  },
+  {
+    "id": "g15",
+    "slug": "que-hacer-con-ninos-en-cdmx",
+    "title": "Qué hacer con niños en CDMX",
+    "description": "Museos que sí se pueden tocar, un zoológico gratis con pandas y trajineras en Xochimilco — planes familiares que sobreviven un sábado completo.",
+    "intro": "Museos que sí se pueden tocar, un zoológico gratis y trajineras en Xochimilco: cinco planes que aguantan un sábado completo con niños, sin que nadie se aburra a media tarde. Esto es lo que hay que saber de cada uno antes de salir.",
+    "sections": [
+      {
+        "heading": "Papalote: cuánto cuesta y qué áreas tiene",
+        "body": "El boleto va de 199 pesos solo museo a 249 con acceso a domodigital incluido — vale la pena decidir antes de hacer fila. Las áreas se dividen en Mi Cuerpo (los cinco sentidos), México Vivo (naturaleza), Mi Hogar y Mi Familia (con la clásica cama de clavos) y Mi Ciudad, donde los niños exploran una ciudad a su escala de forma segura. En temporada alta —vacaciones, puentes— conviene reservar horario de entrada con anticipación en línea.",
+        "placeSlug": "papalote-museo-del-nino"
+      },
+      {
+        "heading": "Museo Tamayo: la parada corta entre planes",
+        "body": "Con entrada libre los domingos para residentes, es la opción de combinar con otro plan del bosque sin que el día se vuelva una maratón de museo: la sala nueva de arte contemporáneo se recorre en menos de una hora, manejable incluso para niños que ya se cansaron en otro lado. No está pensado como el Papalote —no hay zonas táctiles diseñadas para ellos—, pero funciona bien como introducción corta al arte antes de que pidan salir a correr al bosque.",
+        "placeSlug": "museo-tamayo-nueva-sala"
+      },
+      {
+        "heading": "Zoológico: el orden para no perder la paciencia",
+        "body": "Abre de martes a domingo de 9 a 4:30 de la tarde, y la entrada es gratis para menores de 5 años. El recorrido recomendado es de atrás hacia adelante —empieza por las aves, deja pandas y gorilas para el final, que es donde está la salida—. Los fines de semana, la zona de pandas se llena entre 12 y 2 de la tarde; si quieres verla con calma, ve a las 10 de la mañana o después de las 3. Afuera rentan carriolas por unos 30 pesos la hora, si no quieres cargar al más chico todo el recorrido.",
+        "placeSlug": "zoologico-de-chapultepec"
+      },
+      {
+        "heading": "MUNET: qué se puede visitar por ahora",
+        "body": "Abre de martes a domingo de 10 a 6 de la tarde. Aunque el proyecto completo contempla diez salas sobre energía eléctrica, solar, eólica e hidráulica, por ahora solo venden boletos para la Blow Up Experience, un recorrido interactivo de ocho salas con instalaciones artísticas. El resto se irá abriendo por etapas, así que antes de planear el día alrededor de este museo, checa sus redes para confirmar qué está disponible esa semana.",
+        "placeSlug": "munet"
+      },
+      {
+        "heading": "Trajineras: el precio es por barca, no por persona",
+        "body": "La tarifa oficial de la Secretaría de Turismo es de 750 pesos por hora, y es por trajinera completa —hasta 18 personas, contando también a los niños menores de 4—, así que entre más grande el grupo, más barato sale por cabeza. Si alguien no quiere usar chaleco salvavidas, hay que firmar una carta de responsiva con el operador. Mejor ir temprano entre semana: los fines de semana el embarcadero se satura y el paseo se siente más apretado que relajado.",
+        "placeSlug": "embarcadero-nuevo-nativitas"
+      }
+    ],
+    "categoryLabel": "Familiar",
+    "readTime": "8 min de lectura · 5 lugares",
+    "cover": {
+      "seed": "planazo-guia-ninos-cdmx",
+      "alt": "Qué hacer con niños en CDMX",
+      "width": 800,
+      "height": 450
+    },
+    "placeSlugs": [
+      "papalote-museo-del-nino",
+      "museo-tamayo-nueva-sala",
+      "zoologico-de-chapultepec",
+      "munet",
+      "embarcadero-nuevo-nativitas"
+    ]
+  },
+  {
+    "id": "g16",
+    "slug": "donde-ver-una-pelicula-en-cdmx",
+    "title": "Dónde ver una película en CDMX",
+    "description": "Del cine de barrio de 1962 al autocinema donde puedes llevar a tu perro: tres formas distintas de ver una película en la ciudad.",
+    "intro": "Del cine de barrio de 1962 al autocinema donde puedes llevar a tu perro: tres formas distintas de ver una película en la ciudad. Esto es lo que hay que saber de cada una antes de comprar el boleto.",
+    "sections": [
+      {
+        "heading": "Cine Tonalá: cierra los lunes",
+        "body": "Abre de martes a sábado de 1 a 9 de la noche, domingo de 12 a 8 — y cierra por completo los lunes. Además de las funciones, tiene tienda propia de artículos de cine, así que si sales enamorado de algún cartel o playera, se puede comprar ahí mismo antes de irte. El bar-restaurante de pizzas funciona como antesala perfecta si llegas con hambre antes de la función.",
+        "placeSlug": "cine-tonala"
+      },
+      {
+        "heading": "Cinépolis Diana: la sala de cine de autor que no todos conocen",
+        "body": "Con ocho salas, una equipada para IMAX y otra para 3D, es de las sedes más completas de la cadena — pero lo que la distingue es la Sala de Arte Cinépolis, dedicada a cine independiente y de autor, sede de festivales como el de cine francés, Ambulante y la Filmoteca de la UNAM. Si solo la conoces por sus estrenos comerciales de fin de semana, vale la pena revisar también esa cartelera paralela.",
+        "placeSlug": "cinepolis-diana"
+      },
+      {
+        "heading": "Drive Cinema: dos funciones por noche",
+        "body": "Las funciones suelen ser dos por noche, una de 7 a 8:30 y otra de 9 a 10:30 — conviene revisar la cartelera antes de salir porque no siempre hay doble función. Manejan promociones 2x1 y hasta suscripciones para quien va seguido, además de la opción de rentar el lugar completo para un evento privado. Si el clima se ve dudoso, más vale checar el pronóstico: es al aire libre y no hay plan B bajo techo.",
+        "placeSlug": "drive-cinema-mx"
+      }
+    ],
+    "categoryLabel": "Cine",
+    "readTime": "5 min de lectura · 3 lugares",
+    "cover": {
+      "seed": "planazo-guia-cine-cdmx",
+      "alt": "Dónde ver una película en CDMX",
+      "width": 800,
+      "height": 450
+    },
+    "placeSlugs": [
+      "cine-tonala",
+      "cinepolis-diana",
+      "drive-cinema-mx"
+    ]
+  },
+  {
+    "id": "g17",
+    "slug": "planes-gamer-geek-tecnologia-cdmx",
+    "title": "Planes gamer, geek y de tecnología en CDMX",
+    "description": "De un puesto de tacos que nació como sala de videojuegos a un edificio de tres pisos dedicado a la cultura geek — planes para pasar la tarde entre la Condesa y el Centro.",
+    "intro": "De un puesto de tacos que se volvió sala de videojuegos a un edificio de tres pisos dedicado a la cultura geek: siete planes entre la Condesa, Narvarte, Del Valle y el Centro para gamers, coleccionistas y makers. Esto es lo que hay que saber antes de ir a cada uno.",
+    "sections": [
+      {
+        "heading": "Taco Game: tu consumo se cambia por hora y media de juego",
+        "body": "El mínimo es de 200 pesos por persona, y ese consumo se convierte directo en hora y media de consola y control —tú eliges el juego, de Pac-Man a los lanzamientos recientes—. Abre todos los días de 1 a 10 de la noche. Si van en grupo grande o quieren asegurar mesa en fin de semana, mejor reservar antes: se llena rápido con gente que va exactamente por lo mismo que tú.",
+        "placeSlug": "taco-game"
+      },
+      {
+        "heading": "El Ocho: el horario cambia entre semana y fin",
+        "body": "Domingo a miércoles cierran a medianoche; jueves a sábado se estiran hasta la 1 de la mañana, siempre abriendo desde las 8 de la mañana. El librero pasa de 120 juegos —de Uno y Scrabble a algo que no conoces— y puedes tomar el que quieras dejando una identificación de garantía. Si vas con tu perro, hay menú especial para que también pida lo suyo en la terraza.",
+        "placeSlug": "el-ocho-juegos-de-mesa"
+      },
+      {
+        "heading": "Gameplanet: cómo vender tus juegos usados",
+        "body": "Si quieres vender lo que ya no usas, el crédito que te dan por tus juegos queda disponible por 14 meses desde el día del cambio —aunque esa vigencia puede cambiar sin aviso, conviene preguntar en la sucursal antes de decidirte—. Para lo que compres ahí, tienes 90 días para cambios con el recibo y el empaque original. Es la opción más confiable de la ciudad si buscas un título específico que ya no se consigue fácil.",
+        "placeSlug": "gameplanet-del-valle"
+      },
+      {
+        "heading": "The Limited Company: si se agotó, pregunta en Coyoacán",
+        "body": "Como comparte catálogo con su sucursal de Coyoacán y con la tienda en línea, si algo se agotó en Condesa vale la pena preguntar antes de irte con las manos vacías —muchas veces sí lo tienen del otro lado de la ciudad—. Es de esas tiendas donde entras \"nomás a ver\" figuras de Hot Toys o Funko y sales con algo que no sabías que necesitabas, así que ve con tiempo, no de pasada.",
+        "placeSlug": "limited-company-geek-store"
+      },
+      {
+        "heading": "Frikiplaza: entre semana sin la multitud del fin",
+        "body": "Los fines de semana llega a recibir hasta 5 mil visitantes, con torneos de cartas y videojuegos, ligas semanales y hasta cosplay entre los locales — buenísimo ambiente, pero también el momento con más gente. Si prefieres ver con calma los más de 250 changarros sin empujones, entre semana es la apuesta, con la mayoría de los locales abriendo de 10 a 7 de la tarde.",
+        "placeSlug": "frikiplaza"
+      },
+      {
+        "heading": "Plaza de la Tecnología: cómo comprar sin que te vean la cara",
+        "body": "Abre todos los días de 10 a 8 de la noche. La recomendación de quien ya conoce el lugar: no le compres a nadie que te aborde en la calle antes de entrar, compara precio y garantía en al menos dos o tres locales antes de decidir, y si es un producto reacondicionado, pregunta explícitamente por la garantía por escrito. Con casi 800 locales, caminar unos metros de más siempre sale a cuenta.",
+        "placeSlug": "plaza-de-la-tecnologia"
+      },
+      {
+        "heading": "Hacedores Makerspace: cuánto cuesta probar sin membresía",
+        "body": "Si no quieres comprometerte a una membresía todavía, hay tarjetas prepago de hasta 7 accesos desde 600 pesos, además de talleres introductorios para quien nunca ha tocado una impresora 3D o una cortadora láser. También dan clínicas pensadas para adolescentes de 8 a 16 años sin experiencia previa. Es la opción de entrada si traes una idea pero no sabes todavía si el makerspace es para ti.",
+        "placeSlug": "hacedores-makerspace"
+      }
+    ],
+    "categoryLabel": "Gamer y geek",
+    "readTime": "9 min de lectura · 7 lugares",
+    "cover": {
+      "seed": "planazo-guia-gamer-geek-cdmx",
+      "alt": "Planes gamer y geek en CDMX",
+      "width": 800,
+      "height": 450
+    },
+    "placeSlugs": [
+      "taco-game",
+      "el-ocho-juegos-de-mesa",
+      "gameplanet-del-valle",
+      "limited-company-geek-store",
+      "frikiplaza",
+      "plaza-de-la-tecnologia",
+      "hacedores-makerspace"
+    ]
+  },
+  {
+    "id": "g18",
+    "slug": "planes-tradicionales-cdmx",
+    "title": "Planes bien mexicanos: lucha libre, danzón y antigüedades",
+    "description": "La Catedral de la Lucha Libre, el salón de baile que nunca ha cerrado desde 1937 y el mercado dominical donde se regatea desde antes de la Conquista.",
+    "intro": "Lucha libre, danzón y un mercado que se regatea desde antes de la Conquista: tres planes que no encontrarías en ninguna guía de turismo institucional, con más de ocho décadas de tradición cada uno. Esto es lo que hay que saber antes de ir.",
+    "sections": [
+      {
+        "heading": "Arena México: cuánto cuesta según el día y la zona",
+        "body": "Los martes populares son los más baratos, desde 50 pesos general y 300 en ringside; el Viernes Espectacular sube de 80 a 1,500, y las funciones dominicales van de 100 a 800. Los boletos se compran en Ticketmaster, en cmll.com o directo en taquilla de la Arena México, en la colonia Doctores, sin comisión extra. Si es tu primera vez, no hace falta gastar en ringside — desde gradas intermedias, por 150 o 200 pesos, el ambiente se siente igual de fuerte.",
+        "placeSlug": "lucha-libre-arena-mexico"
+      },
+      {
+        "heading": "Salón Los Ángeles: el código de vestir ya no es tan estricto",
+        "body": "Antes se pedía saco, corbata y zapato boleado para los caballeros, y vestido con medias para las damas — hoy la regla es más relajada, aunque ir arreglado sigue siendo parte del ambiente. La música en vivo no es solo danzón: también suena cumbia, salsa, son cubano y hasta chachachá y swing, según la orquesta de la noche. Se inauguró el 29 de julio de 1937 con la orquesta de Gonzalo Curiel y la Danzonera de Toto, y esa mezcla de generaciones bailando junta sigue siendo la razón para ir.",
+        "placeSlug": "salon-los-angeles-danzon"
+      },
+      {
+        "heading": "La Lagunilla: hora exacta y cómo cuidar tus cosas",
+        "body": "El tianguis de antigüedades arma sus puestos desde las 9 de la mañana y empieza a levantar alrededor de las 4 de la tarde, aunque el resto del mercado sigue hasta las 7. La mejor ventana para caminar sin aglomeraciones es entre 10 y 12 del día. Es zona de carteristas como cualquier tianguis grande de la ciudad: ve ligero, con el celular en la bolsa delantera, y negocia — los mejores precios salen cuando compras más de una pieza al mismo puesto.",
+        "placeSlug": "antiguedades-la-lagunilla"
+      }
+    ],
+    "categoryLabel": "Tradición",
+    "readTime": "6 min de lectura · 3 lugares",
+    "cover": {
+      "seed": "planazo-guia-tradicion-cdmx",
+      "alt": "Planes tradicionales en CDMX",
+      "width": 800,
+      "height": 450
+    },
+    "placeSlugs": [
+      "lucha-libre-arena-mexico",
+      "salon-los-angeles-danzon",
+      "antiguedades-la-lagunilla"
+    ]
+  },
+  {
+    "id": "g19",
+    "slug": "cafes-para-trabajar-cdmx",
+    "title": "Cafés para trabajar con laptop en CDMX",
+    "description": "Mesas donde alargar la mañana no se siente fuera de lugar, de Roma Norte a Lomas.",
+    "type": "lista",
+    "intro": "No todos los cafés de especialidad quieren que te quedes — estos sí. Los elegimos por lo mismo que buscarías tú: mesas donde no se siente raro abrir la laptop, ambiente que no compite con tu concentración, y que aguanten más de un café sin que se sienta que estás ocupando lugar.",
+    "sections": [
+      {
+        "heading": "Buna",
+        "order": 1,
+        "placeSlug": "buna",
+        "body": "Tiene mesas al aire libre que lo hacen buena opción para sentarse un rato largo, no solo para pedir para llevar — de las pocas de esta lista pensadas desde el diseño para quedarte, no de paso."
+      },
+      {
+        "heading": "Cardinal Casa de Café",
+        "order": 2,
+        "placeSlug": "cardinal-casa-de-cafe",
+        "body": "Nació con la idea explícita de recuperar la cafetería como espacio de plática y sobremesa, no de paso rápido — el ambiente de casa vieja reconvertida ayuda a que una sesión larga de trabajo no se sienta forzada."
+      },
+      {
+        "heading": "Cafebrería El Péndulo",
+        "order": 3,
+        "placeSlug": "cafebreria-el-pendulo",
+        "body": "El lugar para llegar sin prisa: entre anaqueles de librería y programación cultural, es de los pocos donde quedarte más tiempo del planeado con un café con leche grande se siente parte del plan, no una excepción."
+      },
+      {
+        "heading": "Chiquitito Café",
+        "order": 4,
+        "placeSlug": "chiquitito-cafe",
+        "body": "Ambiente tranquilo, música baja y baristas que si vas seguido ya te saludan por tu nombre. No es para juntas ruidosas ni trabajo urgente, pero para una mañana de trabajo despacio es de las mejores opciones de Lomas."
+      }
+    ],
+    "categoryLabel": "Cafés",
+    "readTime": "4 min de lectura · 4 lugares",
+    "cover": {
+      "seed": "planazo-cafes-para-trabajar-cdmx",
+      "alt": "Café de especialidad con mesas para trabajar"
+    },
+    "placeSlugs": [
+      "buna",
+      "cardinal-casa-de-cafe",
+      "cafebreria-el-pendulo",
+      "chiquitito-cafe"
+    ]
+  },
+  {
+    "id": "g20",
+    "slug": "tarde-en-roma-norte-500-pesos",
+    "title": "Una tarde en Roma Norte por menos de $500",
+    "description": "Café, mercado y un parque para perros — un recorrido corto que no se pasa del presupuesto.",
+    "type": "plan",
+    "budget": "$370 aprox. por persona",
+    "duration": "~4 horas",
+    "audience": [
+      "En pareja",
+      "Con amigos"
+    ],
+    "intro": "Nada de reservaciones ni planeación de más: este recorrido son tres paradas caminables entre sí en la Roma Norte, pensadas para una tarde libre sin que la cuenta se dispare.",
+    "sections": [
+      {
+        "heading": "Almanegra Café",
+        "order": 1,
+        "placeSlug": "almanegra-cafe",
+        "body": "Empieza con un espresso serio, no con una sobremesa larga — el espacio es minimalista y está pensado para un alto rápido y bien hecho antes de seguir el recorrido, no para quedarse toda la tarde."
+      },
+      {
+        "heading": "Mercado Roma",
+        "order": 2,
+        "placeSlug": "mercado-roma",
+        "body": "La parada fuerte del presupuesto: de la torta al caviar en la planta baja, o subir directo al Biergarten de la azotea si el plan es una cerveza con vista. Es de los pocos lugares de la zona donde un grupo puede sentarse junto y cada quien pedir algo distinto."
+      },
+      {
+        "heading": "Jardín Pushkin",
+        "order": 3,
+        "placeSlug": "jardin-pushkin",
+        "body": "Para cerrar sin gastar nada: entrada libre las 24 horas, con explanada y ambiente relajado para caminar la comida antes de terminar la tarde."
+      }
+    ],
+    "categoryLabel": "Roma Norte",
+    "readTime": "3 min de lectura · 3 paradas",
+    "cover": {
+      "seed": "planazo-tarde-en-roma-norte-500-pesos",
+      "alt": "Calle de la Roma Norte por la tarde"
+    },
+    "placeSlugs": [
+      "almanegra-cafe",
+      "mercado-roma",
+      "jardin-pushkin"
+    ]
+  },
+  {
+    "id": "g21",
+    "slug": "condesa-en-un-dia",
+    "title": "Condesa en un día: mañana, tarde y noche",
+    "description": "Parque, juegos de mesa y coctelería, sin salir de la colonia.",
+    "type": "itinerario",
+    "duration": "Un día completo",
+    "audience": [
+      "Con amigos",
+      "En pareja"
+    ],
+    "intro": "Todo el recorrido cabe caminando dentro de la Condesa — no hace falta moverse de colonia entre una parada y la siguiente.",
+    "sections": [
+      {
+        "heading": "Parque México",
+        "time": "Mañana",
+        "placeSlug": "parque-mexico",
+        "body": "El corazón de la Condesa desde que era la pista del hipódromo del Jockey Club: gente corriendo, señoras paseando perros, bancas bajo los árboles. Gratis y pet friendly de verdad, ambiente relajado desde temprano."
+      },
+      {
+        "heading": "El Ocho",
+        "time": "Tarde",
+        "placeSlug": "el-ocho-juegos-de-mesa",
+        "body": "Justo frente al parque: más de 120 juegos de mesa en un librero enorme, tomas el que quieras dejando una identificación de garantía. Abre desde las 8 de la mañana, así que también funciona como cierre de la mañana si el plan se corre."
+      },
+      {
+        "heading": "Gin Gin Condesa",
+        "time": "Noche",
+        "placeSlug": "gin-gin-condesa",
+        "body": "Coctelería de ginebra con más de 30 etiquetas y música de DJ en vivo — más ambiente de fiesta que de bar tranquilo, para cerrar el día con energía. Abre los siete días hasta las 2 de la mañana."
+      }
+    ],
+    "categoryLabel": "Condesa",
+    "readTime": "3 min de lectura · 3 paradas",
+    "cover": {
+      "seed": "planazo-condesa-en-un-dia",
+      "alt": "Parque México en la Condesa"
+    },
+    "placeSlugs": [
+      "parque-mexico",
+      "el-ocho-juegos-de-mesa",
+      "gin-gin-condesa"
+    ]
+  },
+  {
+    "id": "g22",
+    "slug": "roma-norte-vs-condesa",
+    "title": "Roma Norte vs Condesa: ¿cuál te conviene hoy?",
+    "description": "Dos colonias vecinas, dos personalidades distintas — depende de qué estés buscando.",
+    "type": "comparacion",
+    "intro": "Están a un cruce de avenida una de la otra, pero Roma Norte y Condesa no resuelven el mismo plan. Esto es lo que cada una hace mejor, con lugares reales de cada lado.",
+    "sections": [
+      {
+        "heading": "Coctelería seria",
+        "eyebrow": "Roma Norte",
+        "placeSlug": "licoreria-limantour",
+        "body": "Limantour lleva desde 2011 apareciendo año tras año en The World's 50 Best Bars — si el plan es tomarse la coctelería en serio, la Roma gana con esto."
+      },
+      {
+        "heading": "Mercado y grupo grande",
+        "eyebrow": "Roma Norte",
+        "placeSlug": "mercado-roma",
+        "body": "Para un grupo donde cada quien quiere algo distinto — de la torta al sushi — sin que nadie tenga que ceder."
+      },
+      {
+        "heading": "Parque y aire libre",
+        "eyebrow": "Condesa",
+        "placeSlug": "parque-mexico",
+        "body": "La Condesa tiene al Parque México como corazón caminable — gratis, pet friendly de verdad, y con ambiente relajado casi cualquier hora."
+      },
+      {
+        "heading": "Brunch con historia",
+        "eyebrow": "Condesa",
+        "placeSlug": "lardo",
+        "body": "Lardo, el segundo proyecto de Elena Reygadas en la zona, es de los brunches más buscados de la colonia, con pan y pizzas de masa madre horneados en casa."
+      },
+      {
+        "heading": "Veredicto",
+        "body": "Si el plan es una noche formal de tragos o resolver una comida de grupo grande, Roma Norte. Si el plan es un domingo relajado al aire libre con brunch de por medio, Condesa. Están lo bastante cerca para hacer las dos cosas el mismo fin de semana."
+      }
+    ],
+    "categoryLabel": "Barrios",
+    "readTime": "4 min de lectura · 2 colonias",
+    "cover": {
+      "seed": "planazo-roma-norte-vs-condesa",
+      "alt": "Calles de Roma Norte y Condesa"
+    },
+    "placeSlugs": [
+      "licoreria-limantour",
+      "mercado-roma",
+      "parque-mexico",
+      "lardo"
+    ]
+  },
+  {
+    "id": "g24",
+    "slug": "un-sabado-en-san-angel-bazar-museo-y-cine",
+    "title": "Un sábado en San Ángel: bazar, museo y cine",
+    "description": "Tres paradas reales para armar un sábado completo en San Ángel: El Bazar Sábado, el estudio de Diego Rivera y Frida Kahlo, y una sala de cine con más de tres décadas en la colonia.",
+    "type": "itinerario",
+    "duration": "Un día completo",
+    "audience": [
+      "Plan cultural de fin de semana en San Ángel"
+    ],
+    "intro": "San Ángel se presta para un sábado completo: arranca en El Bazar Sábado —que solo abre ese día—, sigue en el museo que fue el estudio real de Diego Rivera y Frida Kahlo, y cierra en una sala de cine con más de tres décadas en la colonia.",
+    "sections": [
+      {
+        "heading": "El Bazar Sábado: arranca aquí porque es el único día que abre",
+        "time": "Mañana",
+        "placeSlug": "bazar-sabado-san-angel",
+        "body": "El Bazar Sábado —como dice su nombre— solo abre los sábados, de 10:00 a 19:00 horas, así que si vas a organizar el día alrededor de él, tiene que ser el primer punto en el reloj. Nació en 1960 en la calle Doctor Gálvez, cuando Wendell Riggs y su esposa Cynthia Sargent reunieron apenas a 15 artesanos mexicanos bajo un mismo techo; en 1965 se mudó a la casona colonial de Plaza San Jacinto 11, remodelada por el arquitecto Manuel Parra y por Ruth Rivera, hija de Diego Rivera. Hoy conviven ahí cientos de artesanos y artistas —joyería de autor, cerámica, textiles, moda— más un restaurante en el patio central, y entrar no cuesta nada. Date tiempo para perderte entre los puestos antes de seguir con el resto del día.",
+        "order": 1
+      },
+      {
+        "heading": "Museo Casa Estudio Diego Rivera y Frida Kahlo: dos casas unidas por un puente, diseño de 1931",
+        "time": "Mediodía",
+        "placeSlug": "casa-estudio-rivera-kahlo",
+        "body": "El conjunto que diseñó Juan O'Gorman en 1931 —uno de los primeros ejemplos de arquitectura funcionalista en América Latina— son en realidad dos casas unidas solo por un puente en la azotea: la roja y blanca de Diego, la azul de Frida, cada una con entrada y vida independiente. Abre de martes a domingo, de 10:00 a 17:30, con entrada de $45 MXN, así que después de la mañana en el Bazar todavía hay margen para conocerlo con calma. Adentro se conservan los talleres casi como los dejó la pareja, con caballetes, pinceles y piezas de arte popular que Rivera fue acumulando con los años.",
+        "order": 2
+      },
+      {
+        "heading": "Cinemanía Loreto: cine de arte y clásicos mexicanos desde 1994, en cuatro salas",
+        "time": "Tarde",
+        "placeSlug": "cinemania-loreto",
+        "body": "Cinemanía lleva desde 1994 en Plaza Loreto, con una programación distinta a la de un multiplex de centro comercial: cine de arte, clásicos mexicanos y cine de género, repartido en cuatro salas digitales. Abre todos los días de 12:00 a 21:45, con margen de sobra para llegar después del museo. El boleto general cuesta $65 MXN, o si el plan es quedarte viendo más de una función, el pase de permanencia voluntaria sale en $90 y te deja ver las que quieras ese mismo día.",
+        "order": 3
+      }
+    ],
+    "categoryLabel": "San Ángel",
+    "readTime": "3 min de lectura · 3 paradas",
+    "cover": {
+      "seed": "planazo-san-angel-bazar-museo-cine",
+      "alt": "Puestos de artesanías en El Bazar Sábado de San Ángel",
+      "width": 800,
+      "height": 450
+    },
+    "placeSlugs": [
+      "bazar-sabado-san-angel",
+      "casa-estudio-rivera-kahlo",
+      "cinemania-loreto"
+    ]
+  },
+  {
+    "id": "g25",
+    "slug": "museos-de-chapultepec-cual-visitar",
+    "title": "Museos de Chapultepec: cuál visitar según lo que buscas",
+    "description": "Cinco museos reales del bosque, ordenados por para quién funciona mejor cada uno — precio, tiempo que piden y qué tipo de experiencia ofrecen.",
+    "type": "lista",
+    "audience": [
+      "Interés en cultura y museos"
+    ],
+    "intro": "Chapultepec tiene cinco museos, y elegir el correcto depende más de qué tipo de experiencia buscas que de cuál es \"el mejor\": aquí van ordenados por para quién funciona mejor cada uno, con su precio real y lo que hace falta saber antes de ir.",
+    "sections": [
+      {
+        "heading": "Museo Nacional de Antropología: el que necesita más de una tarde completa",
+        "placeSlug": "museo-nacional-de-antropologia",
+        "body": "Es el museo más visitado del país, inaugurado en 1964 por Pedro Ramírez Vázquez, Rafael Mijares y Jorge Campuzano, con las salas organizadas alrededor de un patio central bajo el famoso \"paraguas\" de concreto —un diseño que ganó la medalla de oro en la Bienal de Arquitectura de São Paulo de 1965. Adentro está la colección arqueológica más importante de las culturas prehispánicas del país, con la Piedra del Sol —un monolito de 24 toneladas— como pieza que por sí sola justifica la entrada de $95 MXN. De los cinco museos de esta lista, es el que de verdad necesita más de una tarde completa para recorrerse bien; si tienes poco tiempo, no es el primero que deberías elegir. Entrada libre los domingos para residentes."
+      },
+      {
+        "heading": "Museo de Arte Moderno: el más barato de los cinco, y el que menos tiempo pide",
+        "placeSlug": "museo-arte-moderno",
+        "body": "En la Primera Sección del bosque, el MAM reúne arte mexicano del siglo XX —Frida Kahlo, Rufino Tamayo, Remedios Varo— en un edificio circular de Pedro Ramírez Vázquez inaugurado en 1964, con jardín escultórico propio. La entrada cuesta $90 MXN, la más barata de los cinco museos de esta lista, y al ser un solo edificio circular se recorre bien en una sola sesión, sin necesitar planear el resto del día alrededor de él. Entrada libre los domingos."
+      },
+      {
+        "heading": "Museo Tamayo: la colección más chica e íntima de las cinco",
+        "placeSlug": "museo-tamayo-nueva-sala",
+        "body": "El edificio en sí es una pieza de colección: Rufino Tamayo convocó a los arquitectos Teodoro González de León y Abraham Zabludovsky para diseñarlo, con una forma piramidal que dialoga con la herencia prehispánica del bosque; abrió en 1981 y ganó el Premio Nacional de Ciencias y Artes al año siguiente. La colección permanente reúne alrededor de 315 obras que Olga y Rufino Tamayo juntaron en vida, y la nueva sala suma arte contemporáneo mexicano en un espacio que se siente más íntimo que monumental, aunque cuesta lo mismo que Antropología ($95 MXN). Si buscas algo más compacto que una tarde completa de arqueología, este es el punto medio. Entrada libre los domingos para residentes."
+      },
+      {
+        "heading": "Papalote Museo del Niño: el único de los cinco pensado para niños, no para adultos",
+        "placeSlug": "papalote-museo-del-nino",
+        "body": "Abrió en 1993 en la segunda sección de Chapultepec y es, de los cinco museos de esta lista, el único diseñado realmente para que niños de 2 a 12 años toquen y experimenten —seis áreas dedicadas a seres vivos, ecosistemas mexicanos, espacio exterior y trabajo manual, más clásicos como la cama de clavos y las burbujas gigantes. Es también el más caro de los cinco, con $260 MXN de entrada, y en temporada alta conviene reservar horario con anticipación. Su antigua Megapantalla IMAX cerró en 2023 al terminar el contrato; ese domo hoy funciona como sala digital."
+      },
+      {
+        "heading": "MUNET: el más nuevo de los cinco, pero también el único incompleto",
+        "placeSlug": "munet",
+        "body": "Abrió en 2026 sobre el terreno del viejo Museo Tecnológico de la CFE, con un proyecto que ganó por concurso entre arquitectos mexicanos: la propuesta de Enrique Norten junto con el estudio de Ralph Appelbaum, el mismo detrás del Museo del Holocausto en Washington. Es el museo de ciencia de nueva generación de la zona, centrado en energía y tecnología, con entrada de $300 MXN —la más cara de los cinco. Por ser tan reciente, todavía está en fase de apertura por etapas, así que antes de ir conviene checar qué salas están abiertas ese día; de los cinco, es el único que no se puede recorrer completo todavía."
+      }
+    ],
+    "categoryLabel": "Museos",
+    "readTime": "5 min de lectura · 5 museos",
+    "cover": {
+      "seed": "planazo-museos-de-chapultepec",
+      "alt": "Patio central del Museo Nacional de Antropología en Chapultepec",
+      "width": 800,
+      "height": 450
+    },
+    "placeSlugs": [
+      "museo-nacional-de-antropologia",
+      "museo-arte-moderno",
+      "museo-tamayo-nueva-sala",
+      "papalote-museo-del-nino",
+      "munet"
+    ]
+  },
+  {
+    "id": "g26",
+    "slug": "limantour-polanco-vs-limantour-roma-norte",
+    "title": "Licorería Limantour Polanco vs Licorería Limantour: ¿cuál conviene más?",
+    "description": "Mismo bar, dos sucursales — el menú es idéntico, así que la decisión real está en la zona y el horario.",
+    "type": "comparacion",
+    "intro": "Limantour tiene dos sucursales en la ciudad con el mismo nombre y el mismo prestigio, pero no son intercambiables por completo: esto es lo que cambia entre la sede original de Roma Norte y la de Polanco.",
+    "sections": [
+      {
+        "heading": "El menú",
+        "eyebrow": "Roma Norte",
+        "placeSlug": "licoreria-limantour",
+        "body": "La carta la definen la Margarita al Pastor —con un toque de taco al pastor en la mezcla— y el Mr. Pink, de gin, romero y toronja: los dos tragos que todos piden primero. El espacio, de dos pisos con aire art déco, mezcla esos clásicos con creaciones de temporada."
+      },
+      {
+        "heading": "El menú",
+        "eyebrow": "Polanco",
+        "placeSlug": "licoreria-limantour-polanco",
+        "body": "La sucursal de Polanco no trae carta propia: sirve el mismo menú de cócteles de autor que la sede original de la Roma, en un espacio pensado específicamente para esta zona. Si buscas probar algo distinto a lo que ya conoces de Limantour, esta sucursal no es la diferencia — el trago es idéntico, cambia el lugar donde te lo tomas."
+      },
+      {
+        "heading": "La zona",
+        "eyebrow": "Roma Norte",
+        "placeSlug": "licoreria-limantour",
+        "body": "Está sobre Av. Álvaro Obregón, en pleno Roma Norte, la colonia donde abrió en 2011 y donde ayudó a que la ciudad empezara a tomarse la coctelería en serio —desde entonces ha aparecido año tras año en The World's 50 Best Bars, llegando a estar entre los diez primeros del mundo en 2019 y 2021."
+      },
+      {
+        "heading": "La zona",
+        "eyebrow": "Polanco",
+        "placeSlug": "licoreria-limantour-polanco",
+        "body": "Queda entre Masaryk y el Parque Lincoln, a unos pasos del Pasaje Polanco: mismo bar, mismo menú de cócteles de autor que la sede original de la Roma, pero en un espacio propio pensado para esta zona. Si tu plan de la noche ya está armado alrededor de Polanco, no hace falta cruzar la ciudad para tomar lo mismo."
+      },
+      {
+        "heading": "Horario de fin de semana",
+        "eyebrow": "Roma Norte",
+        "placeSlug": "licoreria-limantour",
+        "body": "Viernes y sábado abre de 15:00 a 02:00, y el domingo de 15:00 a 00:00 —un horario amplio que coincide con que el lugar se mantiene igual de lleno entre semana que en fin de semana."
+      },
+      {
+        "heading": "Horario de fin de semana",
+        "eyebrow": "Polanco",
+        "placeSlug": "licoreria-limantour-polanco",
+        "body": "El sábado abre desde las 14:00 hasta las 02:00, y el domingo de 14:00 a 23:00: una hora antes que la sede de Roma Norte ambos días, aunque cierra un poco más temprano el domingo (23:00 contra 00:00)."
+      },
+      {
+        "heading": "Veredicto",
+        "body": "El menú es el mismo en las dos sucursales, así que la decisión real no es de coctel sino de zona y horario: si ya estás en Roma Norte o quieres el lugar donde Limantour se ganó su lugar en The World's 50 Best, ve a la sede original sobre Álvaro Obregón; si tu noche ya gira alrededor de Polanco, o te conviene entrar una hora antes el fin de semana, la sucursal de Masaryk/Parque Lincoln te da exactamente lo mismo sin cruzar la ciudad."
+      }
+    ],
+    "categoryLabel": "Bares",
+    "readTime": "3 min de lectura · 2 sucursales",
+    "cover": {
+      "seed": "planazo-limantour-polanco-vs-roma-norte",
+      "alt": "Barra de coctelería de Licorería Limantour",
+      "width": 800,
+      "height": 450
+    },
+    "placeSlugs": [
+      "licoreria-limantour",
+      "licoreria-limantour-polanco"
+    ]
+  }
+]

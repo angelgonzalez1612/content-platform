@@ -1,0 +1,331 @@
+[
+  {
+    "kind": "evento",
+    "id": "ev-bazar-sabado-san-angel",
+    "slug": "bazar-sabado-san-angel",
+    "name": "El Bazar Sábado",
+    "category": "eventos",
+    "zone": "San Ángel",
+    "address": "Plaza San Jacinto 11, San Ángel, CDMX",
+    "dateLabel": "Sábado · 10:00–19:00",
+    "startDate": "2026-08-01T10:00:00-06:00",
+    "weekend": {
+      "day": "Sábado",
+      "time": "10:00"
+    },
+    "priceLabel": "Gratis",
+    "price": null,
+    "rating": 0,
+    "reviewCount": 0,
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1629218091978-f70a20a43aab?w=800&h=600&fit=crop&q=80&auto=format",
+      "alt": "Jarrón de cerámica de colores"
+    },
+    "gallery": [
+      {
+        "url": "https://images.unsplash.com/photo-1767039770798-89ed11c842d6?w=500&h=650&fit=crop&q=80&auto=format",
+        "alt": "Colección de vasijas de cerámica"
+      }
+    ],
+    "description": "El Bazar Sábado nació en 1960 en la calle Doctor Gálvez, en San Ángel, cuando Wendell Riggs y su esposa Cynthia Sargent tuvieron la idea de juntar artesanos mexicanos en un solo lugar — empezaron con apenas 15. En 1965 se mudaron a la casona colonial de Plaza San Jacinto 11, remodelada por el arquitecto Manuel Parra y por Ruth Rivera, hija de Diego Rivera. Hoy reúne a cientos de artesanos y artistas con joyería de autor, cerámica, textiles, moda y hasta un restaurante en el patio. Es un clásico de San Ángel: llega temprano, camina el jardín del Carmen de al lado y date tiempo para perderte entre los puestos. Solo abre los sábados, así que no hay margen de error si quieres ir.",
+    "tags": [
+      "Gratis",
+      "Familiar"
+    ],
+    "recurringDays": [
+      6
+    ],
+    "organizer": "Bazar Sábado"
+  },
+  {
+    "kind": "evento",
+    "id": "ev-salon-los-angeles-danzon",
+    "slug": "salon-los-angeles-danzon",
+    "name": "Salón Los Ángeles",
+    "category": "eventos",
+    "zone": "Guerrero",
+    "address": "Calle Lerdo 206, Guerrero, CDMX",
+    "dateLabel": "Domingo · 17:00–23:00",
+    "startDate": "2026-08-02T17:00:00-06:00",
+    "weekend": {
+      "day": "Domingo",
+      "time": "17:00"
+    },
+    "priceLabel": "$120 MXN cover",
+    "price": 120,
+    "rating": 0,
+    "reviewCount": 0,
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1555489401-79c274997434?w=800&h=600&fit=crop&q=80&auto=format",
+      "alt": "Pareja bailando"
+    },
+    "gallery": [
+      {
+        "url": "https://images.unsplash.com/photo-1575448913281-98e9e5d3f193?w=500&h=650&fit=crop&q=80&auto=format",
+        "alt": "Pareja bailando en salón"
+      }
+    ],
+    "description": "Abrió el 29 de julio de 1937 en un local que antes era bodega de camiones y costales de carbón, en la colonia Guerrero. Casi 90 años después sigue en pie y nunca ha cerrado sus puertas — por eso es Patrimonio Inmaterial de la Ciudad de México. Por su pista han pasado orquestas legendarias como la Sonora Santanera y Dámaso Pérez Prado, el rey del mambo. La frase que lo volvió mito la acuñó un cronista hace décadas: \"quien no conoce Los Ángeles, no conoce México\". Abre martes y domingo, con clases de baile antes de que arranque la orquesta en vivo — llegas sin saber bailar danzón y sales medio sabiendo, rodeado de parejas que lo han hecho toda la vida.",
+    "tags": [
+      "Música en vivo",
+      "Tradicional"
+    ],
+    "recurringDays": [
+      2,
+      0
+    ],
+    "organizer": "Salón Los Ángeles"
+  },
+  {
+    "kind": "evento",
+    "id": "ev-cicloton-cdmx",
+    "slug": "cicloton-cdmx",
+    "name": "Ciclotón CDMX",
+    "category": "aire-libre",
+    "zone": "Reforma",
+    "address": "Paseo de la Reforma, CDMX",
+    "dateLabel": "Último domingo del mes · 08:00–14:00",
+    "startDate": "2026-08-30T08:00:00-06:00",
+    "priceLabel": "Gratis",
+    "price": null,
+    "rating": 0,
+    "reviewCount": 0,
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1499871435582-a1d4ff236842?w=800&h=600&fit=crop&q=80&auto=format",
+      "alt": "Ciclistas en movimiento en la ciudad"
+    },
+    "gallery": [
+      {
+        "url": "https://images.unsplash.com/photo-1610913855122-e4e14f4e2b8b?w=500&h=650&fit=crop&q=80&auto=format",
+        "alt": "Grupo de ciclistas en la calle"
+      }
+    ],
+    "description": "Cada último domingo de mes, Reforma y otras avenidas de seis alcaldías se cierran a los coches y se llenan de bicicletas, patines y gente caminando — lo organiza el INDEPORTE y es completamente gratis. La ruta cambia según el mes: a veces son más de 40 kilómetros desde Calzada de Guadalupe hasta el Circuito Interior, otras veces se acorta por algún evento especial en la ciudad. En el camino hay puntos de hidratación, asistencia mecánica y hasta módulos de fisioterapia para las piernas cansadas. Se suspendió durante la pandemia y volvió en 2021. Es de las pocas veces al mes que puedes rodar por el centro de la ciudad sin un camión encima — funciona para toda la familia, del ciclista serio al que solo quiere pasear.",
+    "tags": [
+      "Gratis",
+      "Familiar"
+    ],
+    "recurringDays": [
+      0
+    ],
+    "organizer": "INDEPORTE"
+  },
+  {
+    "kind": "evento",
+    "id": "ev-mercado-el-100",
+    "slug": "mercado-el-100",
+    "name": "Mercado El 100",
+    "category": "comer",
+    "zone": "Roma Sur",
+    "address": "Plaza del Lanzador, Roma Sur, CDMX",
+    "dateLabel": "Domingo · 09:30–14:30",
+    "startDate": "2026-08-02T09:30:00-06:00",
+    "weekend": {
+      "day": "Domingo",
+      "time": "09:30"
+    },
+    "priceLabel": "Gratis",
+    "price": null,
+    "rating": 0,
+    "reviewCount": 0,
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1526399743290-f73cb4022f48?w=800&h=600&fit=crop&q=80&auto=format",
+      "alt": "Personas junto a mesas con productos frescos"
+    },
+    "gallery": [
+      {
+        "url": "https://images.unsplash.com/photo-1591586116988-62fe65164f8d?w=500&h=650&fit=crop&q=80&auto=format",
+        "alt": "Verduras frescas sobre mesa de madera"
+      }
+    ],
+    "description": "Abrió el 31 de octubre de 2010 en la Plaza Río de Janeiro, con apenas 12 productores, tras dos años de investigación de quienes lo armaron. Hoy, ya instalado en la Plaza del Lanzador de la Roma Sur, reúne a decenas de productores —todos dentro de un radio de 160 km, de ahí el nombre \"El 100\"— con Certificación Orgánica Participativa reconocida por SAGARPA-SENASICA. Se rige por cinco valores que repiten sus organizadores: local, sano, rico, justo y limpio. Vas a encontrar verduras y fruta de temporada, quesos artesanales, café, pan de manos que sí conoces, y puestos de comida para desayunar ahí mismo. Es cita de domingo para quien quiere saber quién cultivó lo que se está comiendo.",
+    "tags": [
+      "Gratis",
+      "Familiar"
+    ],
+    "recurringDays": [
+      0
+    ],
+    "organizer": "Mercado El 100"
+  },
+  {
+    "kind": "evento",
+    "id": "ev-lucha-libre-arena-mexico",
+    "slug": "lucha-libre-arena-mexico",
+    "name": "Lucha Libre CMLL — Arena México",
+    "category": "eventos",
+    "zone": "Doctores",
+    "address": "Dr. Lavista 189, Doctores, CDMX",
+    "dateLabel": "Viernes · 20:30",
+    "startDate": "2026-07-31T20:30:00-06:00",
+    "weekend": {
+      "day": "Viernes",
+      "time": "20:30"
+    },
+    "priceLabel": "Desde $50 MXN",
+    "price": 50,
+    "rating": 0,
+    "reviewCount": 0,
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1657672825833-7b2ad6fae220?w=800&h=600&fit=crop&q=80&auto=format",
+      "alt": "Luchadores en el aire durante combate"
+    },
+    "gallery": [
+      {
+        "url": "https://images.unsplash.com/photo-1715149721511-8e48fc0cb2f4?w=500&h=650&fit=crop&q=80&auto=format",
+        "alt": "Luchadores en el ring"
+      }
+    ],
+    "description": "La Arena México es la \"Catedral de la Lucha Libre\": ahí vive el CMLL, la empresa de lucha libre en activo más antigua del mundo, fundada en 1933. El Viernes Espectacular es su función insignia — cada viernes a las 20:30, salvo cuando hay una cartelera especial de aniversario con luchas de apuestas donde se arriesgan máscaras y cabelleras. También hay funciones los martes por la noche y los domingos por la tarde, pensadas como Domingo Familiar. No hace falta saber de lucha para engancharte: el ambiente de la arena, la gente gritándole a los rudos y técnicos, y las máscaras son parte del espectáculo tanto como lo que pasa arriba del ring.",
+    "tags": [
+      "Con amigos",
+      "Grupos"
+    ],
+    "recurringDays": [
+      2,
+      5,
+      0
+    ],
+    "organizer": "CMLL",
+    "performer": "CMLL"
+  },
+  {
+    "kind": "evento",
+    "id": "ev-antiguedades-la-lagunilla",
+    "slug": "antiguedades-la-lagunilla",
+    "name": "Mercado de Antigüedades La Lagunilla",
+    "category": "eventos",
+    "zone": "Centro",
+    "address": "Calles Comonfort, Jaime Nunó y Matamoros, Centro, CDMX",
+    "dateLabel": "Domingo · 09:00–15:00",
+    "startDate": "2026-08-02T09:00:00-06:00",
+    "weekend": {
+      "day": "Domingo",
+      "time": "09:00"
+    },
+    "priceLabel": "Gratis",
+    "price": null,
+    "rating": 0,
+    "reviewCount": 0,
+    "cover": {
+      "url": "https://images.unsplash.com/photo-1560697043-f880bb028f1e?w=800&h=600&fit=crop&q=80&auto=format",
+      "alt": "Colección de objetos antiguos"
+    },
+    "gallery": [
+      {
+        "url": "https://images.unsplash.com/photo-1780775119716-ad6b86847f77?w=500&h=650&fit=crop&q=80&auto=format",
+        "alt": "Personas viendo puestos de mercado al aire libre"
+      }
+    ],
+    "description": "La Lagunilla ya era zona de comercio desde antes de la Conquista, cuando aquí había una laguna que se conectaba con el Lago de Texcoco por canales — de ahí el nombre. Con los siglos se volvió mercado y hoy, cada domingo, las calles Comonfort, Jaime Nunó y Matamoros —a unas cuadras de Garibaldi— se llenan de puestos con espadas, monedas y billetes viejos, discos de vinil, cámaras análogas, juguetes de otras décadas y muebles que ya nadie hace así. Es un mercado para hurgar, no para ir con prisa: los mejores hallazgos se los llevan los que llegan temprano y saben regatear.",
+    "tags": [
+      "Tradicional",
+      "Cultura alternativa"
+    ],
+    "recurringDays": [
+      0
+    ]
+  },
+  {
+    "kind": "evento",
+    "id": "ev-tianguis-condesa",
+    "slug": "tianguis-condesa",
+    "name": "Tianguis de Condesa",
+    "category": "comer",
+    "zone": "Condesa",
+    "address": "Calle Pachuca, entre Veracruz y Juan de la Barrera, Condesa, CDMX",
+    "dateLabel": "Martes · 10:00–17:00",
+    "startDate": "2026-08-04T10:00:00-06:00",
+    "priceLabel": "Gratis",
+    "price": null,
+    "rating": 0,
+    "reviewCount": 0,
+    "cover": {
+      "seed": "planazo-tianguis-condesa",
+      "alt": "Tianguis de Condesa",
+      "width": 640,
+      "height": 480
+    },
+    "gallery": [
+      {
+        "seed": "planazo-tianguis-condesa-1",
+        "alt": "Puestos de fruta y verdura en la calle",
+        "width": 300,
+        "height": 300
+      }
+    ],
+    "description": "Cada martes, tres cuadras de la calle Pachuca, en la Condesa, se cierran a los coches para instalar un tianguis clásico de barrio: fruta y verdura de temporada, ropa, cosméticos y artículos para el hogar, entre camellones arbolados. Corre de Veracruz a Juan de la Barrera, de 10 de la mañana a 5 de la tarde, y es de los pocos tianguis genuinos que quedan en una zona cada vez más gentrificada.",
+    "tags": ["Gratis", "Mercado"],
+    "recurringDays": [2]
+  },
+  {
+    "kind": "evento",
+    "id": "ev-bar-comedy-foro-shakespeare",
+    "slug": "microfono-abierto-foro-shakespeare",
+    "name": "Micrófono Abierto — Foro Shakespeare",
+    "category": "eventos",
+    "zone": "Condesa",
+    "address": "Zamora 7, Condesa, CDMX",
+    "dateLabel": "Jueves · 21:00",
+    "startDate": "2026-08-06T21:00:00-06:00",
+    "priceLabel": "Entrada libre",
+    "price": null,
+    "rating": 0,
+    "reviewCount": 0,
+    "cover": {
+      "seed": "planazo-bar-comedy-foro-shakespeare",
+      "alt": "Micrófono abierto en Foro Shakespeare",
+      "width": 640,
+      "height": 480
+    },
+    "gallery": [
+      {
+        "seed": "planazo-bar-comedy-foro-shakespeare-1",
+        "alt": "Escenario pequeño de stand-up",
+        "width": 300,
+        "height": 300
+      }
+    ],
+    "description": "Los jueves, el escenario chico de Foro Shakespeare se abre para micrófono abierto de stand-up: comediantes en formación —y algunos ya conocidos probando material nuevo— se turnan frente a un público que solo paga su consumo. Es la puerta de entrada más accesible a la escena de comedia en vivo de la Condesa, sin el boletaje de los shows de fin de semana del mismo foro.",
+    "tags": ["Gratis", "Comedia"],
+    "recurringDays": [4],
+    "organizer": "Foro Shakespeare"
+  },
+  {
+    "kind": "evento",
+    "id": "ev-casa-franca-jazz",
+    "slug": "casa-franca-jazz",
+    "name": "Jazz en vivo — Casa Franca",
+    "category": "musica",
+    "zone": "Roma Norte",
+    "address": "Mérida 109, Roma Norte, CDMX",
+    "dateLabel": "Martes a sábado · 21:30",
+    "startDate": "2026-08-04T21:30:00-06:00",
+    "weekend": {
+      "day": "Sábado",
+      "time": "21:30"
+    },
+    "priceLabel": "$100-150 MXN cover",
+    "price": 150,
+    "rating": 0,
+    "reviewCount": 0,
+    "cover": {
+      "seed": "planazo-casa-franca-jazz",
+      "alt": "Jazz en vivo en Casa Franca",
+      "width": 640,
+      "height": 480
+    },
+    "gallery": [
+      {
+        "seed": "planazo-casa-franca-jazz-1",
+        "alt": "Músicos de jazz en escenario íntimo",
+        "width": 300,
+        "height": 300
+      }
+    ],
+    "description": "En un bar de ambiente vintage sobre Mérida, en la Roma Norte, Casa Franca mete músicos en vivo de martes a sábado a las 9:30 de la noche, con cover de 100 pesos los martes y 150 el resto de la semana —después de medianoche no se cobra entrada—. La terraza tampoco tiene cover. Es de las apuestas más consistentes de la ciudad para encontrar jazz en vivo casi cualquier noche entre semana.",
+    "tags": ["Música en vivo", "Jazz"],
+    "recurringDays": [2, 3, 4, 5, 6],
+    "organizer": "Casa Franca"
+  }
+]
