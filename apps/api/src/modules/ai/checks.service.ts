@@ -5,6 +5,8 @@ export type { CheckResult, AiDecision };
 
 export interface RunChecksInput {
   mode: 'draft' | 'improve';
+  /** Determina el umbral de `calidad-longitud` — ver MIN_WORDS_BY_TYPE. */
+  contentType: string;
   /** Claves que deben existir y no estar vacías en draftData (base + category_data). */
   requiredFields: string[];
   /** Claves marcadas isFact:true — en modo "improve" deben coincidir exactamente con originalFacts. */
@@ -25,6 +27,25 @@ export interface RunChecksResult {
 
 const isEmpty = (value: unknown) =>
   value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
+
+// Umbral mínimo de `calidad-longitud` por tipo de contenido. 300 nació
+// calibrado solo para noticia/reportaje (ver comentario más abajo) — aplicado
+// tal cual a los tipos de nota corta (place/alerta/evento*/lugar), donde el
+// propio prompt editorial en content-types.ts pide 1-3 párrafos o 80-120
+// palabras, el check bloqueaba el 100% de las piezas sin excepción, sin
+// importar qué tan buena fuera la redacción. guia sí se deja en 300: es
+// evergreen con content[] + faq, con espacio real para llegar ahí.
+const MIN_WORDS_BY_TYPE: Record<string, number> = {
+  noticia: 300,
+  reportaje: 300,
+  guia: 300,
+  place: 60, // objetivo editorial: 80-120 palabras (content-types.ts)
+  alerta: 50, // objetivo editorial: 1-3 párrafos
+  evento: 40, // objetivo editorial: 1-2 párrafos
+  'evento-planazo': 40, // objetivo editorial: 1-2 párrafos
+  lugar: 40, // objetivo editorial: 1-2 párrafos
+};
+const DEFAULT_MIN_WORDS = 300;
 
 // Determinístico, sin llamadas a LLM — es lo único que permite confiar en la
 // auto-publicación (ver Fase 3 del plan). Corre TODOS los checks (no corta al
@@ -98,14 +119,45 @@ export class ChecksService {
       blocking: true,
     });
 
-    // 4. Calidad — señal, no bloqueo. Un texto muy corto no impide publicar,
-    // pero sí queda marcado para revisión periódica (ver riesgo #2 del plan).
+    // 4. Calidad — bloqueante desde 2026-09-07 (calidad > cantidad mientras
+    // se estabiliza el sitio para pasar la revisión de AdSense; antes era
+    // señal no bloqueante, ver historial de este archivo). Umbral subido de
+    // 40 a 300 el mismo día: con 40, artículos de 40-290 palabras (varios de
+    // apenas 33-52 en producción) pasaban como "de calidad aceptable" y nunca
+    // disparaban expandIfShort/maybeExpandContent — Google AdSense rechazó
+    // ambos sitios por "contenido de poco valor", y ese volumen de piezas
+    // demasiado cortas fue una causa real confirmada. Reversible a
+    // blocking:false cuando se quiera volver a más auto-publicación.
     const wordCount = input.bodyText ? input.bodyText.trim().split(/\s+/).filter(Boolean).length : 0;
+    const minWords = MIN_WORDS_BY_TYPE[input.contentType] ?? DEFAULT_MIN_WORDS;
     checksRun.push({
       name: 'calidad-longitud',
-      passed: wordCount >= 40,
-      detail: `${wordCount} palabras (mínimo sugerido: 40)`,
-      blocking: false,
+      passed: wordCount >= minWords,
+      detail: `${wordCount} palabras (mínimo: ${minWords})`,
+      blocking: true,
+    });
+
+    // 5. Revisión humana obligatoria para evento-planazo (2026-09-10): las
+    // reglas de esa categoría (Gaming/Música/Geek/Cine-TV/Viajes/Eventos —
+    // Planazo) generan borradores bien formados — pasan completitud/SEO/
+    // longitud sin problema — a partir de temas que a veces son cobertura de
+    // industria (ranking turístico, estudio de mercado), no una recomendación
+    // real de plan con fecha/lugar. El classifyHint de evento-planazo en
+    // content-types.ts ya dice "no para cobertura noticiosa", pero es una
+    // instrucción para la IA, no algo que un check determinístico pueda
+    // verificar todavía: `startDate` llega null incluso en piezas legítimas
+    // (ver createContent en automation-runner.service.ts, nunca lo llena),
+    // así que hoy no existe ninguna señal estructural real que distinga "es
+    // un plan" de "es una noticia". Mientras no exista esa señal, todo
+    // evento-planazo pasa por revisión humana sin excepción — mismo criterio
+    // que ya se aplicó a calidad-longitud: calidad/seguridad > volumen
+    // mientras se estabiliza el sitio para AdSense. Quitar este check en
+    // cuanto haya una forma confiable de distinguir ambos casos.
+    checksRun.push({
+      name: 'revision-humana-evento-planazo',
+      passed: input.contentType !== 'evento-planazo',
+      detail: input.contentType === 'evento-planazo' ? 'evento-planazo siempre requiere revisión humana antes de publicar' : undefined,
+      blocking: true,
     });
 
     const decision: AiDecision = checksRun.every((c) => !c.blocking || c.passed)

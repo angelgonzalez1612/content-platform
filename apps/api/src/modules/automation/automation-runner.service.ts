@@ -70,6 +70,42 @@ function normalizeTitle(title: string): string {
   return title.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
+// Content Radar no dedupea por historia real — cuando 2-4 medios cubren el
+// mismo hecho, cada uno aparece como su propio "tema" en el reporte (mismo
+// evento, encabezado distinto). Sin este chequeo, la IA redacta y publica la
+// misma noticia varias veces ("Scorpions cancela... y la reagenda para 2027"
+// / "...y anuncia nuevas fechas hasta 2027" / "...y la reagenda para 2027"
+// (de nuevo) — visto en vivo, hasta 4 copias del mismo hecho el mismo día).
+// No es NLP real: compara el solape de palabras "significativas" (4+ letras,
+// sin stopwords) entre dos títulos ya normalizados — barato y suficiente
+// para el caso común (misma historia, redacción distinta). Umbral probado a
+// mano contra los duplicados reales vistos en producción (Scorpions, INE,
+// Metro CDMX) y contra temas genuinamente distintos del mismo reporte: 0.5
+// atrapa los 5/5 duplicados reales sin ningún falso positivo; 0.6 dejaba
+// pasar 1 de los 5 (títulos que reformulan más de la mitad de las palabras).
+const TITLE_STOPWORDS = new Set([
+  'de', 'la', 'el', 'en', 'y', 'a', 'que', 'un', 'una', 'los', 'las', 'del',
+  'al', 'su', 'con', 'por', 'para', 'se', 'es', 'lo', 'ya', 'más', 'tras',
+  'no', 'le', 'sus', 'como', 'entre', 'este', 'esta',
+]);
+
+function significantWords(title: string): Set<string> {
+  return new Set(
+    normalizeTitle(title)
+      .split(/[^a-záéíóúñ0-9]+/i)
+      .filter((w) => w.length >= 4 && !TITLE_STOPWORDS.has(w)),
+  );
+}
+
+function looksLikeSameStory(a: string, b: string): boolean {
+  const wa = significantWords(a);
+  const wb = significantWords(b);
+  if (wa.size === 0 || wb.size === 0) return false;
+  let shared = 0;
+  for (const w of wa) if (wb.has(w)) shared += 1;
+  return shared / Math.min(wa.size, wb.size) >= 0.5;
+}
+
 function buildToc(content: ContentBlock[]): { id: string; label: string }[] {
   return content
     .filter((b) => b.heading?.trim())
@@ -189,6 +225,17 @@ export class AutomationRunnerService {
    * "Ejecutar ahora" de la pantalla de Automatizaciones dispare exactamente lo
    * mismo que la corrida automática del interval, sin duplicar lógica. */
   async run(): Promise<{ evaluated: number; created: number }> {
+    // Guard contra solapamiento: si una corrida anterior (interval, "Ejecutar
+    // ahora", o el cron de Vercel) sigue activa, se omite esta en vez de
+    // correr dos a la vez — visto en vivo: una corrida se atoró más de 15
+    // minutos (un proceso de IA que no respetó su timeout, ver
+    // claude-cli-provider.ts) y el siguiente tick del @Interval habría
+    // arrancado encima sin este chequeo, duplicando llamadas de IA sobre los
+    // mismos temas.
+    if (this.runningFlag) {
+      this.logger.warn('run() se omitió: ya hay una corrida activa (ver isRunning).');
+      return { evaluated: 0, created: 0 };
+    }
     this.runningFlag = true;
     try {
       await this.rules.touchLastChecked();
@@ -208,6 +255,12 @@ export class AutomationRunnerService {
         this.rules.todaysCreatedCountByRule(),
       ]);
       const handledThisRun = new Set<string>();
+      // Títulos de lo que esta MISMA corrida ya creó — junto con `alreadyPublished`
+      // (histórico), alimenta el chequeo de "misma historia, otro medio" de más
+      // abajo (ver looksLikeSameStory). Solo títulos que SÍ se crearon: si un
+      // tema no encontró regla que lo aceptara, su fracaso no debería bloquear
+      // a un tema parecido que sí encuentre una regla distinta.
+      const createdTitlesThisRun: string[] = [];
       const ruleStates: RuleState[] = activeRules.map((rule) => ({ rule, createdCount: todaysCounts.get(rule.id) ?? 0 }));
 
       let created = 0;
@@ -228,6 +281,14 @@ export class AutomationRunnerService {
         // la bitácora sin decir nada nuevo después del primer aviso.
         if (alreadyPublished.has(key) || alreadyEvaluated.has(key)) continue;
 
+        // Sin match exacto, pero puede ser la MISMA noticia contada por otro
+        // medio con otro encabezado — ver looksLikeSameStory. Silencioso a
+        // propósito, mismo criterio que el skip de arriba.
+        const isDuplicateStory =
+          createdTitlesThisRun.some((t) => looksLikeSameStory(topic.title, t)) ||
+          [...alreadyPublished].some((t) => looksLikeSameStory(topic.title, t));
+        if (isDuplicateStory) continue;
+
         const candidates = ruleStates.filter(
           (state) =>
             state.createdCount < state.rule.dailyLimit &&
@@ -237,7 +298,10 @@ export class AutomationRunnerService {
         if (candidates.length === 0) continue;
 
         evaluated += 1;
-        if (await this.assignTopic(candidates, topic)) created += 1;
+        if (await this.assignTopic(candidates, topic)) {
+          created += 1;
+          createdTitlesThisRun.push(topic.title);
+        }
       }
 
       return { evaluated, created };
@@ -394,7 +458,10 @@ export class AutomationRunnerService {
       const category = await this.categories.findOne(result.categoryId);
       return { result, category };
     } catch (err) {
-      return { error: err instanceof Error ? err.message.slice(0, 300) : 'Error desconocido generando el borrador.' };
+      // 2000 y no 300: un límite corto ya escondió la causa real de un lote
+      // de fallos (todas las corridas del 4 de septiembre quedaron con el
+      // mensaje cortado a media línea, sin forma de saber qué pasó de verdad).
+      return { error: err instanceof Error ? err.message.slice(0, 2000) : 'Error desconocido generando el borrador.' };
     }
   }
 
@@ -482,7 +549,7 @@ export class AutomationRunnerService {
         site: result.site,
         contentType: result.contentType,
         outcome: 'error',
-        detail: err instanceof Error ? err.message.slice(0, 300) : 'Error desconocido creando el contenido.',
+        detail: err instanceof Error ? err.message.slice(0, 2000) : 'Error desconocido creando el contenido.',
         source: topic.source,
       });
       return false;
@@ -498,7 +565,14 @@ export class AutomationRunnerService {
   ): Promise<{ id: string; slug: string }> {
     const draft = result.draft as Record<string, unknown>;
     const seo = (draft.seo as Seo | undefined) ?? null;
-    const status = published ? 'published' : 'draft';
+    // 'in_review', no 'draft': un borrador normal (creado a mano, nunca
+    // corrió checks) y una pieza que SÍ corrió checks y los reprobó son cosas
+    // distintas — in_review es justamente el status que ya modela eso (ver
+    // CONTENT_STATUS_VALUES, StatusBadge "En revisión"), pero hasta ahora
+    // nunca se usaba: todo lo no-publicado caía en 'draft' sin distinción,
+    // así que no había ninguna cola real de "esto necesita ojos humanos
+    // antes de publicarse" — solo un montón de borradores indistinguibles.
+    const status = published ? 'published' : 'in_review';
 
     switch (contentType) {
       case 'place': {

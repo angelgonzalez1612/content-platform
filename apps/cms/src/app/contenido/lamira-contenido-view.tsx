@@ -37,7 +37,7 @@ const TYPE_ICON: Record<string, string> = {
 };
 const TYPE_ORDER = ["noticia", "alerta", "guia", "evento", "lugar", "reportaje"] as const;
 
-type StatusFilter = "todos" | "publicado" | "sin_publicar";
+type StatusFilter = "todos" | "publicado" | "en_revision" | "sin_publicar";
 
 // Antes se apilaban los 6 tipos en una sola lista larga — para llegar a
 // "Reportaje" había que scrollear pasando noticias/alertas/guías/eventos/
@@ -58,12 +58,27 @@ export function LamiraContenidoView({ rows, categories }: { rows: LamiraContentR
     if (typeFilter !== "todos" && r.type !== typeFilter) return false;
     if (categoryFilter !== "todos" && r.categoryId !== categoryFilter) return false;
     if (statusFilter === "publicado" && !r.isPublished) return false;
+    if (statusFilter === "en_revision" && r.status !== "in_review") return false;
     if (statusFilter === "sin_publicar" && r.isPublished) return false;
     return true;
   });
 
+  const inReviewCount = rows.filter((r) => r.status === "in_review").length;
+
   return (
     <>
+      {inReviewCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setStatusFilter("en_revision")}
+          className="mb-4 flex w-full items-center gap-2 rounded-[10px] border border-[#F4DDA0] bg-[#FEF6E7] px-4 py-2.5 text-left text-[13px] font-medium text-[#9A6B12] transition-colors hover:bg-[#FCEECA]"
+        >
+          <span aria-hidden>⏳</span>
+          {inReviewCount} {inReviewCount === 1 ? "elemento" : "elementos"} en revisión — no salieron publicados solos
+          porque no pasaron algún check automático (longitud, SEO, foto, etc). Revísalos antes de publicarlos a mano.
+        </button>
+      )}
+
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-border bg-background p-0.5">
           <FilterChip active={typeFilter === "todos"} onClick={() => setTypeFilter("todos")}>
@@ -95,6 +110,9 @@ export function LamiraContenidoView({ rows, categories }: { rows: LamiraContentR
           </FilterChip>
           <FilterChip active={statusFilter === "publicado"} onClick={() => setStatusFilter("publicado")}>
             Publicado
+          </FilterChip>
+          <FilterChip active={statusFilter === "en_revision"} onClick={() => setStatusFilter("en_revision")}>
+            En revisión{inReviewCount > 0 ? ` (${inReviewCount})` : ""}
           </FilterChip>
           <FilterChip active={statusFilter === "sin_publicar"} onClick={() => setStatusFilter("sin_publicar")}>
             Sin publicar

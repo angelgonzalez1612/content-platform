@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { Category, Place, PlanazoEvent } from "@planazo/types";
+import type { Category, Place, PlanazoEvent, PlanazoGuide } from "@planazo/types";
 import { StatusBadge } from "@/components/cms/status-badge";
 import { ViewPublishedLink } from "@/components/cms/view-published-link";
 import { siteConfig } from "@planazo/config";
@@ -12,8 +12,8 @@ function formatDate(iso: string | null): string {
   return new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", year: "numeric" }).format(new Date(iso));
 }
 
-type TypeFilter = "todos" | "lugares" | "eventos";
-type StatusFilter = "todos" | "publicado" | "sin_publicar";
+type TypeFilter = "todos" | "lugares" | "eventos" | "guias";
+type StatusFilter = "todos" | "publicado" | "en_revision" | "sin_publicar";
 
 // Antes Lugares y Eventos se apilaban uno debajo del otro — con muchos
 // lugares, había que scrollear pasando todos para llegar a Eventos. El
@@ -23,10 +23,12 @@ type StatusFilter = "todos" | "publicado" | "sin_publicar";
 export function PlanazoContenidoView({
   places,
   events,
+  guides,
   categories,
 }: {
   places: Place[];
   events: PlanazoEvent[];
+  guides: PlanazoGuide[];
   categories: Category[];
 }) {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("todos");
@@ -44,19 +46,35 @@ export function PlanazoContenidoView({
   const filteredPlaces = places.filter((p) => {
     if (categoryFilter !== "todos" && !p.categories.some((c) => c.id === categoryFilter)) return false;
     if (statusFilter === "publicado" && p.status !== "published") return false;
+    if (statusFilter === "en_revision" && p.status !== "in_review") return false;
     if (statusFilter === "sin_publicar" && p.status === "published") return false;
     return true;
   });
   const filteredEvents = events.filter((e) => {
     if (categoryFilter !== "todos" && e.categoryId !== categoryFilter) return false;
     if (statusFilter === "publicado" && e.status !== "published") return false;
+    if (statusFilter === "en_revision" && e.status !== "in_review") return false;
     if (statusFilter === "sin_publicar" && e.status === "published") return false;
     return true;
   });
+  // Las guías no tienen categoría del catálogo (categoryLabel es texto libre,
+  // ver PlanazoGuide) — el filtro de categoría de arriba no les aplica.
+  const filteredGuides = guides.filter((g) => {
+    if (statusFilter === "publicado" && g.status !== "published") return false;
+    if (statusFilter === "en_revision" && g.status !== "in_review") return false;
+    if (statusFilter === "sin_publicar" && g.status === "published") return false;
+    return true;
+  });
 
-  const showPlaces = typeFilter !== "eventos";
-  const showEvents = typeFilter !== "lugares";
-  const total = places.length + events.length;
+  const inReviewCount =
+    places.filter((p) => p.status === "in_review").length +
+    events.filter((e) => e.status === "in_review").length +
+    guides.filter((g) => g.status === "in_review").length;
+
+  const showPlaces = typeFilter === "todos" || typeFilter === "lugares";
+  const showEvents = typeFilter === "todos" || typeFilter === "eventos";
+  const showGuides = typeFilter === "todos" || typeFilter === "guias";
+  const total = places.length + events.length + guides.length;
 
   return (
     <>
@@ -68,7 +86,7 @@ export function PlanazoContenidoView({
         <div>
           <h1 className="mb-1 text-[22px] font-semibold tracking-tight">Planazo</h1>
           <p className="text-[13.5px] text-ink-soft">
-            {total} {total === 1 ? "elemento" : "elementos"} · lugares y eventos.
+            {total} {total === 1 ? "elemento" : "elementos"} · lugares, eventos y guías.
           </p>
         </div>
         {typeFilter === "eventos" ? (
@@ -77,6 +95,13 @@ export function PlanazoContenidoView({
             className="rounded-[10px] bg-brand px-4 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_1px_2px_rgba(253,105,13,.35)] transition-colors hover:bg-brand-pressed"
           >
             + Crear evento
+          </Link>
+        ) : typeFilter === "guias" ? (
+          <Link
+            href="/crear/manual?site=planazo&type=guia"
+            className="rounded-[10px] bg-brand px-4 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_1px_2px_rgba(253,105,13,.35)] transition-colors hover:bg-brand-pressed"
+          >
+            + Crear guía
           </Link>
         ) : (
           <Link
@@ -88,6 +113,18 @@ export function PlanazoContenidoView({
         )}
       </div>
 
+      {inReviewCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setStatusFilter("en_revision")}
+          className="mb-4 flex w-full items-center gap-2 rounded-[10px] border border-[#F4DDA0] bg-[#FEF6E7] px-4 py-2.5 text-left text-[13px] font-medium text-[#9A6B12] transition-colors hover:bg-[#FCEECA]"
+        >
+          <span aria-hidden>⏳</span>
+          {inReviewCount} {inReviewCount === 1 ? "elemento" : "elementos"} en revisión — no salieron publicados solos
+          porque no pasaron algún check automático (longitud, SEO, foto, etc). Revísalos antes de publicarlos a mano.
+        </button>
+      )}
+
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="inline-flex items-center gap-1 rounded-full border border-border bg-background p-0.5">
           <FilterChip active={typeFilter === "todos"} onClick={() => setTypeFilter("todos")}>
@@ -98,6 +135,9 @@ export function PlanazoContenidoView({
           </FilterChip>
           <FilterChip active={typeFilter === "eventos"} onClick={() => setTypeFilter("eventos")}>
             📅 Eventos
+          </FilterChip>
+          <FilterChip active={typeFilter === "guias"} onClick={() => setTypeFilter("guias")}>
+            📖 Guías
           </FilterChip>
         </div>
 
@@ -120,6 +160,9 @@ export function PlanazoContenidoView({
           </FilterChip>
           <FilterChip active={statusFilter === "publicado"} onClick={() => setStatusFilter("publicado")}>
             Publicado
+          </FilterChip>
+          <FilterChip active={statusFilter === "en_revision"} onClick={() => setStatusFilter("en_revision")}>
+            En revisión{inReviewCount > 0 ? ` (${inReviewCount})` : ""}
           </FilterChip>
           <FilterChip active={statusFilter === "sin_publicar"} onClick={() => setStatusFilter("sin_publicar")}>
             Sin publicar
@@ -197,7 +240,7 @@ export function PlanazoContenidoView({
         </>
       )}
 
-      {showPlaces && showEvents && <div className="h-8" />}
+      {showPlaces && (showEvents || showGuides) && <div className="h-8" />}
 
       {showEvents && (
         <>
@@ -240,6 +283,59 @@ export function PlanazoContenidoView({
                   <span className="text-right font-mono text-[11px] text-ink-faint">{formatDate(event.startDate)}</span>
                   <span className="flex justify-center">
                     <ViewPublishedLink compact href={`${siteConfig.planazoUrl}/eventos/${event.slug}`} available={event.status === "published"} />
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </>
+      )}
+
+      {showEvents && showGuides && <div className="h-8" />}
+
+      {showGuides && (
+        <>
+          <div className="mb-3 flex items-end justify-between gap-4">
+            <h2 className="text-[16px] font-semibold tracking-tight text-ink-soft">
+              Guías
+              <span className="ml-2 font-mono text-[11px] font-normal text-ink-faint">
+                {filteredGuides.length} de {guides.length}
+              </span>
+            </h2>
+          </div>
+
+          <div className="overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+            <div className="grid grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-2.5 font-mono text-[9px] tracking-[.1em] text-[#BDB6AE] uppercase">
+              <span>Título</span>
+              <span>Categoría</span>
+              <span>Estado</span>
+              <span className="text-right">Actualizado</span>
+              <span className="text-center">Ver</span>
+            </div>
+
+            {filteredGuides.length === 0 ? (
+              <p className="p-8 text-center text-[13.5px] text-ink-soft">
+                {guides.length === 0 ? "Todavía no hay guías. Créalas con el botón de arriba." : "Ninguna guía coincide con estos filtros."}
+              </p>
+            ) : (
+              filteredGuides.map((guide) => (
+                <div
+                  key={guide.id}
+                  className="grid grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-[#FEFCFA]"
+                >
+                  <Link href={`/contenido/planazo-guia/${guide.id}`} className="min-w-0 py-2 pr-3">
+                    <span className="block truncate text-[13.5px] font-medium tracking-tight hover:text-brand">{guide.title}</span>
+                    <span className="block truncate text-[11.5px] text-ink-faint">
+                      {guide.placeSlugs.length} {guide.placeSlugs.length === 1 ? "parada" : "paradas"}
+                    </span>
+                  </Link>
+                  <span className="truncate text-[12.5px] text-ink-soft">{guide.categoryLabel || "—"}</span>
+                  <span>
+                    <StatusBadge status={guide.status} />
+                  </span>
+                  <span className="text-right font-mono text-[11px] text-ink-faint">{formatDate(guide.updatedAt)}</span>
+                  <span className="flex justify-center">
+                    <ViewPublishedLink compact href={`${siteConfig.planazoUrl}/guias/${guide.slug}`} available={guide.status === "published"} />
                   </span>
                 </div>
               ))
