@@ -127,6 +127,20 @@
       "when": 1788309029399,
       "tag": "0017_past_nebula",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1788479439079,
+      "tag": "0018_white_patch",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1788882313552,
+      "tag": "0019_lame_clint_barton",
+      "breakpoints": true
     }
   ]
 }

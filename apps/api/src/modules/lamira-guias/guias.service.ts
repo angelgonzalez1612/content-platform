@@ -28,7 +28,11 @@ export class GuiasService {
   }
 
   async findBySlug(slug: string): Promise<Guia> {
-    const row = await this.db.query.guias.findFirst({ where: eq(guias.slug, slug), with: { category: true } });
+    const siteId = await this.sites.getId('la-mira');
+    const row = await this.db.query.guias.findFirst({
+      where: and(eq(guias.slug, slug), eq(guias.siteId, siteId), eq(guias.status, 'published')),
+      with: { category: true },
+    });
     if (!row) throw new NotFoundException(`Guía "${slug}" no existe`);
     return toGuia(row);
   }

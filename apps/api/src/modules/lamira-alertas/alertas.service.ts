@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { slugify } from '@planazo/shared';
 import type { Alerta } from '@planazo/types';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
@@ -31,7 +31,11 @@ export class AlertasService {
   }
 
   async findBySlug(slug: string): Promise<Alerta> {
-    const row = await this.db.query.alertas.findFirst({ where: eq(alertas.slug, slug), with: { category: true } });
+    const siteId = await this.sites.getId('la-mira');
+    const row = await this.db.query.alertas.findFirst({
+      where: and(eq(alertas.slug, slug), eq(alertas.siteId, siteId)),
+      with: { category: true },
+    });
     if (!row) throw new NotFoundException(`Alerta "${slug}" no existe`);
     return toAlerta(row);
   }

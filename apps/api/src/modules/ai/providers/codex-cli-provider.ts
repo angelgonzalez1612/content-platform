@@ -11,6 +11,7 @@ import {
   type PlaceDraftOutput,
   type StructuredGenerateInput,
 } from '../content-provider.interface';
+import { killProcessTree } from './process-tree-kill';
 
 const PLACE_SYSTEM_PROMPT = `Eres redactor editorial de Planazo, una guía de planes y lugares de la Ciudad de México.
 
@@ -162,7 +163,10 @@ function runCodexCommand(
     const timer = setTimeout(() => {
       if (settled) return;
       settled = true;
-      child.kill();
+      // child.kill() aquí solo mataría cmd.exe (spawn con shell:true) — el
+      // codex.cmd/node reales que cmd.exe lanzó seguirían vivos. Mismo bug
+      // que ya se vio con claude-cli-provider.ts, ver su comentario en runClaudeCommand.
+      if (child.pid) killProcessTree(child.pid);
       reject(new Error(`Codex CLI superó el tiempo límite de ${timeoutMs}ms.`));
     }, timeoutMs);
 

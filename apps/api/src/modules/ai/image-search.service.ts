@@ -83,7 +83,17 @@ export class ImageSearchService {
 
       return pages
         .map((p) => p.imageinfo?.[0] && { info: p.imageinfo[0] })
-        .filter((x): x is { info: WikimediaImageInfo } => !!x && !!x.info.mime?.startsWith('image/') && !!x.info.thumburl)
+        .filter((x): x is { info: WikimediaImageInfo } => {
+          if (!x || !x.info.thumburl) return false;
+          const mime = x.info.mime ?? '';
+          // Wikimedia Commons indexa formatos con mime "image/*" que ningún
+          // navegador puede mostrar como <img> — visto en vivo: un .djvu
+          // (documento escaneado) pasó el filtro y quedó guardado como
+          // "imagen" de un evento, mostrando nada en el sitio real.
+          if (!mime.startsWith('image/')) return false;
+          if (/djvu|tiff/i.test(mime)) return false;
+          return true;
+        })
         .map(({ info }) => {
           const artist = stripHtml(info.extmetadata?.Artist?.value ?? '');
           const license = info.extmetadata?.LicenseShortName?.value ?? '';

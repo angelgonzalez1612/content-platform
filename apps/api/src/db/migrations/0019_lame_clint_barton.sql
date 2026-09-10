@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `photos_place_id_url_unique` ON `photos` (`place_id`,`url`);

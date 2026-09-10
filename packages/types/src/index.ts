@@ -417,6 +417,48 @@ export interface PlaceDraftInput {
   hints?: string;
 }
 
+/** One stop/theme in a PlanazoGuide's body — optionally tied to a real Place/PlanazoEvent by slug. */
+export interface GuideSection {
+  heading: string;
+  body: string;
+  placeSlug?: string | null;
+  eyebrow?: string | null;
+  time?: string | null;
+  order?: number | null;
+  image?: { url: string; alt: string; credit: string } | null;
+}
+
+/**
+ * Editorial listicle/itinerary curating real Places/PlanazoEvents by slug —
+ * planazo_fronted's equivalent of la-mira's `Guia`, but composing catalog
+ * entities instead of narrative-only content. `placeSlugs` is derived
+ * server-side from `sections[].placeSlug` (deduplicated, order-preserving),
+ * not stored separately — every real guide authored so far has the two in
+ * exact sync, so a second source of truth would only invite drift.
+ */
+export interface PlanazoGuide {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  type: string | null;
+  intro: string | null;
+  sections: GuideSection[];
+  categoryLabel: string;
+  readTime: string;
+  imageUrl: string | null;
+  imageAlt: string | null;
+  imageCredit: string | null;
+  placeSlugs: string[];
+  excerpt: string | null;
+  budget: string | null;
+  duration: string | null;
+  audience: string[];
+  status: ContentStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** AI-generated draft — never includes address/phone/price; those are human-verified. */
 export interface PlaceDraftOutput {
   description: string;

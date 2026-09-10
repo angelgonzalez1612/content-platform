@@ -89,6 +89,7 @@ async function main() {
     const typeConfig = getContentTypeConfig(log.contentType);
     const { checksRun, decision } = checks.run({
       mode: 'improve',
+      contentType: log.contentType,
       requiredFields: [...typeConfig.requiredEditorialFields],
       // seguridad-hechos ya había pasado en la corrida original (no está en
       // `failing`) y esta pasada no toca categoryData — no hace falta

@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, gt, inArray } from 'drizzle-orm';
 import { slugify } from '@planazo/shared';
 import type { Place, PlaceDetail } from '@planazo/types';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
@@ -78,7 +78,7 @@ export class PlacesService {
 
   async findBySlug(slug: string): Promise<PlaceDetail> {
     const row = await this.db.query.places.findFirst({
-      where: eq(places.slug, slug),
+      where: and(eq(places.slug, slug), eq(places.status, 'published')),
       with: {
         photos: true,
         socialLinks: true,
@@ -142,11 +142,11 @@ export class PlacesService {
       throw new NotFoundException(`Place "${id}" not found`);
     }
 
-    // `photo` no es una columna de `places` (vive en la tabla `photos`,
-    // ver PlacesService.create) — se maneja aparte para no mandarla al
-    // `.set()` de abajo. `undefined` (campo ausente) deja la foto intacta;
-    // `null` explícito la quita.
-    const { photo, ...placeFields } = patch;
+    // `photo`/`gallery` no son columnas de `places` (viven en la tabla
+    // `photos`, ver PlacesService.create) — se manejan aparte para no
+    // mandarlas al `.set()` de abajo. `undefined` (campo ausente) deja la
+    // foto/galería intacta; `null`/`[]` explícito la quita/vacía.
+    const { photo, gallery, ...placeFields } = patch;
 
     await this.db
       .update(places)
@@ -154,8 +154,8 @@ export class PlacesService {
       .where(eq(places.id, id));
 
     if (photo !== undefined) {
-      // Solo la portada (position 0) — el resto de la galería, si la hay
-      // (ej. los 102 lugares migrados del mock), no se toca desde aquí.
+      // Solo la portada (position 0) — el resto de la galería, si la hay,
+      // no se toca desde aquí (ver `gallery` abajo).
       await this.db
         .delete(photos)
         .where(and(eq(photos.placeId, id), eq(photos.position, 0)));
@@ -165,6 +165,29 @@ export class PlacesService {
           url: photo.url,
           credit: photo.credit ?? null,
           position: 0,
+        });
+      }
+    }
+
+    if (gallery !== undefined) {
+      // Reemplazo completo de positions 1+ en el orden dado. Se dedupea por
+      // URL (además del candado a nivel de base de datos,
+      // `photos_place_id_url_unique`) para que la misma foto nunca quede
+      // repetida en varias filas de un mismo lugar.
+      await this.db
+        .delete(photos)
+        .where(and(eq(photos.placeId, id), gt(photos.position, 0)));
+      const seen = new Set<string>();
+      let position = 1;
+      for (const item of gallery) {
+        if (seen.has(item.url)) continue;
+        seen.add(item.url);
+        await this.db.insert(photos).values({
+          placeId: id,
+          url: item.url,
+          alt: item.alt ?? null,
+          credit: item.credit ?? null,
+          position: position++,
         });
       }
     }

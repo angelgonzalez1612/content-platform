@@ -28,7 +28,11 @@ export class ReportajesService {
   }
 
   async findBySlug(slug: string): Promise<Reportaje> {
-    const row = await this.db.query.reportajes.findFirst({ where: eq(reportajes.slug, slug), with: { category: true } });
+    const siteId = await this.sites.getId('la-mira');
+    const row = await this.db.query.reportajes.findFirst({
+      where: and(eq(reportajes.slug, slug), eq(reportajes.siteId, siteId), eq(reportajes.status, 'published')),
+      with: { category: true },
+    });
     if (!row) throw new NotFoundException(`Reportaje "${slug}" no existe`);
     return toReportaje(row);
   }

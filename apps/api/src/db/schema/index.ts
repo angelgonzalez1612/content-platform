@@ -4,6 +4,7 @@ export * from './taxonomy';
 export * from './locations';
 export * from './content-radar';
 export * from './places';
+export * from './planazo-guides';
 export * from './articles';
 export * from './events';
 export * from './rankings';

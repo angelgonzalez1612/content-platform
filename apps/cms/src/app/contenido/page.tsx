@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
-import { getCmsPlaces, getCmsLamiraContent, getCmsEvents, getCmsCategories } from "@/lib/cms-api";
+import { getCmsPlaces, getCmsLamiraContent, getCmsEvents, getCmsCategories, getCmsPlanazoGuides } from "@/lib/cms-api";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { SiteTabs } from "@/components/cms/site-tabs";
 import { LamiraContenidoView } from "./lamira-contenido-view";
@@ -42,13 +42,18 @@ export default async function ContenidoPage({ searchParams }: { searchParams: Pr
     );
   }
 
-  const [places, events, planazoCategories] = await Promise.all([getCmsPlaces(), getCmsEvents(), getCmsCategories("planazo")]);
+  const [places, events, guides, planazoCategories] = await Promise.all([
+    getCmsPlaces(),
+    getCmsEvents(),
+    getCmsPlanazoGuides(),
+    getCmsCategories("planazo"),
+  ]);
 
   return (
     <CmsShell user={session} title="Contenido">
       <div className="p-[26px] pb-[60px]">
         <SiteTabs site="planazo" basePath="/contenido" />
-        <PlanazoContenidoView places={places} events={events} categories={planazoCategories} />
+        <PlanazoContenidoView places={places} events={events} guides={guides} categories={planazoCategories} />
       </div>
     </CmsShell>
   );

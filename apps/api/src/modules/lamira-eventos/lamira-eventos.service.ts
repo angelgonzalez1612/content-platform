@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { slugify } from '@planazo/shared';
 import type { LamiraEvento } from '@planazo/types';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
@@ -28,7 +28,11 @@ export class LamiraEventosService {
   }
 
   async findBySlug(slug: string): Promise<LamiraEvento> {
-    const row = await this.db.query.lamiraEventos.findFirst({ where: eq(lamiraEventos.slug, slug), with: { category: true } });
+    const siteId = await this.sites.getId('la-mira');
+    const row = await this.db.query.lamiraEventos.findFirst({
+      where: and(eq(lamiraEventos.slug, slug), eq(lamiraEventos.siteId, siteId)),
+      with: { category: true },
+    });
     if (!row) throw new NotFoundException(`Evento "${slug}" no existe`);
     return toLamiraEvento(row);
   }

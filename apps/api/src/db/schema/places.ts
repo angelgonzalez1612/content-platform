@@ -4,6 +4,7 @@ import {
   real,
   integer,
   primaryKey,
+  uniqueIndex,
 } from 'drizzle-orm/sqlite-core';
 import { idColumn, createdAtColumn } from './columns.helpers';
 import { CONTENT_STATUS_VALUES } from './enums';
@@ -100,20 +101,29 @@ export const placeServices = sqliteTable(
   (t) => [primaryKey({ columns: [t.placeId, t.serviceId] })],
 );
 
-export const photos = sqliteTable('photos', {
-  id: idColumn(),
-  placeId: text('place_id')
-    .notNull()
-    .references(() => places.id, { onDelete: 'cascade' }),
-  url: text('url').notNull(),
-  alt: text('alt'),
-  // Atribución real de la fuente (ej. "Foto: Wikimedia Commons — Autor X") —
-  // separado de `alt` (texto de accesibilidad, ya usado como tal en las 15+
-  // vistas reales de planazo_fronted) para no mezclar los dos conceptos.
-  credit: text('credit'),
-  position: integer('position').default(0).notNull(),
-  createdAt: createdAtColumn(),
-});
+export const photos = sqliteTable(
+  'photos',
+  {
+    id: idColumn(),
+    placeId: text('place_id')
+      .notNull()
+      .references(() => places.id, { onDelete: 'cascade' }),
+    url: text('url').notNull(),
+    alt: text('alt'),
+    // Atribución real de la fuente (ej. "Foto: Wikimedia Commons — Autor X") —
+    // separado de `alt` (texto de accesibilidad, ya usado como tal en las 15+
+    // vistas reales de planazo_fronted) para no mezclar los dos conceptos.
+    credit: text('credit'),
+    position: integer('position').default(0).notNull(),
+    createdAt: createdAtColumn(),
+  },
+  (t) => [
+    // Evita que un mismo lugar termine con la misma foto repetida en varias
+    // filas — pasó con scripts de corrección que reescribían todas las filas
+    // existentes con el mismo resultado de búsqueda en vez de una por fila.
+    uniqueIndex('photos_place_id_url_unique').on(t.placeId, t.url),
+  ],
+);
 
 export const socialLinks = sqliteTable('social_links', {
   id: idColumn(),

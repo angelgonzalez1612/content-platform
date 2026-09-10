@@ -26,6 +26,18 @@ export const updatePlaceSchema = z
       .object({ url: z.string(), credit: z.string().nullable().optional() })
       .nullable()
       .optional(),
+    // Resto de la galería (positions 1+) — reemplazo completo en el orden
+    // dado. `undefined` (campo ausente) la deja intacta; `[]` la vacía. No
+    // toca la portada (position 0, ver `photo` arriba).
+    gallery: z
+      .array(
+        z.object({
+          url: z.string(),
+          alt: z.string().nullable().optional(),
+          credit: z.string().nullable().optional(),
+        }),
+      )
+      .optional(),
     status: z
       .enum(['draft', 'in_review', 'scheduled', 'published', 'archived'])
       .optional(),

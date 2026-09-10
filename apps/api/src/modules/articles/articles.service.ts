@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { slugify } from '@planazo/shared';
 import type { Article } from '@planazo/types';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
@@ -36,7 +36,7 @@ export class ArticlesService {
 
   async findBySlug(slug: string): Promise<Article> {
     const row = await this.db.query.articles.findFirst({
-      where: eq(articles.slug, slug),
+      where: and(eq(articles.slug, slug), eq(articles.status, 'published')),
       with: { articlePlaces: { with: placesWith } },
     });
     if (!row) throw new NotFoundException(`Article "${slug}" not found`);

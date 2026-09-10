@@ -31,15 +31,19 @@ export class EventsService {
       with: { place: { with: placeWith }, category: true },
       // Nulls-last a propósito: un evento sin fecha (ver comentario en el
       // schema) no debe aparecer primero solo porque NULL ordena antes que
-      // cualquier fecha real en SQLite.
-      orderBy: (e, { asc }) => [sql`${e.startDate} IS NULL`, asc(e.startDate)],
+      // cualquier fecha real en SQLite. Desempate por createdAt descendente:
+      // sin esto, los eventos sin fecha (todos los que crea la automatización,
+      // ver AutomationRunnerService — siempre startDate:null) quedaban en un
+      // grupo sin orden definido entre ellos, así que "el más nuevo" no era
+      // ni el primero ni consistente entre requests.
+      orderBy: (e, { asc, desc }) => [sql`${e.startDate} IS NULL`, asc(e.startDate), desc(e.createdAt)],
     });
     return rows.map(toPlanazoEvent);
   }
 
   async findBySlug(slug: string): Promise<PlanazoEvent> {
     const row = await this.db.query.events.findFirst({
-      where: eq(events.slug, slug),
+      where: and(eq(events.slug, slug), eq(events.status, 'published')),
       with: { place: { with: placeWith }, category: true },
     });
     if (!row) throw new NotFoundException(`Event "${slug}" not found`);

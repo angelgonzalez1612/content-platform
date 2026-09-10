@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { getCmsCategories } from "@/lib/cms-api";
+import { getCmsCategories, getCmsPlaces, getCmsEvents } from "@/lib/cms-api";
+import { buildPlaceOptions } from "@/lib/guide-place-options";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { PlaceCreateForm } from "@/components/cms/place-create-form";
+import { GuideForm } from "@/components/cms/planazo/guide-form";
 import { NoticiaForm } from "@/components/cms/lamira/noticia-form";
 import { AlertaForm } from "@/components/cms/lamira/alerta-form";
 import { GuiaForm } from "@/components/cms/lamira/guia-form";
@@ -40,6 +42,19 @@ export default async function CrearManualPage({ searchParams }: { searchParams: 
           {type === "evento" && <LamiraEventoForm categories={categories} />}
           {type === "lugar" && <LamiraLugarForm categories={categories} />}
           {type === "reportaje" && <ReportajeForm categories={categories} />}
+        </div>
+      </CmsShell>
+    );
+  }
+
+  if (rawType === "guia") {
+    const [places, events] = await Promise.all([getCmsPlaces(), getCmsEvents()]);
+    return (
+      <CmsShell user={session} title="Nueva guía">
+        <div className="p-[26px] pb-[60px]">
+          <h1 className="mb-1 text-[22px] font-semibold tracking-tight">Nueva guía</h1>
+          <p className="mb-5 text-[13.5px] text-ink-soft">Llena la ficha completa — se crea como borrador salvo que cambies el estado.</p>
+          <GuideForm placeOptions={buildPlaceOptions(places, events)} />
         </div>
       </CmsShell>
     );

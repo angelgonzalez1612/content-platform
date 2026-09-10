@@ -6,6 +6,7 @@ import { DbModule } from './db/db.module';
 import { SitesModule } from './modules/sites/sites.module';
 import { PlacesModule } from './modules/places/places.module';
 import { EventsModule } from './modules/events/events.module';
+import { PlanazoGuidesModule } from './modules/planazo-guides/guides.module';
 import { ArticlesModule } from './modules/articles/articles.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { LocationsModule } from './modules/locations/locations.module';
@@ -32,6 +33,7 @@ import { HealthController } from './modules/health/health.controller';
     SitesModule,
     PlacesModule,
     EventsModule,
+    PlanazoGuidesModule,
     ArticlesModule,
     CategoriesModule,
     LocationsModule,

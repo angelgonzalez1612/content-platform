@@ -1,6 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -12,8 +11,9 @@ import {
   type PlaceDraftOutput,
   type StructuredGenerateInput,
 } from '../content-provider.interface';
+import { killProcessTree } from './process-tree-kill';
 
-const execFileAsync = promisify(execFile);
+const CLAUDE_TIMEOUT_MS = 60_000;
 
 const PLACE_SYSTEM_PROMPT = `Eres redactor editorial de Planazo, una guía de planes y lugares de la Ciudad de México.
 
@@ -120,16 +120,47 @@ export class ClaudeCliProvider implements ContentProvider {
     );
   }
 
+  // No usa el `timeout` propio de execFile: en esta máquina (Windows) ese
+  // timeout llama a child.kill() sobre el proceso de `claude`, pero deja
+  // vivos los hijos que ese proceso haya lanzado a su vez — visto en vivo,
+  // un proceso siguió corriendo 15+ minutos después de que su timeout de 60s
+  // debía matarlo, bloqueando toda la corrida de automatización detrás de
+  // él (ver AutomationRunnerService.run, que es secuencial). Se maneja el
+  // timeout a mano y se mata el árbol completo (killProcessTree) en vez de
+  // confiar en el kill parcial de Node.
+  private runClaudeCommand(args: string[], cwd: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const child = execFile(
+        'claude',
+        args,
+        { cwd, maxBuffer: 10 * 1024 * 1024 },
+        (err, stdout) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          if (err) reject(err);
+          else resolve(stdout);
+        },
+      );
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        if (child.pid) killProcessTree(child.pid);
+        reject(new Error(`Claude CLI superó el tiempo límite de ${CLAUDE_TIMEOUT_MS}ms.`));
+      }, CLAUDE_TIMEOUT_MS);
+    });
+  }
+
   private async runOnce(systemPrompt: string, userPrompt: string): Promise<unknown> {
     // cwd aislado a propósito: sin --bare (para conservar la sesión OAuth ya
     // autenticada), pero corriendo fuera del repo para que no se auto-descubra
     // ningún CLAUDE.md/skill de este proyecto durante una generación de contenido.
     const tmpDir = await mkdtemp(path.join(tmpdir(), 'content-platform-claude-'));
     try {
-      const { stdout } = await execFileAsync(
-        'claude',
+      const stdout = await this.runClaudeCommand(
         ['-p', userPrompt, '--output-format', 'json', '--system-prompt', systemPrompt, '--disallowedTools', '*'],
-        { cwd: tmpDir, timeout: 60_000, maxBuffer: 10 * 1024 * 1024 },
+        tmpDir,
       );
 
       let envelope: ClaudeCliResultEnvelope;

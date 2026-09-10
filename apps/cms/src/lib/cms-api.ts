@@ -1,15 +1,26 @@
 import { cookies } from "next/headers";
 import { apiConfig } from "@planazo/config";
-import type { Place, PlaceDetail, Category, Seo, Noticia, Alerta, Guia, LamiraEvento, LamiraLugar, Reportaje, PlanazoEvent, ContentBlock } from "@planazo/types";
+import type { Place, PlaceDetail, Category, Seo, Noticia, Alerta, Guia, LamiraEvento, LamiraLugar, Reportaje, PlanazoEvent, ContentBlock, PlanazoGuide } from "@planazo/types";
 import type { AutomationRule, AutomationRun } from "./automation-types";
 
+// Cada getCmsX de este archivo pasa por aquí y trata cualquier !res.ok como
+// "vacío"/"no existe" (ver safeList/safeOne abajo) — correcto para un 404
+// real, pero antes lo hacía sin loguear nada, así que una sesión expirada
+// (401), un 500 del API, o un timeout de red se veían en el CMS exactamente
+// igual que "esto no existe": el editor abre un contenido y le sale 404, o
+// una lista real se ve vacía, sin ningún rastro en consola para diagnosticarlo
+// (mismo patrón que causó el 404 fantasma de La Mira — ver apiFetch allá).
 async function cmsFetch(path: string, init?: RequestInit) {
   const cookieStore = await cookies();
-  return fetch(`${apiConfig.baseUrl}${path}`, {
+  const res = await fetch(`${apiConfig.baseUrl}${path}`, {
     ...init,
     headers: { cookie: cookieStore.toString(), ...init?.headers },
     cache: "no-store",
   });
+  if (!res.ok && res.status !== 404) {
+    console.error(`[content-platform] cmsFetch ${path} respondió ${res.status}`);
+  }
+  return res;
 }
 
 // Temas de Content Radar ya publicados — para marcarlos como hechos en el
@@ -51,6 +62,9 @@ export interface UpdatePlaceInput {
   // Reemplaza la portada (photos[0]) — `null` la quita, ausente la deja
   // intacta (ver PlacesService.update).
   photo?: { url: string; credit?: string | null } | null;
+  // Reemplaza el resto de la galería (positions 1+) en el orden dado —
+  // ausente la deja intacta, `[]` la vacía (ver PlacesService.update).
+  gallery?: { url: string; alt?: string | null; credit?: string | null }[];
   content?: ContentBlock[];
   allowPhotoModal?: boolean;
 }
@@ -188,4 +202,13 @@ export async function getCmsEvents(): Promise<PlanazoEvent[]> {
 
 export async function getCmsEvent(id: string): Promise<PlanazoEvent | null> {
   return safeOne<PlanazoEvent>(`/cms/events/${id}`);
+}
+
+/** Guías de Planazo (listicles/itinerarios que curan places/events por slug) — mismo patrón que places/events. */
+export async function getCmsPlanazoGuides(): Promise<PlanazoGuide[]> {
+  return safeList<PlanazoGuide>("/cms/guides");
+}
+
+export async function getCmsPlanazoGuide(id: string): Promise<PlanazoGuide | null> {
+  return safeOne<PlanazoGuide>(`/cms/guides/${id}`);
 }

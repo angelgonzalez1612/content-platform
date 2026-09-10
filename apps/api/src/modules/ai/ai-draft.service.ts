@@ -335,6 +335,7 @@ export class AiDraftService {
 
     const { checksRun, decision } = this.checks.run({
       mode: 'draft',
+      contentType,
       requiredFields: [
         ...typeConfig.requiredEditorialFields,
         ...category.fieldSchema.filter((f) => f.required).map((f) => f.key),
@@ -447,6 +448,7 @@ export class AiDraftService {
 
     const { checksRun, decision } = this.checks.run({
       mode: 'improve',
+      contentType: typeConfig.contentType,
       requiredFields: [...typeConfig.requiredEditorialFields],
       factFields: category ? factKeys(category.fieldSchema) : [],
       draftData: output,
@@ -890,6 +892,7 @@ export class AiDraftService {
 
     const { checksRun, decision } = this.checks.run({
       mode: 'improve',
+      contentType: typeConfig.contentType,
       requiredFields: [...typeConfig.requiredEditorialFields],
       factFields: category ? factKeys(category.fieldSchema) : [],
       draftData: output,
@@ -1092,6 +1095,7 @@ export class AiDraftService {
 
     const { checksRun, decision } = this.checks.run({
       mode: 'improve',
+      contentType: type,
       requiredFields: [...typeConfig.requiredEditorialFields],
       factFields: category ? factKeys(category.fieldSchema) : [],
       draftData: output,

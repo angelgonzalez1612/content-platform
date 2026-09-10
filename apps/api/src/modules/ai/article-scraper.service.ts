@@ -116,8 +116,24 @@ export class ArticleScraperService {
   private extractOgImage(doc: Document): string | undefined {
     const og = doc
       .querySelector('meta[property="og:image"]')
-      ?.getAttribute('content');
-    return og?.trim() || undefined;
+      ?.getAttribute('content')
+      ?.trim();
+    if (!og) return undefined;
+    // Algunos sitios fuente (visto en vivo: un portal .gob.mx) publican su
+    // propio og:image ya mal formado — ej. "/https://dominio.com/foto.jpg",
+    // con un "/" de más antes de una URL que ya era absoluta. Guardar eso tal
+    // cual produce una <img> rota en el sitio (el navegador la resuelve
+    // contra el propio origen: "planazo.com.mx/https://..."). Se intenta
+    // reparar el caso conocido (quitar el "/" sobrante) y, si aun así no es
+    // una URL absoluta válida, se descarta en vez de guardar basura.
+    const repaired = og.replace(/^\/+(https?:\/\/)/i, '$1');
+    try {
+      const parsed = new URL(repaired);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return undefined;
+      return repaired;
+    } catch {
+      return undefined;
+    }
   }
 
   private extractSiteName(doc: Document, url: string): string {

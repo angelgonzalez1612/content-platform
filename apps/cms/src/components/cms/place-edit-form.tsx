@@ -11,6 +11,7 @@ import { SeoPanel } from "@/components/cms/seo-panel";
 import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
 import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
 import { ImageField } from "@/components/cms/lamira/image-field";
+import { GalleryField, type GalleryPhoto } from "@/components/cms/planazo/gallery-field";
 import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
 import { PlanazoPreviewCard } from "@/components/cms/planazo/planazo-preview-card";
 import { ContentBlocksField, type ContentBlockValue } from "@/components/cms/content-blocks-field";
@@ -47,8 +48,12 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
   });
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(place.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(place.seo ?? {});
-  const cover = place.photos[0];
+  const sortedPhotos = [...place.photos].sort((a, b) => a.position - b.position);
+  const cover = sortedPhotos[0];
   const [image, setImage] = useState<{ url: string; credit: string } | null>(cover ? { url: cover.url, credit: cover.credit ?? "" } : null);
+  const [gallery, setGallery] = useState<GalleryPhoto[]>(
+    sortedPhotos.slice(1).map((p) => ({ url: p.url, alt: p.alt, credit: p.credit })),
+  );
   const [content, setContent] = useState<ContentBlockValue[]>((place.content ?? []).map((b) => ({ ...b, heading: b.heading ?? null })));
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -82,6 +87,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
       categoryData,
       seo,
       photo: image,
+      gallery,
       content,
       allowPhotoModal: form.allowPhotoModal,
     };
@@ -263,6 +269,8 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
         </div>
 
         <ImageField image={image} onChange={setImage} />
+
+        <GalleryField photos={gallery} onChange={setGallery} searchQuery={`${form.name} ${category?.name ?? ""} CDMX`.trim()} />
 
         <label className="flex items-start gap-2.5 rounded-[10px] border border-border-soft bg-background p-3">
           <input
