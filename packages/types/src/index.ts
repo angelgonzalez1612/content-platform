@@ -406,6 +406,7 @@ export interface PlanazoEvent {
   imageUrl: string | null;
   imageCredit: string | null;
   content: ContentBlock[];
+  createdAt: string;
 }
 
 export const PLACE_CATEGORY_SLUGS = ['comer', 'cafes', 'bares', 'cultura', 'aire-libre', 'tecnologia'] as const;

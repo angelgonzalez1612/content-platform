@@ -21,6 +21,7 @@ interface EventRow {
   imageUrl: string | null;
   imageCredit: string | null;
   content: PlanazoEvent['content'];
+  createdAt: Date | string;
 }
 
 const toIso = (value: Date | string) =>
@@ -47,5 +48,6 @@ export function toPlanazoEvent(row: EventRow): PlanazoEvent {
     imageUrl: row.imageUrl,
     imageCredit: row.imageCredit,
     content: row.content,
+    createdAt: toIso(row.createdAt),
   };
 }
