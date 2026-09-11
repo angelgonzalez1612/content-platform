@@ -16,6 +16,7 @@ const ROUTES: Record<string, string> = {
   "content-radar": "/content-radar",
   calendario: "/calendario",
   automatizaciones: "/automatizaciones",
+  multimedia: "/multimedia",
   config: "/configuracion",
 };
 

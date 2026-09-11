@@ -23,6 +23,7 @@ import { AutomationModule } from './modules/automation/automation.module';
 import { ContentVersionsModule } from './modules/content-versions/content-versions.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { CalendarModule } from './modules/calendar/calendar.module';
+import { MediaModule } from './modules/media/media.module';
 import { HealthController } from './modules/health/health.controller';
 
 @Module({
@@ -53,6 +54,7 @@ import { HealthController } from './modules/health/health.controller';
     ContentVersionsModule,
     DashboardModule,
     CalendarModule,
+    MediaModule,
   ],
   controllers: [HealthController],
 })
