@@ -445,6 +445,38 @@ export function extractSearchPhrases(rawMarkdown: string): string[] {
     .filter((p): p is string => !!p);
 }
 
+/** Un video real de "Videos en YouTube" (ver renderYoutubeVideos en report.ts), extraído del reporte crudo. */
+export interface ExtractedYoutubeVideo {
+  title: string;
+  url: string;
+  channel: string;
+}
+
+// Videos de YouTube ya vienen en el reporte (ver report.ts, renderYoutubeVideos)
+// pero hasta ahora nadie los leía de vuelta — un humano los veía en Content
+// Radar y ya. Esto los extrae para que AutomationRunnerService pueda cruzarlos
+// contra noticias existentes (misma historia, ver looksLikeSameStory) y
+// anexar el video a la pieza real en vez de crear algo aparte. Busca CUALQUIER
+// bloque "Videos en YouTube" del reporte (una por categoría), sin importar de
+// cuál categoría venga — el cruce por título no necesita esa distinción.
+export function extractYoutubeVideos(rawMarkdown: string): ExtractedYoutubeVideo[] {
+  const videos: ExtractedYoutubeVideo[] = [];
+  const sectionRe = /<p class="sub-label">Videos en YouTube<\/p>\n\n((?:- .+\n?)+)/g;
+  const bulletRe = /^- \[(.+?)\]\((.+?)\) — (.+?)$/;
+
+  for (const sectionMatch of rawMarkdown.matchAll(sectionRe)) {
+    for (const line of sectionMatch[1].split('\n')) {
+      const bullet = bulletRe.exec(line.trim());
+      if (!bullet) continue;
+      // itemGeoBadge (ver report.ts) puede agregar un badge de HTML al final
+      // del canal — se recorta, no aporta nada para el cruce por título.
+      const channel = bullet[3].replace(/<span[^>]*>.*?<\/span>/g, '').trim();
+      videos.push({ title: bullet[1], url: bullet[2], channel });
+    }
+  }
+  return videos;
+}
+
 export async function readReportFile(fileName: string): Promise<string> {
   if (!/^[\w-]+\.md$/.test(fileName)) {
     throw new Error(`Nombre de reporte inválido: "${fileName}".`);

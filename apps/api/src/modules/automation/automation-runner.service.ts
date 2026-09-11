@@ -41,6 +41,15 @@ interface ExtractedTopic {
   sites: string[];
 }
 
+// Un video real de "Videos en YouTube" del reporte (ver extractYoutubeVideos
+// en content-radar/src/render.ts) — puente vía subproceso, mismo motivo que
+// ExtractedTopic (content-radar es ESM puro, no se puede importar directo).
+interface ExtractedYoutubeVideo {
+  title: string;
+  url: string;
+  channel: string;
+}
+
 // Tema real (con artículo/fuente) o frase de "Qué busca la gente (frases)"
 // tratada como semilla — mismo shape para poder reusar todo el pipeline de
 // assignTopic/classifyTopic/finalizeCreate, distinguidas solo por `source`
@@ -105,6 +114,17 @@ function looksLikeSameStory(a: string, b: string): boolean {
   let shared = 0;
   for (const w of wa) if (wb.has(w)) shared += 1;
   return shared / Math.min(wa.size, wb.size) >= 0.5;
+}
+
+// Soporta las 3 formas reales de URL que trae la YouTube Data API / que un
+// editor podría pegar a mano: watch?v=, youtu.be/ y /embed/.
+function extractYoutubeVideoId(url: string): string | null {
+  const patterns = [/[?&]v=([\w-]{11})/, /youtu\.be\/([\w-]{11})/, /\/embed\/([\w-]{11})/];
+  for (const re of patterns) {
+    const match = re.exec(url);
+    if (match) return match[1];
+  }
+  return null;
 }
 
 function buildToc(content: ContentBlock[]): { id: string; label: string }[] {
@@ -188,7 +208,12 @@ export class AutomationRunnerService {
   // en el entorno de ejecución (esta máquina) — pendiente para producción:
   // migrar el reporte diario a Turso en vez de un archivo local (ver
   // apps/content-radar/reports/, gitignored — ni siquiera llega al deploy).
-  private async extractTopics(): Promise<{ fileName: string | null; topics: ExtractedTopic[]; searchPhrases: string[] }> {
+  private async extractTopics(): Promise<{
+    fileName: string | null;
+    topics: ExtractedTopic[];
+    searchPhrases: string[];
+    youtubeVideos: ExtractedYoutubeVideo[];
+  }> {
     // Ruta fija en vez de require.resolve('@planazo/content-radar/package.json')
     // — bajo el build de webpack (ver webpack-hmr.config.js) require.resolve
     // no devuelve una ruta de archivo real, tronaba con "__webpack_require__
@@ -220,7 +245,12 @@ export class AutomationRunnerService {
       child.stdin?.end(JSON.stringify(slugToSites));
     });
 
-    return JSON.parse(stdout) as { fileName: string | null; topics: ExtractedTopic[]; searchPhrases: string[] };
+    return JSON.parse(stdout) as {
+      fileName: string | null;
+      topics: ExtractedTopic[];
+      searchPhrases: string[];
+      youtubeVideos: ExtractedYoutubeVideo[];
+    };
   }
 
   /** Corrida real — expuesta aparte de runScheduled() para que el endpoint
@@ -245,7 +275,7 @@ export class AutomationRunnerService {
       const activeRules = await this.rules.findActive();
       if (activeRules.length === 0) return { evaluated: 0, created: 0 };
 
-      const { fileName, topics, searchPhrases } = await this.extractTopics();
+      const { fileName, topics, searchPhrases, youtubeVideos } = await this.extractTopics();
       if (!fileName) {
         this.logger.warn('No hay reportes de content-radar todavía — nada que evaluar.');
         return { evaluated: 0, created: 0 };
@@ -306,9 +336,35 @@ export class AutomationRunnerService {
         }
       }
 
+      await this.matchYoutubeVideosToNoticias(youtubeVideos);
+
       return { evaluated, created };
     } finally {
       this.runningFlag = false;
+    }
+  }
+
+  /**
+   * Cruza los videos de YouTube del reporte contra las noticias existentes
+   * por título (mismo criterio que looksLikeSameStory, ver arriba) — si
+   * coincide y esa noticia todavía no tiene un video propio, se anexa solo,
+   * sin revisión humana (misma pieza en vez de contenido aparte). Nunca
+   * pisa un youtubeId que un editor ya haya puesto a mano.
+   */
+  private async matchYoutubeVideosToNoticias(videos: ExtractedYoutubeVideo[]): Promise<void> {
+    if (videos.length === 0) return;
+    const allNoticias = await this.noticias.findAllForCms();
+
+    for (const video of videos) {
+      const videoId = extractYoutubeVideoId(video.url);
+      if (!videoId) continue;
+
+      const match = allNoticias.find((n) => !n.youtubeId && looksLikeSameStory(video.title, n.title));
+      if (!match) continue;
+
+      await this.noticias.update(match.id, { youtubeId: videoId });
+      match.youtubeId = videoId; // evita que un 2º video de la misma corrida se anexe a la misma noticia
+      this.logger.log(`Video de YouTube anexado a noticia "${match.title}": ${video.url}`);
     }
   }
 

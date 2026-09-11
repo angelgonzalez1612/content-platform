@@ -10,8 +10,8 @@
 // este script cruza eso con SiteConfig.categories (que sí conoce
 // cmsCategorySlugs) para armar el categorySiteMap completo, mismo criterio
 // que buildCategorySiteMap() en apps/cms/src/app/content-radar/page.tsx.
-// stdout: JSON { fileName, topics }.
-import { listReports, readReportFile, extractTopics, extractSearchPhrases } from "./render";
+// stdout: JSON { fileName, topics, searchPhrases, youtubeVideos }.
+import { listReports, readReportFile, extractTopics, extractSearchPhrases, extractYoutubeVideos } from "./render";
 import { DEFAULT_SITE_ID, getSite } from "./sites";
 
 async function main() {
@@ -31,14 +31,15 @@ async function main() {
   const files = await listReports(DEFAULT_SITE_ID);
   const fileName = files[0];
   if (!fileName) {
-    process.stdout.write(JSON.stringify({ fileName: null, topics: [], searchPhrases: [] }));
+    process.stdout.write(JSON.stringify({ fileName: null, topics: [], searchPhrases: [], youtubeVideos: [] }));
     return;
   }
 
   const raw = await readReportFile(fileName);
   const topics = await extractTopics(raw, categorySiteMap as never);
   const searchPhrases = extractSearchPhrases(raw);
-  process.stdout.write(JSON.stringify({ fileName, topics, searchPhrases }));
+  const youtubeVideos = extractYoutubeVideos(raw);
+  process.stdout.write(JSON.stringify({ fileName, topics, searchPhrases, youtubeVideos }));
 }
 
 main().catch((err) => {
