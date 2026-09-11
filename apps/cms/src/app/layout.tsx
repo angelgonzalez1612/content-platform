@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Instrument_Sans, JetBrains_Mono } from "next/font/google";
+import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
 const instrumentSans = Instrument_Sans({
@@ -20,12 +21,38 @@ export const metadata: Metadata = {
     template: "%s | Content CMS",
   },
   description: "Panel interno para generar y publicar contenido de la-mira y Planazo.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Content CMS",
+  },
+  other: {
+    // iOS < 17.4 solo respeta el meta prefijado, no el genérico que Next ya
+    // emite via appleWebApp — se manda ambos para cubrir versiones viejas.
+    "apple-mobile-web-app-capable": "yes",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#fd690d",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es-MX" className={`${instrumentSans.variable} ${jetBrainsMono.variable}`}>
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        {children}
+        <PwaRegister />
+      </body>
     </html>
   );
 }
