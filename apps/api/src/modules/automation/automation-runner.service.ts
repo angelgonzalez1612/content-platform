@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { execFile } from 'node:child_process';
 import path from 'node:path';
+import { and, desc, eq } from 'drizzle-orm';
 import { slugify } from '@planazo/shared';
 import type { Category, ContentBlock, Seo } from '@planazo/types';
 import { AiDraftService, type DraftResult } from '../ai/ai-draft.service';
@@ -16,7 +17,8 @@ import { ReportajesService } from '../lamira-reportajes/reportajes.service';
 import { PlanazoGuidesService } from '../planazo-guides/guides.service';
 import { AutomationRulesService } from './automation-rules.service';
 import { AUTOMATABLE_CONTENT_TYPES } from './dto/automation-rule.dto';
-import type { AutomationRuleRow } from '../../db/schema';
+import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
+import { contentAuditLog, type AutomationRuleRow } from '../../db/schema';
 
 // Cada cuánto revisa solo, mientras la API esté prendida — no es un cron a
 // hora fija: mientras el proceso viva, cada 15 min vuelve a mirar el reporte
@@ -26,6 +28,16 @@ import type { AutomationRuleRow } from '../../db/schema';
 // run(). Si la API se apaga y se prende más tarde, en cuanto vuelva a
 // arrancar retoma solo, sin depender de pegarle exacto a una hora.
 const CHECK_INTERVAL_MS = 15 * 60 * 1000;
+
+// evento-planazo y planazo-guia SIEMPRE caen en 'in_review' por el check
+// 'revision-humana' (ver checks.service.ts), sin importar qué tan bien
+// salieron — es una regla de diseño, no una señal de que algo esté mal. Cada
+// 3h se revisa si, aparte de esa, pasaron TODAS las demás checadas reales
+// (hechos, SEO, completitud, slug único, alt de imagen) y si sí, se publican
+// solas. Si además fallaron una checada real, se quedan en revisión para que
+// las vea una persona — auto-publicar eso sería reintroducir justo el
+// contenido de bajo valor por el que Google rechazó los sitios.
+const AUTO_PUBLISH_INTERVAL_MS = 3 * 60 * 60 * 1000;
 
 type AutomatableType = (typeof AUTOMATABLE_CONTENT_TYPES)[number];
 
@@ -166,11 +178,56 @@ export class AutomationRunnerService {
     private readonly alertas: AlertasService,
     private readonly reportajes: ReportajesService,
     private readonly guides: PlanazoGuidesService,
+    @Inject(DRIZZLE) private readonly db: DrizzleDb,
   ) {}
 
   @Interval(CHECK_INTERVAL_MS)
   async runScheduled() {
     await this.run();
+  }
+
+  @Interval(AUTO_PUBLISH_INTERVAL_MS)
+  async autoPublishSafeReviewed(): Promise<{ published: number; skipped: number }> {
+    let published = 0;
+    let skipped = 0;
+
+    const candidates: { contentType: 'evento-planazo' | 'planazo-guia'; id: string }[] = [
+      ...(await this.events.findAllForCms())
+        .filter((e) => e.status === 'in_review')
+        .map((e) => ({ contentType: 'evento-planazo' as const, id: e.id })),
+      ...(await this.guides.findAllForCms())
+        .filter((g) => g.status === 'in_review')
+        .map((g) => ({ contentType: 'planazo-guia' as const, id: g.id })),
+    ];
+
+    for (const candidate of candidates) {
+      const lastRun = await this.db.query.contentAuditLog.findFirst({
+        where: and(eq(contentAuditLog.contentType, candidate.contentType), eq(contentAuditLog.contentId, candidate.id)),
+        orderBy: [desc(contentAuditLog.createdAt)],
+      });
+
+      const onlyBlockedByHumanReview =
+        !!lastRun && lastRun.checksRun.length > 0 && lastRun.checksRun.every((c) => c.passed || c.name === 'revision-humana');
+
+      if (!onlyBlockedByHumanReview) {
+        skipped += 1;
+        continue;
+      }
+
+      if (candidate.contentType === 'evento-planazo') {
+        await this.events.update(candidate.id, { status: 'published' });
+      } else {
+        await this.guides.update(candidate.id, { status: 'published' });
+      }
+      published += 1;
+      this.logger.log(`Auto-publicado tras revisión (${candidate.contentType} ${candidate.id}) — pasó todas las checadas reales.`);
+    }
+
+    if (published || skipped) {
+      this.logger.log(`autoPublishSafeReviewed: ${published} publicados, ${skipped} siguen en revisión.`);
+    }
+
+    return { published, skipped };
   }
 
   // Solo la mitad "conoce la DB" del cruce sitio↔categoría — la otra mitad
