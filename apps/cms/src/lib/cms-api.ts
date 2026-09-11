@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { apiConfig } from "@planazo/config";
 import type { Place, PlaceDetail, Category, Seo, Noticia, Alerta, Guia, LamiraEvento, LamiraLugar, Reportaje, PlanazoEvent, ContentBlock, PlanazoGuide } from "@planazo/types";
 import type { AutomationRule, AutomationRun } from "./automation-types";
+import type { CalendarItem } from "./calendar-api";
 
 // Cada getCmsX de este archivo pasa por aquí y trata cualquier !res.ok como
 // "vacío"/"no existe" (ver safeList/safeOne abajo) — correcto para un 404
@@ -211,4 +212,12 @@ export async function getCmsPlanazoGuides(): Promise<PlanazoGuide[]> {
 
 export async function getCmsPlanazoGuide(id: string): Promise<PlanazoGuide | null> {
   return safeOne<PlanazoGuide>(`/cms/guides/${id}`);
+}
+
+/** Registros de publicaciones reales de un mes (Calendario Editorial) — ver
+ * CalendarService en la API. `month` es 1-12. */
+export async function getCalendarMonth(year: number, month: number): Promise<CalendarItem[]> {
+  const res = await cmsFetch(`/cms/calendar?year=${year}&month=${month}`);
+  if (!res.ok) return [];
+  return res.json();
 }
