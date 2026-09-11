@@ -7,9 +7,12 @@ import { contentEditHref, contentTypeIcon, contentTypeLabel } from "@/lib/dashbo
 
 type SiteFilter = "all" | "la-mira" | "planazo";
 
+const NO_CATEGORY = "__sin_categoria__";
+
 export function MediaView({ initialItems }: { initialItems: MediaItem[] }) {
   const [siteFilter, setSiteFilter] = useState<SiteFilter>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [query, setQuery] = useState("");
 
   const typesPresent = useMemo(() => {
@@ -24,15 +27,30 @@ export function MediaView({ initialItems }: { initialItems: MediaItem[] }) {
     return order;
   }, [initialItems]);
 
+  // Categoría editorial real (no el tipo de contenido) — para poder ver
+  // "toda la variedad de fotos de Comida", por ejemplo, sin importar si es
+  // una noticia, un lugar o una guía, útil al buscar un reemplazo.
+  const categoriesPresent = useMemo(() => {
+    const names = new Set<string>();
+    let hasUncategorized = false;
+    for (const it of initialItems) {
+      if (it.categoryName) names.add(it.categoryName);
+      else hasUncategorized = true;
+    }
+    return { names: [...names].sort((a, b) => a.localeCompare(b, "es")), hasUncategorized };
+  }, [initialItems]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return initialItems.filter((it) => {
       if (siteFilter !== "all" && it.site !== siteFilter) return false;
       if (typeFilter !== "all" && it.contentType !== typeFilter) return false;
+      if (categoryFilter === NO_CATEGORY && it.categoryName) return false;
+      if (categoryFilter !== "all" && categoryFilter !== NO_CATEGORY && it.categoryName !== categoryFilter) return false;
       if (q && !it.contentTitle.toLowerCase().includes(q) && !(it.credit ?? "").toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [initialItems, siteFilter, typeFilter, query]);
+  }, [initialItems, siteFilter, typeFilter, categoryFilter, query]);
 
   return (
     <div className="max-w-[1320px] p-[26px] pb-[60px]">
@@ -51,6 +69,19 @@ export function MediaView({ initialItems }: { initialItems: MediaItem[] }) {
           placeholder="Buscar por título o crédito…"
           className="w-full max-w-[260px] rounded-full border border-border bg-white px-3.5 py-1.5 text-[12.5px] transition-colors placeholder:text-ink-faint focus:border-brand focus:outline-none"
         />
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="rounded-full border border-border bg-white px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint"
+        >
+          <option value="all">Todas las categorías</option>
+          {categoriesPresent.names.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+          {categoriesPresent.hasUncategorized && <option value={NO_CATEGORY}>Sin categoría</option>}
+        </select>
         <div className="inline-flex items-center gap-1 rounded-full border border-border bg-background p-0.5">
           {(
             [
@@ -115,10 +146,15 @@ export function MediaView({ initialItems }: { initialItems: MediaItem[] }) {
               </div>
               <div className="p-2">
                 <span className="block truncate text-[11.5px] font-medium tracking-tight">{it.contentTitle}</span>
-                <div className="mt-0.5 flex items-center gap-1">
+                <div className="mt-0.5 flex flex-wrap items-center gap-1">
                   <span className="flex-none rounded font-mono text-[9px] text-[#8A837B]" style={{ background: "#F3F0EC", padding: "1px 4px" }}>
                     {contentTypeIcon(it.contentType)} {contentTypeLabel(it.contentType)}
                   </span>
+                  {it.categoryName && (
+                    <span className="flex-none truncate rounded font-mono text-[9px] text-accent-fg" style={{ background: "#FFF2E8", padding: "1px 4px", maxWidth: 100 }}>
+                      {it.categoryName}
+                    </span>
+                  )}
                 </div>
               </div>
               {it.credit && (

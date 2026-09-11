@@ -10,4 +10,5 @@ export interface MediaItem {
   contentId: string;
   contentTitle: string;
   site: "la-mira" | "planazo";
+  categoryName: string | null;
 }
