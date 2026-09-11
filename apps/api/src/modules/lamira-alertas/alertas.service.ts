@@ -7,6 +7,7 @@ import { alertas } from '../../db/schema';
 import { SitesService } from '../sites/sites.service';
 import { QueryAlertasDto, CreateAlertaDto, UpdateAlertaDto } from './dto/alerta.dto';
 import { toAlerta } from './alertas.mapper';
+import { ContentVersionsService } from '../content-versions/content-versions.service';
 
 // Sin workflow editorial (draft/published) a propósito — una Alerta es
 // contenido operativo en vivo, no editorial; todas las que existen se
@@ -16,6 +17,7 @@ export class AlertasService {
   constructor(
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
     private readonly sites: SitesService,
+    private readonly versions: ContentVersionsService,
   ) {}
 
   async findAll(query: QueryAlertasDto): Promise<Alerta[]> {
@@ -63,6 +65,7 @@ export class AlertasService {
   async update(id: string, patch: UpdateAlertaDto): Promise<Alerta> {
     const existing = await this.db.query.alertas.findFirst({ where: eq(alertas.id, id) });
     if (!existing) throw new NotFoundException(`Alerta "${id}" no existe`);
+    await this.versions.snapshot('alerta', id, existing, 'Antes de editar');
     await this.db.update(alertas).set({ ...patch, updatedAt: new Date() }).where(eq(alertas.id, id));
     return this.findByIdForCms(id);
   }

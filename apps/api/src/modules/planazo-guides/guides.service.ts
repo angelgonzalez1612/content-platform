@@ -6,10 +6,14 @@ import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
 import { planazoGuides } from '../../db/schema';
 import { CreateGuideDto, QueryGuidesDto, UpdateGuideDto } from './dto/guide.dto';
 import { toPlanazoGuide } from './guides.mapper';
+import { ContentVersionsService } from '../content-versions/content-versions.service';
 
 @Injectable()
 export class PlanazoGuidesService {
-  constructor(@Inject(DRIZZLE) private readonly db: DrizzleDb) {}
+  constructor(
+    @Inject(DRIZZLE) private readonly db: DrizzleDb,
+    private readonly versions: ContentVersionsService,
+  ) {}
 
   async findAll(query: QueryGuidesDto): Promise<PlanazoGuide[]> {
     const rows = await this.db.query.planazoGuides.findMany({
@@ -73,6 +77,7 @@ export class PlanazoGuidesService {
   async update(id: string, patch: UpdateGuideDto): Promise<PlanazoGuide> {
     const existing = await this.db.query.planazoGuides.findFirst({ where: eq(planazoGuides.id, id) });
     if (!existing) throw new NotFoundException(`Guía "${id}" no existe`);
+    await this.versions.snapshot('planazo-guia', id, existing, 'Antes de editar');
 
     await this.db
       .update(planazoGuides)

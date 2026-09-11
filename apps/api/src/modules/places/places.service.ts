@@ -20,10 +20,14 @@ import { QueryPlacesDto } from './dto/query-places.dto';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { CreatePlaceDto } from './dto/create-place.dto';
 import { toPlaceSummary, toPlaceDetail } from './places.mapper';
+import { ContentVersionsService } from '../content-versions/content-versions.service';
 
 @Injectable()
 export class PlacesService {
-  constructor(@Inject(DRIZZLE) private readonly db: DrizzleDb) {}
+  constructor(
+    @Inject(DRIZZLE) private readonly db: DrizzleDb,
+    private readonly versions: ContentVersionsService,
+  ) {}
 
   /** `?category=`/`?tag=` filtran por slug — el DTO ya los declaraba desde
    * antes, pero nunca se habían conectado a la query (planazo_fronted ya los
@@ -141,6 +145,7 @@ export class PlacesService {
     if (!existing) {
       throw new NotFoundException(`Place "${id}" not found`);
     }
+    await this.versions.snapshot('place', id, existing, 'Antes de editar');
 
     // `photo`/`gallery` no son columnas de `places` (viven en la tabla
     // `photos`, ver PlacesService.create) — se manejan aparte para no

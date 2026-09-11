@@ -11,6 +11,7 @@ export * from './rankings';
 export * from './lamira';
 export * from './ai-runs';
 export * from './ai-settings';
+export * from './content-versions';
 export * from './automation';
 export * from './relations';
 export * from './users';

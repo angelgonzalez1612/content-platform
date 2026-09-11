@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { EventsController } from './events.controller';
 import { CmsEventsController } from './cms-events.controller';
 import { EventsService } from './events.service';
+import { ContentVersionsModule } from '../content-versions/content-versions.module';
 
 @Module({
+  imports: [ContentVersionsModule],
   controllers: [EventsController, CmsEventsController],
   providers: [EventsService],
   exports: [EventsService], // AutomationModule lo usa para crear eventos solo

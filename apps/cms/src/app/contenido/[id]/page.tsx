@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { getCmsPlace, getCmsCategory } from "@/lib/cms-api";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { PlaceEditForm } from "@/components/cms/place-edit-form";
+import { VersionHistory } from "@/components/cms/version-history";
 import { ViewPublishedLink } from "@/components/cms/view-published-link";
 import { siteConfig } from "@planazo/config";
 
@@ -35,7 +36,8 @@ export default async function EditPlacePage({ params }: { params: Promise<{ id: 
         <p className="text-[13.5px] text-ink-soft">/{place.slug}</p>
       </div>
 
-      <div className="p-[26px] pb-[60px]">
+      <div className="flex flex-col gap-4 p-[26px] pb-[60px]">
+        <VersionHistory contentType="place" contentId={place.id} />
         <PlaceEditForm place={place} category={category} />
       </div>
     </CmsShell>

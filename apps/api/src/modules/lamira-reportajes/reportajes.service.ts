@@ -7,12 +7,14 @@ import { reportajes } from '../../db/schema';
 import { SitesService } from '../sites/sites.service';
 import { QueryReportajesDto, CreateReportajeDto, UpdateReportajeDto } from './dto/reportaje.dto';
 import { toReportaje } from './reportajes.mapper';
+import { ContentVersionsService } from '../content-versions/content-versions.service';
 
 @Injectable()
 export class ReportajesService {
   constructor(
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
     private readonly sites: SitesService,
+    private readonly versions: ContentVersionsService,
   ) {}
 
   async findAll(query: QueryReportajesDto): Promise<Reportaje[]> {
@@ -66,6 +68,7 @@ export class ReportajesService {
   async update(id: string, patch: UpdateReportajeDto): Promise<Reportaje> {
     const existing = await this.db.query.reportajes.findFirst({ where: eq(reportajes.id, id) });
     if (!existing) throw new NotFoundException(`Reportaje "${id}" no existe`);
+    await this.versions.snapshot('reportaje', id, existing, 'Antes de editar');
     await this.db.update(reportajes).set(patch).where(eq(reportajes.id, id));
     return this.findByIdForCms(id);
   }

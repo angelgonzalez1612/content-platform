@@ -20,6 +20,7 @@ import { ReportajesModule } from './modules/lamira-reportajes/reportajes.module'
 import { AuthModule } from './modules/auth/auth.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AutomationModule } from './modules/automation/automation.module';
+import { ContentVersionsModule } from './modules/content-versions/content-versions.module';
 import { HealthController } from './modules/health/health.controller';
 
 @Module({
@@ -47,6 +48,7 @@ import { HealthController } from './modules/health/health.controller';
     AuthModule,
     AiModule,
     AutomationModule,
+    ContentVersionsModule,
   ],
   controllers: [HealthController],
 })

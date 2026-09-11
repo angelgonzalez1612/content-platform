@@ -4,6 +4,7 @@ import { getCmsPlaces, getCmsEvents, getCmsPlanazoGuide } from "@/lib/cms-api";
 import { buildPlaceOptions } from "@/lib/guide-place-options";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { GuideForm } from "@/components/cms/planazo/guide-form";
+import { VersionHistory } from "@/components/cms/version-history";
 import { ViewPublishedLink } from "@/components/cms/view-published-link";
 import { siteConfig } from "@planazo/config";
 
@@ -25,7 +26,8 @@ export default async function EditPlanazoGuidePage({ params }: { params: Promise
         <h1 className="mt-3 text-[22px] font-semibold tracking-tight">{guide.title}</h1>
       </div>
 
-      <div className="p-[26px] pb-[60px]">
+      <div className="flex flex-col gap-4 p-[26px] pb-[60px]">
+        <VersionHistory contentType="planazo-guia" contentId={guide.id} />
         <GuideForm placeOptions={buildPlaceOptions(places, events)} existing={guide} />
       </div>
     </CmsShell>

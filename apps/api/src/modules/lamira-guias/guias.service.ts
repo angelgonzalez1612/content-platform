@@ -7,12 +7,14 @@ import { guias } from '../../db/schema';
 import { SitesService } from '../sites/sites.service';
 import { QueryGuiasDto, CreateGuiaDto, UpdateGuiaDto } from './dto/guia.dto';
 import { toGuia } from './guias.mapper';
+import { ContentVersionsService } from '../content-versions/content-versions.service';
 
 @Injectable()
 export class GuiasService {
   constructor(
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
     private readonly sites: SitesService,
+    private readonly versions: ContentVersionsService,
   ) {}
 
   async findAll(query: QueryGuiasDto): Promise<Guia[]> {
@@ -66,6 +68,7 @@ export class GuiasService {
   async update(id: string, patch: UpdateGuiaDto): Promise<Guia> {
     const existing = await this.db.query.guias.findFirst({ where: eq(guias.id, id) });
     if (!existing) throw new NotFoundException(`Guía "${id}" no existe`);
+    await this.versions.snapshot('guia', id, existing, 'Antes de editar');
     await this.db.update(guias).set({ ...patch, updatedAt: new Date() }).where(eq(guias.id, id));
     return this.findByIdForCms(id);
   }

@@ -8,6 +8,7 @@ import { QueryEventsDto } from './dto/query-events.dto';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { toPlanazoEvent } from './events.mapper';
+import { ContentVersionsService } from '../content-versions/content-versions.service';
 
 const placeWith = {
   photos: true,
@@ -17,7 +18,10 @@ const placeWith = {
 
 @Injectable()
 export class EventsService {
-  constructor(@Inject(DRIZZLE) private readonly db: DrizzleDb) {}
+  constructor(
+    @Inject(DRIZZLE) private readonly db: DrizzleDb,
+    private readonly versions: ContentVersionsService,
+  ) {}
 
   async findAll(query: QueryEventsDto): Promise<PlanazoEvent[]> {
     const conditions = [eq(events.status, 'published')];
@@ -97,6 +101,7 @@ export class EventsService {
       where: eq(events.id, id),
     });
     if (!existing) throw new NotFoundException(`Event "${id}" not found`);
+    await this.versions.snapshot('evento-planazo', id, existing, 'Antes de editar');
     await this.db.update(events).set(patch).where(eq(events.id, id));
     return this.findByIdForCms(id);
   }

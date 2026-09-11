@@ -141,6 +141,13 @@
       "when": 1788882313552,
       "tag": "0019_lame_clint_barton",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1789083396786,
+      "tag": "0020_brave_zemo",
+      "breakpoints": true
     }
   ]
 }

@@ -16,6 +16,7 @@ import { GuiaForm } from "@/components/cms/lamira/guia-form";
 import { LamiraEventoForm } from "@/components/cms/lamira/lamira-evento-form";
 import { LamiraLugarForm } from "@/components/cms/lamira/lamira-lugar-form";
 import { ReportajeForm } from "@/components/cms/lamira/reportaje-form";
+import { VersionHistory } from "@/components/cms/version-history";
 import { ViewPublishedLink } from "@/components/cms/view-published-link";
 import { LAMIRA_TYPE_PATH } from "@/lib/lamira-paths";
 import { siteConfig } from "@planazo/config";
@@ -117,7 +118,10 @@ export default async function EditLamiraContentPage({ params }: { params: Promis
         <h1 className="mt-3 text-[22px] font-semibold tracking-tight">{title}</h1>
       </div>
 
-      <div className="p-[26px] pb-[60px]">{form}</div>
+      <div className="flex flex-col gap-4 p-[26px] pb-[60px]">
+        <VersionHistory contentType={type} contentId={id} />
+        {form}
+      </div>
     </CmsShell>
   );
 }

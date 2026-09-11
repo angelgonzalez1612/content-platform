@@ -7,12 +7,14 @@ import { lamiraEventos } from '../../db/schema';
 import { SitesService } from '../sites/sites.service';
 import { QueryLamiraEventosDto, CreateLamiraEventoDto, UpdateLamiraEventoDto } from './dto/lamira-evento.dto';
 import { toLamiraEvento } from './lamira-eventos.mapper';
+import { ContentVersionsService } from '../content-versions/content-versions.service';
 
 @Injectable()
 export class LamiraEventosService {
   constructor(
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
     private readonly sites: SitesService,
+    private readonly versions: ContentVersionsService,
   ) {}
 
   async findAll(query: QueryLamiraEventosDto): Promise<LamiraEvento[]> {
@@ -60,6 +62,7 @@ export class LamiraEventosService {
   async update(id: string, patch: UpdateLamiraEventoDto): Promise<LamiraEvento> {
     const existing = await this.db.query.lamiraEventos.findFirst({ where: eq(lamiraEventos.id, id) });
     if (!existing) throw new NotFoundException(`Evento "${id}" no existe`);
+    await this.versions.snapshot('evento', id, existing, 'Antes de editar');
     await this.db.update(lamiraEventos).set(patch).where(eq(lamiraEventos.id, id));
     return this.findByIdForCms(id);
   }

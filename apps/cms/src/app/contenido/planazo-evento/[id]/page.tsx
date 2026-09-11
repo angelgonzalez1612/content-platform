@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { getCmsCategories, getCmsEvent } from "@/lib/cms-api";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { PlanazoEventForm } from "@/components/cms/planazo/planazo-event-form";
+import { VersionHistory } from "@/components/cms/version-history";
 import { ViewPublishedLink } from "@/components/cms/view-published-link";
 import { siteConfig } from "@planazo/config";
 
@@ -24,7 +25,8 @@ export default async function EditPlanazoEventPage({ params }: { params: Promise
         <h1 className="mt-3 text-[22px] font-semibold tracking-tight">{event.name}</h1>
       </div>
 
-      <div className="p-[26px] pb-[60px]">
+      <div className="flex flex-col gap-4 p-[26px] pb-[60px]">
+        <VersionHistory contentType="evento-planazo" contentId={event.id} />
         <PlanazoEventForm categories={categories} existing={event} />
       </div>
     </CmsShell>

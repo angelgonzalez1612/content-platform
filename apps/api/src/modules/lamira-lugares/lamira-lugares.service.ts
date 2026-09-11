@@ -7,12 +7,14 @@ import { lamiraLugares } from '../../db/schema';
 import { SitesService } from '../sites/sites.service';
 import { QueryLamiraLugaresDto, CreateLamiraLugarDto, UpdateLamiraLugarDto } from './dto/lamira-lugar.dto';
 import { toLamiraLugar } from './lamira-lugares.mapper';
+import { ContentVersionsService } from '../content-versions/content-versions.service';
 
 @Injectable()
 export class LamiraLugaresService {
   constructor(
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
     private readonly sites: SitesService,
+    private readonly versions: ContentVersionsService,
   ) {}
 
   async findAll(query: QueryLamiraLugaresDto): Promise<LamiraLugar[]> {
@@ -60,6 +62,7 @@ export class LamiraLugaresService {
   async update(id: string, patch: UpdateLamiraLugarDto): Promise<LamiraLugar> {
     const existing = await this.db.query.lamiraLugares.findFirst({ where: eq(lamiraLugares.id, id) });
     if (!existing) throw new NotFoundException(`Lugar "${id}" no existe`);
+    await this.versions.snapshot('lugar', id, existing, 'Antes de editar');
     await this.db.update(lamiraLugares).set(patch).where(eq(lamiraLugares.id, id));
     return this.findByIdForCms(id);
   }
