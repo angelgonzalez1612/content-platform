@@ -85,7 +85,7 @@ export function DashboardContent({ user }: { user: AuthUser }) {
       </div>
 
       <div className="mb-[18px] grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-px overflow-hidden rounded-[14px] border border-border bg-border">
-        {(stats ? kpis : Array.from({ length: 6 })).map((k, i) => (
+        {(stats ? kpis : Array.from<Kpi | null>({ length: 6 })).map((k, i) => (
           <div key={k?.label ?? i} className="flex min-w-0 flex-col gap-2 bg-white px-4 pt-[15px] pb-3.5 transition-colors hover:bg-[#FEFCFA]">
             {k ? (
               <>
