@@ -21,6 +21,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AutomationModule } from './modules/automation/automation.module';
 import { ContentVersionsModule } from './modules/content-versions/content-versions.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { HealthController } from './modules/health/health.controller';
 
 @Module({
@@ -49,6 +50,7 @@ import { HealthController } from './modules/health/health.controller';
     AiModule,
     AutomationModule,
     ContentVersionsModule,
+    DashboardModule,
   ],
   controllers: [HealthController],
 })

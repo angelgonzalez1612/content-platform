@@ -166,23 +166,6 @@ export function Sidebar({
         ))}
       </nav>
 
-      <div
-        className={`flex-none overflow-hidden border-t border-border-soft transition-[max-height,opacity] duration-200 ease-out ${
-          collapsed ? "max-h-0 border-t-0 opacity-0" : "max-h-[110px] p-3 opacity-100"
-        }`}
-      >
-        <div className="flex flex-col gap-[7px] rounded-[11px] border border-[#FFE2CC] bg-[#FFF7F1] px-3 py-[11px]">
-          <div className="flex items-center justify-between">
-            <span className="text-[11.5px] font-semibold tracking-tight">Créditos IA</span>
-            <span className="font-mono text-[10.5px] text-accent-fg">68%</span>
-          </div>
-          <div className="h-1 overflow-hidden rounded-full bg-[#FFE2CC]">
-            <div className="h-full rounded-full bg-brand" style={{ width: "68%" }} />
-          </div>
-          <span className="text-[10.5px] leading-[1.35] text-ink-faint">13,600 de 20,000 tokens · renueva el 1 de agosto</span>
-        </div>
-      </div>
-
       {!isMobile && (
         <div className="flex-none border-t border-border-soft p-2.5">
           <button

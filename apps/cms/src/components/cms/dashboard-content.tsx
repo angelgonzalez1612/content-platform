@@ -1,15 +1,14 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { AuthUser } from "@planazo/types";
-import {
-  getAlerts,
-  getActivity,
-  getKpis,
-  getNeedsUpdate,
-  getSeoOpportunities,
-  getTopArticles,
-} from "@/data/dashboard";
+import { apiConfig } from "@planazo/config";
 import { Icon } from "@/components/icon";
 import { AutomationActivityCard } from "@/components/cms/automation-activity-card";
+import type { DashboardStats } from "@/lib/dashboard-api";
+import { contentEditHref, contentTypeIcon, contentTypeLabel, daysAgoLabel } from "@/lib/dashboard-api";
+import type { AutomationQueue } from "@/lib/automation-types";
 
 function greeting(hour: number): string {
   if (hour < 12) return "Buenos días";
@@ -17,22 +16,54 @@ function greeting(hour: number): string {
   return "Buenas noches";
 }
 
+interface Kpi {
+  label: string;
+  value: string;
+  delta?: string;
+}
+
 export function DashboardContent({ user }: { user: AuthUser }) {
   const now = new Date();
   const firstName = user.name.split(" ")[0];
-  const rawDateLabel = new Intl.DateTimeFormat("es-MX", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(now);
+  const rawDateLabel = new Intl.DateTimeFormat("es-MX", { weekday: "long", day: "numeric", month: "long" }).format(now);
   const dateLabel = rawDateLabel.charAt(0).toUpperCase() + rawDateLabel.slice(1);
 
-  const kpis = getKpis();
-  const topArticles = getTopArticles();
-  const needsUpdate = getNeedsUpdate();
-  const seoOpportunities = getSeoOpportunities();
-  const alerts = getAlerts();
-  const activity = getActivity();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [queue, setQueue] = useState<AutomationQueue | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${apiConfig.clientBaseUrl}/cms/dashboard/stats`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: DashboardStats | null) => {
+        if (!cancelled && data) setStats(data);
+      })
+      .catch(() => {});
+    fetch(`${apiConfig.clientBaseUrl}/cms/automation/queue`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: AutomationQueue | null) => {
+        if (!cancelled && data) setQueue(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const kpis: Kpi[] = stats
+    ? [
+        { label: "Publicados", value: stats.counts.published.toLocaleString("es-MX") },
+        { label: "Borradores", value: stats.counts.draft.toLocaleString("es-MX") },
+        { label: "En revisión", value: stats.counts.inReview.toLocaleString("es-MX") },
+        { label: "Programados", value: stats.counts.scheduled.toLocaleString("es-MX") },
+        { label: "Generados por IA", value: stats.aiGeneratedTotal.toLocaleString("es-MX"), delta: `${stats.aiGeneratedLast30Days} en 30 días` },
+        { label: "Temas pendientes", value: queue ? queue.pending.length.toLocaleString("es-MX") : "…", delta: queue ? `de ${queue.totalTopics} hoy` : undefined },
+      ]
+    : [];
+
+  const subtitle = stats
+    ? `${dateLabel} · ${stats.counts.published} piezas publicadas${stats.counts.inReview > 0 ? ` · ${stats.counts.inReview} esperan tu revisión` : ""}.`
+    : dateLabel;
 
   return (
     <div className="max-w-[1320px] p-[26px] pb-[60px]">
@@ -41,9 +72,7 @@ export function DashboardContent({ user }: { user: AuthUser }) {
           <h1 className="mb-1 text-[25px] font-semibold tracking-tight">
             {greeting(now.getHours())}, {firstName}
           </h1>
-          <p className="text-[13.5px] text-ink-soft">
-            {dateLabel} · 3 artículos se publican hoy, 2 esperan tu revisión.
-          </p>
+          <p className="text-[13.5px] text-ink-soft">{subtitle}</p>
         </div>
         <div className="flex-1" />
         <Link
@@ -55,21 +84,23 @@ export function DashboardContent({ user }: { user: AuthUser }) {
         </Link>
       </div>
 
-      <div className="mb-[18px] grid grid-cols-[repeat(auto-fit,minmax(196px,1fr))] gap-px overflow-hidden rounded-[14px] border border-border bg-border">
-        {kpis.map((k) => (
-          <div key={k.label} className="flex min-w-0 flex-col gap-2 bg-white px-4 pt-[15px] pb-3.5 transition-colors hover:bg-[#FEFCFA]">
-            <span className="text-[11.5px] text-[#8A837B]">{k.label}</span>
-            <div className="flex flex-wrap items-baseline gap-[7px]">
-              <span className="text-[23px] font-semibold tracking-tight [font-variant-numeric:tabular-nums]">{k.value}</span>
-              <span className="font-mono text-[10.5px] font-medium" style={{ color: k.deltaColor }}>
-                {k.delta}
-              </span>
-            </div>
-            <div className="flex h-[22px] items-end gap-0.5">
-              {k.spark.map((h, i) => (
-                <span key={i} className="flex-1 rounded-[1px]" style={{ background: k.barColor, height: `${h}%` }} />
-              ))}
-            </div>
+      <div className="mb-[18px] grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-px overflow-hidden rounded-[14px] border border-border bg-border">
+        {(stats ? kpis : Array.from({ length: 6 })).map((k, i) => (
+          <div key={k?.label ?? i} className="flex min-w-0 flex-col gap-2 bg-white px-4 pt-[15px] pb-3.5 transition-colors hover:bg-[#FEFCFA]">
+            {k ? (
+              <>
+                <span className="text-[11.5px] text-[#8A837B]">{k.label}</span>
+                <div className="flex flex-wrap items-baseline gap-[7px]">
+                  <span className="text-[23px] font-semibold tracking-tight [font-variant-numeric:tabular-nums]">{k.value}</span>
+                  {k.delta && <span className="font-mono text-[10.5px] font-medium text-[#8A837B]">{k.delta}</span>}
+                </div>
+              </>
+            ) : (
+              <>
+                <span className="h-[13px] w-16 animate-pulse rounded bg-[#F3F0EC]" />
+                <span className="h-[23px] w-10 animate-pulse rounded bg-[#F3F0EC]" />
+              </>
+            )}
           </div>
         ))}
       </div>
@@ -80,90 +111,93 @@ export function DashboardContent({ user }: { user: AuthUser }) {
         <div className="flex flex-col gap-4">
           <div className="overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
             <div className="flex items-center gap-2.5 border-b border-border-soft px-4 py-3.5">
-              <span className="text-[13.5px] font-semibold tracking-tight">Mejor rendimiento · últimos 7 días</span>
+              <span className="text-[13.5px] font-semibold tracking-tight">Publicado recientemente</span>
               <div className="flex-1" />
-              <span className="text-[12px] text-ink-soft">Ver todo</span>
+              <Link href="/contenido" className="text-[12px] text-ink-soft hover:text-brand">
+                Ver todo
+              </Link>
             </div>
-            <div className="overflow-x-auto">
-            <div className="grid min-w-[440px] grid-cols-[1fr_78px_68px_68px_82px] gap-0 px-4 pt-2 pb-1 font-mono text-[9px] tracking-[.1em] text-[#BDB6AE] uppercase">
-              <span>Artículo</span>
-              <span className="text-right">Visitas</span>
-              <span className="text-right">CTR</span>
-              <span className="text-right">RPM</span>
-              <span className="text-right">Ingresos</span>
-            </div>
-            {topArticles.map((a) => (
-              <div
-                key={a.title}
-                className="grid min-w-[440px] grid-cols-[1fr_78px_68px_68px_82px] items-center gap-0 border-t border-border-soft px-4 py-2.5 transition-colors hover:bg-[#FEFCFA]"
-              >
-                <div className="flex min-w-0 flex-col gap-[3px] pr-3">
-                  <span className="truncate text-[13px] font-medium tracking-tight">{a.title}</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="rounded font-mono text-[9.5px] text-[#8A837B]" style={{ background: "#F3F0EC", padding: "1px 5px" }}>
-                      {a.category}
-                    </span>
-                    {a.ai && (
-                      <span className="rounded font-mono text-[9.5px] text-accent-fg" style={{ background: "#FFF2E8", padding: "1px 5px" }}>
-                        IA
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <span className="text-right text-[13px] [font-variant-numeric:tabular-nums]">{a.visits}</span>
-                <span className="text-right text-[13px] text-[#5C564F] [font-variant-numeric:tabular-nums]">{a.ctr}</span>
-                <span className="text-right text-[13px] text-[#5C564F] [font-variant-numeric:tabular-nums]">{a.rpm}</span>
-                <span className="text-right text-[13px] font-semibold [font-variant-numeric:tabular-nums]">{a.revenue}</span>
-              </div>
-            ))}
-            </div>
+            {!stats ? (
+              <p className="p-6 text-center text-[13px] text-ink-faint">Cargando…</p>
+            ) : stats.recentlyCreated.length === 0 ? (
+              <p className="p-6 text-center text-[13px] text-ink-faint">Todavía no hay contenido publicado.</p>
+            ) : (
+              stats.recentlyCreated.map((item) => (
+                <Link
+                  key={`${item.contentType}-${item.contentId}`}
+                  href={contentEditHref(item.contentType, item.contentId)}
+                  className="flex items-center gap-2.5 border-t border-border-soft px-4 py-2.5 transition-colors first:border-t-0 hover:bg-[#FEFCFA]"
+                >
+                  <span aria-hidden="true">{contentTypeIcon(item.contentType)}</span>
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-medium tracking-tight">{item.title}</span>
+                  <span className="flex-none rounded font-mono text-[9.5px] text-[#8A837B]" style={{ background: "#F3F0EC", padding: "1px 5px" }}>
+                    {contentTypeLabel(item.contentType)}
+                  </span>
+                  <span className="flex-none font-mono text-[10.5px] text-ink-faint">{daysAgoLabel(item.at)}</span>
+                </Link>
+              ))
+            )}
           </div>
 
           <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
             <div className="rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
               <div className="mb-3 flex items-center gap-2">
-                <span className="text-[13.5px] font-semibold tracking-tight">Necesitan actualización</span>
-                <span className="rounded font-mono text-[9.5px] text-warning" style={{ background: "#FEF6E7", padding: "1px 5px" }}>
-                  {needsUpdate.length}
-                </span>
+                <span className="text-[13.5px] font-semibold tracking-tight">Sin actualizar hace más tiempo</span>
+                {stats && (
+                  <span className="rounded font-mono text-[9.5px] text-warning" style={{ background: "#FEF6E7", padding: "1px 5px" }}>
+                    {stats.staleContent.length}
+                  </span>
+                )}
               </div>
               <div className="flex flex-col gap-2.5">
-                {needsUpdate.map((u) => (
-                  <div key={u.title} className="flex items-center gap-2.5">
-                    <span className="h-[26px] w-[3px] flex-none rounded-sm" style={{ background: u.color }} />
-                    <div className="flex min-w-0 flex-1 flex-col gap-px">
-                      <span className="truncate text-[12.5px] font-medium">{u.title}</span>
-                      <span className="text-[10.5px] text-ink-faint">{u.why}</span>
-                    </div>
-                    <button
-                      type="button"
-                      className="flex-none rounded-md border border-border bg-white px-2 py-1 font-sans text-[11px] font-medium text-[#5C564F] transition-colors hover:border-brand hover:text-brand"
-                    >
-                      Refrescar
-                    </button>
-                  </div>
-                ))}
+                {!stats ? (
+                  <p className="text-[12.5px] text-ink-faint">Cargando…</p>
+                ) : stats.staleContent.length === 0 ? (
+                  <p className="text-[12.5px] text-ink-faint">Todo se ha actualizado recientemente.</p>
+                ) : (
+                  stats.staleContent.map((u) => (
+                    <Link key={`${u.contentType}-${u.contentId}`} href={contentEditHref(u.contentType, u.contentId)} className="flex items-center gap-2.5">
+                      <span className="h-[26px] w-[3px] flex-none rounded-sm bg-[#E0A020]" />
+                      <div className="flex min-w-0 flex-1 flex-col gap-px">
+                        <span className="truncate text-[12.5px] font-medium">{u.title}</span>
+                        <span className="text-[10.5px] text-ink-faint">
+                          Sin actualizar hace {u.daysSinceUpdate} {u.daysSinceUpdate === 1 ? "día" : "días"}
+                        </span>
+                      </div>
+                    </Link>
+                  ))
+                )}
               </div>
             </div>
 
             <div className="rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
               <div className="mb-3 flex items-center gap-2">
-                <span className="text-[13.5px] font-semibold tracking-tight">Oportunidades SEO</span>
+                <span className="text-[13.5px] font-semibold tracking-tight">Qué busca la gente</span>
                 <div className="flex-1" />
-                <span className="text-[11.5px] text-ink-soft">Keywords</span>
+                <Link href="/automatizaciones" className="text-[11.5px] text-ink-soft hover:text-brand">
+                  Ver todo
+                </Link>
               </div>
               <div className="flex flex-col gap-2.5">
-                {seoOpportunities.map((o) => (
-                  <div key={o.keyword} className="flex items-center gap-2.5 rounded-[9px] border border-border-soft px-2.5 py-2 transition-colors hover:border-[#FFD9BB] hover:bg-[#FFFCF9]">
-                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="truncate text-[12.5px] font-medium">{o.keyword}</span>
-                      <span className="font-mono text-[9.5px] text-ink-faint">
-                        Vol {o.volume} · KD {o.kd} · {o.gap}
-                      </span>
+                {!queue ? (
+                  <p className="text-[12.5px] text-ink-faint">Cargando…</p>
+                ) : queue.pending.length === 0 ? (
+                  <p className="text-[12.5px] text-ink-faint">Sin temas pendientes por ahora.</p>
+                ) : (
+                  queue.pending.slice(0, 4).map((o, i) => (
+                    <div key={i} className="flex items-center gap-2.5 rounded-[9px] border border-border-soft px-2.5 py-2">
+                      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                        <span className="truncate text-[12.5px] font-medium">{o.title}</span>
+                        <span className="font-mono text-[9.5px] text-ink-faint">{o.categoryLabel}</span>
+                      </div>
+                      {!o.hasCandidateRule && (
+                        <span className="flex-none rounded font-mono text-[9.5px] text-ink-faint" style={{ background: "#F3F0EC", padding: "1px 5px" }}>
+                          sin regla
+                        </span>
+                      )}
                     </div>
-                    <span className="font-mono text-[10.5px] font-semibold text-positive">{o.score}</span>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -178,19 +212,26 @@ export function DashboardContent({ user }: { user: AuthUser }) {
             <div className="relative">
               <div className="mb-[11px] flex items-center gap-1.5">
                 <Icon d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z" size={14} strokeWidth={1.8} className="text-brand" />
-                <span className="text-[12.5px] font-semibold tracking-tight">Resumen del copiloto</span>
+                <span className="text-[12.5px] font-semibold tracking-tight">Resumen</span>
               </div>
               <p className="mb-[13px] text-[13px] leading-[1.55] text-white/78">
-                Detecté <strong className="font-semibold text-white">14 keywords nuevas</strong> sobre brunch en
-                Condesa con volumen creciente. Puedo armar un cluster de 5 artículos y programarlos para agosto.
+                {stats ? (
+                  stats.counts.inReview > 0 ? (
+                    <>
+                      Tienes <strong className="font-semibold text-white">{stats.counts.inReview} {stats.counts.inReview === 1 ? "pieza" : "piezas"}</strong> esperando
+                      tu revisión antes de publicarse — no salieron solas porque no pasaron alguna checada automática (longitud, SEO, foto, etc).
+                    </>
+                  ) : (
+                    <>No hay nada pendiente de revisión ahora mismo — todo lo que se generó pasó las checadas automáticas.</>
+                  )
+                ) : (
+                  "Cargando…"
+                )}
               </p>
               <div className="flex gap-1.5">
-                <button type="button" className="rounded-lg bg-brand px-3 py-[7px] font-sans text-[12px] font-semibold text-white">
-                  Ver plan
-                </button>
-                <button type="button" className="rounded-lg border border-white/18 bg-transparent px-3 py-[7px] font-sans text-[12px] text-white/80">
-                  Descartar
-                </button>
+                <Link href="/contenido" className="rounded-lg bg-brand px-3 py-[7px] font-sans text-[12px] font-semibold text-white">
+                  Ver contenido
+                </Link>
               </div>
             </div>
           </div>
@@ -198,40 +239,26 @@ export function DashboardContent({ user }: { user: AuthUser }) {
           <div className="rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
             <span className="mb-3 block text-[13.5px] font-semibold tracking-tight">Alertas</span>
             <div className="flex flex-col gap-2.5">
-              {alerts.map((al) => (
-                <div key={al.title} className="flex items-start gap-2.5">
-                  <span
-                    className="mt-px flex size-4 flex-none items-center justify-center rounded-[5px] text-[10px] font-bold"
-                    style={{ background: al.bg, color: al.fg }}
-                  >
-                    {al.icon}
-                  </span>
-                  <div className="flex flex-1 flex-col gap-0.5">
-                    <span className="text-[12.5px] leading-[1.35] font-medium">{al.title}</span>
-                    <span className="text-[11px] leading-[1.4] text-ink-faint">{al.meta}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
-            <span className="mb-[13px] block text-[13.5px] font-semibold tracking-tight">Actividad reciente</span>
-            <div className="flex flex-col">
-              {activity.map((ac, i) => (
-                <div key={i} className="flex gap-2.5 pb-[13px]">
-                  <div className="flex w-5 flex-none flex-col items-center">
-                    <span className="mt-1 size-[7px] rounded-full" style={{ background: ac.dot }} />
-                    {i < activity.length - 1 && <span className="mt-[3px] w-px flex-1 bg-border-soft" />}
-                  </div>
-                  <div className="flex flex-1 flex-col gap-0.5">
-                    <span className="text-[12.5px] leading-[1.4] text-[#3D382F]">{ac.text}</span>
-                    <span className="font-mono text-[9.5px] text-[#BDB6AE]">
-                      {ac.who} · {ac.when}
+              {!stats ? (
+                <p className="text-[12.5px] text-ink-faint">Cargando…</p>
+              ) : stats.alerts.length === 0 ? (
+                <p className="text-[12.5px] text-ink-faint">Sin alertas por ahora.</p>
+              ) : (
+                stats.alerts.map((al, i) => (
+                  <div key={i} className="flex items-start gap-2.5">
+                    <span
+                      className="mt-px flex size-4 flex-none items-center justify-center rounded-[5px] text-[10px] font-bold"
+                      style={{ background: "#FEF6E7", color: "#9A6B12" }}
+                    >
+                      !
                     </span>
+                    <div className="flex flex-1 flex-col gap-0.5">
+                      <span className="text-[12.5px] leading-[1.35] font-medium">{al.title}</span>
+                      <span className="text-[11px] leading-[1.4] text-ink-faint">{al.meta}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
