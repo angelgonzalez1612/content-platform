@@ -9,6 +9,7 @@
     "noImplicitAny": false,
     "resolveJsonModule": true,
     "outDir": "dist",
+    "declaration": true,
     "types": ["node"]
   },
   "include": ["src"]
