@@ -84,7 +84,8 @@ export function DashboardContent({ user }: { user: AuthUser }) {
               <div className="flex-1" />
               <span className="text-[12px] text-ink-soft">Ver todo</span>
             </div>
-            <div className="grid grid-cols-[1fr_78px_68px_68px_82px] gap-0 px-4 pt-2 pb-1 font-mono text-[9px] tracking-[.1em] text-[#BDB6AE] uppercase">
+            <div className="overflow-x-auto">
+            <div className="grid min-w-[440px] grid-cols-[1fr_78px_68px_68px_82px] gap-0 px-4 pt-2 pb-1 font-mono text-[9px] tracking-[.1em] text-[#BDB6AE] uppercase">
               <span>Artículo</span>
               <span className="text-right">Visitas</span>
               <span className="text-right">CTR</span>
@@ -94,7 +95,7 @@ export function DashboardContent({ user }: { user: AuthUser }) {
             {topArticles.map((a) => (
               <div
                 key={a.title}
-                className="grid grid-cols-[1fr_78px_68px_68px_82px] items-center gap-0 border-t border-border-soft px-4 py-2.5 transition-colors hover:bg-[#FEFCFA]"
+                className="grid min-w-[440px] grid-cols-[1fr_78px_68px_68px_82px] items-center gap-0 border-t border-border-soft px-4 py-2.5 transition-colors hover:bg-[#FEFCFA]"
               >
                 <div className="flex min-w-0 flex-col gap-[3px] pr-3">
                   <span className="truncate text-[13px] font-medium tracking-tight">{a.title}</span>
@@ -115,6 +116,7 @@ export function DashboardContent({ user }: { user: AuthUser }) {
                 <span className="text-right text-[13px] font-semibold [font-variant-numeric:tabular-nums]">{a.revenue}</span>
               </div>
             ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">

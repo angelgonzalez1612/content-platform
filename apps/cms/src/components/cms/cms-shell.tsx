@@ -19,6 +19,7 @@ export function CmsShell({
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (window.localStorage.getItem("planazo-cms-sidebar-collapsed") === "1") setSidebarCollapsed(true);
@@ -43,16 +44,37 @@ export function CmsShell({
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
-      <Sidebar collapsed={sidebarCollapsed} onToggleCollapsed={toggleSidebarCollapsed} onOpenCommand={() => setCommandOpen(true)} />
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={toggleSidebarCollapsed}
+        onOpenCommand={() => setCommandOpen(true)}
+        mobileOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
+      />
 
       <main className="flex h-full min-w-0 flex-1 flex-col">
-        <Topbar user={user} title={title} copilotOpen={copilotOpen} onToggleCopilot={() => setCopilotOpen((v) => !v)} />
+        <Topbar
+          user={user}
+          title={title}
+          copilotOpen={copilotOpen}
+          onToggleCopilot={() => setCopilotOpen((v) => !v)}
+          onOpenMobileMenu={() => setMobileSidebarOpen(true)}
+        />
 
         <div className="flex min-h-0 flex-1">
           <div className="min-w-0 flex-1 overflow-y-auto bg-background">{children}</div>
+          {copilotOpen && (
+            <div
+              className="fixed inset-0 z-40 bg-black/40 sm:hidden"
+              onClick={() => setCopilotOpen(false)}
+              aria-hidden="true"
+            />
+          )}
           <div
             inert={!copilotOpen}
-            className={`flex-none overflow-hidden transition-[width] duration-200 ease-out ${copilotOpen ? "w-[326px]" : "w-0"}`}
+            className={`fixed inset-y-0 right-0 z-50 overflow-hidden transition-[width] duration-200 ease-out sm:relative sm:z-auto ${
+              copilotOpen ? "w-full sm:w-[326px]" : "w-0"
+            }`}
           >
             <CopilotPanel screenTitle={title} onClose={() => setCopilotOpen(false)} />
           </div>

@@ -163,7 +163,7 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
           <RichTextarea id="l-description" required rows={4} value={form.description} onChange={(v) => set("description", v)} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="l-kind" className={labelClass}>
               Tipo de lugar
@@ -192,7 +192,7 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
 
         <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="l-alcaldia" className={labelClass}>
               Alcaldía / municipio

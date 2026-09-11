@@ -206,7 +206,7 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
           <textarea id="g-dek" required rows={2} value={form.dek} onChange={(e) => set("dek", e.target.value)} className={`${fieldClass} resize-none`} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="g-group" className={labelClass}>
               Grupo de trámite
@@ -236,7 +236,7 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
 
         <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="g-source-label" className={labelClass}>
               Fuente oficial — nombre
@@ -280,7 +280,7 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
 
         <SeoPanel seo={seo} onChange={setSeo} />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="g-reading" className={labelClass}>
               Tiempo de lectura

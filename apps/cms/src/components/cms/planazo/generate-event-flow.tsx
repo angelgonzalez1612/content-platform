@@ -373,7 +373,7 @@ export function GenerateEventFlow({
                     Todos opcionales — algunos temas (ej. una agenda con varios planes) no tienen una sola fecha/hora/lugar real. Déjalos en blanco si no aplican.
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="ev-start" className={labelClass}>
                       Fecha y hora de inicio <span className="normal-case font-normal text-ink-faint">(opcional)</span>
@@ -387,7 +387,7 @@ export function GenerateEventFlow({
                     <input id="ev-end" type="datetime-local" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={fieldClass} />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="ev-location" className={labelClass}>
                       Lugar <span className="normal-case font-normal text-ink-faint">(opcional)</span>

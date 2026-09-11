@@ -198,7 +198,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 text-[13px]">
+            <div className="grid grid-cols-1 gap-4 text-[13px] sm:grid-cols-2">
               <div>
                 <span className={labelClass}>Descripción actual</span>
                 <p className="mt-1 text-ink-soft">{form.description || "(vacía)"}</p>
@@ -297,7 +297,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
 
         <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="zone" className={labelClass}>
               Zona / colonia
@@ -318,7 +318,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="priceLevel" className={labelClass}>
               Nivel de precio
@@ -367,7 +367,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="phone" className={labelClass}>
               Teléfono

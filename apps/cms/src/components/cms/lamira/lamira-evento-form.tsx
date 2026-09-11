@@ -195,7 +195,7 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
 
         <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="e-date" className={labelClass}>
               Fecha
@@ -216,7 +216,7 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="e-location" className={labelClass}>
               Ubicación
@@ -231,7 +231,7 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="e-organizer" className={labelClass}>
               Organizador

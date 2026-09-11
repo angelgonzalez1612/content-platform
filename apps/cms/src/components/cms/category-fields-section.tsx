@@ -22,7 +22,7 @@ export function CategoryFieldsSection({
       <span className="font-mono text-[10px] font-medium tracking-[.1em] text-ink-faint uppercase">
         Campos de {category.name}
       </span>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {category.fieldSchema.map((entry) => (
           <div key={entry.key} className={entry.type === "textarea" || entry.type === "multiselect" ? "col-span-2" : ""}>
             <DynamicField entry={entry} value={data[entry.key]} onChange={(value) => onChange({ ...data, [entry.key]: value })} />

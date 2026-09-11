@@ -595,7 +595,7 @@ export function GenerateLamiraContentFlow({
                 )}
                 {type === "alerta" && (
                   <div className="flex flex-col gap-2">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="flex flex-col gap-1.5">
                         <label htmlFor="ex-alerta-status" className={labelClass}>
                           Estado <span className="normal-case font-normal text-ink-faint">(opcional)</span>
@@ -622,7 +622,7 @@ export function GenerateLamiraContentFlow({
                 )}
                 {type === "evento" && (
                   <>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="flex flex-col gap-1.5">
                         <label htmlFor="ex-tag" className={labelClass}>
                           Badge
@@ -641,7 +641,7 @@ export function GenerateLamiraContentFlow({
                         </select>
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                       <div className="flex flex-col gap-1.5">
                         <label htmlFor="ex-date" className={labelClass}>
                           Fecha
@@ -661,7 +661,7 @@ export function GenerateLamiraContentFlow({
                         <input id="ex-price" required value={extra.price} onChange={(e) => setExtraField("price", e.target.value)} placeholder="Gratis" className={fieldClass} />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="flex flex-col gap-1.5">
                         <label htmlFor="ex-location" className={labelClass}>
                           Ubicación
@@ -684,7 +684,7 @@ export function GenerateLamiraContentFlow({
                   </>
                 )}
                 {type === "lugar" && (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="flex flex-col gap-1.5">
                       <label htmlFor="ex-kind" className={labelClass}>
                         Tipo de lugar

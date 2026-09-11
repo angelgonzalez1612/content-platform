@@ -212,7 +212,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
           <textarea id="n-dek" required rows={2} value={form.dek} onChange={(e) => set("dek", e.target.value)} className={`${fieldClass} resize-none`} />
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="n-category" className={labelClass}>
               Categoría
@@ -245,7 +245,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
 
         <TagsField label="Etiquetas" tags={tags} onChange={setTags} />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="n-author" className={labelClass}>
               Autor (slug)
@@ -260,7 +260,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="n-source-kind" className={labelClass}>
               Tipo de fuente
@@ -303,7 +303,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="n-image-caption" className={labelClass}>
               Pie de foto
@@ -318,7 +318,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="n-instagram" className={labelClass}>
               Liga de Instagram (opcional)

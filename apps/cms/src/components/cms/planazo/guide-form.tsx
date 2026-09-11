@@ -177,7 +177,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
         <textarea id="gu-intro" rows={3} value={form.intro} onChange={(e) => set("intro", e.target.value)} className={`${fieldClass} resize-none`} />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="gu-type" className={labelClass}>
             Formato
@@ -207,7 +207,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
 
       <GuideSectionsField sections={sections} onChange={setSections} placeOptions={placeOptions} />
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="gu-reading" className={labelClass}>
             Tiempo de lectura

@@ -185,7 +185,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
 
         <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="pe-start" className={labelClass}>
               Fecha y hora de inicio <span className="normal-case font-normal text-ink-faint">(opcional)</span>
@@ -200,7 +200,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="pe-location" className={labelClass}>
               Lugar <span className="normal-case font-normal text-ink-faint">(opcional)</span>

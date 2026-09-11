@@ -213,7 +213,7 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
 
         <TagsField label="Etiquetas (mínimo 1)" tags={tags} onChange={setTags} />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="r-author" className={labelClass}>
               Autor (slug)
@@ -228,7 +228,7 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="r-source-kind" className={labelClass}>
               Tipo de fuente

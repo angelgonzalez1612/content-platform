@@ -178,7 +178,7 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
 
       <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="c-zone" className={labelClass}>
             Zona / colonia
@@ -199,7 +199,7 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="c-priceLevel" className={labelClass}>
             Nivel de precio
@@ -248,7 +248,7 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="c-phone" className={labelClass}>
             Teléfono
