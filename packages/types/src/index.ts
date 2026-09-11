@@ -134,6 +134,9 @@ export interface Noticia {
   externalSource: string | null;
   sourceUrl: string | null;
   youtubeId: string | null;
+  instagramUrl: string | null;
+  twitterUrl: string | null;
+  tiktokUrl: string | null;
   tags: string[];
   seo: Seo | null;
   toc: TocEntry[];

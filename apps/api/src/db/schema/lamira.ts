@@ -42,6 +42,13 @@ export const noticias = sqliteTable('noticias', {
   // AutomationRunnerService.createContent), editable a mano en el formulario.
   sourceUrl: text('source_url'),
   youtubeId: text('youtube_id'),
+  // URL completa del post/tweet/video, no un id — a diferencia de YouTube,
+  // el embed oficial de estas 3 redes (blockquote + su script) pide la URL
+  // entera, no un id corto. Mismo criterio que youtubeId: opcional, editable
+  // a mano en el formulario, nunca inventado.
+  instagramUrl: text('instagram_url'),
+  twitterUrl: text('twitter_url'),
+  tiktokUrl: text('tiktok_url'),
   tags: text('tags', { mode: 'json' }).$type<string[]>().notNull().default([]),
   seo: text('seo', { mode: 'json' }).$type<Seo>(),
   toc: text('toc', { mode: 'json' }).$type<TocEntry[]>().notNull().default([]),

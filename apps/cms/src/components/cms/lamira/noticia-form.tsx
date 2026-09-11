@@ -41,6 +41,9 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
     externalSource: existing?.externalSource ?? "",
     sourceUrl: existing?.sourceUrl ?? "",
     youtubeId: existing?.youtubeId ?? "",
+    instagramUrl: existing?.instagramUrl ?? "",
+    twitterUrl: existing?.twitterUrl ?? "",
+    tiktokUrl: existing?.tiktokUrl ?? "",
     imageCaption: existing?.imageCaption ?? "",
     featured: existing?.featured ?? false,
     tag: existing?.tag ?? "",
@@ -99,6 +102,9 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
       externalSource: form.externalSource || null,
       sourceUrl: form.sourceUrl || null,
       youtubeId: form.youtubeId || null,
+      instagramUrl: form.instagramUrl || null,
+      twitterUrl: form.twitterUrl || null,
+      tiktokUrl: form.tiktokUrl || null,
       tags,
       toc: buildToc(content),
       content,
@@ -309,6 +315,45 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
               ID de YouTube (opcional)
             </label>
             <input id="n-youtube" value={form.youtubeId} onChange={(e) => set("youtubeId", e.target.value)} className={fieldClass} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="n-instagram" className={labelClass}>
+              Liga de Instagram (opcional)
+            </label>
+            <input
+              id="n-instagram"
+              placeholder="https://www.instagram.com/p/..."
+              value={form.instagramUrl}
+              onChange={(e) => set("instagramUrl", e.target.value)}
+              className={fieldClass}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="n-twitter" className={labelClass}>
+              Liga de X/Twitter (opcional)
+            </label>
+            <input
+              id="n-twitter"
+              placeholder="https://x.com/usuario/status/..."
+              value={form.twitterUrl}
+              onChange={(e) => set("twitterUrl", e.target.value)}
+              className={fieldClass}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="n-tiktok" className={labelClass}>
+              Liga de TikTok (opcional)
+            </label>
+            <input
+              id="n-tiktok"
+              placeholder="https://www.tiktok.com/@usuario/video/..."
+              value={form.tiktokUrl}
+              onChange={(e) => set("tiktokUrl", e.target.value)}
+              className={fieldClass}
+            />
           </div>
         </div>
 

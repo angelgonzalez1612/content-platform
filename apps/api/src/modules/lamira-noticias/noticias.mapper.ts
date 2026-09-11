@@ -18,6 +18,9 @@ interface NoticiaRow {
   externalSource: string | null;
   sourceUrl: string | null;
   youtubeId: string | null;
+  instagramUrl: string | null;
+  twitterUrl: string | null;
+  tiktokUrl: string | null;
   tags: string[];
   seo: Noticia['seo'];
   toc: Noticia['toc'];
@@ -53,6 +56,9 @@ export function toNoticia(row: NoticiaRow): Noticia {
     externalSource: row.externalSource,
     sourceUrl: row.sourceUrl,
     youtubeId: row.youtubeId,
+    instagramUrl: row.instagramUrl,
+    twitterUrl: row.twitterUrl,
+    tiktokUrl: row.tiktokUrl,
     tags: row.tags,
     seo: row.seo ?? null,
     toc: row.toc,
