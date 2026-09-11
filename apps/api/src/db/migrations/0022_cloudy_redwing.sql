@@ -1,0 +1,1 @@
+ALTER TABLE `content_audit_log` DROP COLUMN `tokens_used`;

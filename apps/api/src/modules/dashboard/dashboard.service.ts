@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, count, desc, asc, eq, gte, inArray, lt, sql } from 'drizzle-orm';
+import { and, count, desc, asc, eq, gte, inArray, lt } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
 import * as schema from '../../db/schema';
 
@@ -20,7 +20,6 @@ export interface DashboardStats {
   counts: { published: number; draft: number; inReview: number; scheduled: number };
   aiGeneratedTotal: number;
   aiGeneratedLast30Days: number;
-  tokensUsedThisMonth: number;
   recentlyCreated: ContentItem[];
   staleContent: (ContentItem & { daysSinceUpdate: number })[];
   alerts: { title: string; meta: string }[];
@@ -39,16 +38,15 @@ export class DashboardService {
   constructor(@Inject(DRIZZLE) private readonly db: DrizzleDb) {}
 
   async getStats(): Promise<DashboardStats> {
-    const [counts, aiTotals, tokensUsedThisMonth, recentlyCreated, staleContent, alerts] = await Promise.all([
+    const [counts, aiTotals, recentlyCreated, staleContent, alerts] = await Promise.all([
       this.getCounts(),
       this.getAiGeneratedTotals(),
-      this.getTokensUsedThisMonth(),
       this.getRecentlyCreated(),
       this.getStaleContent(),
       this.getAlerts(),
     ]);
 
-    return { counts, aiGeneratedTotal: aiTotals.total, aiGeneratedLast30Days: aiTotals.last30Days, tokensUsedThisMonth, recentlyCreated, staleContent, alerts };
+    return { counts, aiGeneratedTotal: aiTotals.total, aiGeneratedLast30Days: aiTotals.last30Days, recentlyCreated, staleContent, alerts };
   }
 
   // Solo 6 de los 9 tipos tienen workflow de borrador/revisión real
@@ -98,18 +96,6 @@ export class DashboardService {
     ]);
 
     return { total: totalRow?.n ?? 0, last30Days: recentRow?.n ?? 0 };
-  }
-
-  private async getTokensUsedThisMonth(): Promise<number> {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    const [row] = await this.db
-      .select({ total: sql<number>`coalesce(sum(${schema.contentAuditLog.tokensUsed}), 0)` })
-      .from(schema.contentAuditLog)
-      .where(gte(schema.contentAuditLog.createdAt, monthStart));
-
-    return row?.total ?? 0;
   }
 
   private async getRecentlyCreated(): Promise<ContentItem[]> {

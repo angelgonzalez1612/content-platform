@@ -38,7 +38,6 @@ export const contentAuditLog = sqliteTable('content_audit_log', {
   actorId: text('actor_id').references(() => users.id), // null si la corrida fue 100% automática
   reviewedBy: text('reviewed_by').references(() => users.id),
   reviewedAt: integer('reviewed_at', { mode: 'timestamp' }),
-  tokensUsed: integer('tokens_used'),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .$defaultFn(() => new Date()),

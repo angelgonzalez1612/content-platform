@@ -18,7 +18,6 @@ export interface DashboardStats {
   counts: { published: number; draft: number; inReview: number; scheduled: number };
   aiGeneratedTotal: number;
   aiGeneratedLast30Days: number;
-  tokensUsedThisMonth: number;
   recentlyCreated: DashboardContentRef[];
   staleContent: DashboardStaleItem[];
   alerts: { title: string; meta: string }[];
