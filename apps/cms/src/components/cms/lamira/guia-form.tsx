@@ -174,7 +174,14 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
   const left = (
     <div className="flex flex-col gap-4">
       {isEdit && (
-        <ImproveWithAiPanel contentType="guia" contentId={existing.id} expanded={improving} onToggle={() => setImproving((v) => !v)} onResult={setImproveResult} />
+        <ImproveWithAiPanel
+          contentType="guia"
+          contentId={existing.id}
+          expanded={improving}
+          onToggle={() => setImproving((v) => !v)}
+          onResult={setImproveResult}
+          supportsExpand
+        />
       )}
 
       {improveResult && (

@@ -13,6 +13,8 @@ import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
 import { ImageField } from "@/components/cms/lamira/image-field";
 import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
 import { PlanazoPreviewCard } from "@/components/cms/planazo/planazo-preview-card";
+import { ContentBlocksField, type ContentBlockValue } from "@/components/cms/content-blocks-field";
+import { summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
 
 // `startDate` es el valor crudo de un <input type="datetime-local"> ("2026-09-01T18:00") — para la vista previa.
 function toDateLabelPreview(startDate: string): string {
@@ -51,6 +53,9 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
   });
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(existing.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(existing.seo ?? {});
+  const [content, setContent] = useState<ContentBlockValue[]>(
+    existing.content.map((b) => ({ heading: b.heading ?? null, paragraphs: b.paragraphs })),
+  );
   const [image, setImage] = useState<{ url: string; credit: string } | null>(
     existing.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
   );
@@ -69,8 +74,14 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
 
   function applyImprovement() {
     if (!improveResult) return;
-    const { description, seo: improvedSeo, ...rest } = improveResult.draft as { description?: string; seo?: Seo; [k: string]: unknown };
+    const { description, content: improvedContent, seo: improvedSeo, ...rest } = improveResult.draft as {
+      description?: string;
+      content?: ContentBlockValue[];
+      seo?: Seo;
+      [k: string]: unknown;
+    };
     if (description) set("description", description);
+    if (improvedContent) setContent(improvedContent);
     if (improvedSeo) setSeo(improvedSeo);
     setCategoryData((prev) => ({ ...prev, ...rest }));
     setImproveResult(null);
@@ -93,6 +104,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
       status,
       categoryData,
       seo,
+      content,
     };
 
     try {
@@ -142,12 +154,22 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
 
   const left = (
     <div className="flex flex-col gap-4">
-      <ImproveWithAiPanel contentType="evento-planazo" contentId={existing.id} expanded={improving} onToggle={() => setImproving((v) => !v)} onResult={setImproveResult} />
+      <ImproveWithAiPanel
+        contentType="evento-planazo"
+        contentId={existing.id}
+        expanded={improving}
+        onToggle={() => setImproving((v) => !v)}
+        onResult={setImproveResult}
+        supportsExpand
+      />
 
       {improveResult && (
         <ImprovePreview
           result={improveResult}
-          fields={[{ label: "Descripción", current: form.description, improved: (improveResult.draft.description as string) ?? "" }]}
+          fields={[
+            { label: "Descripción", current: form.description, improved: (improveResult.draft.description as string) ?? "" },
+            { label: "Cuerpo", current: summarizeBlocks(content), improved: summarizeBlocks((improveResult.draft.content as ContentBlockValue[]) ?? content) },
+          ]}
           onApply={applyImprovement}
           onDiscard={() => setImproveResult(null)}
         />
@@ -184,6 +206,8 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
         <ImageField image={image} onChange={setImage} />
 
         <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
+
+        <ContentBlocksField blocks={content} onChange={setContent} />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">

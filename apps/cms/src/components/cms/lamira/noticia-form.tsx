@@ -180,7 +180,14 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
   const left = (
     <div className="flex flex-col gap-4">
       {isEdit && (
-        <ImproveWithAiPanel contentType="noticia" contentId={existing.id} expanded={improving} onToggle={() => setImproving((v) => !v)} onResult={setImproveResult} />
+        <ImproveWithAiPanel
+          contentType="noticia"
+          contentId={existing.id}
+          expanded={improving}
+          onToggle={() => setImproving((v) => !v)}
+          onResult={setImproveResult}
+          supportsExpand
+        />
       )}
 
       {improveResult && (

@@ -161,7 +161,14 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
   const left = (
     <div className="flex flex-col gap-4">
       {isEdit && (
-        <ImproveWithAiPanel contentType="reportaje" contentId={existing.id} expanded={improving} onToggle={() => setImproving((v) => !v)} onResult={setImproveResult} />
+        <ImproveWithAiPanel
+          contentType="reportaje"
+          contentId={existing.id}
+          expanded={improving}
+          onToggle={() => setImproving((v) => !v)}
+          onResult={setImproveResult}
+          supportsExpand
+        />
       )}
 
       {improveResult && (
