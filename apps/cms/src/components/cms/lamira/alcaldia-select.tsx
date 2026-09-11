@@ -33,7 +33,7 @@ export function AlcaldiaSelect({
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${apiConfig.baseUrl}/locations`, { credentials: "include" })
+    fetch(`${apiConfig.clientBaseUrl}/locations`, { credentials: "include" })
       .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
       .then((data: { slug: string; name: string; kind: "alcaldia" | "municipio" }[]) => {
         if (cancelled) return;

@@ -177,10 +177,10 @@ export function AutomationView({
 
   async function refreshAll() {
     const [rulesRes, runsRes, statusRes, queueRes] = await Promise.all([
-      fetch(`${apiConfig.baseUrl}/cms/automation/rules`, { credentials: "include" }),
-      fetch(`${apiConfig.baseUrl}/cms/automation/runs`, { credentials: "include" }),
-      fetch(`${apiConfig.baseUrl}/cms/automation/status`, { credentials: "include" }),
-      fetch(`${apiConfig.baseUrl}/cms/automation/queue`, { credentials: "include" }),
+      fetch(`${apiConfig.clientBaseUrl}/cms/automation/rules`, { credentials: "include" }),
+      fetch(`${apiConfig.clientBaseUrl}/cms/automation/runs`, { credentials: "include" }),
+      fetch(`${apiConfig.clientBaseUrl}/cms/automation/status`, { credentials: "include" }),
+      fetch(`${apiConfig.clientBaseUrl}/cms/automation/queue`, { credentials: "include" }),
     ]);
     if (rulesRes.ok) setRules(await rulesRes.json());
     if (runsRes.ok) setRuns(await runsRes.json());
@@ -192,7 +192,7 @@ export function AutomationView({
   // montar, igual que AutomationActivityCard del Dashboard, así el nuevo
   // apartado de frases de búsqueda no bloquea el render inicial de la página.
   useEffect(() => {
-    fetch(`${apiConfig.baseUrl}/cms/automation/queue`, { credentials: "include" })
+    fetch(`${apiConfig.clientBaseUrl}/cms/automation/queue`, { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => data && setQueue(data));
   }, []);
@@ -213,7 +213,7 @@ export function AutomationView({
     };
     try {
       const isNew = editingId === "new";
-      const res = await fetch(`${apiConfig.baseUrl}/cms/automation/rules${isNew ? "" : `/${editingId}`}`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/automation/rules${isNew ? "" : `/${editingId}`}`, {
         method: isNew ? "POST" : "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -235,7 +235,7 @@ export function AutomationView({
   }
 
   async function toggleActive(rule: AutomationRule) {
-    await fetch(`${apiConfig.baseUrl}/cms/automation/rules/${rule.id}`, {
+    await fetch(`${apiConfig.clientBaseUrl}/cms/automation/rules/${rule.id}`, {
       method: "PATCH",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -246,7 +246,7 @@ export function AutomationView({
 
   async function removeRule(rule: AutomationRule) {
     if (!confirm(`¿Borrar la regla "${rule.name}"? Esto no borra el contenido que ya haya creado, solo la regla.`)) return;
-    await fetch(`${apiConfig.baseUrl}/cms/automation/rules/${rule.id}`, { method: "DELETE", credentials: "include" });
+    await fetch(`${apiConfig.clientBaseUrl}/cms/automation/rules/${rule.id}`, { method: "DELETE", credentials: "include" });
     await refreshAll();
   }
 
@@ -254,7 +254,7 @@ export function AutomationView({
     setRunning(true);
     setRunResult(null);
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/automation/run-now`, { method: "POST", credentials: "include" });
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/automation/run-now`, { method: "POST", credentials: "include" });
       if (res.ok) setRunResult(await res.json());
       await refreshAll();
     } finally {

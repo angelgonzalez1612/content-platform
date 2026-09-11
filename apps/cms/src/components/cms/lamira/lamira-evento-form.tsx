@@ -91,7 +91,7 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
     };
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/lamira/eventos${isEdit ? `/${existing.id}` : ""}`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/lamira/eventos${isEdit ? `/${existing.id}` : ""}`, {
         method: isEdit ? "PATCH" : "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

@@ -59,7 +59,7 @@ export function ImproveWithAiPanel({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/ai/improve/${contentType}/${contentId}`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/improve/${contentType}/${contentId}`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

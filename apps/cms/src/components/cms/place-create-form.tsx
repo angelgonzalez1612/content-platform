@@ -61,7 +61,7 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
     setError("");
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/places`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/places`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

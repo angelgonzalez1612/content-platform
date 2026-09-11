@@ -79,7 +79,7 @@ export function AlertaForm({ categories, existing }: { categories: Category[]; e
     };
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/lamira/alertas${isEdit ? `/${existing.id}` : ""}`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/lamira/alertas${isEdit ? `/${existing.id}` : ""}`, {
         method: isEdit ? "PATCH" : "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

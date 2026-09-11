@@ -7,7 +7,7 @@ import { apiConfig } from "@planazo/config";
 // mostrar error si falla: es un extra de comodidad, no debe impedir navegar
 // al contenido recién creado si esta llamada falla por lo que sea.
 export function markContentRadarPublished(params: { title: string; site: "la-mira" | "planazo"; contentType: string; contentId: string }) {
-  fetch(`${apiConfig.baseUrl}/cms/content-radar/mark-published`, {
+  fetch(`${apiConfig.clientBaseUrl}/cms/content-radar/mark-published`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

@@ -15,7 +15,7 @@ export function useOpenAiAvailable(): boolean | null {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${apiConfig.baseUrl}/cms/settings/ai`, { credentials: "include" })
+    fetch(`${apiConfig.clientBaseUrl}/cms/settings/ai`, { credentials: "include" })
       .then((res) => (res.ok ? res.json() : { openaiApiKeySet: false }))
       .then((data: { openaiApiKeySet?: boolean }) => {
         if (!cancelled) setAvailable(!!data.openaiApiKeySet);

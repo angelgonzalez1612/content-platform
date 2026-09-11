@@ -114,7 +114,7 @@ export function GeneratePlaceFlow({
     setStep("generating");
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/ai/draft`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/draft`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -155,7 +155,7 @@ export function GeneratePlaceFlow({
     setError("");
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/places`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/places`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

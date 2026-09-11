@@ -32,9 +32,9 @@ export function AutomationActivityCard() {
     setLoading(true);
     try {
       const [statusRes, queueRes, runsRes] = await Promise.all([
-        fetch(`${apiConfig.baseUrl}/cms/automation/status`, { credentials: "include" }),
-        fetch(`${apiConfig.baseUrl}/cms/automation/queue`, { credentials: "include" }),
-        fetch(`${apiConfig.baseUrl}/cms/automation/runs`, { credentials: "include" }),
+        fetch(`${apiConfig.clientBaseUrl}/cms/automation/status`, { credentials: "include" }),
+        fetch(`${apiConfig.clientBaseUrl}/cms/automation/queue`, { credentials: "include" }),
+        fetch(`${apiConfig.clientBaseUrl}/cms/automation/runs`, { credentials: "include" }),
       ]);
       if (statusRes.ok) setStatus(await statusRes.json());
       if (queueRes.ok) setQueue(await queueRes.json());

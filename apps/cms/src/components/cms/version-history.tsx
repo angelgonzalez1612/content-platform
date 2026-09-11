@@ -25,7 +25,7 @@ export function VersionHistory({ contentType, contentId }: { contentType: string
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${apiConfig.baseUrl}/cms/content-versions?contentType=${encodeURIComponent(contentType)}&contentId=${encodeURIComponent(contentId)}`, {
+    fetch(`${apiConfig.clientBaseUrl}/cms/content-versions?contentType=${encodeURIComponent(contentType)}&contentId=${encodeURIComponent(contentId)}`, {
       credentials: "include",
     })
       .then((res) => (res.ok ? res.json() : []))
@@ -48,7 +48,7 @@ export function VersionHistory({ contentType, contentId }: { contentType: string
     setRestoring(true);
     setError("");
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/content-versions/${selected.id}/restore`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/content-versions/${selected.id}/restore`, {
         method: "POST",
         credentials: "include",
       });

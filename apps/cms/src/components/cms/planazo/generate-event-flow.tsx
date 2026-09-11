@@ -121,7 +121,7 @@ export function GenerateEventFlow({
     setStep("generating");
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/ai/draft`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/draft`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -161,7 +161,7 @@ export function GenerateEventFlow({
     setError("");
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/events`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/events`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

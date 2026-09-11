@@ -29,7 +29,7 @@ export function Topbar({
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${apiConfig.baseUrl}/cms/automation/status`, { credentials: "include" })
+    fetch(`${apiConfig.clientBaseUrl}/cms/automation/status`, { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { activeRulesCount?: number; isRunning?: boolean } | null) => {
         if (!cancelled && data) setAutomation({ activeRulesCount: data.activeRulesCount ?? 0, isRunning: !!data.isRunning });

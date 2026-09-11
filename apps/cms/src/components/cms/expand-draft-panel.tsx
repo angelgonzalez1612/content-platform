@@ -59,7 +59,7 @@ export function ExpandDraftPanel({
     setError("");
     setResult(null);
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/ai/draft-expand`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/draft-expand`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

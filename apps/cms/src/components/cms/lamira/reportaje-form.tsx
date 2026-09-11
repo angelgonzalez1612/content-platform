@@ -99,7 +99,7 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
     };
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/lamira/reportajes${isEdit ? `/${existing.id}` : ""}`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/lamira/reportajes${isEdit ? `/${existing.id}` : ""}`, {
         method: isEdit ? "PATCH" : "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

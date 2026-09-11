@@ -10,7 +10,7 @@ export function ProfileLogoutButton() {
 
   async function handleLogout() {
     setLoading(true);
-    await fetch(`${apiConfig.baseUrl}/auth/logout`, { method: "POST", credentials: "include" });
+    await fetch(`${apiConfig.clientBaseUrl}/auth/logout`, { method: "POST", credentials: "include" });
     router.push("/login");
     router.refresh();
   }

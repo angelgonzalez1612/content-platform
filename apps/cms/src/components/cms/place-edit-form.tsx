@@ -93,7 +93,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
     };
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/places/${place.id}`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/places/${place.id}`, {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

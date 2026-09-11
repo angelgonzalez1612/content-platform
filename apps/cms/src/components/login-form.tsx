@@ -18,7 +18,7 @@ export function LoginForm() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/auth/login`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/auth/login`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

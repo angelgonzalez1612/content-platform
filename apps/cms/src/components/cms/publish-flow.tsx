@@ -78,7 +78,7 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
     setGenerating(true);
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/ai/draft`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/draft`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -95,7 +95,7 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
       }
 
       const data: DraftResponse = await res.json();
-      const catRes = await fetch(`${apiConfig.baseUrl}/cms/categories?site=${data.site}`, { credentials: "include" });
+      const catRes = await fetch(`${apiConfig.clientBaseUrl}/cms/categories?site=${data.site}`, { credentials: "include" });
       const categories: Category[] = catRes.ok ? await catRes.json() : [];
 
       setResolved({ name, categories, draftResponse: data });
@@ -114,7 +114,7 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
     setSwitching(true);
     setError("");
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/ai/draft`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/draft`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -135,7 +135,7 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
       }
 
       const data: DraftResponse = await res.json();
-      const catRes = await fetch(`${apiConfig.baseUrl}/cms/categories?site=${data.site}`, { credentials: "include" });
+      const catRes = await fetch(`${apiConfig.clientBaseUrl}/cms/categories?site=${data.site}`, { credentials: "include" });
       const categories: Category[] = catRes.ok ? await catRes.json() : [];
 
       setResolved({ name, categories, draftResponse: data });

@@ -96,7 +96,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
     };
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/events/${existing.id}`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/events/${existing.id}`, {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

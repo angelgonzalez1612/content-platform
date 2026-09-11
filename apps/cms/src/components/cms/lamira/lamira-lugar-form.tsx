@@ -82,7 +82,7 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
     };
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/lamira/lugares${isEdit ? `/${existing.id}` : ""}`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/lamira/lugares${isEdit ? `/${existing.id}` : ""}`, {
         method: isEdit ? "PATCH" : "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

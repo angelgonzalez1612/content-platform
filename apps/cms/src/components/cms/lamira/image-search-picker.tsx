@@ -50,7 +50,7 @@ export function ImageSearchPicker({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/ai/search-images`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/search-images`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -79,7 +79,7 @@ export function ImageSearchPicker({
     try {
       const form = new FormData();
       form.append("file", file);
-      const res = await fetch(`${apiConfig.baseUrl}/cms/ai/upload-image`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/upload-image`, {
         method: "POST",
         credentials: "include",
         body: form,
@@ -109,7 +109,7 @@ export function ImageSearchPicker({
     setSourceError("");
     setSourceResult(undefined);
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/ai/fetch-image`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/fetch-image`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

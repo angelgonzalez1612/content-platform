@@ -19,7 +19,7 @@ export function ConfiguracionView({ initialAiSettings }: { initialAiSettings: Ai
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/settings/ai`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/settings/ai`, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

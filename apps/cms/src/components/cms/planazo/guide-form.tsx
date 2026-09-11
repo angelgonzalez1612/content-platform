@@ -89,7 +89,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
     };
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/guides${isEdit ? `/${existing.id}` : ""}`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/guides${isEdit ? `/${existing.id}` : ""}`, {
         method: isEdit ? "PATCH" : "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

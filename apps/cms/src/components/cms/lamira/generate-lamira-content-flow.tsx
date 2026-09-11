@@ -204,7 +204,7 @@ export function GenerateLamiraContentFlow({
     setStep("generating");
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/ai/draft`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/draft`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -282,7 +282,7 @@ export function GenerateLamiraContentFlow({
     }
 
     try {
-      const res = await fetch(`${apiConfig.baseUrl}/cms/lamira/${meta.endpoint}`, {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/lamira/${meta.endpoint}`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
