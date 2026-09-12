@@ -9,7 +9,7 @@ export interface MediaAsset {
   id: string;
   url: string;
   credit: string | null;
-  source: 'wikimedia' | 'openverse';
+  source: 'wikimedia' | 'openverse' | 'bing';
   sourcePageUrl: string | null;
   categoryName: string | null;
   createdAt: string;

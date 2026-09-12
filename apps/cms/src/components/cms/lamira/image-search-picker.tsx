@@ -8,6 +8,7 @@ import { fieldClass } from "@/components/cms/dynamic-field";
 const SOURCE_LABEL: Record<ImageSearchResult["source"], string> = {
   wikimedia: "Wikimedia",
   openverse: "Openverse",
+  bing: "Bing",
 };
 
 type Tab = "search" | "article" | "fromUrl" | "upload";

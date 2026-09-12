@@ -31,6 +31,10 @@ const envSchema = z.object({
   FTP_PORT: z.coerce.number().default(21),
   FTP_UPLOAD_DIR: z.string().default('public_html/media-library'),
   MEDIA_PUBLIC_BASE_URL: z.string().optional(),
+  // Bing Image Search (Azure AI Services) — tercera fuente del buscador de
+  // imágenes, opcional (sin ella, ImageSearchService simplemente no incluye
+  // resultados de Bing, igual que ya pasa con OPENAI_API_KEY).
+  BING_API_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

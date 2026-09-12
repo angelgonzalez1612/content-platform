@@ -8,6 +8,7 @@ import type { MediaAsset } from "@/lib/media-api";
 const SOURCE_LABEL: Record<ImageSearchResult["source"], string> = {
   wikimedia: "Wikimedia",
   openverse: "Openverse",
+  bing: "Bing",
 };
 
 /** Buscador de imágenes libres (Wikimedia/Openverse, ya usado en los

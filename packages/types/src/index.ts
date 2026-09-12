@@ -95,7 +95,7 @@ export interface ImageSearchResult {
   thumbUrl: string;
   credit: string;
   sourcePageUrl: string;
-  source: 'wikimedia' | 'openverse';
+  source: 'wikimedia' | 'openverse' | 'bing';
 }
 
 // ── Los 6 tipos de contenido editorial de la-mira ───────────────────────────

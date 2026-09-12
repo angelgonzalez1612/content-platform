@@ -2,7 +2,7 @@ import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { idColumn, createdAtColumn } from './columns.helpers';
 import { categories } from './taxonomy';
 
-// Imágenes guardadas desde el buscador (Wikimedia/Openverse) que TODAVÍA no
+// Imágenes guardadas desde el buscador (Wikimedia/Openverse/Bing) que TODAVÍA no
 // están usadas en ninguna pieza de contenido — un acervo aparte de la
 // biblioteca (ver MediaService), no ligado a noticia/lugar/etc. El archivo
 // en sí vive en el hosting FTP del cliente (ver FtpStorageService); aquí
@@ -12,7 +12,7 @@ export const mediaAssets = sqliteTable('media_assets', {
   id: idColumn(),
   url: text('url').notNull(),
   credit: text('credit'),
-  source: text('source', { enum: ['wikimedia', 'openverse'] }).notNull(),
+  source: text('source', { enum: ['wikimedia', 'openverse', 'bing'] }).notNull(),
   sourcePageUrl: text('source_page_url'),
   categoryId: text('category_id').references(() => categories.id, { onDelete: 'set null' }),
   createdAt: createdAtColumn(),

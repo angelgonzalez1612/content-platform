@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 export interface ImageSearchResult {
   url: string;
   thumbUrl: string;
   credit: string;
   sourcePageUrl: string;
-  source: 'wikimedia' | 'openverse';
+  source: 'wikimedia' | 'openverse' | 'bing';
 }
 
 interface WikimediaImageInfo {
@@ -32,6 +33,14 @@ interface OpenverseResult {
   foreign_landing_url?: string;
 }
 
+interface BingImageResult {
+  contentUrl: string;
+  thumbnailUrl?: string;
+  hostPageUrl?: string;
+  hostPageDomainFriendlyName?: string;
+  encodingFormat?: string;
+}
+
 const RESULT_LIMIT_PER_SOURCE = 9;
 const FETCH_TIMEOUT_MS = 8_000;
 
@@ -45,18 +54,22 @@ function stripHtml(html: string): string {
 // Búsqueda de imágenes de uso libre para adjuntar a un borrador — no las
 // genera/inventa la IA, es el humano quien elige de una lista real de
 // resultados (mismo principio que la imagen scrapeada de Fase 4: el crédito
-// siempre viene de una fuente real, nunca inventado). Dos fuentes, ninguna
-// pide API key: Wikimedia Commons (licencia+autor estructurados en
-// extmetadata) y Openverse (agrega Flickr y otros bancos CC, se filtra a
-// `license_type=commercial` — excluye NC, que no es seguro para un sitio con
-// anuncios reales).
+// siempre viene de una fuente real, nunca inventado). Wikimedia Commons y
+// Openverse no piden API key y traen licencia+autor estructurados; Bing
+// Image Search (tercera fuente, opcional — solo si hay BING_API_KEY) es más
+// amplio pero NO da autor real por imagen, solo el sitio de origen — se
+// filtra a `license=ShareCommercially` (lo más seguro que ofrece Bing para
+// un sitio con anuncios reales) y el crédito queda como "Fuente: <dominio>",
+// honesto sobre lo que sí se sabe, sin inventar un fotógrafo.
 @Injectable()
 export class ImageSearchService {
   private readonly logger = new Logger(ImageSearchService.name);
 
+  constructor(private readonly config: ConfigService) {}
+
   async search(query: string): Promise<ImageSearchResult[]> {
-    const [wikimedia, openverse] = await Promise.all([this.searchWikimedia(query), this.searchOpenverse(query)]);
-    return [...wikimedia, ...openverse];
+    const [wikimedia, openverse, bing] = await Promise.all([this.searchWikimedia(query), this.searchOpenverse(query), this.searchBing(query)]);
+    return [...wikimedia, ...openverse, ...bing];
   }
 
   async searchWikimedia(query: string): Promise<ImageSearchResult[]> {
@@ -140,6 +153,47 @@ export class ImageSearchService {
         }));
     } catch (err) {
       this.logger.warn(`Búsqueda en Openverse falló para "${query}": ${(err as Error).message}`);
+      return [];
+    }
+  }
+
+  async searchBing(query: string): Promise<ImageSearchResult[]> {
+    const apiKey = this.config.get<string>('BING_API_KEY');
+    if (!apiKey) return [];
+
+    const url =
+      'https://api.bing.microsoft.com/v7.0/images/search?' +
+      new URLSearchParams({
+        q: query,
+        count: String(RESULT_LIMIT_PER_SOURCE),
+        safeSearch: 'Strict',
+        // Lo más restrictivo que ofrece Bing sigue permitiendo uso comercial
+        // sin más filtro — necesario para un sitio con anuncios reales.
+        license: 'ShareCommercially',
+      }).toString();
+
+    try {
+      const res = await fetch(url, {
+        headers: { 'Ocp-Apim-Subscription-Key': apiKey },
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
+      if (!res.ok) return [];
+      const data = (await res.json()) as { value?: BingImageResult[] };
+      return (data.value ?? [])
+        .filter((r) => r.contentUrl && r.thumbnailUrl)
+        .map((r) => ({
+          url: r.contentUrl,
+          thumbUrl: r.thumbnailUrl!,
+          // Bing no da autor/licencia estructurados por imagen como
+          // Wikimedia — el crédito honesto que sí se puede dar es el sitio
+          // de origen, nunca un autor inventado.
+          credit: `Fuente: ${r.hostPageDomainFriendlyName ?? new URL(r.hostPageUrl ?? r.contentUrl).hostname} (Bing)`,
+          sourcePageUrl: r.hostPageUrl ?? r.contentUrl,
+          source: 'bing' as const,
+        }))
+        .slice(0, RESULT_LIMIT_PER_SOURCE);
+    } catch (err) {
+      this.logger.warn(`Búsqueda en Bing falló para "${query}": ${(err as Error).message}`);
       return [];
     }
   }
