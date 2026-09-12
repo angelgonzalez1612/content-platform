@@ -12,3 +12,17 @@ export interface MediaItem {
   site: "la-mira" | "planazo";
   categoryName: string | null;
 }
+
+// Acervo aparte — imágenes guardadas desde el buscador (Wikimedia/Openverse)
+// que todavía no están usadas en ninguna pieza de contenido. El binario vive
+// en el hosting FTP del cliente (ver FtpStorageService en la API); aquí solo
+// se guarda la URL pública final.
+export interface MediaAsset {
+  id: string;
+  url: string;
+  credit: string | null;
+  source: "wikimedia" | "openverse";
+  sourcePageUrl: string | null;
+  categoryName: string | null;
+  createdAt: string;
+}

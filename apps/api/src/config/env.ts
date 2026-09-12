@@ -20,6 +20,17 @@ const envSchema = z.object({
   // Autoriza al cron de Vercel a disparar la automatización (ver
   // AutomationCronController) — sin esto, ese endpoint rechaza todo.
   CRON_SECRET: z.string().optional(),
+  // Hosting FTP donde se guardan las imágenes que se buscan y salvan desde
+  // la Biblioteca Multimedia (ver FtpStorageService) — deliberadamente fuera
+  // de la base de datos, solo se guarda ahí la URL final. Todos opcionales:
+  // sin ellos, "guardar imagen" falla con un mensaje claro en vez de tronar
+  // el arranque del server.
+  FTP_HOST: z.string().optional(),
+  FTP_USER: z.string().optional(),
+  FTP_PASSWORD: z.string().optional(),
+  FTP_PORT: z.coerce.number().default(21),
+  FTP_UPLOAD_DIR: z.string().default('public_html/media-library'),
+  MEDIA_PUBLIC_BASE_URL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

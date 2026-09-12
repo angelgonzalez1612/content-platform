@@ -15,3 +15,4 @@ export * from './content-versions';
 export * from './automation';
 export * from './relations';
 export * from './users';
+export * from './media-assets';

@@ -3,7 +3,7 @@ import { apiConfig } from "@planazo/config";
 import type { Place, PlaceDetail, Category, Seo, Noticia, Alerta, Guia, LamiraEvento, LamiraLugar, Reportaje, PlanazoEvent, ContentBlock, PlanazoGuide } from "@planazo/types";
 import type { AutomationRule, AutomationRun } from "./automation-types";
 import type { CalendarItem } from "./calendar-api";
-import type { MediaItem } from "./media-api";
+import type { MediaItem, MediaAsset } from "./media-api";
 
 // Cada getCmsX de este archivo pasa por aquí y trata cualquier !res.ok como
 // "vacío"/"no existe" (ver safeList/safeOne abajo) — correcto para un 404
@@ -226,4 +226,9 @@ export async function getCalendarMonth(year: number, month: number): Promise<Cal
 /** Catálogo real de imágenes en uso (Biblioteca Multimedia) — ver MediaService en la API. */
 export async function getMediaLibrary(): Promise<MediaItem[]> {
   return safeList<MediaItem>("/cms/media");
+}
+
+/** Acervo de imágenes guardadas desde el buscador, todavía sin usar en ninguna pieza. */
+export async function getMediaAssets(): Promise<MediaAsset[]> {
+  return safeList<MediaAsset>("/cms/media/assets");
 }

@@ -1,7 +1,19 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { asc, eq, isNotNull } from 'drizzle-orm';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { asc, desc, eq, isNotNull } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
 import * as schema from '../../db/schema';
+import { FtpStorageService } from './ftp-storage.service';
+import type { SaveMediaAssetDto } from './dto/save-media-asset.dto';
+
+export interface MediaAsset {
+  id: string;
+  url: string;
+  credit: string | null;
+  source: 'wikimedia' | 'openverse';
+  sourcePageUrl: string | null;
+  categoryName: string | null;
+  createdAt: string;
+}
 
 export interface MediaItem {
   id: string;
@@ -29,7 +41,10 @@ export interface MediaItem {
 // se puede sumar después si hace falta.
 @Injectable()
 export class MediaService {
-  constructor(@Inject(DRIZZLE) private readonly db: DrizzleDb) {}
+  constructor(
+    @Inject(DRIZZLE) private readonly db: DrizzleDb,
+    private readonly ftpStorage: FtpStorageService,
+  ) {}
 
   async list(): Promise<MediaItem[]> {
     const [noticias, alertas, guias, lamiraEventos, lamiraLugares, reportajes, events, planazoGuides, photos, placeCategoryRows] = await Promise.all([
@@ -142,5 +157,66 @@ export class MediaService {
       ...tag(planazoGuides, 'planazo-guia', 'planazo'),
       ...placePhotos,
     ];
+  }
+
+  // Acervo aparte de imágenes encontradas por el buscador (Wikimedia/
+  // Openverse) que todavía no están usadas en ninguna pieza — "más
+  // variedad" para cuando haga falta reemplazar algo. El binario se sube al
+  // FTP del cliente (ver FtpStorageService); aquí solo se guarda la URL
+  // pública final.
+  async listAssets(): Promise<MediaAsset[]> {
+    const rows = await this.db
+      .select({
+        id: schema.mediaAssets.id,
+        url: schema.mediaAssets.url,
+        credit: schema.mediaAssets.credit,
+        source: schema.mediaAssets.source,
+        sourcePageUrl: schema.mediaAssets.sourcePageUrl,
+        categoryName: schema.categories.name,
+        createdAt: schema.mediaAssets.createdAt,
+      })
+      .from(schema.mediaAssets)
+      .leftJoin(schema.categories, eq(schema.mediaAssets.categoryId, schema.categories.id))
+      .orderBy(desc(schema.mediaAssets.createdAt));
+
+    return rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }));
+  }
+
+  async saveAsset(dto: SaveMediaAssetDto): Promise<MediaAsset> {
+    const publicUrl = await this.ftpStorage.uploadFromUrl(dto.url, dto.credit ?? 'imagen');
+
+    const [inserted] = await this.db
+      .insert(schema.mediaAssets)
+      .values({
+        url: publicUrl,
+        credit: dto.credit ?? null,
+        source: dto.source,
+        sourcePageUrl: dto.sourcePageUrl ?? null,
+        categoryId: dto.categoryId ?? null,
+      })
+      .returning({ id: schema.mediaAssets.id, createdAt: schema.mediaAssets.createdAt });
+
+    const categoryName = dto.categoryId
+      ? ((await this.db.query.categories.findFirst({ where: eq(schema.categories.id, dto.categoryId) }))?.name ?? null)
+      : null;
+
+    return {
+      id: inserted.id,
+      url: publicUrl,
+      credit: dto.credit ?? null,
+      source: dto.source,
+      sourcePageUrl: dto.sourcePageUrl ?? null,
+      categoryName,
+      createdAt: inserted.createdAt.toISOString(),
+    };
+  }
+
+  // Solo borra el registro — el archivo huérfano se queda en el FTP (no hace
+  // daño, y borrar por FTP en cada delete complica el flujo sin mucho
+  // beneficio real para este acervo).
+  async deleteAsset(id: string): Promise<void> {
+    const existing = await this.db.query.mediaAssets.findFirst({ where: eq(schema.mediaAssets.id, id) });
+    if (!existing) throw new NotFoundException(`Imagen "${id}" no existe`);
+    await this.db.delete(schema.mediaAssets).where(eq(schema.mediaAssets.id, id));
   }
 }

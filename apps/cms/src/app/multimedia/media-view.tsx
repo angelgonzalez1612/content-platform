@@ -2,14 +2,27 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { MediaItem } from "@/lib/media-api";
+import type { Category } from "@planazo/types";
+import type { MediaItem, MediaAsset } from "@/lib/media-api";
 import { contentEditHref, contentTypeIcon, contentTypeLabel } from "@/lib/dashboard-api";
+import { MediaSearchPanel } from "./media-search-panel";
 
 type SiteFilter = "all" | "la-mira" | "planazo";
+type Tab = "en-uso" | "buscar";
 
 const NO_CATEGORY = "__sin_categoria__";
 
-export function MediaView({ initialItems }: { initialItems: MediaItem[] }) {
+export function MediaView({
+  initialItems,
+  initialAssets,
+  categories,
+}: {
+  initialItems: MediaItem[];
+  initialAssets: MediaAsset[];
+  categories: Category[];
+}) {
+  const [tab, setTab] = useState<Tab>("en-uso");
+  const [assets, setAssets] = useState(initialAssets);
   const [siteFilter, setSiteFilter] = useState<SiteFilter>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -58,9 +71,38 @@ export function MediaView({ initialItems }: { initialItems: MediaItem[] }) {
         <div>
           <h1 className="mb-1 text-[25px] font-semibold tracking-tight">Biblioteca Multimedia</h1>
           <p className="text-[13.5px] text-ink-soft">
-            {filtered.length} de {initialItems.length} {initialItems.length === 1 ? "imagen" : "imágenes"} en uso.
+            {tab === "en-uso"
+              ? `${filtered.length} de ${initialItems.length} ${initialItems.length === 1 ? "imagen" : "imágenes"} en uso.`
+              : `${assets.length} ${assets.length === 1 ? "imagen guardada" : "imágenes guardadas"} sin usar todavía.`}
           </p>
         </div>
+        <div className="flex-1" />
+        <div className="inline-flex items-center gap-1 rounded-full border border-border bg-background p-0.5">
+          {(
+            [
+              { id: "en-uso", label: "En uso" },
+              { id: "buscar", label: "Buscar y guardar" },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={`rounded-full px-3 py-1 text-[12.5px] font-semibold whitespace-nowrap transition-colors ${
+                tab === t.id ? "bg-white text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {tab === "buscar" ? (
+        <MediaSearchPanel assets={assets} categories={categories} onAssetsChange={setAssets} />
+      ) : (
+        <>
+      <div className="mb-[18px] flex flex-wrap items-end gap-4">
         <div className="flex-1" />
         <input
           type="text"
@@ -165,6 +207,8 @@ export function MediaView({ initialItems }: { initialItems: MediaItem[] }) {
             </Link>
           ))}
         </div>
+      )}
+        </>
       )}
     </div>
   );
