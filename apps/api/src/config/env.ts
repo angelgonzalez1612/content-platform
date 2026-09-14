@@ -35,13 +35,16 @@ const envSchema = z.object({
   // imágenes, opcional (sin ella, ImageSearchService simplemente no incluye
   // resultados de Bing, igual que ya pasa con OPENAI_API_KEY).
   BING_API_KEY: z.string().optional(),
-  // Google Programmable Search (Custom Search JSON API) — busca ligas reales
-  // por cada frase de "Qué busca la gente" en /automatizaciones/frases, para
-  // que el humano elija una como fuente citada antes de generar contenido
-  // (ver WebSearchService). Opcionales: sin ellas, "Buscar ligas" falla con
-  // un mensaje claro en vez de tronar el arranque del server.
-  GOOGLE_SEARCH_API_KEY: z.string().optional(),
-  GOOGLE_SEARCH_ENGINE_ID: z.string().optional(),
+  // Búsqueda web para ligas reales por cada frase de "Qué busca la gente" en
+  // /automatizaciones/frases, para que el humano elija una como fuente citada
+  // antes de generar contenido (ver WebSearchService). Tavily primero (hecha
+  // para que la use una IA); Brave se agrega después como segunda fuente —
+  // se descartó Google Programmable Search: dejó de ofrecer "buscar en toda
+  // la Web" a cuentas nuevas (ver soporte de Google, respuesta 12397162),
+  // así que un buscador creado hoy queda atado a un puñado de sitios fijos,
+  // inútil para frases genéricas. Opcional: sin ella, "Buscar ligas" falla
+  // con un mensaje claro en vez de tronar el arranque del server.
+  TAVILY_API_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
