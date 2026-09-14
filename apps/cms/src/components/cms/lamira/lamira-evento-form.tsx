@@ -8,6 +8,7 @@ import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
 import { CategoryFieldsSection } from "@/components/cms/category-fields-section";
 import { SeoPanel } from "@/components/cms/seo-panel";
+import { ensureSeo } from "@/lib/ensure-seo";
 import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
 import { RichTextarea } from "@/components/cms/rich-textarea";
@@ -71,6 +72,9 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
     setSaving(true);
     setError("");
 
+    const finalSeo = await ensureSeo(seo, form.title, form.description);
+    if (finalSeo !== seo) setSeo(finalSeo);
+
     const payload = {
       title: form.title,
       tag: form.tag,
@@ -87,7 +91,7 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
       imageUrl: image?.url ?? null,
       imageCredit: image?.credit ?? null,
       categoryData,
-      seo,
+      seo: finalSeo,
     };
 
     try {

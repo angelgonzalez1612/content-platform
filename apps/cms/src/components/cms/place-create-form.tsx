@@ -7,6 +7,7 @@ import type { ContentStatus, Category, Seo } from "@planazo/types";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { CategoryFieldsSection } from "@/components/cms/category-fields-section";
 import { SeoPanel } from "@/components/cms/seo-panel";
+import { ensureSeo } from "@/lib/ensure-seo";
 import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
 import { ImageField } from "@/components/cms/lamira/image-field";
 import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
@@ -60,6 +61,9 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
     setCreating(true);
     setError("");
 
+    const finalSeo = await ensureSeo(seo, form.name, form.description);
+    if (finalSeo !== seo) setSeo(finalSeo);
+
     try {
       const res = await fetch(`${apiConfig.clientBaseUrl}/cms/places`, {
         method: "POST",
@@ -78,7 +82,7 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
           tags,
           status: form.status,
           categoryData,
-          seo,
+          seo: finalSeo,
           photo: image,
           allowPhotoModal: form.allowPhotoModal,
         }),

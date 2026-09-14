@@ -10,6 +10,7 @@ import { CategoryFieldsSection } from "@/components/cms/category-fields-section"
 import { ContentBlocksField, type ContentBlockValue } from "@/components/cms/content-blocks-field";
 import { TagsField } from "@/components/cms/tags-field";
 import { SeoPanel } from "@/components/cms/seo-panel";
+import { ensureSeo } from "@/lib/ensure-seo";
 import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
 import { buildToc, summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
@@ -89,6 +90,9 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
     setSaving(true);
     setError("");
 
+    const finalSeo = await ensureSeo(seo, form.title, form.dek);
+    if (finalSeo !== seo) setSeo(finalSeo);
+
     const payload = {
       title: form.title,
       dek: form.dek,
@@ -114,7 +118,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
       featured: form.featured,
       tag: form.tag || null,
       categoryData,
-      seo,
+      seo: finalSeo,
     };
 
     try {
