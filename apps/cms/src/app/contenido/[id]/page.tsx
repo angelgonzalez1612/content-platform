@@ -34,10 +34,12 @@ export default async function EditPlacePage({ params }: { params: Promise<{ id: 
         </div>
         <h1 className="mt-3 mb-1 text-[22px] font-semibold tracking-tight">{place.name}</h1>
         <p className="text-[13.5px] text-ink-soft">/{place.slug}</p>
+        <div className="mt-3">
+          <VersionHistory contentType="place" contentId={place.id} />
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 p-[26px] pb-[60px]">
-        <VersionHistory contentType="place" contentId={place.id} />
         <PlaceEditForm place={place} category={category} />
       </div>
     </CmsShell>

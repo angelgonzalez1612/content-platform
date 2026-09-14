@@ -116,10 +116,12 @@ export default async function EditLamiraContentPage({ params }: { params: Promis
           <ViewPublishedLink href={publicUrl} available={isPublished} />
         </div>
         <h1 className="mt-3 text-[22px] font-semibold tracking-tight">{title}</h1>
+        <div className="mt-3">
+          <VersionHistory contentType={type} contentId={id} />
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 p-[26px] pb-[60px]">
-        <VersionHistory contentType={type} contentId={id} />
         {form}
       </div>
     </CmsShell>

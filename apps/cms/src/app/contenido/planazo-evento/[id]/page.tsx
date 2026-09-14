@@ -23,10 +23,12 @@ export default async function EditPlanazoEventPage({ params }: { params: Promise
           <ViewPublishedLink href={`${siteConfig.planazoUrl}/eventos/${event.slug}`} available={event.status === "published"} />
         </div>
         <h1 className="mt-3 text-[22px] font-semibold tracking-tight">{event.name}</h1>
+        <div className="mt-3">
+          <VersionHistory contentType="evento-planazo" contentId={event.id} />
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 p-[26px] pb-[60px]">
-        <VersionHistory contentType="evento-planazo" contentId={event.id} />
         <PlanazoEventForm categories={categories} existing={event} />
       </div>
     </CmsShell>

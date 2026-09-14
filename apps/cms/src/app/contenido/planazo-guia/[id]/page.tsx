@@ -24,10 +24,12 @@ export default async function EditPlanazoGuidePage({ params }: { params: Promise
           <ViewPublishedLink href={`${siteConfig.planazoUrl}/guias/${guide.slug}`} available={guide.status === "published"} />
         </div>
         <h1 className="mt-3 text-[22px] font-semibold tracking-tight">{guide.title}</h1>
+        <div className="mt-3">
+          <VersionHistory contentType="planazo-guia" contentId={guide.id} />
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 p-[26px] pb-[60px]">
-        <VersionHistory contentType="planazo-guia" contentId={guide.id} />
         <GuideForm placeOptions={buildPlaceOptions(places, events)} existing={guide} />
       </div>
     </CmsShell>

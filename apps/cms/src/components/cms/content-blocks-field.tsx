@@ -136,14 +136,6 @@ export function ContentBlocksField({
               </button>
             </div>
 
-            <BlockImprovePanel
-              heading={block.heading}
-              paragraphs={block.paragraphs}
-              articleTitle={articleTitle}
-              onApplyRewrite={(newHeading, newParagraphs) => updateBlock(bi, { heading: newHeading, paragraphs: newParagraphs })}
-              onApplyExpand={(newParagraphs) => updateBlock(bi, { paragraphs: [...blocks[bi].paragraphs, ...newParagraphs] })}
-            />
-
             {editingImageFor === bi ? (
               <div className="flex flex-col gap-2 rounded-[10px] border border-border-soft bg-white p-3">
                 <ImageSearchPicker
@@ -190,6 +182,8 @@ export function ContentBlocksField({
       >
         + Bloque
       </button>
+
+      <BlockImprovePanel blocks={blocks} onChange={onChange} articleTitle={articleTitle} />
     </div>
   );
 }
