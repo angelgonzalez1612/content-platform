@@ -7,23 +7,24 @@ export interface WebSearchResult {
   snippet: string;
 }
 
-interface TavilySearchItem {
+interface GoogleSearchItem {
   title?: string;
-  url?: string;
-  content?: string;
+  link?: string;
+  snippet?: string;
 }
 
 const RESULT_LIMIT = 6;
-const FETCH_TIMEOUT_MS = 10_000;
+const FETCH_TIMEOUT_MS = 8_000;
 
-// Ligas reales por cada frase de "Qué busca la gente" (Tavily — buscador
-// hecho para que lo consuma una IA, no un humano en un buscador) — el humano
-// elige una como fuente citada antes de generar contenido (ver
-// SearchPhrasesService), nunca se le pide a la IA que redacte a ciegas sin
-// nada que citar. Mismo principio que ImageSearchService: el crédito/fuente
-// siempre viene de un resultado real. Se descartó Google Programmable
-// Search: dejó de ofrecer "buscar en toda la Web" a cuentas nuevas, un
-// buscador creado hoy queda atado a sitios fijos (ver env.ts).
+// Ligas reales por cada frase de "Qué busca la gente" (Google Programmable
+// Search / Custom Search JSON API) — el humano elige una como fuente citada
+// antes de generar contenido (ver SearchPhrasesService), nunca se le pide a
+// la IA que redacte a ciegas sin nada que citar. Mismo principio que
+// ImageSearchService: el crédito/fuente siempre viene de un resultado real.
+// A propósito NO usa "buscar en toda la Web" — Google ya no se lo ofrece a
+// buscadores nuevos (ver env.ts) — sino una lista curada de sitios reales de
+// CDMX configurada directo en el panel de Google (noticias + gob.mx +
+// planes), que sí acepta gratis sin tarjeta.
 @Injectable()
 export class WebSearchService {
   private readonly logger = new Logger(WebSearchService.name);
@@ -31,37 +32,37 @@ export class WebSearchService {
   constructor(private readonly config: ConfigService) {}
 
   isConfigured(): boolean {
-    return !!this.config.get('TAVILY_API_KEY');
+    return !!(this.config.get('GOOGLE_SEARCH_API_KEY') && this.config.get('GOOGLE_SEARCH_ENGINE_ID'));
   }
 
   async search(query: string): Promise<WebSearchResult[]> {
     if (!this.isConfigured()) {
       throw new InternalServerErrorException(
-        'La búsqueda web no está configurada (falta TAVILY_API_KEY) — pídele al administrador que la agregue en Vercel.',
+        'La búsqueda web no está configurada (faltan GOOGLE_SEARCH_API_KEY/GOOGLE_SEARCH_ENGINE_ID) — pídele al administrador que las agregue en Vercel.',
       );
     }
 
+    const url =
+      'https://www.googleapis.com/customsearch/v1?' +
+      new URLSearchParams({
+        key: this.config.get<string>('GOOGLE_SEARCH_API_KEY')!,
+        cx: this.config.get<string>('GOOGLE_SEARCH_ENGINE_ID')!,
+        q: query,
+        num: String(RESULT_LIMIT),
+        gl: 'mx',
+        hl: 'es',
+      }).toString();
+
     try {
-      const res = await fetch('https://api.tavily.com/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          api_key: this.config.get<string>('TAVILY_API_KEY'),
-          query,
-          search_depth: 'basic',
-          max_results: RESULT_LIMIT,
-          include_answer: false,
-        }),
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      });
+      const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
       if (!res.ok) {
         this.logger.warn(`Búsqueda web falló para "${query}": HTTP ${res.status}`);
         return [];
       }
-      const data = (await res.json()) as { results?: TavilySearchItem[] };
-      return (data.results ?? [])
-        .filter((item) => item.url && item.title)
-        .map((item) => ({ title: item.title!, url: item.url!, snippet: item.content ?? '' }));
+      const data = (await res.json()) as { items?: GoogleSearchItem[] };
+      return (data.items ?? [])
+        .filter((item) => item.link && item.title)
+        .map((item) => ({ title: item.title!, url: item.link!, snippet: item.snippet ?? '' }));
     } catch (err) {
       this.logger.warn(`Búsqueda web falló para "${query}": ${(err as Error).message}`);
       return [];
