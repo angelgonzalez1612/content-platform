@@ -239,7 +239,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
           </div>
         </div>
 
-        <SeoPanel seo={seo} onChange={setSeo} />
+        <SeoPanel seo={seo} onChange={setSeo} contentTitle={form.name} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="pe-status" className={labelClass}>

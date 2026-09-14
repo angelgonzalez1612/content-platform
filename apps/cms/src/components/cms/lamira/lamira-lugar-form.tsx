@@ -207,7 +207,7 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
           </div>
         </div>
 
-        <SeoPanel seo={seo} onChange={setSeo} />
+        <SeoPanel seo={seo} onChange={setSeo} contentTitle={form.name} />
 
         {error && <p className="rounded-lg bg-[#FDECEA] px-3 py-2 text-[13px] font-medium text-[#C4453A]">{error}</p>}
 

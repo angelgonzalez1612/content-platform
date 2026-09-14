@@ -197,7 +197,7 @@ export function AlertaForm({ categories, existing }: { categories: Category[]; e
           addLabel="+ Actualización"
         />
 
-        <SeoPanel seo={seo} onChange={setSeo} />
+        <SeoPanel seo={seo} onChange={setSeo} contentTitle={form.title} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="a-status" className={labelClass}>

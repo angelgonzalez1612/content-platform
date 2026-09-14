@@ -9,6 +9,7 @@ import { CONTENT_PROVIDER } from './content-provider.interface';
 import { ChecksService } from './checks.service';
 import { AiDraftService } from './ai-draft.service';
 import { BlockImproveService } from './block-improve.service';
+import { SeoGenerateService } from './seo-generate.service';
 import { ProviderRegistry } from './provider-registry.service';
 import { ArticleScraperService } from './article-scraper.service';
 import { ImageSearchService } from './image-search.service';
@@ -32,6 +33,7 @@ import { PlacesModule } from '../places/places.module';
     ImageUploadService,
     AiDraftService,
     BlockImproveService,
+    SeoGenerateService,
     AiSettingsService,
   ],
   exports: [AiDraftService], // AutomationModule lo usa para generar el borrador

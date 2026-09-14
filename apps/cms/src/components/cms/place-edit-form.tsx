@@ -382,7 +382,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
           </div>
         </div>
 
-        <SeoPanel seo={seo} onChange={setSeo} />
+        <SeoPanel seo={seo} onChange={setSeo} contentTitle={form.name} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="status" className={labelClass}>

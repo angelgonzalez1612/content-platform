@@ -278,7 +278,7 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
           </p>
         </div>
 
-        <SeoPanel seo={seo} onChange={setSeo} />
+        <SeoPanel seo={seo} onChange={setSeo} contentTitle={form.title} contentContext={form.dek} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="r-status" className={labelClass}>

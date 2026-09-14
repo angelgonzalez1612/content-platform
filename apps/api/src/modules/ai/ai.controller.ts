@@ -26,8 +26,10 @@ import {
 import { searchImagesSchema } from './dto/search-images.dto';
 import { fetchImageSchema } from './dto/fetch-image.dto';
 import { improveBlockSchema } from './dto/improve-block.dto';
+import { generateSeoSchema } from './dto/generate-seo.dto';
 import { AiDraftService } from './ai-draft.service';
 import { BlockImproveService } from './block-improve.service';
+import { SeoGenerateService } from './seo-generate.service';
 import { ImageSearchService } from './image-search.service';
 import { ImageUploadService } from './image-upload.service';
 
@@ -38,6 +40,7 @@ export class AiController {
     @Inject(CONTENT_PROVIDER) private readonly provider: ContentProvider,
     private readonly draftService: AiDraftService,
     private readonly blockImprove: BlockImproveService,
+    private readonly seoGenerate: SeoGenerateService,
     private readonly imageSearch: ImageSearchService,
     private readonly imageUpload: ImageUploadService,
   ) {}
@@ -101,6 +104,13 @@ export class AiController {
   @Post('improve-block')
   improveBlock(@Body() body: unknown) {
     return this.blockImprove.improveBlock(improveBlockSchema.parse(body));
+  }
+
+  // Botón "Generar SEO" del SeoPanel — para cuando el título/descripción SEO
+  // todavía están vacíos. Sin contentId, igual que improve-block.
+  @Post('generate-seo')
+  generateSeo(@Body() body: unknown) {
+    return this.seoGenerate.generateSeo(generateSeoSchema.parse(body));
   }
 
   // Ruta genérica (:type/:id) — 'place' y los 6 tipos de la-mira

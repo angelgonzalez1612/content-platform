@@ -381,7 +381,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
           </label>
         </div>
 
-        <SeoPanel seo={seo} onChange={setSeo} />
+        <SeoPanel seo={seo} onChange={setSeo} contentTitle={form.title} contentContext={form.dek} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="n-status" className={labelClass}>

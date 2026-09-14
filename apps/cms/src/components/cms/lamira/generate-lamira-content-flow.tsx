@@ -718,7 +718,7 @@ export function GenerateLamiraContentFlow({
                 )}
               </div>
 
-              <SeoPanel seo={seo} onChange={setSeo} checksRun={checksRun} decision={decision} />
+              <SeoPanel seo={seo} onChange={setSeo} checksRun={checksRun} decision={decision} contentTitle={title} />
 
               {meta.hasStatus ? (
                 <p className="rounded-lg bg-background px-3 py-2.5 text-[12.5px] leading-[1.5] text-ink-soft">

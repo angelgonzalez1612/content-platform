@@ -403,7 +403,7 @@ export function GenerateEventFlow({
                 </div>
               </div>
 
-              <SeoPanel seo={seo} onChange={setSeo} checksRun={checksRun} decision={decision} />
+              <SeoPanel seo={seo} onChange={setSeo} checksRun={checksRun} decision={decision} contentTitle={name} />
 
               <p className="rounded-lg bg-[#FEF6E7] px-3 py-2.5 text-[12.5px] leading-[1.5] text-[#9A6B12]">
                 Este tipo de contenido no tiene borrador — se publica de inmediato al crearlo. Revisa bien antes de continuar.

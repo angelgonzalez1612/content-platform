@@ -304,7 +304,7 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
         )}
       </div>
 
-      <SeoPanel seo={seo} onChange={setSeo} />
+      <SeoPanel seo={seo} onChange={setSeo} contentTitle={form.name} />
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="c-status" className={labelClass}>

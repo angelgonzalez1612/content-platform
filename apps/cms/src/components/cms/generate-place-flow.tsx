@@ -385,7 +385,7 @@ export function GeneratePlaceFlow({
                 </div>
               </div>
 
-              <SeoPanel seo={seo} onChange={setSeo} checksRun={checksRun} decision={decision} />
+              <SeoPanel seo={seo} onChange={setSeo} checksRun={checksRun} decision={decision} contentTitle={name} />
 
               <p className="rounded-lg bg-background px-3 py-2.5 text-[12.5px] leading-[1.5] text-ink-soft">
                 Dirección, teléfono y precio quedan en blanco a propósito — la IA no los inventó. Complétalos en la
