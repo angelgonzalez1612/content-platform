@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import type { Category } from "@planazo/types";
 import { apiConfig, siteConfig } from "@planazo/config";
@@ -15,7 +15,6 @@ import {
   type AutomatableContentType,
   type AutomationRule,
   type AutomationRun,
-  type AutomationQueue,
 } from "@/lib/automation-types";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
@@ -137,7 +136,6 @@ export function AutomationView({
   const [rules, setRules] = useState(initialRules);
   const [runs, setRuns] = useState(initialRuns);
   const [status, setStatus] = useState(initialStatus);
-  const [queue, setQueue] = useState<AutomationQueue | null>(null);
   const [editingId, setEditingId] = useState<string | "new" | null>(null);
   const [form, setForm] = useState<RuleFormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
@@ -145,11 +143,6 @@ export function AutomationView({
   const [running, setRunning] = useState(false);
   const [runResult, setRunResult] = useState<{ evaluated: number; created: number } | null>(null);
   const [siteFilter, setSiteFilter] = useState<"all" | "la-mira" | "planazo" | "ambos">("all");
-  const [phraseTab, setPhraseTab] = useState<"pending" | "processed">("pending");
-  // "Qué busca la gente" ya no es una pestaña de la bitácora — vive junto a
-  // Reglas, con su propio filtro por sitio (mismo patrón que siteFilter de
-  // arriba, aplicado a esta fuente en vez de a las reglas).
-  const [phraseSiteFilter, setPhraseSiteFilter] = useState<"all" | "la-mira" | "planazo">("all");
   const [outcomeFilter, setOutcomeFilter] = useState<"all" | AutomationRun["outcome"]>("all");
   const [dateFrom, setDateFrom] = useState(""); // yyyy-mm-dd, vacío = sin tope
   const [dateTo, setDateTo] = useState("");
@@ -176,26 +169,15 @@ export function AutomationView({
   }
 
   async function refreshAll() {
-    const [rulesRes, runsRes, statusRes, queueRes] = await Promise.all([
+    const [rulesRes, runsRes, statusRes] = await Promise.all([
       fetch(`${apiConfig.clientBaseUrl}/cms/automation/rules`, { credentials: "include" }),
       fetch(`${apiConfig.clientBaseUrl}/cms/automation/runs`, { credentials: "include" }),
       fetch(`${apiConfig.clientBaseUrl}/cms/automation/status`, { credentials: "include" }),
-      fetch(`${apiConfig.clientBaseUrl}/cms/automation/queue`, { credentials: "include" }),
     ]);
     if (rulesRes.ok) setRules(await rulesRes.json());
     if (runsRes.ok) setRuns(await runsRes.json());
     if (statusRes.ok) setStatus(await statusRes.json());
-    if (queueRes.ok) setQueue(await queueRes.json());
   }
-
-  // La cola no viene de props (page.tsx no la pide todavía) — se trae al
-  // montar, igual que AutomationActivityCard del Dashboard, así el nuevo
-  // apartado de frases de búsqueda no bloquea el render inicial de la página.
-  useEffect(() => {
-    fetch(`${apiConfig.clientBaseUrl}/cms/automation/queue`, { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => data && setQueue(data));
-  }, []);
 
   async function handleSave() {
     setSaving(true);
@@ -314,37 +296,18 @@ export function AutomationView({
   });
   const runFiltersActive = outcomeFilter !== "all" || !!dateFrom || !!dateTo;
 
-  // Apartado propio de "Qué busca la gente" (Content Radar) — separado de la
-  // bitácora de arriba (que mezcla todo) para que se vea aparte qué está
-  // pasando específicamente con esta fuente más arriesgada, y vive junto a
-  // Reglas en vez de compartir pestaña con la bitácora.
-  const phrasePendingAll = queue?.pending.filter((p) => p.source === "search-phrase") ?? [];
-  const phraseRunsAll = runs.filter((r) => r.source === "search-phrase");
-  const rulesWithPhrases = rules.filter((r) => r.includeSearchPhrases);
-
-  // Mismo patrón que siteTabs (Reglas) — Todos/La Mira/Planazo con conteo,
-  // ocultando una pestaña en 0. Solo filtra "Ya procesadas" (AutomationRun
-  // trae `site`, ya clasificado): "Pendientes de hoy" son temas en bruto
-  // (PendingTopic) que todavía no se clasifican por sitio — nadie sabe a cuál
-  // pertenecen hasta que se procesan, así que se muestran igual sin importar
-  // la pestaña elegida.
-  const phraseSiteTabs = [
-    { key: "all" as const, label: "Todos", count: phraseRunsAll.length },
-    { key: "la-mira" as const, label: "La Mira", count: phraseRunsAll.filter((r) => r.site === "la-mira").length },
-    { key: "planazo" as const, label: "Planazo", count: phraseRunsAll.filter((r) => r.site === "planazo").length },
-  ].filter((t) => t.key === "all" || t.count > 0);
-
-  const phrasePending = phrasePendingAll;
-  const phraseRuns = phraseSiteFilter === "all" ? phraseRunsAll : phraseRunsAll.filter((r) => r.site === phraseSiteFilter);
-
   return (
     <div className="p-[26px] pb-[60px]">
       <div className="mb-5 flex items-end justify-between gap-4">
         <div>
-          <h1 className="mb-1 text-[22px] font-semibold tracking-tight">Automatizaciones</h1>
+          <h1 className="mb-1 text-[22px] font-semibold tracking-tight">Reglas de automatización</h1>
           <p className="flex items-center gap-1.5 text-[12px] text-ink-faint">
             <span className={`size-[6px] rounded-full ${status.lastCheckedAt && Date.now() - new Date(status.lastCheckedAt).getTime() < 30 * 60 * 1000 ? "bg-positive" : "bg-ink-faint"}`} />
             Última revisión: {timeAgo(status.lastCheckedAt)}
+            <span className="text-ink-faint">·</span>
+            <Link href="/automatizaciones/frases" className="font-medium text-brand hover:text-brand-pressed">
+              Ver frases de búsqueda →
+            </Link>
           </p>
         </div>
         <div className="flex flex-none items-center gap-2.5">
@@ -548,7 +511,6 @@ export function AutomationView({
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_1fr] lg:items-start">
-        <div className="flex flex-col gap-6">
         <div className="flex flex-col overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
           <div className="flex items-center justify-between border-b border-border-soft px-5 py-3.5">
             <h2 className="text-[15px] font-semibold tracking-tight">Reglas</h2>
@@ -620,121 +582,6 @@ export function AutomationView({
               </div>
             </>
           )}
-        </div>
-
-        <div className="flex flex-col overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
-          <div className="border-b border-border-soft px-5 py-3.5">
-            <h2 className="text-[15px] font-semibold tracking-tight">Qué busca la gente (frases reales)</h2>
-            <p className="mt-0.5 text-[11.5px] leading-[1.4] text-ink-faint">
-              Frases reales de autocompletado de Google, tomadas del reporte de Content Radar — sin artículo que citar, la IA redacta
-              directo respondiendo la intención de búsqueda.{" "}
-              {rulesWithPhrases.length === 0
-                ? "Ninguna regla las incluye todavía."
-                : `${rulesWithPhrases.length} regla(s) las incluye(n): ${rulesWithPhrases.map((r) => r.name).join(", ")}.`}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-1.5 border-b border-border-soft px-3 py-2.5">
-            {phraseSiteTabs.map((t) => (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => setPhraseSiteFilter(t.key)}
-                className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
-                  phraseSiteFilter === t.key ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
-                }`}
-              >
-                {t.label}
-                <span
-                  className={`rounded-full px-1.5 font-mono text-[10.5px] ${phraseSiteFilter === t.key ? "bg-white/60" : "bg-background text-ink-faint"}`}
-                >
-                  {t.count}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <div className="flex gap-1.5 border-b border-border-soft px-4 py-2.5">
-            <button
-              type="button"
-              onClick={() => setPhraseTab("pending")}
-              className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
-                phraseTab === "pending" ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
-              }`}
-            >
-              Pendientes de hoy
-              <span className={`rounded-full px-1.5 font-mono text-[10.5px] ${phraseTab === "pending" ? "bg-white/60" : "bg-background text-ink-faint"}`}>
-                {phrasePending.length}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPhraseTab("processed")}
-              className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
-                phraseTab === "processed" ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
-              }`}
-            >
-              Ya procesadas
-              <span className={`rounded-full px-1.5 font-mono text-[10.5px] ${phraseTab === "processed" ? "bg-white/60" : "bg-background text-ink-faint"}`}>
-                {phraseRuns.length}
-              </span>
-            </button>
-          </div>
-
-          {phraseTab === "pending" ? (
-            !queue ? (
-              <p className="px-4 py-3.5 text-[12px] text-ink-faint">Cargando…</p>
-            ) : phrasePending.length === 0 ? (
-              <p className="px-4 py-3.5 text-[12px] text-ink-faint">
-                Sin frases pendientes hoy — o ya se evaluaron todas, o ninguna regla activa las incluye.
-              </p>
-            ) : (
-              <div className="max-h-[400px] overflow-y-auto">
-                {phrasePending.map((p) => (
-                  <div key={p.title} className="flex items-center gap-2 border-b border-border-soft px-4 py-2 last:border-b-0">
-                    <p className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-ink">{p.title}</p>
-                    {!p.hasCandidateRule && (
-                      <span className="flex-none rounded-md bg-background px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">sin regla</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )
-          ) : phraseRuns.length === 0 ? (
-            <p className="px-4 py-3.5 text-[12px] text-ink-faint">Todavía no se ha generado contenido a partir de estas frases.</p>
-          ) : (
-            <div className="max-h-[400px] overflow-y-auto">
-              {phraseRuns.slice(0, 30).map((run) => {
-                const meta = OUTCOME_META[run.outcome];
-                const live = run.outcome === "published" ? publicUrl(run) : null;
-                const href = !live ? contentHref(run.contentType, run.contentId) : null;
-                return (
-                  <div key={run.id} className="flex items-center gap-2 border-b border-border-soft px-4 py-2 last:border-b-0">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[12.5px] font-medium text-ink">{run.topic}</p>
-                      <p className="truncate text-[11px] text-ink-faint">{run.ruleName ?? "—"}</p>
-                    </div>
-                    <span
-                      className="flex-none rounded-md px-1.5 py-0.5 font-mono text-[10px] font-medium"
-                      style={{ background: meta.bg, color: meta.fg }}
-                    >
-                      {meta.label}
-                    </span>
-                    {live ? (
-                      <ViewPublishedLink compact href={live} available />
-                    ) : (
-                      href && (
-                        <Link href={href} className="flex-none text-[12px] font-medium text-brand hover:text-brand-pressed">
-                          Ver →
-                        </Link>
-                      )
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
         </div>
 
         <div className="flex flex-col overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">

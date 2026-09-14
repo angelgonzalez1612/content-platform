@@ -16,6 +16,7 @@ const ROUTES: Record<string, string> = {
   "content-radar": "/content-radar",
   calendario: "/calendario",
   automatizaciones: "/automatizaciones",
+  "automatizaciones-frases": "/automatizaciones/frases",
   multimedia: "/multimedia",
   config: "/configuracion",
 };
@@ -121,7 +122,16 @@ export function Sidebar({
             </div>
             {group.items.map((item) => {
               const href = ROUTES[item.id];
-              const active = href ? (href === "/" ? pathname === "/" : pathname.startsWith(href)) : false;
+              // "automatizaciones" es prefijo de "automatizaciones/frases" (su
+              // hermano, no un hijo) — sin esta excepción, ambos se marcarían
+              // activos al estar en /automatizaciones/frases.
+              const active = href
+                ? item.id === "automatizaciones"
+                  ? pathname === href
+                  : href === "/"
+                    ? pathname === "/"
+                    : pathname.startsWith(href)
+                : false;
               const className = `flex w-full items-center gap-2.5 rounded-lg py-[6.5px] text-left text-[13px] transition-colors ${
                 collapsed ? "justify-center px-0" : "px-2.5"
               } ${active ? "bg-accent font-semibold text-accent-fg" : "text-ink hover:bg-[#F5F3F0]"} ${!href ? "cursor-default opacity-55" : ""}`;
