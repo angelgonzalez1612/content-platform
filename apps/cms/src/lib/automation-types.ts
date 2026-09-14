@@ -54,6 +54,28 @@ export interface AutomationQueue {
   pending: PendingTopic[];
 }
 
+export interface SearchResultLink {
+  title: string;
+  url: string;
+  snippet: string;
+}
+
+// A diferencia de PendingTopic (recalculado del reporte del día, efímero),
+// esta frase se guardó de verdad en la BD — ver SearchPhrasesService. El
+// humano elige una de `candidateLinks` (ligas reales de una búsqueda web,
+// nunca inventadas por la IA) para usarla como fuente citada al generar.
+export interface SearchPhrase {
+  id: string;
+  phrase: string;
+  categoryLabel: string | null;
+  status: 'pending' | 'researched' | 'used' | 'discarded';
+  candidateLinks: SearchResultLink[];
+  researchedAt: string | null;
+  chosenUrl: string | null;
+  usedAt: string | null;
+  createdAt: string;
+}
+
 // Compartido entre la bitácora de /automatizaciones y la tarjeta de
 // "en tiempo real" del Dashboard — mismo criterio visual para cada outcome.
 export const OUTCOME_META: Record<AutomationRun["outcome"], { label: string; bg: string; fg: string }> = {

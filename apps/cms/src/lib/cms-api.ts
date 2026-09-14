@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { apiConfig } from "@planazo/config";
 import type { Place, PlaceDetail, Category, Seo, Noticia, Alerta, Guia, LamiraEvento, LamiraLugar, Reportaje, PlanazoEvent, ContentBlock, PlanazoGuide } from "@planazo/types";
-import type { AutomationRule, AutomationRun } from "./automation-types";
+import type { AutomationRule, AutomationRun, SearchPhrase } from "./automation-types";
 import type { CalendarItem } from "./calendar-api";
 import type { MediaItem, MediaAsset } from "./media-api";
 
@@ -107,6 +107,12 @@ export interface AutomationStatus {
 export async function getAutomationStatus(): Promise<AutomationStatus> {
   const res = await cmsFetch("/cms/automation/status");
   if (!res.ok) return { lastCheckedAt: null, checkIntervalMinutes: 15, activeRulesCount: 0, isRunning: false };
+  return res.json();
+}
+
+export async function getSearchPhrases(): Promise<SearchPhrase[]> {
+  const res = await cmsFetch("/cms/automation/search-phrases");
+  if (!res.ok) return [];
   return res.json();
 }
 

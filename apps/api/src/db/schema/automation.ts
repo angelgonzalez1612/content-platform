@@ -91,5 +91,35 @@ export const automationState = sqliteTable('automation_state', {
   lastCheckedAt: createdAtColumn('last_checked_at'),
 });
 
+// Antes efímeras (se recalculaban leyendo el reporte del día en disco cada
+// vez, ver AutomationRunnerService.extractTopics — ni siquiera llegaba a
+// producción, apps/content-radar/reports/ está en .gitignore). Ahora se
+// guardan de verdad la primera vez que se ven — dedupe por `phrase` — para
+// poder acumular ligas de búsqueda web por frase y que el humano las revise
+// en /automatizaciones/frases sin que desaparezcan al día siguiente.
+export const searchPhrases = sqliteTable('search_phrases', {
+  id: idColumn(),
+  phrase: text('phrase').notNull().unique(),
+  categoryLabel: text('category_label'),
+  // 'pending': guardada, sin buscar ligas todavía.
+  // 'researched': ya se corrió la búsqueda web, candidateLinks tiene resultados
+  //          (puede quedar vacío si la búsqueda no encontró nada real).
+  // 'used': el humano ya eligió una liga y mandó a generar el borrador desde
+  //          Centro IA — se oculta de "Pendientes" para no acumular basura.
+  // 'discarded': el humano decidió que esta frase no vale la pena.
+  status: text('status', { enum: ['pending', 'researched', 'used', 'discarded'] }).notNull().default('pending'),
+  // Resultados de Google Programmable Search — nunca los genera/inventa la
+  // IA, siempre vienen de una búsqueda real (mismo principio que las
+  // imágenes de Wikimedia/Openverse/Bing, ver ImageSearchService).
+  candidateLinks: text('candidate_links', { mode: 'json' }).$type<{ title: string; url: string; snippet: string }[]>().notNull().default([]),
+  researchedAt: integer('researched_at', { mode: 'timestamp' }),
+  // Liga que el humano eligió al mandar a generar — solo referencia/auditoría,
+  // el borrador real se genera en Centro IA (ver PublishFlow), no aquí.
+  chosenUrl: text('chosen_url'),
+  usedAt: integer('used_at', { mode: 'timestamp' }),
+  createdAt: createdAtColumn(),
+});
+
 export type AutomationRuleRow = typeof automationRules.$inferSelect;
 export type AutomationRunRow = typeof automationRuns.$inferSelect;
+export type SearchPhraseRow = typeof searchPhrases.$inferSelect;

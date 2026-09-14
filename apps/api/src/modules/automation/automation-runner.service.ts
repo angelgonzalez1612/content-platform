@@ -16,6 +16,7 @@ import { AlertasService } from '../lamira-alertas/alertas.service';
 import { ReportajesService } from '../lamira-reportajes/reportajes.service';
 import { PlanazoGuidesService } from '../planazo-guides/guides.service';
 import { AutomationRulesService } from './automation-rules.service';
+import { SearchPhrasesService } from './search-phrases.service';
 import { AUTOMATABLE_CONTENT_TYPES } from './dto/automation-rule.dto';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
 import { contentAuditLog, type AutomationRuleRow } from '../../db/schema';
@@ -178,6 +179,7 @@ export class AutomationRunnerService {
     private readonly alertas: AlertasService,
     private readonly reportajes: ReportajesService,
     private readonly guides: PlanazoGuidesService,
+    private readonly searchPhrasesService: SearchPhrasesService,
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
   ) {}
 
@@ -337,6 +339,7 @@ export class AutomationRunnerService {
         this.logger.warn('No hay reportes de content-radar todavía — nada que evaluar.');
         return { evaluated: 0, created: 0 };
       }
+      await this.searchPhrasesService.syncFromExtraction(searchPhrases, SEARCH_PHRASE_CATEGORY_LABEL);
 
       const [alreadyPublished, alreadyEvaluated, todaysCounts] = await Promise.all([
         this.contentRadarPublished.findAllTitles().then((titles) => new Set(titles.map(normalizeTitle))),
@@ -435,6 +438,7 @@ export class AutomationRunnerService {
     const activeRules = await this.rules.findActive();
     const { fileName, topics, searchPhrases } = await this.extractTopics();
     if (!fileName) return { totalTopics: 0, alreadyHandled: 0, pending: [] };
+    await this.searchPhrasesService.syncFromExtraction(searchPhrases, SEARCH_PHRASE_CATEGORY_LABEL);
 
     const [alreadyPublished, alreadyEvaluated] = await Promise.all([
       this.contentRadarPublished.findAllTitles().then((titles) => new Set(titles.map(normalizeTitle))),

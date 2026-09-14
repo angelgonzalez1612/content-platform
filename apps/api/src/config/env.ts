@@ -35,6 +35,13 @@ const envSchema = z.object({
   // imágenes, opcional (sin ella, ImageSearchService simplemente no incluye
   // resultados de Bing, igual que ya pasa con OPENAI_API_KEY).
   BING_API_KEY: z.string().optional(),
+  // Google Programmable Search (Custom Search JSON API) — busca ligas reales
+  // por cada frase de "Qué busca la gente" en /automatizaciones/frases, para
+  // que el humano elija una como fuente citada antes de generar contenido
+  // (ver WebSearchService). Opcionales: sin ellas, "Buscar ligas" falla con
+  // un mensaje claro en vez de tronar el arranque del server.
+  GOOGLE_SEARCH_API_KEY: z.string().optional(),
+  GOOGLE_SEARCH_ENGINE_ID: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
