@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { HttpException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 export interface WebSearchResult {
@@ -56,14 +56,21 @@ export class WebSearchService {
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
       if (!res.ok) {
-        this.logger.warn(`Búsqueda web falló para "${query}": HTTP ${res.status}`);
-        return [];
+        // Antes esto se disfrazaba de "0 resultados" — una key inválida, cuota
+        // agotada o un cx mal puesto se veían idénticos a una búsqueda que de
+        // verdad no encontró nada, imposible de diagnosticar desde la
+        // pantalla. Ahora se propaga el error real de Google (visible en el
+        // banner rojo de "Buscar ligas" en el CMS) en vez de tragárselo.
+        const body = await res.text().catch(() => '');
+        this.logger.warn(`Búsqueda web falló para "${query}": HTTP ${res.status} — ${body.slice(0, 300)}`);
+        throw new InternalServerErrorException(`Google Search respondió HTTP ${res.status}: ${body.slice(0, 200) || '(sin detalle)'}`);
       }
       const data = (await res.json()) as { items?: GoogleSearchItem[] };
       return (data.items ?? [])
         .filter((item) => item.link && item.title)
         .map((item) => ({ title: item.title!, url: item.link!, snippet: item.snippet ?? '' }));
     } catch (err) {
+      if (err instanceof HttpException) throw err; // ya se logueó arriba, con el detalle real de Google
       this.logger.warn(`Búsqueda web falló para "${query}": ${(err as Error).message}`);
       return [];
     }
