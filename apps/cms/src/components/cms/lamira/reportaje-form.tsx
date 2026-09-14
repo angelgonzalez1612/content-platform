@@ -216,7 +216,7 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
 
         <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 
-        <ContentBlocksField blocks={content} onChange={setContent} />
+        <ContentBlocksField blocks={content} onChange={setContent} articleTitle={form.title} />
 
         <TagsField label="Etiquetas (mínimo 1)" tags={tags} onChange={setTags} />
 

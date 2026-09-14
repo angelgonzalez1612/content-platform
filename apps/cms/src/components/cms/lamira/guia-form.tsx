@@ -271,7 +271,7 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
           addLabel="+ Dato rápido"
         />
 
-        <ContentBlocksField blocks={content} onChange={setContent} headingRequired />
+        <ContentBlocksField blocks={content} onChange={setContent} headingRequired articleTitle={form.title} />
 
         <PairListField
           label="Preguntas frecuentes"

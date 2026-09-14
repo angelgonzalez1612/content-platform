@@ -4,6 +4,7 @@ import { useState } from "react";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { RichTextarea } from "@/components/cms/rich-textarea";
 import { ImageSearchPicker } from "@/components/cms/lamira/image-search-picker";
+import { BlockImprovePanel } from "@/components/cms/block-improve-panel";
 
 export interface ContentBlockValue {
   heading: string | null;
@@ -22,6 +23,7 @@ export function ContentBlocksField({
   onChange,
   headingRequired = false,
   articleImages,
+  articleTitle,
 }: {
   blocks: ContentBlockValue[];
   onChange: (blocks: ContentBlockValue[]) => void;
@@ -29,6 +31,9 @@ export function ContentBlocksField({
   // Imágenes candidatas del artículo scrapeado (ver GenerateLamiraContentFlow)
   // — se ofrecen también aquí para usarlas dentro de un bloque específico.
   articleImages?: { url: string; credit: string }[];
+  // Título del artículo completo — contexto opcional para BlockImprovePanel,
+  // para que la IA no repita lo que ya dice el resto del contenido.
+  articleTitle?: string;
 }) {
   const [editingImageFor, setEditingImageFor] = useState<number | null>(null);
 
@@ -130,6 +135,14 @@ export function ContentBlocksField({
                 + Párrafo
               </button>
             </div>
+
+            <BlockImprovePanel
+              heading={block.heading}
+              paragraphs={block.paragraphs}
+              articleTitle={articleTitle}
+              onApplyRewrite={(newHeading, newParagraphs) => updateBlock(bi, { heading: newHeading, paragraphs: newParagraphs })}
+              onApplyExpand={(newParagraphs) => updateBlock(bi, { paragraphs: [...blocks[bi].paragraphs, ...newParagraphs] })}
+            />
 
             {editingImageFor === bi ? (
               <div className="flex flex-col gap-2 rounded-[10px] border border-border-soft bg-white p-3">

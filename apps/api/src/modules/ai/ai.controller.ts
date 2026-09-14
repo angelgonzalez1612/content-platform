@@ -25,7 +25,9 @@ import {
 } from './dto/draft-request.dto';
 import { searchImagesSchema } from './dto/search-images.dto';
 import { fetchImageSchema } from './dto/fetch-image.dto';
+import { improveBlockSchema } from './dto/improve-block.dto';
 import { AiDraftService } from './ai-draft.service';
+import { BlockImproveService } from './block-improve.service';
 import { ImageSearchService } from './image-search.service';
 import { ImageUploadService } from './image-upload.service';
 
@@ -35,6 +37,7 @@ export class AiController {
   constructor(
     @Inject(CONTENT_PROVIDER) private readonly provider: ContentProvider,
     private readonly draftService: AiDraftService,
+    private readonly blockImprove: BlockImproveService,
     private readonly imageSearch: ImageSearchService,
     private readonly imageUpload: ImageUploadService,
   ) {}
@@ -89,6 +92,15 @@ export class AiController {
   ) {
     const publicOrigin = `${req.protocol}://${req.get('host')}`;
     return this.imageUpload.save(file, publicOrigin);
+  }
+
+  // Botón "IA" por bloque del cuerpo (ver ContentBlocksField/BlockImprovePanel
+  // en el CMS) — corrige o amplía SOLO los párrafos de ese bloque, no todo el
+  // contenido. Sin contentId: no depende de que la pieza ya esté guardada
+  // (también vive en las pantallas de "generar" antes de crear).
+  @Post('improve-block')
+  improveBlock(@Body() body: unknown) {
+    return this.blockImprove.improveBlock(improveBlockSchema.parse(body));
   }
 
   // Ruta genérica (:type/:id) — 'place' y los 6 tipos de la-mira

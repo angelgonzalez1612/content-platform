@@ -292,7 +292,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
           <p className="text-[11.5px] text-ink-faint">
             Secciones adicionales que se muestran debajo de la descripción — pueden agregarse a mano o con &quot;Agregar contenido&quot; en Mejorar con IA, arriba.
           </p>
-          <ContentBlocksField blocks={content} onChange={setContent} />
+          <ContentBlocksField blocks={content} onChange={setContent} articleTitle={form.name} />
         </div>
 
         <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
