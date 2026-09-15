@@ -17,6 +17,7 @@ import { ReportajesService } from '../lamira-reportajes/reportajes.service';
 import { PlanazoGuidesService } from '../planazo-guides/guides.service';
 import { AutomationRulesService } from './automation-rules.service';
 import { SearchPhrasesService } from './search-phrases.service';
+import { RadarTopicsService } from './radar-topics.service';
 import { AUTOMATABLE_CONTENT_TYPES } from './dto/automation-rule.dto';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
 import { contentAuditLog, type AutomationRuleRow } from '../../db/schema';
@@ -180,6 +181,7 @@ export class AutomationRunnerService {
     private readonly reportajes: ReportajesService,
     private readonly guides: PlanazoGuidesService,
     private readonly searchPhrasesService: SearchPhrasesService,
+    private readonly radarTopicsService: RadarTopicsService,
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
   ) {}
 
@@ -340,6 +342,8 @@ export class AutomationRunnerService {
         return { evaluated: 0, created: 0 };
       }
       await this.searchPhrasesService.syncFromExtraction(searchPhrases, SEARCH_PHRASE_CATEGORY_LABEL);
+      await this.radarTopicsService.syncFromExtraction(topics);
+      const accumulatedTopics = await this.radarTopicsService.findAll();
 
       const [alreadyPublished, alreadyEvaluated, todaysCounts] = await Promise.all([
         this.contentRadarPublished.findAllTitles().then((titles) => new Set(titles.map(normalizeTitle))),
@@ -359,7 +363,13 @@ export class AutomationRunnerService {
       let evaluated = 0;
 
       const allTopics: Topic[] = [
-        ...topics.map((t) => ({ ...t, source: 'report' as const })),
+        ...accumulatedTopics.map((t) => ({
+          title: t.title,
+          hints: t.hints,
+          categoryLabel: t.categoryLabel ?? '',
+          sites: t.sites,
+          source: 'report' as const,
+        })),
         ...searchPhrases.map(toSearchPhraseTopic),
       ];
 
@@ -439,6 +449,8 @@ export class AutomationRunnerService {
     const { fileName, topics, searchPhrases } = await this.extractTopics();
     if (!fileName) return { totalTopics: 0, alreadyHandled: 0, pending: [] };
     await this.searchPhrasesService.syncFromExtraction(searchPhrases, SEARCH_PHRASE_CATEGORY_LABEL);
+    await this.radarTopicsService.syncFromExtraction(topics);
+    const accumulatedTopics = await this.radarTopicsService.findAll();
 
     const [alreadyPublished, alreadyEvaluated] = await Promise.all([
       this.contentRadarPublished.findAllTitles().then((titles) => new Set(titles.map(normalizeTitle))),
@@ -450,7 +462,13 @@ export class AutomationRunnerService {
     let alreadyHandled = 0;
 
     const allTopics: Topic[] = [
-      ...topics.map((t) => ({ ...t, source: 'report' as const })),
+      ...accumulatedTopics.map((t) => ({
+        title: t.title,
+        hints: t.hints,
+        categoryLabel: t.categoryLabel ?? '',
+        sites: t.sites,
+        source: 'report' as const,
+      })),
       ...searchPhrases.map(toSearchPhraseTopic),
     ];
 

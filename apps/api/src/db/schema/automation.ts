@@ -120,6 +120,28 @@ export const searchPhrases = sqliteTable('search_phrases', {
   createdAt: createdAtColumn(),
 });
 
+// Temas del reporte diario de Content Radar (noticias con fuente real, no
+// frases de búsqueda — eso es searchPhrases arriba) — acumulados la primera
+// vez que se ven, dedupe por `title`. Antes AutomationRunnerService.run()
+// solo leía el ÚNICO archivo .md del día (mismo nombre siempre, se
+// sobreescribe en cada corrida de content-radar), así que si alguien
+// regeneraba el reporte más de una vez al día, cualquier tema que ya
+// estuviera ahí pero aún sin evaluar y que ya no saliera "trending" en la
+// nueva corrida desaparecía sin que ninguna regla llegara a verlo. Ahora cada
+// corrida de content-radar (aunque sea la 3ra del mismo día) se guarda aquí
+// además de leerse — run()/getQueueStatus() arman su cola de pendientes
+// contra ESTA tabla, no contra el archivo suelto, así nada se pierde entre
+// corridas locales repetidas.
+export const radarTopics = sqliteTable('radar_topics', {
+  id: idColumn(),
+  title: text('title').notNull().unique(),
+  hints: text('hints').notNull().default(''),
+  categoryLabel: text('category_label'),
+  sites: text('sites', { mode: 'json' }).$type<string[]>().notNull().default([]),
+  createdAt: createdAtColumn(),
+});
+
 export type AutomationRuleRow = typeof automationRules.$inferSelect;
 export type AutomationRunRow = typeof automationRuns.$inferSelect;
 export type SearchPhraseRow = typeof searchPhrases.$inferSelect;
+export type RadarTopicRow = typeof radarTopics.$inferSelect;
