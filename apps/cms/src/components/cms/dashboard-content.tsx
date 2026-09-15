@@ -6,8 +6,8 @@ import type { AuthUser } from "@planazo/types";
 import { apiConfig } from "@planazo/config";
 import { Icon } from "@/components/icon";
 import { AutomationActivityCard } from "@/components/cms/automation-activity-card";
-import type { DashboardStats } from "@/lib/dashboard-api";
-import { contentEditHref, contentTypeIcon, contentTypeLabel, daysAgoLabel } from "@/lib/dashboard-api";
+import type { DashboardStats, LastDeploy } from "@/lib/dashboard-api";
+import { contentEditHref, contentTypeIcon, contentTypeLabel, daysAgoLabel, relativeTimeLabel, deployStateLabel } from "@/lib/dashboard-api";
 import type { AutomationQueue } from "@/lib/automation-types";
 
 function greeting(hour: number): string {
@@ -30,6 +30,7 @@ export function DashboardContent({ user }: { user: AuthUser }) {
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [queue, setQueue] = useState<AutomationQueue | null>(null);
+  const [deploys, setDeploys] = useState<LastDeploy[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,6 +44,12 @@ export function DashboardContent({ user }: { user: AuthUser }) {
       .then((res) => (res.ok ? res.json() : null))
       .then((data: AutomationQueue | null) => {
         if (!cancelled && data) setQueue(data);
+      })
+      .catch(() => {});
+    fetch(`${apiConfig.clientBaseUrl}/cms/dashboard/deploys`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: LastDeploy[] | null) => {
+        if (!cancelled && data) setDeploys(data);
       })
       .catch(() => {});
     return () => {
@@ -256,6 +263,33 @@ export function DashboardContent({ user }: { user: AuthUser }) {
                       <span className="text-[12.5px] leading-[1.35] font-medium">{al.title}</span>
                       <span className="text-[11px] leading-[1.4] text-ink-faint">{al.meta}</span>
                     </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+            <span className="mb-3 block text-[13.5px] font-semibold tracking-tight">Última subida a prod</span>
+            <div className="flex flex-col gap-2.5">
+              {!deploys ? (
+                <p className="text-[12.5px] text-ink-faint">Cargando…</p>
+              ) : deploys.every((d) => d.deployedAt === null && d.state === null) ? (
+                <p className="text-[12.5px] text-ink-faint">
+                  No configurado — falta <code className="font-mono text-[11px]">VERCEL_API_TOKEN</code> en el servidor.
+                </p>
+              ) : (
+                deploys.map((d) => (
+                  <div key={d.project} className="flex items-center gap-2.5">
+                    <span
+                      className="size-1.5 flex-none rounded-full"
+                      style={{ background: d.state === "READY" ? "#2E9B4F" : d.state === "ERROR" || d.state === "error" ? "#D14343" : "#8A837B" }}
+                    />
+                    <div className="flex min-w-0 flex-1 flex-col gap-px">
+                      <span className="text-[12.5px] font-medium">{d.label}</span>
+                      <span className="text-[10.5px] text-ink-faint">{deployStateLabel(d.state)}</span>
+                    </div>
+                    <span className="flex-none font-mono text-[10.5px] text-ink-faint">{d.deployedAt ? relativeTimeLabel(d.deployedAt) : "—"}</span>
                   </div>
                 ))
               )}

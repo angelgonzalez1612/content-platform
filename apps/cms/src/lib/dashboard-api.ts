@@ -71,3 +71,40 @@ export function daysAgoLabel(iso: string): string {
   if (days === 1) return "hace 1 día";
   return `hace ${days} días`;
 }
+
+export interface LastDeploy {
+  project: string;
+  label: string;
+  deployedAt: string | null;
+  state: string | null;
+  url: string | null;
+}
+
+// Más fino que daysAgoLabel (minutos/horas) — un deploy típico es cuestión
+// de minutos/horas, no de días, "hoy"/"hace 2 días" sería inútil aquí.
+export function relativeTimeLabel(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diffMs / 60_000);
+  if (minutes < 1) return "hace un momento";
+  if (minutes < 60) return `hace ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  const days = Math.floor(hours / 24);
+  return `hace ${days} ${days === 1 ? "día" : "días"}`;
+}
+
+const DEPLOY_STATE_LABEL: Record<string, string> = {
+  READY: "Listo",
+  ERROR: "Error",
+  BUILDING: "Compilando",
+  QUEUED: "En cola",
+  CANCELED: "Cancelado",
+  BLOCKED: "Bloqueado",
+  INITIALIZING: "Iniciando",
+  error: "No se pudo checar",
+};
+
+export function deployStateLabel(state: string | null): string {
+  if (!state) return "Sin datos";
+  return DEPLOY_STATE_LABEL[state] ?? state;
+}

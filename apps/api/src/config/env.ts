@@ -47,6 +47,12 @@ const envSchema = z.object({
   // claro en vez de tronar el arranque del server.
   GOOGLE_SEARCH_API_KEY: z.string().optional(),
   GOOGLE_SEARCH_ENGINE_ID: z.string().optional(),
+  // Token personal de Vercel (Account Settings -> Tokens) — solo lectura de
+  // deployments, usado por el Dashboard del CMS para mostrar "cuándo fue la
+  // última vez que se subió a prod" de los 4 proyectos (ver
+  // VercelDeploymentsService). Opcional: sin él, esa tarjeta simplemente
+  // dice "no configurado" en vez de tronar el arranque del server.
+  VERCEL_API_TOKEN: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
