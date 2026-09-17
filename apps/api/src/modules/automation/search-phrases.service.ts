@@ -37,12 +37,16 @@ export class SearchPhrasesService {
    * /automatizaciones/frases sin que desaparezcan al día siguiente. */
   async syncFromExtraction(phrases: string[], categoryLabel: string): Promise<void> {
     if (phrases.length === 0) return;
+    // Mismo riesgo que RadarTopicsService.syncFromExtraction: si `phrases`
+    // trae la misma frase repetida, ambas copias pasarían el filtro de "no
+    // existe todavía" y el insert por lote tronaría con UNIQUE constraint.
+    const uniquePhrases = [...new Set(phrases)];
     const existing = await this.db.query.searchPhrases.findMany({
-      where: inArray(searchPhrases.phrase, phrases),
+      where: inArray(searchPhrases.phrase, uniquePhrases),
       columns: { phrase: true },
     });
     const existingSet = new Set(existing.map((r) => r.phrase));
-    const toInsert = phrases.filter((p) => !existingSet.has(p));
+    const toInsert = uniquePhrases.filter((p) => !existingSet.has(p));
     if (toInsert.length === 0) return;
 
     await this.db.insert(searchPhrases).values(toInsert.map((phrase) => ({ phrase, categoryLabel })));
