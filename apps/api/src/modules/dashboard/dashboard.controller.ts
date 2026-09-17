@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardService } from './dashboard.service';
 import { VercelDeploymentsService } from './vercel-deployments.service';
@@ -19,5 +19,10 @@ export class DashboardController {
   @Get('deploys')
   getDeploys() {
     return this.vercelDeployments.getLastDeploys();
+  }
+
+  @Post('deploys/:project')
+  triggerDeploy(@Param('project') project: string) {
+    return this.vercelDeployments.triggerDeploy(project);
   }
 }

@@ -11,7 +11,9 @@ const envSchema = z.object({
   DATABASE_AUTH_TOKEN: z.string().optional(),
   REDIS_URL: z.url().optional(),
   // Comma-separated list — the API is shared between planazo_fronted and planazo_cms.
-  CORS_ORIGIN: z.string().default('http://localhost:3000,http://localhost:3002'),
+  CORS_ORIGIN: z
+    .string()
+    .default('http://localhost:3000,http://localhost:3002'),
   JWT_SECRET: z.string().min(16),
   SEED_ADMIN_EMAIL: z.string().email().optional(),
   SEED_ADMIN_PASSWORD: z.string().min(8).optional(),
@@ -53,6 +55,13 @@ const envSchema = z.object({
   // VercelDeploymentsService). Opcional: sin él, esa tarjeta simplemente
   // dice "no configurado" en vez de tronar el arranque del server.
   VERCEL_API_TOKEN: z.string().optional(),
+  // URLs secretas de Deploy Hooks de Vercel. Se usan únicamente desde la API
+  // cuando un editor pide publicar manualmente desde el Dashboard del CMS.
+  // Crea un hook por proyecto en Vercel: Settings -> Git -> Deploy Hooks.
+  VERCEL_DEPLOY_HOOK_API: z.url().optional(),
+  VERCEL_DEPLOY_HOOK_CMS: z.url().optional(),
+  VERCEL_DEPLOY_HOOK_LA_MIRA: z.url().optional(),
+  VERCEL_DEPLOY_HOOK_PLANAZO: z.url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
