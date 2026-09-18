@@ -44,10 +44,32 @@ function itemGeoBadge(title: string): string {
   return ` <span class="geo-tag">${text}</span>`;
 }
 
+// Antes esta línea era texto plano con pesos tipográficos inconsistentes:
+// el número en formato `código` (parece un identificador técnico, no una
+// métrica) y los badges de clasificación mezclados en la misma oración sin
+// separación real. Ahora es un bloque de datos: el volumen como estadística
+// con su propio peso visual (más marcado cuanto más alto el tier — 3
+// niveles honestos, no una barra que finge precisión que Trending Now no
+// da), separado de las etiquetas de clasificación (origen/geo/categoría).
+type VolumeTier = "alto" | "medio" | "bajo";
+
+function volumeTier(traffic: string): VolumeTier {
+  const n = parseTraffic(traffic);
+  if (n >= 1000) return "alto";
+  if (n >= 200) return "medio";
+  return "bajo";
+}
+
+function metaRow(traffic: string, badges: string): string {
+  const tier = volumeTier(traffic);
+  const label = traffic || "N/D";
+  return `<span class="cr-meta"><span class="cr-volume" data-tier="${tier}">${label}<small>búsquedas aprox.</small></span>${badges ? ` ${badges}` : ""}</span>`;
+}
+
 function renderTrendTopic(topic: ScoredTopic, index: number): string[] {
   const lines: string[] = [];
   lines.push(`### ${index}. ${topic.title}`);
-  lines.push(`- Volumen aproximado: \`${topic.traffic || "N/D"}\` ${originBadge(topic)}${geoBadge(topic)}`);
+  lines.push(`- ${metaRow(topic.traffic, `${originBadge(topic)}${geoBadge(topic)}`)}`);
   if (topic.newsItems.length) {
     lines.push("- Noticias relacionadas:");
     topic.newsItems.forEach((n) => {
@@ -93,9 +115,7 @@ function renderHottest(site: SiteConfig, topics: ScoredTopic[]): string[] {
   top.forEach((topic, i) => {
     const tags = categoryTags(topic, site);
     lines.push(`### ${i + 1}. ${topic.title}`);
-    lines.push(
-      `- Volumen aproximado: \`${topic.traffic || "N/D"}\` ${originBadge(topic)}${geoBadge(topic)}${tags ? " " + tags : ""}`
-    );
+    lines.push(`- ${metaRow(topic.traffic, `${originBadge(topic)}${geoBadge(topic)}${tags ? " " + tags : ""}`)}`);
     if (topic.newsItems.length) {
       const top1 = topic.newsItems[0];
       lines.push(`  - [${top1.title}](${top1.url}) — ${top1.source}`);
@@ -126,7 +146,7 @@ function renderTopSearches(topics: ScoredTopic[]): string[] {
   const sorted = byTrafficDesc(topics);
   const lines: string[] = [`## ${TOP_SEARCHES_HEADING} \`(${sorted.length})\``, ""];
   sorted.forEach((t, i) => {
-    lines.push(`${i + 1}. **${t.title}** — \`${t.traffic || "N/D"}\` ${originBadge(t)}${geoBadge(t)}`);
+    lines.push(`${i + 1}. **${t.title}** — ${metaRow(t.traffic, `${originBadge(t)}${geoBadge(t)}`)}`);
   });
   lines.push("");
   return lines;
