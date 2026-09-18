@@ -60,16 +60,22 @@ function volumeTier(traffic: string): VolumeTier {
   return "bajo";
 }
 
-function metaRow(traffic: string, badges: string): string {
+// `cr-meta-compact` (volumen + origen) es lo mínimo que hace falta para
+// decidir si un tema vale la pena sin abrir nada — buildHeroTiles (render.ts)
+// lo extrae de aquí y lo hoistea a la fila siempre visible del acordeón. Lo
+// demás (geo, categorías) es detalle real pero no crítico para escanear,
+// se queda colapsado en `cr-meta-extra`.
+function metaRow(traffic: string, origin: string, extra: string): string {
   const tier = volumeTier(traffic);
   const label = traffic || "N/D";
-  return `<span class="cr-meta"><span class="cr-volume" data-tier="${tier}">${label}<small>búsquedas aprox.</small></span>${badges ? ` ${badges}` : ""}</span>`;
+  const compact = `<span class="cr-meta-compact"><span class="cr-volume" data-tier="${tier}">${label}<small>búsquedas aprox.</small></span>${origin}</span>`;
+  return `<span class="cr-meta">${compact}${extra ? ` <span class="cr-meta-extra">${extra}</span>` : ""}</span>`;
 }
 
 function renderTrendTopic(topic: ScoredTopic, index: number): string[] {
   const lines: string[] = [];
   lines.push(`### ${index}. ${topic.title}`);
-  lines.push(`- ${metaRow(topic.traffic, `${originBadge(topic)}${geoBadge(topic)}`)}`);
+  lines.push(`- ${metaRow(topic.traffic, originBadge(topic), geoBadge(topic))}`);
   if (topic.newsItems.length) {
     lines.push("- Noticias relacionadas:");
     topic.newsItems.forEach((n) => {
@@ -115,7 +121,7 @@ function renderHottest(site: SiteConfig, topics: ScoredTopic[]): string[] {
   top.forEach((topic, i) => {
     const tags = categoryTags(topic, site);
     lines.push(`### ${i + 1}. ${topic.title}`);
-    lines.push(`- ${metaRow(topic.traffic, `${originBadge(topic)}${geoBadge(topic)}${tags ? " " + tags : ""}`)}`);
+    lines.push(`- ${metaRow(topic.traffic, originBadge(topic), `${geoBadge(topic)}${tags ? " " + tags : ""}`)}`);
     if (topic.newsItems.length) {
       const top1 = topic.newsItems[0];
       lines.push(`  - [${top1.title}](${top1.url}) — ${top1.source}`);
@@ -146,7 +152,7 @@ function renderTopSearches(topics: ScoredTopic[]): string[] {
   const sorted = byTrafficDesc(topics);
   const lines: string[] = [`## ${TOP_SEARCHES_HEADING} \`(${sorted.length})\``, ""];
   sorted.forEach((t, i) => {
-    lines.push(`${i + 1}. **${t.title}** — ${metaRow(t.traffic, `${originBadge(t)}${geoBadge(t)}`)}`);
+    lines.push(`${i + 1}. **${t.title}** — ${metaRow(t.traffic, originBadge(t), geoBadge(t))}`);
   });
   lines.push("");
   return lines;

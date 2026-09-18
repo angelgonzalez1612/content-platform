@@ -146,13 +146,26 @@
 .cr-scope .cr-row-summary {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.5rem 0.75rem;
   padding: 0.85rem 1.1rem;
   cursor: pointer;
   list-style: none;
   font-family: var(--font-mono);
   min-width: 0;
+}
+/* Volumen + origen (cr-meta-compact) hoisteado desde el cuerpo colapsado de
+   cada tema de "Radar del día" (ver buildHeroTiles, render.ts) — es el dato
+   mínimo para juzgar un tema sin abrir la fila, así que va siempre visible
+   en el summary, no escondido detrás del clic. */
+.cr-scope .cr-row-summary .cr-meta-compact {
+  flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  white-space: nowrap;
+  font-family: var(--font-sans);
 }
 .cr-scope .cr-row-summary::-webkit-details-marker { display: none; }
 .cr-scope .cr-row-summary:hover { background: var(--color-border-soft); }

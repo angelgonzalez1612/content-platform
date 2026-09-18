@@ -175,6 +175,33 @@ function injectItemPublishButtons(html: string, categoryLabel: string, published
 // <h3> (rank+título+Publicar, ya armado por wrapRankedHeadings/injectPublishButtons)
 // queda siempre visible como resumen; el resto (volumen, tags, fuente citada)
 // se colapsa.
+// Saca el <span class="cr-meta-compact">...</span> de `body` con un conteo
+// de profundidad (no regex no-greedy) porque adentro trae spans anidados
+// (cr-volume, origin-badge) — un match no-greedy cortaría en el primer
+// </span> interno en vez del que realmente cierra cr-meta-compact.
+function extractMetaCompact(body: string): { compact: string; rest: string } {
+  const startTag = '<span class="cr-meta-compact">';
+  const start = body.indexOf(startTag);
+  if (start === -1) return { compact: "", rest: body };
+  let depth = 0;
+  let pos = start;
+  while (pos < body.length) {
+    if (body.startsWith("<span", pos)) {
+      depth++;
+      pos += 5;
+    } else if (body.startsWith("</span>", pos)) {
+      depth--;
+      pos += 7;
+      if (depth === 0) {
+        return { compact: body.slice(start, pos), rest: body.slice(0, start) + body.slice(pos) };
+      }
+    } else {
+      pos++;
+    }
+  }
+  return { compact: "", rest: body };
+}
+
 function buildHeroTiles(sectionBody: string): string {
   const tiles = sectionBody
     .split(/(?=<h3>)/)
@@ -183,11 +210,15 @@ function buildHeroTiles(sectionBody: string): string {
       const h3Match = part.match(/^<h3>[\s\S]*?<\/h3>/);
       if (!h3Match) return `<details class="cr-row"><summary class="cr-row-summary">${part}${CHEVRON_ICON}</summary></details>`;
       const header = h3Match[0];
-      const body = part.slice(header.length);
+      const rawBody = part.slice(header.length);
+      // El volumen + origen (cr-meta-compact) se hoistea al summary, siempre
+      // visible sin expandir — es lo mínimo para decidir si el tema importa
+      // con solo escanear la lista. El resto (geo, fuentes) se queda colapsado.
+      const { compact, rest } = extractMetaCompact(rawBody);
       return `
         <details class="cr-row">
-          <summary class="cr-row-summary">${header}${CHEVRON_ICON}</summary>
-          <div class="cr-row-body">${body}</div>
+          <summary class="cr-row-summary">${header}${compact}${CHEVRON_ICON}</summary>
+          <div class="cr-row-body">${rest}</div>
         </details>
       `;
     })
