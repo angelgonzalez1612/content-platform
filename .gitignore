@@ -23,3 +23,7 @@ coverage
 # no versionadas, cada entorno tiene las suyas.
 apps/api/uploads/
 *.tsbuildinfo
+
+# Respaldos de la BD (ver scripts/backup-turso.sh) — contienen todo el
+# contenido real, nunca al repo.
+/backups/
