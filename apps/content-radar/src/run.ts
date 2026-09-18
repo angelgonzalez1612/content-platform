@@ -9,7 +9,7 @@ import { getCdmxWeather } from "./weather";
 import { getYoutubeByCategory } from "./youtube";
 import { getBingStatsByCategory } from "./bingKeywords";
 import { getTmdbTrending } from "./tmdb";
-import { todayLocal } from "./date";
+import { todayLocal, nowLocalTime } from "./date";
 import { scoreTopics } from "./relevance";
 import { buildMarkdownReport } from "./report";
 import { getSite } from "./sites";
@@ -33,8 +33,15 @@ export interface RunResult {
   report: string;
 }
 
-export function reportFileName(today: string, geo: string, siteId: string): string {
-  return `${today}-${geo}-${siteId}.md`;
+// `time` (HHmm) es la pieza nueva — antes el nombre solo tenía la fecha, así
+// que la corrida de las 7am, la de mediodía y cualquier "Actualizar" manual
+// del mismo día se pisaban entre sí (solo quedaba la última). Con la hora en
+// el nombre, cada corrida deja su propio snapshot — eso es el "historial por
+// transcurso del día" que se veía perdido. `time` es opcional únicamente
+// para que reportFileName siga sirviendo para reconstruir nombres de
+// archivos viejos (antes de este cambio) si algo los necesita.
+export function reportFileName(today: string, geo: string, siteId: string, time?: string): string {
+  return time ? `${today}-${time}-${geo}-${siteId}.md` : `${today}-${geo}-${siteId}.md`;
 }
 
 // Consulta Trending Now + Google News CDMX + RSS directo de medios + YouTube +
@@ -84,7 +91,7 @@ export async function runAndSave(siteId: string, geo: string): Promise<RunResult
 
   await mkdir(REPORTS_DIR, { recursive: true });
   const today = todayLocal();
-  const fileName = reportFileName(today, geo, site.id);
+  const fileName = reportFileName(today, geo, site.id, nowLocalTime());
   const file = path.join(REPORTS_DIR, fileName);
   await writeFile(file, report, "utf-8");
 

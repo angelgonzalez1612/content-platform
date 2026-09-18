@@ -70,10 +70,30 @@ export default async function ContentRadarPage({
   const files = await listReports(DEFAULT_SITE_ID);
   const activeFile = requestedFile && files.includes(requestedFile) ? requestedFile : files[0];
 
-  const pickerOptions = files.map((f) => {
-    const { date, geo } = parseFileName(f, DEFAULT_SITE_ID);
-    return { value: `/content-radar?file=${encodeURIComponent(f)}`, label: `${date} · ${geo}` };
-  });
+  // Agrupado por día — un mismo día puede tener varias corridas ahora
+  // (7am, mediodía, "Actualizar" manual), así que cada archivo pasó de ser
+  // "el reporte del día" a "una corrida más" dentro de su día. `files` ya
+  // viene ordenado más reciente primero (listReports), y como los nombres
+  // con hora ordenan igual dentro de un mismo día, los grupos salen en
+  // orden sin necesidad de reordenar nada aquí.
+  const pickerGroups: { groupLabel: string; options: { value: string; label: string }[] }[] = [];
+  let lastGroupDate: string | null = null;
+  for (const f of files) {
+    const { date, time, geo } = parseFileName(f, DEFAULT_SITE_ID);
+    const option = {
+      value: `/content-radar?file=${encodeURIComponent(f)}`,
+      label: time ? `${time.slice(0, 2)}:${time.slice(2)} · ${geo}` : `${date} · ${geo}`,
+    };
+    if (date === lastGroupDate) {
+      pickerGroups[pickerGroups.length - 1].options.push(option);
+    } else {
+      const dateLabel = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", year: "numeric" }).format(
+        new Date(`${date}T00:00:00`)
+      );
+      pickerGroups.push({ groupLabel: `${dateLabel} (${date})`, options: [option] });
+      lastGroupDate = date;
+    }
+  }
 
   const refreshForm = (
     <form action={refreshContentRadar} className="cr-refresh-form">
@@ -118,7 +138,7 @@ export default async function ContentRadarPage({
     <CmsShell user={session} title="Content Radar">
       <div className="cr-scope">
         <div className="cr-picker">
-          <ReportPicker options={pickerOptions} value={`/content-radar?file=${encodeURIComponent(activeFile)}`} />
+          <ReportPicker groups={pickerGroups} value={`/content-radar?file=${encodeURIComponent(activeFile)}`} />
           {refreshForm}
         </div>
         <div className="cr-content report">

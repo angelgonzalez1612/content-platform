@@ -6,3 +6,10 @@ export function todayLocal(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+
+// HHmm local — para que cada corrida del día (7am, 12pm, "Actualizar" a
+// mano, etc.) guarde su propio snapshot en vez de pisar el reporte del día.
+export function nowLocalTime(): string {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}`;
+}

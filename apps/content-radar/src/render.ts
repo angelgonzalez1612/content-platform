@@ -23,11 +23,16 @@ export async function listReports(siteId: string): Promise<string[]> {
   }
 }
 
-export function parseFileName(fileName: string, siteId: string): { date: string; geo: string } {
+// `time` es `undefined` para reportes de antes de que el nombre incluyera
+// hora (un archivo por día, formato viejo) — sigue leyéndose bien, solo sin
+// hora que mostrar.
+export function parseFileName(fileName: string, siteId: string): { date: string; time?: string; geo: string } {
   const suffix = `-${siteId}.md`;
   const base = fileName.endsWith(suffix) ? fileName.slice(0, -suffix.length) : fileName;
-  const match = base.match(/^(\d{4}-\d{2}-\d{2})-(.+)$/);
-  return match ? { date: match[1], geo: match[2] } : { date: base, geo: "" };
+  const withTime = base.match(/^(\d{4}-\d{2}-\d{2})-(\d{4})-(.+)$/);
+  if (withTime) return { date: withTime[1], time: withTime[2], geo: withTime[3] };
+  const withoutTime = base.match(/^(\d{4}-\d{2}-\d{2})-(.+)$/);
+  return withoutTime ? { date: withoutTime[1], geo: withoutTime[2] } : { date: base, geo: "" };
 }
 
 export function slugify(text: string): string {
