@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { RichTextarea } from "@/components/cms/rich-textarea";
 import { ImageSearchPicker } from "@/components/cms/lamira/image-search-picker";
-import { BlockImprovePanel } from "@/components/cms/block-improve-panel";
+import { BlockImprovePanel, type BlockImprovePanelHandle } from "@/components/cms/block-improve-panel";
 
 export interface ContentBlockValue {
   heading: string | null;
@@ -36,6 +36,7 @@ export function ContentBlocksField({
   articleTitle?: string;
 }) {
   const [editingImageFor, setEditingImageFor] = useState<number | null>(null);
+  const improvePanelRef = useRef<BlockImprovePanelHandle>(null);
 
   function updateBlock(i: number, patch: Partial<ContentBlockValue>) {
     onChange(blocks.map((b, bi) => (bi === i ? { ...b, ...patch } : b)));
@@ -154,6 +155,9 @@ export function ContentBlocksField({
                 <div className="flex min-w-0 flex-1 flex-col gap-1 pt-0.5">
                   <p className="truncate text-[11.5px] text-ink-soft">{block.image.credit}</p>
                   <div className="flex items-center gap-3">
+                    <a href={block.image.url} target="_blank" rel="noopener noreferrer" className="text-[11.5px] font-medium text-ink-soft hover:text-brand">
+                      Abrir ↗
+                    </a>
                     <button type="button" onClick={() => setEditingImageFor(bi)} className="text-[11.5px] font-medium text-ink-soft hover:text-brand">
                       Reemplazar
                     </button>
@@ -172,6 +176,14 @@ export function ContentBlocksField({
                 + Imagen en este bloque
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={() => improvePanelRef.current?.openFor(bi, "expand")}
+              className="flex items-center gap-1.5 self-start rounded-lg border border-dashed border-border bg-white px-3 py-1.5 text-[12px] font-medium text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
+            >
+              ✨ + Párrafos con IA
+            </button>
           </div>
         ))}
       </div>
@@ -183,7 +195,7 @@ export function ContentBlocksField({
         + Bloque
       </button>
 
-      <BlockImprovePanel blocks={blocks} onChange={onChange} articleTitle={articleTitle} />
+      <BlockImprovePanel ref={improvePanelRef} blocks={blocks} onChange={onChange} articleTitle={articleTitle} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { apiConfig } from "@planazo/config";
 import type { CheckResult, AiDecision } from "@planazo/types";
 import { Icon } from "@/components/icon";
@@ -23,16 +23,16 @@ interface ImproveResult {
   decision: AiDecision;
 }
 
+export interface ImproveWithAiHandle {
+  /** Repite la última generación con el mismo proveedor/modo/instrucciones —
+   * la usa el botón "Generar otra vez" del preview (ImprovePreview), para no
+   * obligar a volver a abrir este panel para pedir una alternativa. */
+  regenerate: () => void;
+}
+
 /** "Mejorar" nunca sobreescribe directo — solo pide el borrador al agente y
  * lo entrega al componente padre para que el humano decida si lo aplica. */
-export function ImproveWithAiPanel({
-  contentType,
-  contentId,
-  expanded,
-  onToggle,
-  onResult,
-  supportsExpand = false,
-}: {
+export const ImproveWithAiPanel = forwardRef<ImproveWithAiHandle, {
   contentType: string;
   contentId: string;
   expanded: boolean;
@@ -42,7 +42,10 @@ export function ImproveWithAiPanel({
   // modo 'expand') — los otros 7 tipos que usan este panel no ofrecen el
   // segundo modo, se quedan exactamente como estaban.
   supportsExpand?: boolean;
-}) {
+  // Notifica al padre cuando empieza/termina una regeneración disparada vía
+  // el ref — así ImprovePreview puede deshabilitar sus botones mientras dura.
+  onLoadingChange?: (loading: boolean) => void;
+}>(function ImproveWithAiPanel({ contentType, contentId, expanded, onToggle, onResult, supportsExpand = false, onLoadingChange }, ref) {
   const [provider, setProvider] = useState<ProviderId>("openai");
   const [mode, setMode] = useState<"rewrite" | "expand">("rewrite");
   const [instructions, setInstructions] = useState("");
@@ -55,8 +58,11 @@ export function ImproveWithAiPanel({
     if (openaiAvailable === false && provider === "openai") setProvider("claude-cli");
   }, [openaiAvailable, provider]);
 
+  useImperativeHandle(ref, () => ({ regenerate: handleImprove }));
+
   async function handleImprove() {
     setLoading(true);
+    onLoadingChange?.(true);
     setError("");
     try {
       const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/improve/${contentType}/${contentId}`, {
@@ -77,6 +83,7 @@ export function ImproveWithAiPanel({
       setError("No se pudo conectar con el servidor.");
     } finally {
       setLoading(false);
+      onLoadingChange?.(false);
     }
   }
 
@@ -179,4 +186,4 @@ export function ImproveWithAiPanel({
       )}
     </div>
   );
-}
+});

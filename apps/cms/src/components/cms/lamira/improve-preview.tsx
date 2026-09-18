@@ -18,11 +18,17 @@ export function ImprovePreview({
   fields,
   onApply,
   onDiscard,
+  onRegenerate,
+  regenerating = false,
 }: {
   result: ImproveResult;
   fields: { label: string; current: string; improved: string }[];
   onApply: () => void;
   onDiscard: () => void;
+  // Repite la generación con el mismo proveedor/modo/instrucciones, sin
+  // volver a abrir el panel — para probar una alternativa antes de aplicar.
+  onRegenerate?: () => void;
+  regenerating?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-4 rounded-[14px] border border-brand bg-accent p-5">
@@ -64,11 +70,26 @@ export function ImprovePreview({
         ))}
       </div>
 
-      <div className="flex items-center gap-3 border-t border-[#FFE2CC] pt-4">
-        <button type="button" onClick={onApply} className="rounded-[10px] bg-brand px-4 py-2 text-[13px] font-semibold text-white hover:bg-brand-pressed">
+      <div className="flex flex-wrap items-center gap-3 border-t border-[#FFE2CC] pt-4">
+        <button
+          type="button"
+          onClick={onApply}
+          disabled={regenerating}
+          className="rounded-[10px] bg-brand px-4 py-2 text-[13px] font-semibold text-white hover:bg-brand-pressed disabled:cursor-default disabled:opacity-70"
+        >
           Aplicar al formulario
         </button>
-        <button type="button" onClick={onDiscard} className="text-[13px] font-medium text-ink-soft hover:text-brand">
+        {onRegenerate && (
+          <button
+            type="button"
+            onClick={onRegenerate}
+            disabled={regenerating}
+            className="rounded-[10px] border border-border bg-white px-4 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand disabled:cursor-default disabled:opacity-70"
+          >
+            {regenerating ? "Generando…" : "Generar otra vez"}
+          </button>
+        )}
+        <button type="button" onClick={onDiscard} disabled={regenerating} className="text-[13px] font-medium text-ink-soft hover:text-brand disabled:cursor-default disabled:opacity-70">
           Descartar
         </button>
       </div>

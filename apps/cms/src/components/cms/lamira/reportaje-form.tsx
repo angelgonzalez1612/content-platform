@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
 import type { Reportaje, ContentStatus, Category, Seo } from "@planazo/types";
@@ -10,7 +10,7 @@ import { ContentBlocksField, type ContentBlockValue } from "@/components/cms/con
 import { TagsField } from "@/components/cms/tags-field";
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { ensureSeo } from "@/lib/ensure-seo";
-import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
+import { ImproveWithAiPanel, type ImproveWithAiHandle } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
 import { buildToc, summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
 import { ImageField } from "@/components/cms/lamira/image-field";
@@ -53,6 +53,8 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
   const [error, setError] = useState("");
   const [improving, setImproving] = useState(false);
   const [improveResult, setImproveResult] = useState<ImproveResult | null>(null);
+  const improveRef = useRef<ImproveWithAiHandle>(null);
+  const [regenerating, setRegenerating] = useState(false);
 
   const category = categories.find((c) => c.id === form.categoryId) ?? null;
 
@@ -166,11 +168,13 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
     <div className="flex flex-col gap-4">
       {isEdit && (
         <ImproveWithAiPanel
+          ref={improveRef}
           contentType="reportaje"
           contentId={existing.id}
           expanded={improving}
           onToggle={() => setImproving((v) => !v)}
           onResult={setImproveResult}
+          onLoadingChange={setRegenerating}
           supportsExpand
         />
       )}
@@ -184,6 +188,8 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
           ]}
           onApply={applyImprovement}
           onDiscard={() => setImproveResult(null)}
+          onRegenerate={() => improveRef.current?.regenerate()}
+          regenerating={regenerating}
         />
       )}
 
@@ -193,6 +199,37 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
             Título
           </label>
           <input id="r-title" required value={form.title} onChange={(e) => set("title", e.target.value)} className={fieldClass} />
+        </div>
+
+        {/* Arriba de todo — es lo primero que se necesita para verificar el
+            tema contra el artículo real antes de revisar el resto del
+            formulario, no algo que revisar hasta el final. */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="r-source-url" className={labelClass}>
+            URL de la fuente
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="r-source-url"
+              value={form.sourceUrl}
+              onChange={(e) => set("sourceUrl", e.target.value)}
+              placeholder="https://…"
+              className={`${fieldClass} flex-1`}
+            />
+            {form.sourceUrl && (
+              <a
+                href={form.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-none rounded-lg border border-border bg-white px-3 py-2.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
+              >
+                Abrir ↗
+              </a>
+            )}
+          </div>
+          <p className="text-[11.5px] leading-[1.4] text-ink-faint">
+            El artículo original del que salió el tema — cuando lo crea la automatización, se llena solo.
+          </p>
         </div>
 
         <ImageField image={image} onChange={setImage} searchQuery={form.title} />
@@ -252,34 +289,6 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
             </label>
             <input id="r-image-caption" required value={form.imageCaption} onChange={(e) => set("imageCaption", e.target.value)} className={fieldClass} />
           </div>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="r-source-url" className={labelClass}>
-            URL de la fuente
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              id="r-source-url"
-              value={form.sourceUrl}
-              onChange={(e) => set("sourceUrl", e.target.value)}
-              placeholder="https://…"
-              className={`${fieldClass} flex-1`}
-            />
-            {form.sourceUrl && (
-              <a
-                href={form.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-none rounded-lg border border-border bg-white px-3 py-2.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
-              >
-                Abrir ↗
-              </a>
-            )}
-          </div>
-          <p className="text-[11.5px] leading-[1.4] text-ink-faint">
-            El artículo original del que salió el tema — cuando lo crea la automatización, se llena solo.
-          </p>
         </div>
 
         <SeoPanel seo={seo} onChange={setSeo} contentTitle={form.title} contentContext={form.dek} />

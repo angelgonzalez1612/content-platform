@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { apiConfig } from "@planazo/config";
 import { Icon } from "@/components/icon";
 import { fieldClass } from "@/components/cms/dynamic-field";
@@ -28,20 +28,23 @@ function blockLabel(block: ContentBlockValue, i: number): string {
   return heading ? `${i + 1}. ${heading}` : `Bloque ${i + 1} (sin título)`;
 }
 
+export interface BlockImprovePanelHandle {
+  /** Abre el panel ya enfocado en un bloque específico — lo usa el botón
+   * inline "+ Párrafos con IA" de cada bloque (ContentBlocksField), para no
+   * obligar a abrir el panel flotante y elegir el bloque del selector a mano. */
+  openFor: (index: number, mode: "rewrite" | "expand") => void;
+}
+
 /** Panel único y fijo (no uno por bloque) — mismo principio que
  * ImproveWithAiPanel (la IA nunca sobreescribe directo, el humano revisa y
  * aplica), pero acotado a UN bloque a la vez, elegido de un selector, en vez
  * de todo el contenido. Se queda fijo en pantalla mientras se hace scroll por
  * el cuerpo, así no hay que volver a subir para usarlo. */
-export function BlockImprovePanel({
-  blocks,
-  onChange,
-  articleTitle,
-}: {
+export const BlockImprovePanel = forwardRef<BlockImprovePanelHandle, {
   blocks: ContentBlockValue[];
   onChange: (blocks: ContentBlockValue[]) => void;
   articleTitle?: string;
-}) {
+}>(function BlockImprovePanel({ blocks, onChange, articleTitle }, ref) {
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [mode, setMode] = useState<"rewrite" | "expand">("rewrite");
@@ -61,13 +64,25 @@ export function BlockImprovePanel({
     if (selectedIndex >= blocks.length) setSelectedIndex(Math.max(0, blocks.length - 1));
   }, [blocks.length, selectedIndex]);
 
+  useImperativeHandle(ref, () => ({
+    openFor: (index, m) => {
+      setSelectedIndex(index);
+      setMode(m);
+      setResult(null);
+      setError("");
+      setOpen(true);
+    },
+  }));
+
   const block = blocks[selectedIndex] as ContentBlockValue | undefined;
 
+  // No limpia `result` al inicio — así "Generar otra vez" deja el resultado
+  // anterior visible (aunque ya desactualizado) mientras llega el nuevo, en
+  // vez de hacerlo parpadear a la vista "sin resultado" y de vuelta.
   async function handleGenerate() {
     if (!block) return;
     setLoading(true);
     setError("");
-    setResult(null);
     try {
       const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/improve-block`, {
         method: "POST",
@@ -199,15 +214,24 @@ export function BlockImprovePanel({
                   {p}
                 </p>
               ))}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={handleApply}
-                  className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-pressed"
+                  disabled={loading}
+                  className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-pressed disabled:cursor-default disabled:opacity-70"
                 >
                   {mode === "expand" ? "Agregar al bloque" : "Aplicar"}
                 </button>
-                <button type="button" onClick={() => setResult(null)} className="rounded-lg px-3 py-1.5 text-[12px] font-medium text-ink-soft hover:text-negative">
+                <button
+                  type="button"
+                  onClick={handleGenerate}
+                  disabled={loading}
+                  className="rounded-lg border border-border px-3 py-1.5 text-[12px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand disabled:cursor-default disabled:opacity-70"
+                >
+                  {loading ? "Generando…" : "Generar otra vez"}
+                </button>
+                <button type="button" onClick={() => setResult(null)} disabled={loading} className="rounded-lg px-3 py-1.5 text-[12px] font-medium text-ink-soft hover:text-negative disabled:cursor-default disabled:opacity-70">
                   Descartar
                 </button>
               </div>
@@ -237,4 +261,4 @@ export function BlockImprovePanel({
       </button>
     </div>
   );
-}
+});

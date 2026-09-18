@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
 import type { PlanazoEvent, Category, Seo } from "@planazo/types";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { CategoryFieldsSection } from "@/components/cms/category-fields-section";
 import { SeoPanel } from "@/components/cms/seo-panel";
-import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
+import { ImproveWithAiPanel, type ImproveWithAiHandle } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
 import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
 import { ImageField } from "@/components/cms/lamira/image-field";
@@ -64,6 +64,8 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
   const [error, setError] = useState("");
   const [improving, setImproving] = useState(false);
   const [improveResult, setImproveResult] = useState<ImproveResult | null>(null);
+  const improveRef = useRef<ImproveWithAiHandle>(null);
+  const [regenerating, setRegenerating] = useState(false);
 
   const category = categories.find((c) => c.id === form.categoryId) ?? null;
 
@@ -155,11 +157,13 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
   const left = (
     <div className="flex flex-col gap-4">
       <ImproveWithAiPanel
+        ref={improveRef}
         contentType="evento-planazo"
         contentId={existing.id}
         expanded={improving}
         onToggle={() => setImproving((v) => !v)}
         onResult={setImproveResult}
+        onLoadingChange={setRegenerating}
         supportsExpand
       />
 
@@ -172,6 +176,8 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
           ]}
           onApply={applyImprovement}
           onDiscard={() => setImproveResult(null)}
+          onRegenerate={() => improveRef.current?.regenerate()}
+          regenerating={regenerating}
         />
       )}
 

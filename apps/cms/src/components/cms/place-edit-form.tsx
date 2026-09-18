@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
 import type { PlaceDetail, Category, CheckResult, AiDecision, Seo } from "@planazo/types";
@@ -8,7 +8,7 @@ import type { UpdatePlaceInput } from "@/lib/cms-api";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { CategoryFieldsSection } from "@/components/cms/category-fields-section";
 import { SeoPanel } from "@/components/cms/seo-panel";
-import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
+import { ImproveWithAiPanel, type ImproveWithAiHandle } from "@/components/cms/improve-with-ai-panel";
 import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
 import { ImageField } from "@/components/cms/lamira/image-field";
 import { GalleryField, type GalleryPhoto } from "@/components/cms/planazo/gallery-field";
@@ -62,6 +62,8 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
   const [improving, setImproving] = useState(false);
   const [improveResult, setImproveResult] = useState<{ draft: ImproveDraft; checksRun: CheckResult[]; decision: AiDecision } | null>(null);
   const [improveMode, setImproveMode] = useState<"rewrite" | "expand">("rewrite");
+  const improveRef = useRef<ImproveWithAiHandle>(null);
+  const [regenerating, setRegenerating] = useState(false);
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -158,6 +160,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
   const left = (
     <div className="flex flex-col gap-4">
       <ImproveWithAiPanel
+        ref={improveRef}
         contentType="place"
         contentId={place.id}
         expanded={improving}
@@ -166,6 +169,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
           setImproveResult(result);
           setImproveMode(mode);
         }}
+        onLoadingChange={setRegenerating}
         supportsExpand
       />
 
@@ -224,15 +228,24 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
             ))}
           </div>
 
-          <div className="flex items-center gap-3 border-t border-[#FFE2CC] pt-4">
+          <div className="flex flex-wrap items-center gap-3 border-t border-[#FFE2CC] pt-4">
             <button
               type="button"
               onClick={applyImprovement}
-              className="rounded-[10px] bg-brand px-4 py-2 text-[13px] font-semibold text-white hover:bg-brand-pressed"
+              disabled={regenerating}
+              className="rounded-[10px] bg-brand px-4 py-2 text-[13px] font-semibold text-white hover:bg-brand-pressed disabled:cursor-default disabled:opacity-70"
             >
               Aplicar al formulario
             </button>
-            <button type="button" onClick={() => setImproveResult(null)} className="text-[13px] font-medium text-ink-soft hover:text-brand">
+            <button
+              type="button"
+              onClick={() => improveRef.current?.regenerate()}
+              disabled={regenerating}
+              className="rounded-[10px] border border-border bg-white px-4 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand disabled:cursor-default disabled:opacity-70"
+            >
+              {regenerating ? "Generando…" : "Generar otra vez"}
+            </button>
+            <button type="button" onClick={() => setImproveResult(null)} disabled={regenerating} className="text-[13px] font-medium text-ink-soft hover:text-brand disabled:cursor-default disabled:opacity-70">
               Descartar
             </button>
           </div>

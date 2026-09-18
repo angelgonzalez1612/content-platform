@@ -120,6 +120,9 @@ export function ImageField({
           <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-0.5">
             <p className="truncate text-[12px] text-ink-soft">{image.credit || "(sin crédito)"}</p>
             <div className="flex items-center gap-3">
+              <a href={image.url} target="_blank" rel="noopener noreferrer" className="text-[12px] font-medium text-ink-soft hover:text-brand">
+                Abrir ↗
+              </a>
               <button type="button" onClick={startEdit} className="text-[12px] font-medium text-ink-soft hover:text-brand">
                 Reemplazar
               </button>

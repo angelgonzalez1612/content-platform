@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
 import type { Guia, ContentStatus, Category, Seo } from "@planazo/types";
@@ -10,7 +10,7 @@ import { ContentBlocksField, type ContentBlockValue } from "@/components/cms/con
 import { PairListField } from "@/components/cms/pair-list-field";
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { ensureSeo } from "@/lib/ensure-seo";
-import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
+import { ImproveWithAiPanel, type ImproveWithAiHandle } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
 import { withBlockIds, summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
 import { ImageField } from "@/components/cms/lamira/image-field";
@@ -66,6 +66,8 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
   const [error, setError] = useState("");
   const [improving, setImproving] = useState(false);
   const [improveResult, setImproveResult] = useState<ImproveResult | null>(null);
+  const improveRef = useRef<ImproveWithAiHandle>(null);
+  const [regenerating, setRegenerating] = useState(false);
 
   const category = categories.find((c) => c.id === form.categoryId) ?? null;
 
@@ -179,11 +181,13 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
     <div className="flex flex-col gap-4">
       {isEdit && (
         <ImproveWithAiPanel
+          ref={improveRef}
           contentType="guia"
           contentId={existing.id}
           expanded={improving}
           onToggle={() => setImproving((v) => !v)}
           onResult={setImproveResult}
+          onLoadingChange={setRegenerating}
           supportsExpand
         />
       )}
@@ -197,6 +201,8 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
           ]}
           onApply={applyImprovement}
           onDiscard={() => setImproveResult(null)}
+          onRegenerate={() => improveRef.current?.regenerate()}
+          regenerating={regenerating}
         />
       )}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
 import type { LamiraLugar, LugarKind, Category, Seo } from "@planazo/types";
@@ -9,7 +9,7 @@ import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
 import { CategoryFieldsSection } from "@/components/cms/category-fields-section";
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { ensureSeo } from "@/lib/ensure-seo";
-import { ImproveWithAiPanel } from "@/components/cms/improve-with-ai-panel";
+import { ImproveWithAiPanel, type ImproveWithAiHandle } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
 import { RichTextarea } from "@/components/cms/rich-textarea";
 import { ImageField } from "@/components/cms/lamira/image-field";
@@ -47,6 +47,8 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
   const [error, setError] = useState("");
   const [improving, setImproving] = useState(false);
   const [improveResult, setImproveResult] = useState<ImproveResult | null>(null);
+  const improveRef = useRef<ImproveWithAiHandle>(null);
+  const [regenerating, setRegenerating] = useState(false);
 
   const category = categories.find((c) => c.id === form.categoryId) ?? null;
 
@@ -138,7 +140,15 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
   const left = (
     <div className="flex flex-col gap-4">
       {isEdit && (
-        <ImproveWithAiPanel contentType="lugar" contentId={existing.id} expanded={improving} onToggle={() => setImproving((v) => !v)} onResult={setImproveResult} />
+        <ImproveWithAiPanel
+          ref={improveRef}
+          contentType="lugar"
+          contentId={existing.id}
+          expanded={improving}
+          onToggle={() => setImproving((v) => !v)}
+          onResult={setImproveResult}
+          onLoadingChange={setRegenerating}
+        />
       )}
 
       {improveResult && (
@@ -147,6 +157,8 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
           fields={[{ label: "Descripción", current: form.description, improved: (improveResult.draft.description as string) ?? "" }]}
           onApply={applyImprovement}
           onDiscard={() => setImproveResult(null)}
+          onRegenerate={() => improveRef.current?.regenerate()}
+          regenerating={regenerating}
         />
       )}
 
