@@ -27,3 +27,7 @@ apps/api/uploads/
 # Respaldos de la BD (ver scripts/backup-turso.sh) — contienen todo el
 # contenido real, nunca al repo.
 /backups/
+
+# Credenciales del segundo respaldo por FTP (ver scripts/backup-turso.sh) —
+# nunca al repo, cada máquina las llena a mano.
+scripts/.ftp-credentials

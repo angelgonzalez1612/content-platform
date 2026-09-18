@@ -37,3 +37,21 @@ echo "Respaldo guardado en $OUT_FILE ($(du -h "$OUT_FILE" | cut -f1))"
 
 # Se queda con los últimos 14 respaldos nada más, para no llenar el disco.
 ls -1t "$BACKUP_DIR"/turso-backup-*.sql | tail -n +15 | xargs -r rm -f
+
+# Segunda copia por FTP (opcional) — al hosting de Planazo, fuera de
+# public_html (nunca dentro: sería descargable por cualquiera desde
+# internet). Si no existe scripts/.ftp-credentials, se omite en silencio —
+# cada máquina la llena a mano, nunca va al repo (ver .gitignore).
+FTP_CREDS="$REPO_ROOT/scripts/.ftp-credentials"
+if [ -f "$FTP_CREDS" ]; then
+  # shellcheck disable=SC1090
+  source "$FTP_CREDS"
+  if curl -s --connect-timeout 15 --user "${FTP_USER}:${FTP_PASS}" -T "$OUT_FILE" \
+    "ftp://${FTP_HOST}:${FTP_PORT}${FTP_DIR}/$(basename "$OUT_FILE")"; then
+    echo "Segunda copia subida por FTP a ${FTP_HOST}${FTP_DIR}/$(basename "$OUT_FILE")"
+  else
+    echo "Aviso: la subida por FTP falló — el respaldo local en $BACKUP_DIR sigue intacto." >&2
+  fi
+else
+  echo "scripts/.ftp-credentials no existe — se omite la segunda copia por FTP."
+fi
