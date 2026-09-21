@@ -50,7 +50,7 @@ export class BlockImproveService {
       .join('\n\n');
 
     if (dto.mode === 'expand') {
-      const output = await this.providers.get(dto.provider).generateStructured({
+      const output = await this.providers.generateWithFallback(dto.provider, {
         systemPrompt,
         userPrompt,
         schema: expandSchema,
@@ -59,7 +59,7 @@ export class BlockImproveService {
       return { heading: dto.heading ?? null, paragraphs: output.paragraphs };
     }
 
-    const output = await this.providers.get(dto.provider).generateStructured({
+    const output = await this.providers.generateWithFallback(dto.provider, {
       systemPrompt,
       userPrompt,
       schema: rewriteSchema,

@@ -117,9 +117,18 @@ export async function getSearchPhrases(): Promise<SearchPhrase[]> {
   return res.json();
 }
 
-export async function getAiSettingsStatus(): Promise<{ openaiApiKeySet: boolean; openaiApiKeyPreview: string | null }> {
+export type AiProviderId = "openai" | "claude-cli" | "codex-cli";
+
+export interface AiSettingsStatus {
+  openaiApiKeySet: boolean;
+  openaiApiKeyPreview: string | null;
+  preferredProvider: AiProviderId | null;
+  fallbackProvider: AiProviderId | null;
+}
+
+export async function getAiSettingsStatus(): Promise<AiSettingsStatus> {
   const res = await cmsFetch("/cms/settings/ai");
-  if (!res.ok) return { openaiApiKeySet: false, openaiApiKeyPreview: null };
+  if (!res.ok) return { openaiApiKeySet: false, openaiApiKeyPreview: null, preferredProvider: null, fallbackProvider: null };
   return res.json();
 }
 

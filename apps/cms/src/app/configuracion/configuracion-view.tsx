@@ -4,13 +4,15 @@ import { useState } from "react";
 import { apiConfig } from "@planazo/config";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { Icon } from "@/components/icon";
+import type { AiSettingsStatus, AiProviderId } from "@/lib/cms-api";
 
-interface AiSettingsStatus {
-  openaiApiKeySet: boolean;
-  openaiApiKeyPreview: string | null;
-}
+type ProviderId = AiProviderId;
 
-type ProviderId = "openai" | "claude-cli" | "codex-cli";
+const PROVIDER_LABEL: Record<ProviderId, string> = {
+  openai: "OpenAI",
+  "claude-cli": "Claude",
+  "codex-cli": "Codex",
+};
 
 interface CheckResult {
   ok: boolean;
@@ -95,6 +97,11 @@ export function ConfiguracionView({ initialAiSettings }: { initialAiSettings: Ai
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [checks, setChecks] = useState(EMPTY_CHECKS);
+  const [preferredProvider, setPreferredProvider] = useState<ProviderId | "">(initialAiSettings.preferredProvider ?? "");
+  const [fallbackProvider, setFallbackProvider] = useState<ProviderId | "">(initialAiSettings.fallbackProvider ?? "");
+  const [savingPreference, setSavingPreference] = useState(false);
+  const [preferenceSavedAt, setPreferenceSavedAt] = useState<number | null>(null);
+  const [preferenceError, setPreferenceError] = useState("");
 
   async function save(openaiApiKey: string | null) {
     setSaving(true);
@@ -136,6 +143,33 @@ export function ConfiguracionView({ initialAiSettings }: { initialAiSettings: Ai
       result = { ok: false, detail: "No se pudo conectar con el servidor." };
     }
     setChecks((c) => ({ ...c, [provider]: { loading: false, result } }));
+  }
+
+  async function savePreference(next: { preferredProvider: ProviderId | ""; fallbackProvider: ProviderId | "" }) {
+    setSavingPreference(true);
+    setPreferenceError("");
+    try {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/settings/ai/preference`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          preferredProvider: next.preferredProvider || null,
+          fallbackProvider: next.fallbackProvider || null,
+        }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { message?: string } | null;
+        setPreferenceError(body?.message ?? "No se pudo guardar.");
+        return;
+      }
+      setStatus(await res.json());
+      setPreferenceSavedAt(Date.now());
+    } catch {
+      setPreferenceError("No se pudo conectar con el servidor.");
+    } finally {
+      setSavingPreference(false);
+    }
   }
 
   // Antes de probar, cada proveedor muestra su pill puramente informativa de
@@ -244,6 +278,76 @@ export function ConfiguracionView({ initialAiSettings }: { initialAiSettings: Ai
             <ConnectionCheck state={checks["codex-cli"]} onCheck={() => checkConnection("codex-cli")} />
           </div>
         </div>
+      </div>
+
+      <div className="mt-5 max-w-[720px] overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+        <div className="border-b border-border-soft px-5 py-4">
+          <h2 className="text-[15px] font-semibold tracking-tight">Preferencia de redacción</h2>
+          <p className="mt-0.5 text-[12px] text-ink-faint">
+            Si el proveedor preferido falla al generar (sesión caída, límite alcanzado, timeout), se reintenta una vez con el de respaldo
+            antes de fallar del todo. Sin preferencia, cada pantalla usa el proveedor que elijas ahí, sin reintento automático.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-end gap-3 p-5">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="pref-preferred" className={labelClass}>
+              Preferido
+            </label>
+            <select
+              id="pref-preferred"
+              value={preferredProvider}
+              onChange={(e) => {
+                const next = e.target.value as ProviderId | "";
+                setPreferredProvider(next);
+                if (next === fallbackProvider) setFallbackProvider("");
+                setPreferenceSavedAt(null);
+              }}
+              className={`${fieldClass} min-w-[170px]`}
+            >
+              <option value="">Sin preferencia</option>
+              <option value="codex-cli">Codex</option>
+              <option value="claude-cli">Claude</option>
+              <option value="openai">OpenAI</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="pref-fallback" className={labelClass}>
+              Respaldo si falla
+            </label>
+            <select
+              id="pref-fallback"
+              value={fallbackProvider}
+              onChange={(e) => {
+                setFallbackProvider(e.target.value as ProviderId | "");
+                setPreferenceSavedAt(null);
+              }}
+              disabled={!preferredProvider}
+              className={`${fieldClass} min-w-[170px] disabled:cursor-default disabled:opacity-50`}
+            >
+              <option value="">Sin respaldo</option>
+              {(["openai", "claude-cli", "codex-cli"] as ProviderId[])
+                .filter((p) => p !== preferredProvider)
+                .map((p) => (
+                  <option key={p} value={p}>
+                    {PROVIDER_LABEL[p]}
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => savePreference({ preferredProvider, fallbackProvider })}
+            disabled={savingPreference}
+            className="flex-none rounded-[10px] bg-brand px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_1px_2px_rgba(253,105,13,.35)] transition-colors hover:bg-brand-pressed disabled:cursor-default disabled:opacity-60"
+          >
+            {savingPreference ? "Guardando…" : "Guardar"}
+          </button>
+          {preferenceSavedAt && <span className="font-mono text-[12px] text-positive">Guardado ✓</span>}
+        </div>
+        {preferenceError && <p className="px-5 pb-4 text-[12px] font-medium text-negative">{preferenceError}</p>}
       </div>
     </div>
   );

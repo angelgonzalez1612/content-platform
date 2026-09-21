@@ -211,7 +211,7 @@ export class AiDraftService {
         ? 'La Mira, un periódico digital hiperlocal de la Ciudad de México'
         : 'Planazo, una guía de planes y lugares de la Ciudad de México';
 
-    const output = await this.providers.get(dto.provider).generateStructured({
+    const output = await this.providers.generateWithFallback(dto.provider, {
       systemPrompt: `Eres un editor que clasifica contenido para ${siteLabel}. Tu único trabajo es elegir, de la lista de categorías reales que te doy, la que mejor encaja con el tema — nunca inventes una categoría que no esté en la lista.`,
       userPrompt: `${material}\n\nCategorías disponibles (responde con el id de exactamente una de ellas):\n${categoryList}`,
       schema: classifySchema,
@@ -260,7 +260,7 @@ export class AiDraftService {
       )
       .join('\n');
 
-    const output = await this.providers.get(dto.provider).generateStructured({
+    const output = await this.providers.generateWithFallback(dto.provider, {
       systemPrompt:
         'Eres un editor que decide en qué sitio y bajo qué tipo de contenido publicar un tema, entre dos publicaciones digitales de la Ciudad de México: La Mira (periodismo hiperlocal — noticias, alertas, guías, eventos y lugares con angle noticioso) y Planazo (directorio evergreen de planes — lugares y eventos recomendados, sin angle de cobertura). Elige el tipo que mejor encaja — nunca inventes uno que no esté en la lista.',
       userPrompt: `${material}\n\nTipos disponibles (responde con el id de exactamente uno de ellos):\n${typeList}`,
@@ -353,7 +353,7 @@ export class AiDraftService {
       .filter(Boolean)
       .join('\n');
 
-    const output = await this.providers.get(dto.provider).generateStructured({
+    const output = await this.providers.generateWithFallback(dto.provider, {
       systemPrompt: typeConfig.systemPrompt,
       userPrompt,
       schema: fullSchema,
@@ -480,7 +480,7 @@ export class AiDraftService {
 
     const improveSystemPrompt = `${typeConfig.systemPrompt}\n\nEstás MEJORANDO contenido existente, no creando desde cero: expande texto genérico/ambiguo. Tu respuesta solo lleva los campos editoriales (descripción, SEO) que te pide el schema — nunca dirección, teléfono, precios, horarios ni ningún otro dato verificable.`;
 
-    const output = await this.providers.get(dto.provider).generateStructured({
+    const output = await this.providers.generateWithFallback(dto.provider, {
       systemPrompt: improveSystemPrompt,
       userPrompt,
       schema: fullSchema,
@@ -585,7 +585,7 @@ export class AiDraftService {
       .filter(Boolean)
       .join('\n');
 
-    const output = (await this.providers.get(params.provider).generateStructured({
+    const output = (await this.providers.generateWithFallback(params.provider, {
       systemPrompt: `${params.typeConfig.systemPrompt}\n\nEstás AGREGANDO contenido nuevo a una pieza existente, no reescribiendo lo que ya hay.`,
       userPrompt,
       schema: expandSchema,
@@ -924,7 +924,7 @@ export class AiDraftService {
 
     const improveSystemPrompt = `${typeConfig.systemPrompt}\n\nEstás MEJORANDO contenido existente, no creando desde cero: expande texto genérico/ambiguo. Tu respuesta solo lleva los campos editoriales (descripción, SEO) que te pide el schema — nunca fecha, hora, lugar ni ningún otro dato verificable.`;
 
-    const output = await this.providers.get(dto.provider).generateStructured({
+    const output = await this.providers.generateWithFallback(dto.provider, {
       systemPrompt: improveSystemPrompt,
       userPrompt,
       schema: fullSchema,
@@ -1022,7 +1022,7 @@ export class AiDraftService {
 
     const improveSystemPrompt = `${typeConfig.systemPrompt}\n\nEstás MEJORANDO contenido existente, no creando desde cero: expande texto genérico/ambiguo. Tu respuesta solo lleva description e intro — nunca inventes ni cambies las secciones ni ningún dato de lugares reales.`;
 
-    const output = await this.providers.get(dto.provider).generateStructured({
+    const output = await this.providers.generateWithFallback(dto.provider, {
       systemPrompt: improveSystemPrompt,
       userPrompt,
       schema: fullSchema,
@@ -1224,7 +1224,7 @@ export class AiDraftService {
 
     const improveSystemPrompt = `${typeConfig.systemPrompt}\n\nEstás MEJORANDO contenido existente, no creando desde cero: expande texto genérico/ambiguo. Tu respuesta solo lleva los campos editoriales que te pide el schema — nunca cifras, fechas, ubicaciones ni ningún otro dato verificable.`;
 
-    const output = await this.providers.get(dto.provider).generateStructured({
+    const output = await this.providers.generateWithFallback(dto.provider, {
       systemPrompt: improveSystemPrompt,
       userPrompt,
       schema: fullSchema,

@@ -11,6 +11,14 @@ import { updatedAtColumn } from './columns.helpers';
 export const aiSettings = sqliteTable('ai_settings', {
   id: text('id').primaryKey(),
   openaiApiKey: text('openai_api_key'),
+  // Preferencia de redacción configurable desde Configuración — si el
+  // proveedor preferido falla (CLI sin sesión, límite alcanzado, timeout),
+  // ProviderRegistry.generateWithFallback reintenta una vez con el de
+  // respaldo antes de fallar la generación completa. null = sin preferencia
+  // configurada (comportamiento de siempre: usa el proveedor pedido tal
+  // cual, sin reintento).
+  preferredProvider: text('preferred_provider'),
+  fallbackProvider: text('fallback_provider'),
   updatedAt: updatedAtColumn(),
 });
 

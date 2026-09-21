@@ -40,7 +40,7 @@ export class SeoGenerateService {
       .filter(Boolean)
       .join('\n');
 
-    return this.providers.get(dto.provider).generateStructured({
+    return this.providers.generateWithFallback(dto.provider, {
       systemPrompt,
       userPrompt,
       schema: seoSchema,
