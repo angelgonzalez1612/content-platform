@@ -43,9 +43,13 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
     status: existing?.status ?? ("draft" as ContentStatus),
   });
   const [sections, setSections] = useState<GuideSectionValue[]>(
-    existing?.sections.map((s) => ({ heading: s.heading, body: s.body, placeSlug: s.placeSlug ?? "" })) ?? [
-      { heading: "", body: "", placeSlug: "" },
-    ],
+    existing?.sections.map((s) => {
+      // planazo_fronted's <Prose> ya separa párrafos por línea en blanco
+      // (\n{2,}) al mostrar `body` — mismo split aquí para editar cada
+      // párrafo por separado, se vuelve a unir así mismo al guardar.
+      const paragraphs = s.body.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+      return { heading: s.heading, paragraphs: paragraphs.length ? paragraphs : [""], placeSlug: s.placeSlug ?? "", image: s.image ?? null };
+    }) ?? [{ heading: "", paragraphs: [""], placeSlug: "" }],
   );
   const [audience, setAudience] = useState<string[]>(existing?.audience ?? []);
   const [audienceInput, setAudienceInput] = useState("");
@@ -89,8 +93,13 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
       type: form.type || null,
       intro: form.intro || null,
       sections: sections
-        .filter((s) => s.heading.trim() && s.body.trim())
-        .map((s) => ({ heading: s.heading, body: s.body, placeSlug: s.placeSlug || null })),
+        .filter((s) => s.heading.trim() && s.paragraphs.some((p) => p.trim()))
+        .map((s) => ({
+          heading: s.heading,
+          body: s.paragraphs.map((p) => p.trim()).filter(Boolean).join("\n\n"),
+          placeSlug: s.placeSlug || null,
+          image: s.image ?? null,
+        })),
       categoryLabel: form.categoryLabel,
       readTime: form.readTime,
       imageUrl: image?.url ?? null,
@@ -246,7 +255,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
         </div>
       </div>
 
-      <GuideSectionsField sections={sections} onChange={setSections} placeOptions={placeOptions} />
+      <GuideSectionsField sections={sections} onChange={setSections} placeOptions={placeOptions} guideTitle={form.title} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
