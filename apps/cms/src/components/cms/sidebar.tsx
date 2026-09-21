@@ -77,12 +77,12 @@ export function Sidebar({
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         } ${collapsed ? "md:w-[64px]" : "md:w-[246px]"}`}
       >
-      <div className={`flex h-[60px] flex-none items-center gap-2.5 border-b border-border-soft ${collapsed ? "justify-center px-0" : "px-[18px]"}`}>
+      <div className={`flex h-[60px] flex-none items-center border-b border-border-soft ${collapsed ? "justify-center gap-0 px-0" : "gap-2.5 px-[18px]"}`}>
         <span className="grid size-[26px] flex-none place-items-center rounded-[7px] bg-brand text-[12px] font-semibold text-white">C</span>
         <div className={`flex flex-col leading-[1.1] ${collapseText(collapsed)}`} style={{ maxWidth: collapsed ? 0 : 140 }}>
           <span className="text-[14.5px] font-semibold tracking-tight">Content CMS</span>
         </div>
-        <div className="flex-1" />
+        <div className={collapsed ? "hidden" : "flex-1"} />
         <button
           type="button"
           onClick={onCloseMobile}
@@ -98,8 +98,8 @@ export function Sidebar({
           onClick={onOpenCommand}
           onMouseEnter={handleEnter("Buscar o preguntar (⌘K)")}
           onMouseLeave={handleLeave}
-          className={`flex w-full items-center gap-2 rounded-[9px] border border-border bg-background text-left font-sans text-[12.5px] text-ink-faint transition-colors hover:border-[#E0DBD4] hover:bg-[#F6F4F1] ${
-            collapsed ? "justify-center px-0 py-1.5" : "px-2.5 py-1.5"
+          className={`flex w-full items-center rounded-[9px] border border-border bg-background text-left font-sans text-[12.5px] text-ink-faint transition-colors hover:border-[#E0DBD4] hover:bg-[#F6F4F1] ${
+            collapsed ? "justify-center gap-0 px-0 py-1.5" : "gap-2 px-2.5 py-1.5"
           }`}
         >
           <Icon d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM16.5 16.5L21 21" size={13} strokeWidth={2} className="flex-none" />
@@ -110,7 +110,15 @@ export function Sidebar({
         </button>
       </div>
 
-      <nav className={`flex flex-1 flex-col gap-3.5 overflow-y-auto pt-3 pb-4 ${collapsed ? "px-2" : "px-3"}`}>
+      {/* [scrollbar-gutter:stable_both-edges] cuando está colapsado — sin
+          esto, la barra de scroll (10px, ver globals.css) solo le quita
+          ancho al lado derecho del nav y descentra los íconos respecto al
+          logo/buscador/botón inferior, que no scrollean. */}
+      <nav
+        className={`flex flex-1 flex-col gap-3.5 overflow-y-auto pt-3 pb-4 ${
+          collapsed ? "px-2 [scrollbar-gutter:stable_both-edges]" : "px-3"
+        }`}
+      >
         {NAV_GROUPS.map((group) => (
           <div key={group.label} className="flex flex-col gap-px">
             <div
@@ -132,8 +140,8 @@ export function Sidebar({
                     ? pathname === "/"
                     : pathname.startsWith(href)
                 : false;
-              const className = `flex w-full items-center gap-2.5 rounded-lg py-[6.5px] text-left text-[13px] transition-colors ${
-                collapsed ? "justify-center px-0" : "px-2.5"
+              const className = `flex w-full items-center rounded-lg py-[6.5px] text-left text-[13px] transition-colors ${
+                collapsed ? "justify-center gap-0 px-0" : "gap-2.5 px-2.5"
               } ${active ? "bg-accent font-semibold text-accent-fg" : "text-ink hover:bg-[#F5F3F0]"} ${!href ? "cursor-default opacity-55" : ""}`;
 
               const content = (
@@ -185,8 +193,8 @@ export function Sidebar({
             onClick={onToggleCollapsed}
             onMouseEnter={handleEnter(collapsed ? "Expandir menú" : "Colapsar menú")}
             onMouseLeave={handleLeave}
-            className={`flex w-full items-center gap-2 rounded-lg py-2 text-[12.5px] font-medium text-ink-soft transition-colors hover:bg-[#F5F3F0] ${
-              collapsed ? "justify-center px-0" : "px-2.5"
+            className={`flex w-full items-center rounded-lg py-2 text-[12.5px] font-medium text-ink-soft transition-colors hover:bg-[#F5F3F0] ${
+              collapsed ? "justify-center gap-0 px-0" : "gap-2 px-2.5"
             }`}
           >
             <Icon d={collapsed ? "M9 5l7 7-7 7M4 5v14" : "M15 5l-7 7 7 7M20 5v14"} size={14} strokeWidth={1.8} className="flex-none" />
