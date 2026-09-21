@@ -40,7 +40,10 @@ export function CalendarView({
   const [selectedDay, setSelectedDay] = useState<number | null>(year === today.year && month === today.month ? today.day : null);
 
   useEffect(() => {
-    if (year === initialYear && month === initialMonth) return;
+    if (year === initialYear && month === initialMonth) {
+      setItems(initialItems);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     fetch(`${apiConfig.clientBaseUrl}/cms/calendar?year=${year}&month=${month}`, { credentials: "include" })
@@ -75,6 +78,19 @@ export function CalendarView({
     return map;
   }, [filteredItems, year, month]);
 
+  // Independiente de siteFilter — la franja de KPIs siempre muestra el
+  // desglose completo del mes, aunque la vista de calendario esté filtrada
+  // a un solo sitio.
+  const monthItems = useMemo(
+    () =>
+      items.filter((i) => {
+        const d = new Date(i.date);
+        return d.getFullYear() === year && d.getMonth() + 1 === month;
+      }),
+    [items, year, month],
+  );
+  const monthDaysActive = useMemo(() => new Set(monthItems.map((i) => new Date(i.date).getDate())).size, [monthItems]);
+
   const cells = useMemo(() => {
     const firstOfMonth = new Date(year, month - 1, 1);
     const leadingBlanks = (firstOfMonth.getDay() + 6) % 7; // Lunes = 0
@@ -103,19 +119,20 @@ export function CalendarView({
   const monthLabelCap = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
   const selectedItems = selectedDay ? (itemsByDay.get(selectedDay) ?? []) : [];
   const selectedDateLabel = selectedDay ? DAY_LABEL.format(new Date(year, month - 1, selectedDay)) : null;
-  const totalThisMonth = filteredItems.filter((i) => {
-    const d = new Date(i.date);
-    return d.getFullYear() === year && d.getMonth() + 1 === month;
-  }).length;
+
+  const kpis = [
+    { label: "Publicaciones", value: monthItems.length },
+    { label: "La Mira", value: monthItems.filter((i) => i.site === "la-mira").length },
+    { label: "Planazo", value: monthItems.filter((i) => i.site === "planazo").length },
+    { label: "Días con publicaciones", value: monthDaysActive },
+  ];
 
   return (
     <div className="p-[26px] pb-[60px]">
-      <div className="mb-[22px] flex flex-wrap items-end gap-4">
+      <div className="mb-[18px] flex flex-wrap items-end gap-4">
         <div>
           <h1 className="mb-1 text-[25px] font-semibold tracking-tight">Calendario Editorial</h1>
-          <p className="text-[13.5px] text-ink-soft">
-            {totalThisMonth} {totalThisMonth === 1 ? "publicación" : "publicaciones"} en {monthLabel}.
-          </p>
+          <p className="text-[13.5px] text-ink-soft">Registro real de lo publicado en La Mira y Planazo, por fecha.</p>
         </div>
         <div className="flex-1" />
         <div className="inline-flex items-center gap-1 rounded-full border border-border bg-background p-0.5">
@@ -136,6 +153,15 @@ export function CalendarView({
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="mb-[18px] grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-px overflow-hidden rounded-[14px] border border-border bg-border">
+        {kpis.map((k) => (
+          <div key={k.label} className="flex min-w-0 flex-col gap-2 bg-white px-4 pt-[15px] pb-3.5">
+            <span className="text-[11.5px] text-[#8A837B]">{k.label}</span>
+            <span className="text-[23px] font-semibold tracking-tight [font-variant-numeric:tabular-nums]">{k.value}</span>
+          </div>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1fr_300px]">
@@ -187,9 +213,9 @@ export function CalendarView({
                   type="button"
                   disabled={day === null}
                   onClick={() => day && setSelectedDay(day)}
-                  className={`flex min-h-[84px] flex-col items-start gap-1 border-r border-b border-border-soft p-1.5 text-left last:border-r-0 [&:nth-child(7n)]:border-r-0 ${
+                  className={`flex min-h-[84px] flex-col items-start gap-1 border-r border-b border-border-soft p-1.5 text-left transition-colors last:border-r-0 [&:nth-child(7n)]:border-r-0 ${
                     day === null ? "bg-[#FAF9F7]" : "bg-white hover:bg-[#FEFCFA]"
-                  } ${isSelected ? "!bg-accent" : ""}`}
+                  } ${isToday && !isSelected ? "shadow-[inset_0_0_0_1.5px_rgba(253,105,13,.35)]" : ""} ${isSelected ? "!bg-accent" : ""}`}
                 >
                   {day && (
                     <>
@@ -217,7 +243,14 @@ export function CalendarView({
         </div>
 
         <div className="rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)] lg:sticky lg:top-[26px] lg:max-h-[calc(100vh-52px)] lg:overflow-y-auto">
-          <span className="mb-3 block text-[13.5px] font-semibold tracking-tight capitalize">{selectedDateLabel ?? "Selecciona un día"}</span>
+          <div className="mb-3 flex items-center gap-2">
+            <span className="text-[13.5px] font-semibold tracking-tight capitalize">{selectedDateLabel ?? "Selecciona un día"}</span>
+            {selectedDay && selectedItems.length > 0 && (
+              <span className="inline-flex flex-none items-center rounded-full bg-[#F3F0EC] px-2 py-0.5 text-[11px] font-semibold text-[#5C564F]">
+                {selectedItems.length}
+              </span>
+            )}
+          </div>
           {!selectedDay ? (
             <p className="text-[12.5px] text-ink-faint">Haz clic en un día del calendario para ver qué se publicó.</p>
           ) : selectedItems.length === 0 ? (
