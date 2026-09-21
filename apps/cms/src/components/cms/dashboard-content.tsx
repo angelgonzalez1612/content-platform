@@ -163,7 +163,7 @@ export function DashboardContent({ user }: { user: AuthUser }) {
   }
 
   return (
-    <div className="max-w-[1320px] p-[26px] pb-[60px]">
+    <div className="p-[26px] pb-[60px]">
       <div className="mb-[22px] flex items-end gap-4">
         <div>
           <h1 className="mb-1 text-[25px] font-semibold tracking-tight">
