@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { AiSettingsService } from '../ai-settings.service';
 import {
   CATEGORY_SLUGS,
+  type ConnectionCheckResult,
   type ContentProvider,
   type PlaceDraftInput,
   type PlaceDraftOutput,
@@ -111,5 +112,23 @@ export class OpenAiProvider implements ContentProvider {
     // el mismo shape (ya verificado en runtime), TS solo no puede probarlo
     // a través de dos alias de tipo distintos en este contexto genérico.
     return parsed as z.infer<Schema>;
+  }
+
+  // client.models.list() — el mismo endpoint que usa la doc oficial de OpenAI
+  // para "verificar una key": valida la key real contra la API sin gastar
+  // tokens de completion (a diferencia de mandar un prompt de prueba).
+  async checkConnection(): Promise<ConnectionCheckResult> {
+    const apiKey = (await this.aiSettings.getOpenAiApiKey()) ?? this.config.get<string>('OPENAI_API_KEY');
+    if (!apiKey) return { ok: false, detail: 'Sin API key configurada.' };
+
+    try {
+      const client = await this.getClient();
+      await client.models.list();
+      return { ok: true, detail: 'La API key es válida y responde.' };
+    } catch (err) {
+      const status = (err as { status?: number }).status;
+      if (status === 401) return { ok: false, detail: 'La API key fue rechazada (401 — no es válida o fue revocada).' };
+      return { ok: false, detail: `No se pudo conectar con OpenAI: ${(err as Error).message}` };
+    }
   }
 }

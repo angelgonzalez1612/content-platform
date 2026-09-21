@@ -6,6 +6,7 @@ import path from 'node:path';
 import { z } from 'zod';
 import {
   CATEGORY_SLUGS,
+  type ConnectionCheckResult,
   type ContentProvider,
   type PlaceDraftInput,
   type PlaceDraftOutput,
@@ -128,7 +129,7 @@ export class ClaudeCliProvider implements ContentProvider {
   // él (ver AutomationRunnerService.run, que es secuencial). Se maneja el
   // timeout a mano y se mata el árbol completo (killProcessTree) en vez de
   // confiar en el kill parcial de Node.
-  private runClaudeCommand(args: string[], cwd: string): Promise<string> {
+  private runClaudeCommand(args: string[], cwd: string, timeoutMs = CLAUDE_TIMEOUT_MS): Promise<string> {
     return new Promise((resolve, reject) => {
       let settled = false;
       const child = execFile(
@@ -147,9 +148,40 @@ export class ClaudeCliProvider implements ContentProvider {
         if (settled) return;
         settled = true;
         if (child.pid) killProcessTree(child.pid);
-        reject(new Error(`Claude CLI superó el tiempo límite de ${CLAUDE_TIMEOUT_MS}ms.`));
-      }, CLAUDE_TIMEOUT_MS);
+        reject(new Error(`Claude CLI superó el tiempo límite de ${timeoutMs}ms.`));
+      }, timeoutMs);
     });
+  }
+
+  // Prueba mínima real (Configuración → Probar conexión): el mismo camino
+  // que runOnce (execFile 'claude', sin --bare, cwd aislado) pero con un
+  // prompt trivial y timeout corto — un ✓ aquí significa que una generación
+  // real también funcionaría, no solo que el binario existe.
+  async checkConnection(): Promise<ConnectionCheckResult> {
+    const tmpDir = await mkdtemp(path.join(tmpdir(), 'content-platform-claude-check-'));
+    try {
+      const stdout = await this.runClaudeCommand(
+        ['-p', 'Responde únicamente con la palabra: ok', '--output-format', 'json', '--disallowedTools', '*'],
+        tmpDir,
+        25_000,
+      );
+      let envelope: ClaudeCliResultEnvelope;
+      try {
+        envelope = JSON.parse(stdout);
+      } catch {
+        return { ok: false, detail: 'El CLI respondió, pero no en el formato esperado.' };
+      }
+      if (envelope.is_error) {
+        return { ok: false, detail: `El CLI respondió con un error: ${envelope.result || 'desconocido'}` };
+      }
+      return { ok: true, detail: 'La sesión de Claude Code responde correctamente.' };
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code === 'ENOENT') return { ok: false, detail: 'El comando "claude" no se encontró en este servidor (¿está instalado y en PATH?).' };
+      return { ok: false, detail: (err as Error).message };
+    } finally {
+      await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+    }
   }
 
   private async runOnce(systemPrompt: string, userPrompt: string): Promise<unknown> {

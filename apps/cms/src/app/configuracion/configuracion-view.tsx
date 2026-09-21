@@ -10,6 +10,24 @@ interface AiSettingsStatus {
   openaiApiKeyPreview: string | null;
 }
 
+type ProviderId = "openai" | "claude-cli" | "codex-cli";
+
+interface CheckResult {
+  ok: boolean;
+  detail: string;
+}
+
+interface CheckState {
+  loading: boolean;
+  result: CheckResult | null;
+}
+
+const EMPTY_CHECKS: Record<ProviderId, CheckState> = {
+  openai: { loading: false, result: null },
+  "claude-cli": { loading: false, result: null },
+  "codex-cli": { loading: false, result: null },
+};
+
 // API key pegada a mano — se guarda/revoca desde aquí en vez de editar
 // apps/api/.env directo.
 const LOCK_ICON = "M6 11V8a6 6 0 0 1 12 0v3M5 11h14a1 1 0 0 1 1 1v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a1 1 0 0 1 1-1z";
@@ -18,11 +36,12 @@ const LOCK_ICON = "M6 11V8a6 6 0 0 1 12 0v3M5 11h14a1 1 0 0 1 1 1v8a2 2 0 0 1-2 
 // (sesión, no key), así que comparten el mismo icono.
 const TERMINAL_ICON = "M4 5l6 6-6 6M12 19h8";
 
-// Mismos pares bg/fg que StatusBadge (status-badge.tsx) — "positive" para un
-// estado verificado, "neutral" para uno informativo (nunca implica una
-// verificación que no se hizo, ver comentario en la fila de sesión abajo).
+// Mismos pares bg/fg que StatusBadge (status-badge.tsx) — "positive"/"negative"
+// para un estado ya verificado con una prueba real, "neutral" para uno
+// puramente informativo (nunca implica una verificación que no se hizo).
 const PILL_STYLE = {
   positive: { bg: "#EAF7EF", fg: "#2E9E5B" },
+  negative: { bg: "#FDECEA", fg: "#C4453A" },
   neutral: { bg: "#F3F0EC", fg: "#5C564F" },
 } as const;
 
@@ -46,11 +65,36 @@ function ProviderIcon({ d }: { d: string }) {
   );
 }
 
+// Fila de "Probar conexión" — una llamada real y barata al proveedor
+// (models.list() en OpenAI, un prompt trivial en las CLI), nunca un chequeo
+// automático (cada corrida gasta una llamada real), así que el resultado
+// solo existe después de que el editor lo pide a propósito.
+function ConnectionCheck({ state, onCheck }: { state: CheckState; onCheck: () => void }) {
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-2.5">
+      <button
+        type="button"
+        onClick={onCheck}
+        disabled={state.loading}
+        className="flex-none rounded-[10px] border border-border bg-white px-3.5 py-2 text-[12.5px] font-semibold text-ink transition-colors hover:border-ink-faint disabled:cursor-default disabled:opacity-60"
+      >
+        {state.loading ? "Probando…" : "Probar conexión"}
+      </button>
+      {state.result && (
+        <span className={`text-[12px] leading-[1.4] font-medium ${state.result.ok ? "text-positive" : "text-negative"}`}>
+          {state.result.ok ? "✓" : "✕"} {state.result.detail}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function ConfiguracionView({ initialAiSettings }: { initialAiSettings: AiSettingsStatus }) {
   const [status, setStatus] = useState(initialAiSettings);
   const [keyInput, setKeyInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [checks, setChecks] = useState(EMPTY_CHECKS);
 
   async function save(openaiApiKey: string | null) {
     setSaving(true);
@@ -69,11 +113,40 @@ export function ConfiguracionView({ initialAiSettings }: { initialAiSettings: Ai
       }
       setStatus(await res.json());
       setKeyInput("");
+      // La key acaba de cambiar — un resultado de prueba viejo (con la key
+      // anterior) ya no significa nada, se limpia para no confundir.
+      setChecks((c) => ({ ...c, openai: { loading: false, result: null } }));
     } catch {
       setError("No se pudo conectar con el servidor.");
     } finally {
       setSaving(false);
     }
+  }
+
+  async function checkConnection(provider: ProviderId) {
+    setChecks((c) => ({ ...c, [provider]: { loading: true, result: null } }));
+    let result: CheckResult;
+    try {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/settings/ai/check/${provider}`, {
+        method: "POST",
+        credentials: "include",
+      });
+      result = res.ok ? await res.json() : { ok: false, detail: "No se pudo ejecutar la prueba." };
+    } catch {
+      result = { ok: false, detail: "No se pudo conectar con el servidor." };
+    }
+    setChecks((c) => ({ ...c, [provider]: { loading: false, result } }));
+  }
+
+  // Antes de probar, cada proveedor muestra su pill puramente informativa de
+  // siempre (OpenAI: si hay key guardada; Claude/Codex: que corren por
+  // sesión) — después de un "Probar conexión", el resultado real manda.
+  function statusPill(provider: ProviderId, fallback: { tone: keyof typeof PILL_STYLE; label: string }) {
+    const check = checks[provider];
+    if (check.result) {
+      return <Pill tone={check.result.ok ? "positive" : "negative"}>{check.result.ok ? "Conectado" : "Error de conexión"}</Pill>;
+    }
+    return <Pill tone={fallback.tone}>{fallback.label}</Pill>;
   }
 
   return (
@@ -86,20 +159,21 @@ export function ConfiguracionView({ initialAiSettings }: { initialAiSettings: Ai
       <div className="max-w-[720px] overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
         <div className="border-b border-border-soft px-5 py-4">
           <h2 className="text-[15px] font-semibold tracking-tight">Proveedores de IA</h2>
-          <p className="mt-0.5 text-[12px] text-ink-faint">Cada regla de Automatizaciones y cada generación de Centro IA elige uno de estos al correr.</p>
+          <p className="mt-0.5 text-[12px] text-ink-faint">
+            Cada regla de Automatizaciones y cada generación de Centro IA elige uno de estos al correr — &quot;Probar conexión&quot; hace
+            la misma llamada mínima que haría una generación real, para saber de un vistazo si de verdad va a funcionar.
+          </p>
         </div>
 
-        {/* OpenAI — única fila con acción real (guardar/quitar key); las
-            otras dos son informativas porque no hay nada que configurar
-            aquí (corren contra la sesión del servidor). */}
         <div className="flex items-start gap-4 border-b border-border-soft p-5">
           <ProviderIcon d={LOCK_ICON} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-[14px] font-semibold tracking-tight">OpenAI</h3>
-              <Pill tone={status.openaiApiKeySet ? "positive" : "neutral"}>
-                {status.openaiApiKeySet ? `Configurada · termina en ${status.openaiApiKeyPreview}` : "No configurada"}
-              </Pill>
+              {statusPill("openai", {
+                tone: status.openaiApiKeySet ? "positive" : "neutral",
+                label: status.openaiApiKeySet ? `Configurada · termina en ${status.openaiApiKeyPreview}` : "No configurada",
+              })}
             </div>
             <p className="mt-1 max-w-[52ch] text-[12.5px] leading-[1.5] text-ink-soft">
               Se usa cuando una regla o una generación elige el proveedor &quot;OpenAI&quot;. Pégala aquí en vez de editar{" "}
@@ -135,6 +209,8 @@ export function ConfiguracionView({ initialAiSettings }: { initialAiSettings: Ai
               )}
             </div>
             {error && <p className="mt-2 text-[12px] font-medium text-negative">{error}</p>}
+
+            <ConnectionCheck state={checks.openai} onCheck={() => checkConnection("openai")} />
           </div>
         </div>
 
@@ -143,12 +219,14 @@ export function ConfiguracionView({ initialAiSettings }: { initialAiSettings: Ai
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-[14px] font-semibold tracking-tight">Claude (sesión)</h3>
-              <Pill tone="neutral">Sesión del servidor</Pill>
+              {statusPill("claude-cli", { tone: "neutral", label: "Sesión del servidor" })}
             </div>
             <p className="mt-1 max-w-[52ch] text-[12.5px] leading-[1.5] text-ink-soft">
               No necesita key aquí — corre contra la sesión de Claude Code ya autenticada en esta máquina. Si una regla con este proveedor
               falla, revisa que la sesión del CLI siga iniciada en el servidor.
             </p>
+
+            <ConnectionCheck state={checks["claude-cli"]} onCheck={() => checkConnection("claude-cli")} />
           </div>
         </div>
 
@@ -157,11 +235,13 @@ export function ConfiguracionView({ initialAiSettings }: { initialAiSettings: Ai
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-[14px] font-semibold tracking-tight">Codex (sesión)</h3>
-              <Pill tone="neutral">Sesión del servidor</Pill>
+              {statusPill("codex-cli", { tone: "neutral", label: "Sesión del servidor" })}
             </div>
             <p className="mt-1 max-w-[52ch] text-[12.5px] leading-[1.5] text-ink-soft">
               Igual que Claude — corre contra la sesión de Codex ya autenticada en esta máquina, sin key que guardar aquí.
             </p>
+
+            <ConnectionCheck state={checks["codex-cli"]} onCheck={() => checkConnection("codex-cli")} />
           </div>
         </div>
       </div>

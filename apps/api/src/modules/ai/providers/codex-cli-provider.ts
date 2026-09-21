@@ -6,6 +6,7 @@ import path from 'node:path';
 import { z } from 'zod';
 import {
   CATEGORY_SLUGS,
+  type ConnectionCheckResult,
   type ContentProvider,
   type PlaceDraftInput,
   type PlaceDraftOutput,
@@ -260,6 +261,38 @@ export class CodexCliProvider implements ContentProvider {
     throw new InternalServerErrorException(
       `Codex CLI no devolvió datos válidos tras reintentar: ${parsed.error.message}`,
     );
+  }
+
+  // Prueba mínima real (Configuración → Probar conexión): mismo mecanismo
+  // que runOnce (spawn con shell:true, prompt por stdin, cwd aislado) pero
+  // sin --output-schema (no hace falta validar formato para esta prueba) y
+  // con timeout corto — un ✓ aquí significa que una generación real también
+  // funcionaría, no solo que el binario está en PATH.
+  async checkConnection(): Promise<ConnectionCheckResult> {
+    const tmpDir = await mkdtemp(path.join(tmpdir(), 'content-platform-codex-check-'));
+    try {
+      const parts = [
+        'codex',
+        'exec',
+        '-',
+        '--sandbox',
+        'read-only',
+        '--skip-git-repo-check',
+        '--ephemeral',
+        '-C',
+        quoteArgForWindowsShell(tmpDir),
+      ];
+      await runCodexCommand(parts.join(' '), 'Responde únicamente con la palabra: ok', 25_000);
+      return { ok: true, detail: 'La sesión de Codex responde correctamente.' };
+    } catch (err) {
+      const message = (err as Error).message;
+      if (/ENOENT|not recognized|no se reconoce|command not found/i.test(message)) {
+        return { ok: false, detail: 'El comando "codex" no se encontró en este servidor (¿está instalado y en PATH?).' };
+      }
+      return { ok: false, detail: message };
+    } finally {
+      await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+    }
   }
 
   private async runOnce(
