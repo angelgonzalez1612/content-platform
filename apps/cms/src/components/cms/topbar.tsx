@@ -15,12 +15,16 @@ export function Topbar({
   copilotOpen,
   onToggleCopilot,
   onOpenMobileMenu,
+  theme,
+  onToggleTheme,
 }: {
   user: AuthUser;
   title: string;
   copilotOpen: boolean;
   onToggleCopilot: () => void;
   onOpenMobileMenu: () => void;
+  theme: "light" | "dark";
+  onToggleTheme: () => void;
 }) {
   const pathname = usePathname();
   const crumbs = getBreadcrumb(pathname, title);
@@ -41,11 +45,11 @@ export function Topbar({
   }, []);
 
   return (
-    <header className="flex h-[60px] flex-none items-center gap-2 border-b border-border bg-white/86 px-3 backdrop-blur-sm sm:gap-3 sm:px-[22px]">
+    <header className="flex h-[60px] flex-none items-center gap-2 border-b border-border bg-card/86 px-3 backdrop-blur-sm sm:gap-3 sm:px-[22px]">
       <button
         type="button"
         onClick={onOpenMobileMenu}
-        className="grid size-8 flex-none place-items-center rounded-lg border border-border bg-white text-ink-soft md:hidden"
+        className="grid size-8 flex-none place-items-center rounded-lg border border-border bg-card text-ink-soft md:hidden"
       >
         <Icon d="M4 7h16M4 12h16M4 17h16" size={15} strokeWidth={1.8} />
       </button>
@@ -79,17 +83,29 @@ export function Topbar({
         <button
           type="button"
           title="Notificaciones"
-          className="relative hidden size-8 place-items-center rounded-lg border border-border bg-white text-ink-soft transition-colors hover:border-[#E0DBD4] sm:grid"
+          className="relative hidden size-8 place-items-center rounded-lg border border-border bg-card text-ink-soft transition-colors hover:border-[#E0DBD4] sm:grid"
         >
           <Icon d="M12 4a5.5 5.5 0 0 0-5.5 5.5c0 4-1.5 5.5-1.5 5.5h14s-1.5-1.5-1.5-5.5A5.5 5.5 0 0 0 12 4zM10 18.5a2 2 0 0 0 4 0" />
-          <span className="absolute top-[5px] right-1.5 size-[5px] rounded-full border-[1.5px] border-white bg-brand" />
+          <span className="absolute top-[5px] right-1.5 size-[5px] rounded-full border-[1.5px] border-card bg-brand" />
+        </button>
+        <button
+          type="button"
+          onClick={onToggleTheme}
+          title={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+          className="grid size-8 flex-none place-items-center rounded-lg border border-border bg-card text-ink-soft transition-colors hover:border-[#E0DBD4]"
+        >
+          {theme === "dark" ? (
+            <Icon d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" size={15} strokeWidth={1.7} />
+          ) : (
+            <Icon d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z" size={15} strokeWidth={1.7} />
+          )}
         </button>
         <button
           type="button"
           onClick={onToggleCopilot}
           title="Copiloto"
           className={`flex items-center gap-[7px] rounded-lg border py-1.5 pr-2.5 pl-2.5 font-sans text-[12.5px] font-medium transition-colors sm:pr-[11px] ${
-            copilotOpen ? "border-ink bg-ink text-white" : "border-border bg-white text-ink"
+            copilotOpen ? "border-ink bg-ink text-white" : "border-border bg-card text-ink"
           }`}
         >
           <Icon d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z" size={14} strokeWidth={1.6} />

@@ -20,9 +20,15 @@ export function CmsShell({
   const [commandOpen, setCommandOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  // Arranca en "light" y el layout raíz corrige a "dark" con un script
+  // inline antes de hidratar (ver app/layout.tsx) — evita el flash, pero
+  // significa que este estado debe releerse del DOM, no de localStorage
+  // directo, para no perder ese ajuste temprano.
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
     if (window.localStorage.getItem("planazo-cms-sidebar-collapsed") === "1") setSidebarCollapsed(true);
+    if (document.documentElement.dataset.theme === "dark") setTheme("dark");
 
     function onKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -38,6 +44,16 @@ export function CmsShell({
     setSidebarCollapsed((v) => {
       const next = !v;
       window.localStorage.setItem("planazo-cms-sidebar-collapsed", next ? "1" : "0");
+      return next;
+    });
+  }
+
+  function toggleTheme() {
+    setTheme((v) => {
+      const next = v === "dark" ? "light" : "dark";
+      window.localStorage.setItem("planazo-cms-theme", next);
+      if (next === "dark") document.documentElement.setAttribute("data-theme", "dark");
+      else document.documentElement.removeAttribute("data-theme");
       return next;
     });
   }
@@ -59,6 +75,8 @@ export function CmsShell({
           copilotOpen={copilotOpen}
           onToggleCopilot={() => setCopilotOpen((v) => !v)}
           onOpenMobileMenu={() => setMobileSidebarOpen(true)}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
 
         <div className="flex min-h-0 flex-1">

@@ -3,7 +3,13 @@
 @theme inline {
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+}
 
+/* Sin "inline": Tailwind emite las clases (bg-background, text-ink, etc.)
+   referenciando var(--color-x) en vez de grabar el valor literal — con
+   "inline" quedan hardcodeados en cada clase generada y cambiar la
+   variable en runtime (tema oscuro) no tiene ningún efecto. */
+@theme {
   --color-brand: #fd690d;
   --color-brand-pressed: #e85d06;
   --color-ink: #17140f;
@@ -18,6 +24,34 @@
   --color-positive: #2e9e5b;
   --color-negative: #c4453a;
   --color-warning: #9a6b12;
+}
+
+/* Tema oscuro — solo cubre los tokens semánticos de arriba (fondo, texto,
+   bordes, card, accent, estados). Muchas pantallas todavía usan colores
+   fijos (bg-white, hex sueltos tipo #F5F3F0) en vez de estos tokens y no
+   van a cambiar con esto — se van migrando aparte, pantalla por pantalla.
+   Mismo @layer "theme" que usa @theme arriba (Tailwind ya pone ahí su
+   :root con los valores claros) — puesto fuera de cualquier layer, este
+   bloque perdía contra ese :root pese a estar después en el archivo
+   (verificado con getComputedStyle: sin el layer, --color-background
+   seguía resolviendo al valor claro con data-theme="dark" puesto). Dentro
+   del mismo layer sí gana, por venir después en el código. */
+@layer theme {
+  [data-theme="dark"] {
+    --color-ink: #f2efe9;
+    --color-ink-soft: #b8b0a6;
+    --color-ink-faint: #7d766e;
+    --color-border: #322c25;
+    --color-border-soft: #2a2521;
+    --color-card: #1c1815;
+    --color-background: #131110;
+    --color-accent: #3a2415;
+    --color-accent-fg: #ff9a5c;
+    --color-positive: #4cbf82;
+    --color-negative: #e2685c;
+    --color-warning: #d7a53a;
+    --color-brand-pressed: #ff7d29;
+  }
 }
 
 @layer base {
