@@ -11,7 +11,7 @@ const NO_DRAFT_TYPES = new Set(["alerta", "evento", "lugar"]);
 export function TemplateCard({ template, index, category }: { template: ContentTemplate; index: number; category?: Category | null }) {
   const instant = NO_DRAFT_TYPES.has(template.contentType);
   return (
-    <div className="overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+    <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
       <div className="flex flex-col lg:flex-row">
         <div className="flex min-w-0 gap-4 p-5 lg:flex-[3]">
           <span className="grid size-8 flex-none place-items-center rounded-full bg-accent font-mono text-[12px] font-semibold text-accent-fg">

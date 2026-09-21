@@ -128,7 +128,7 @@ export function LamiraPreviewCard({
     <div className="flex flex-col gap-1.5">
       <span className="font-mono text-[10px] font-medium tracking-[.1em] text-ink-faint uppercase">Vista previa — cómo se vería en La Mira</span>
 
-      <div className="overflow-hidden rounded-[14px] border border-border-soft bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+      <div className="overflow-hidden rounded-[14px] border border-border-soft bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
         <div className="flex items-center gap-1.5 border-b border-border-soft bg-background px-3 py-2">
           <span className="size-2 rounded-full bg-[#E4A951]" />
           <span className="size-2 rounded-full bg-[#DE7A54]" />

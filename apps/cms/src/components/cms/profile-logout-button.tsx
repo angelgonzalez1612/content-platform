@@ -20,7 +20,7 @@ export function ProfileLogoutButton() {
       type="button"
       onClick={handleLogout}
       disabled={loading}
-      className="rounded-[10px] border border-[#F3D4CF] bg-white px-4 py-2 text-[13px] font-semibold text-negative transition-colors duration-150 hover:bg-[#FDECEA] disabled:opacity-60"
+      className="rounded-[10px] border border-[#F3D4CF] bg-card px-4 py-2 text-[13px] font-semibold text-negative transition-colors duration-150 hover:bg-[#FDECEA] disabled:opacity-60"
     >
       {loading ? "Saliendo…" : "Cerrar sesión"}
     </button>

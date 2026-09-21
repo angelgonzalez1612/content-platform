@@ -315,7 +315,7 @@ export function AutomationView({
             type="button"
             onClick={runNow}
             disabled={running}
-            className="flex items-center gap-2 rounded-[10px] border border-border bg-white px-4 py-2.5 text-[13.5px] font-semibold text-ink shadow-[0_1px_2px_rgba(23,20,17,.03)] transition-colors hover:border-ink-faint disabled:cursor-default disabled:opacity-60"
+            className="flex items-center gap-2 rounded-[10px] border border-border bg-card px-4 py-2.5 text-[13.5px] font-semibold text-ink shadow-[0_1px_2px_rgba(23,20,17,.03)] transition-colors hover:border-ink-faint disabled:cursor-default disabled:opacity-60"
           >
             <Icon d={SPARK_ICON} size={14} strokeWidth={1.8} className={running ? "animate-spin text-brand" : "text-brand"} />
             {running ? "Ejecutando…" : "Ejecutar ahora"}
@@ -338,7 +338,7 @@ export function AutomationView({
       )}
 
       {editingId && (
-        <div className="mb-6 flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+        <div className="mb-6 flex flex-col gap-5 rounded-[14px] border border-border bg-card p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
           <h2 className="text-[15px] font-semibold tracking-tight">{editingId === "new" ? "Nueva regla" : "Editar regla"}</h2>
 
           <div className="flex flex-col gap-1.5">
@@ -363,7 +363,7 @@ export function AutomationView({
                   type="button"
                   onClick={() => set("site", s)}
                   className={`rounded-xl border px-3.5 py-2 text-[13px] font-medium transition-colors ${
-                    form.site === s ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
+                    form.site === s ? "border-brand bg-accent text-accent-fg" : "border-border bg-card text-ink-soft hover:border-ink-faint"
                   }`}
                 >
                   {s === "" ? "Ambos sitios" : SITE_LABEL[s]}
@@ -385,7 +385,7 @@ export function AutomationView({
                   type="button"
                   onClick={() => toggleContentType(t)}
                   className={`rounded-full border px-3 py-1.5 text-[12.5px] font-medium transition-colors ${
-                    form.contentTypes.includes(t) ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
+                    form.contentTypes.includes(t) ? "border-brand bg-accent text-accent-fg" : "border-border bg-card text-ink-soft hover:border-ink-faint"
                   }`}
                 >
                   {TYPE_LABEL[t]}
@@ -406,7 +406,7 @@ export function AutomationView({
                   onClick={() => toggleCategorySlug(c.slug)}
                   title={form.site === "" ? c.siteLabel : undefined}
                   className={`rounded-full border px-3 py-1.5 text-[12.5px] font-medium transition-colors ${
-                    form.categorySlugs.includes(c.slug) ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
+                    form.categorySlugs.includes(c.slug) ? "border-brand bg-accent text-accent-fg" : "border-border bg-card text-ink-soft hover:border-ink-faint"
                   }`}
                 >
                   {c.name}
@@ -426,7 +426,7 @@ export function AutomationView({
                     type="button"
                     onClick={() => set("provider", p)}
                     className={`flex-1 rounded-xl border px-3 py-2 text-[12.5px] font-medium transition-colors ${
-                      form.provider === p ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
+                      form.provider === p ? "border-brand bg-accent text-accent-fg" : "border-border bg-card text-ink-soft hover:border-ink-faint"
                     }`}
                   >
                     {PROVIDER_LABEL[p]}
@@ -511,7 +511,7 @@ export function AutomationView({
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_1fr] lg:items-start">
-        <div className="flex flex-col overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+        <div className="flex flex-col overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
           <div className="flex items-center justify-between border-b border-border-soft px-5 py-3.5">
             <h2 className="text-[15px] font-semibold tracking-tight">Reglas</h2>
             {rules.length > 0 && (
@@ -534,12 +534,12 @@ export function AutomationView({
                     type="button"
                     onClick={() => setSiteFilter(t.key)}
                     className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
-                      siteFilter === t.key ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
+                      siteFilter === t.key ? "border-brand bg-accent text-accent-fg" : "border-border bg-card text-ink-soft hover:border-ink-faint"
                     }`}
                   >
                     {t.label}
                     <span
-                      className={`rounded-full px-1.5 font-mono text-[10.5px] ${siteFilter === t.key ? "bg-white/60" : "bg-background text-ink-faint"}`}
+                      className={`rounded-full px-1.5 font-mono text-[10.5px] ${siteFilter === t.key ? "bg-card/60" : "bg-background text-ink-faint"}`}
                     >
                       {t.count}
                     </span>
@@ -567,13 +567,13 @@ export function AutomationView({
                       </p>
                     </div>
                     <div className="flex flex-none items-center gap-1">
-                      <button type="button" onClick={() => toggleActive(rule)} className="rounded-md border border-border bg-white px-2 py-1 text-[11px] font-medium text-ink-soft transition-colors hover:border-ink-faint">
+                      <button type="button" onClick={() => toggleActive(rule)} className="rounded-md border border-border bg-card px-2 py-1 text-[11px] font-medium text-ink-soft transition-colors hover:border-ink-faint">
                         {rule.active ? "Pausar" : "Activar"}
                       </button>
-                      <button type="button" onClick={() => startEdit(rule)} className="rounded-md border border-border bg-white px-2 py-1 text-[11px] font-medium text-ink-soft transition-colors hover:border-ink-faint">
+                      <button type="button" onClick={() => startEdit(rule)} className="rounded-md border border-border bg-card px-2 py-1 text-[11px] font-medium text-ink-soft transition-colors hover:border-ink-faint">
                         Editar
                       </button>
-                      <button type="button" onClick={() => removeRule(rule)} className="rounded-md border border-border bg-white px-2 py-1 text-[11px] font-medium text-negative transition-colors hover:border-negative">
+                      <button type="button" onClick={() => removeRule(rule)} className="rounded-md border border-border bg-card px-2 py-1 text-[11px] font-medium text-negative transition-colors hover:border-negative">
                         Borrar
                       </button>
                     </div>
@@ -584,7 +584,7 @@ export function AutomationView({
           )}
         </div>
 
-        <div className="flex flex-col overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+        <div className="flex flex-col overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft px-5 py-3.5">
             <h2 className="text-[15px] font-semibold tracking-tight">Bitácora — qué hizo la IA</h2>
             {runs.length > 0 && (
@@ -603,7 +603,7 @@ export function AutomationView({
                     type="button"
                     onClick={() => setOutcomeFilter(o)}
                     className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
-                      outcomeFilter === o ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
+                      outcomeFilter === o ? "border-brand bg-accent text-accent-fg" : "border-border bg-card text-ink-soft hover:border-ink-faint"
                     }`}
                   >
                     {o === "all" ? "Todos" : OUTCOME_META[o].label}

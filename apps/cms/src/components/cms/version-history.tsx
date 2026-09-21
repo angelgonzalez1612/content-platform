@@ -61,7 +61,7 @@ export function VersionHistory({ contentType, contentId }: { contentType: string
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2.5 rounded-[10px] border border-border bg-white px-3.5 py-2 text-[12.5px]">
+    <div className="flex flex-wrap items-center gap-2.5 rounded-[10px] border border-border bg-card px-3.5 py-2 text-[12.5px]">
       <span className="font-medium text-ink-faint">Historial:</span>
       <button
         type="button"
@@ -89,7 +89,7 @@ export function VersionHistory({ contentType, contentId }: { contentType: string
         type="button"
         onClick={restore}
         disabled={restoring}
-        className="rounded-md border border-border bg-white px-2.5 py-1 text-[11.5px] font-semibold text-brand transition-colors hover:border-brand disabled:cursor-default disabled:opacity-60"
+        className="rounded-md border border-border bg-card px-2.5 py-1 text-[11.5px] font-semibold text-brand transition-colors hover:border-brand disabled:cursor-default disabled:opacity-60"
       >
         {restoring ? "Restaurando…" : "Restaurar esta versión"}
       </button>

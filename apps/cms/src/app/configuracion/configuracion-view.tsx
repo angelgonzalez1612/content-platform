@@ -78,7 +78,7 @@ function ConnectionCheck({ state, onCheck }: { state: CheckState; onCheck: () =>
         type="button"
         onClick={onCheck}
         disabled={state.loading}
-        className="flex-none rounded-[10px] border border-border bg-white px-3.5 py-2 text-[12.5px] font-semibold text-ink transition-colors hover:border-ink-faint disabled:cursor-default disabled:opacity-60"
+        className="flex-none rounded-[10px] border border-border bg-card px-3.5 py-2 text-[12.5px] font-semibold text-ink transition-colors hover:border-ink-faint disabled:cursor-default disabled:opacity-60"
       >
         {state.loading ? "Probando…" : "Probar conexión"}
       </button>
@@ -190,7 +190,7 @@ export function ConfiguracionView({ initialAiSettings }: { initialAiSettings: Ai
         <p className="text-[13px] text-ink-faint">Credenciales y proveedores de IA usados en Centro IA, Content Radar y Automatizaciones.</p>
       </div>
 
-      <div className="max-w-[720px] overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+      <div className="max-w-[720px] overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
         <div className="border-b border-border-soft px-5 py-4">
           <h2 className="text-[15px] font-semibold tracking-tight">Proveedores de IA</h2>
           <p className="mt-0.5 text-[12px] text-ink-faint">
@@ -236,7 +236,7 @@ export function ConfiguracionView({ initialAiSettings }: { initialAiSettings: Ai
                   type="button"
                   onClick={() => save(null)}
                   disabled={saving}
-                  className="flex-none rounded-[10px] border border-border bg-white px-3.5 py-2.5 text-[13px] font-medium text-negative transition-colors hover:border-negative disabled:cursor-default disabled:opacity-60"
+                  className="flex-none rounded-[10px] border border-border bg-card px-3.5 py-2.5 text-[13px] font-medium text-negative transition-colors hover:border-negative disabled:cursor-default disabled:opacity-60"
                 >
                   Quitar
                 </button>
@@ -280,7 +280,7 @@ export function ConfiguracionView({ initialAiSettings }: { initialAiSettings: Ai
         </div>
       </div>
 
-      <div className="mt-5 max-w-[720px] overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+      <div className="mt-5 max-w-[720px] overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
         <div className="border-b border-border-soft px-5 py-4">
           <h2 className="text-[15px] font-semibold tracking-tight">Preferencia de redacción</h2>
           <p className="mt-0.5 text-[12px] text-ink-faint">

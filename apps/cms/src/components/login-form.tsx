@@ -54,7 +54,7 @@ export function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="tu@correo.com"
-          className="rounded-xl border border-border bg-white px-3.5 py-3 text-[14.5px] text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-brand focus:shadow-[0_0_0_4px_rgba(253,105,13,.12)]"
+          className="rounded-xl border border-border bg-card px-3.5 py-3 text-[14.5px] text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-brand focus:shadow-[0_0_0_4px_rgba(253,105,13,.12)]"
         />
       </div>
 
@@ -70,7 +70,7 @@ export function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full rounded-xl border border-border bg-white px-3.5 py-3 pr-11 text-[14.5px] text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-brand focus:shadow-[0_0_0_4px_rgba(253,105,13,.12)]"
+            className="w-full rounded-xl border border-border bg-card px-3.5 py-3 pr-11 text-[14.5px] text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-brand focus:shadow-[0_0_0_4px_rgba(253,105,13,.12)]"
           />
           <button
             type="button"

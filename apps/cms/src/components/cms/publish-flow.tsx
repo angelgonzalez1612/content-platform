@@ -229,7 +229,7 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
         datos verificables (fecha, ubicación, cifras) los completas tú.
       </p>
 
-      <form onSubmit={handleGenerate} className="flex flex-col gap-5 rounded-[16px] border border-border bg-white p-6 text-left shadow-[0_1px_2px_rgba(23,20,17,.03)] sm:p-7">
+      <form onSubmit={handleGenerate} className="flex flex-col gap-5 rounded-[16px] border border-border bg-card p-6 text-left shadow-[0_1px_2px_rgba(23,20,17,.03)] sm:p-7">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="pf-name" className={labelClass}>
             Tema / título
@@ -266,7 +266,7 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
                 onClick={() => setProvider(p.id)}
                 disabled={generating}
                 title={p.hint}
-                className={`flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors ${provider === p.id ? "border-brand bg-accent" : "border-border bg-white hover:border-ink-faint"}`}
+                className={`flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors ${provider === p.id ? "border-brand bg-accent" : "border-border bg-card hover:border-ink-faint"}`}
               >
                 <span className="block text-[13px] font-semibold">{p.label}</span>
                 <span className="block text-[11px] text-ink-faint">{p.hint}</span>

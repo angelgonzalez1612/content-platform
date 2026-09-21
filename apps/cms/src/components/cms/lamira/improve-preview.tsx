@@ -84,7 +84,7 @@ export function ImprovePreview({
             type="button"
             onClick={onRegenerate}
             disabled={regenerating}
-            className="rounded-[10px] border border-border bg-white px-4 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand disabled:cursor-default disabled:opacity-70"
+            className="rounded-[10px] border border-border bg-card px-4 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand disabled:cursor-default disabled:opacity-70"
           >
             {regenerating ? "Generando…" : "Generar otra vez"}
           </button>

@@ -77,11 +77,11 @@ export function RichTextarea({
   }, [value, editor]);
 
   if (!editor) {
-    return <div className="rounded-[10px] border border-border bg-white" style={{ minHeight: `${rows * 1.6}em` }} />;
+    return <div className="rounded-[10px] border border-border bg-card" style={{ minHeight: `${rows * 1.6}em` }} />;
   }
 
   return (
-    <div className={`rounded-[10px] border border-border bg-white transition-colors focus-within:border-ink-faint ${required && !value.trim() ? "border-[#F0B8B4]" : ""}`}>
+    <div className={`rounded-[10px] border border-border bg-card transition-colors focus-within:border-ink-faint ${required && !value.trim() ? "border-[#F0B8B4]" : ""}`}>
       <div className="flex items-center gap-1 border-b border-border-soft px-2 py-1.5">
         <ToolbarButton active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()} icon={BOLD_ICON} label="Negritas" />
         <ToolbarButton active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()} icon={ITALIC_ICON} label="Cursiva" />

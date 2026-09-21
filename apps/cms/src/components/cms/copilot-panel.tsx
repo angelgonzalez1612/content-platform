@@ -40,7 +40,7 @@ export function CopilotPanel({ screenTitle, onClose }: { screenTitle: string; on
               <button
                 key={action}
                 type="button"
-                className="flex items-center gap-2.5 rounded-[10px] border border-border bg-white px-[11px] py-2.5 text-left font-sans text-[12.5px] transition-colors hover:border-brand hover:text-brand"
+                className="flex items-center gap-2.5 rounded-[10px] border border-border bg-card px-[11px] py-2.5 text-left font-sans text-[12.5px] transition-colors hover:border-brand hover:text-brand"
               >
                 <span className="size-[5px] flex-none rounded-full bg-brand" />
                 {action}

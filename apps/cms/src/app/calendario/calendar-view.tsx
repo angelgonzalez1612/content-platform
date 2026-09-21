@@ -146,7 +146,7 @@ export function CalendarView({
               type="button"
               onClick={() => setSiteFilter(f.id)}
               className={`rounded-full px-3 py-1 text-[12.5px] font-semibold whitespace-nowrap transition-colors ${
-                siteFilter === f.id ? "bg-white text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+                siteFilter === f.id ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
               }`}
             >
               {f.label}
@@ -157,7 +157,7 @@ export function CalendarView({
 
       <div className="mb-[18px] grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-px overflow-hidden rounded-[14px] border border-border bg-border">
         {kpis.map((k) => (
-          <div key={k.label} className="flex min-w-0 flex-col gap-2 bg-white px-4 pt-[15px] pb-3.5">
+          <div key={k.label} className="flex min-w-0 flex-col gap-2 bg-card px-4 pt-[15px] pb-3.5">
             <span className="text-[11.5px] text-[#8A837B]">{k.label}</span>
             <span className="text-[23px] font-semibold tracking-tight [font-variant-numeric:tabular-nums]">{k.value}</span>
           </div>
@@ -170,12 +170,12 @@ export function CalendarView({
             sí puede crecer mucho en un día con muchas publicaciones. Mismo
             patrón que EditPreviewLayout (form + vista previa), aquí al
             revés: el panel angosto es el que scrollea, no el ancho. */}
-        <div className="rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)] lg:sticky lg:top-[26px]">
+        <div className="rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)] lg:sticky lg:top-[26px]">
           <div className="flex items-center gap-2 border-b border-border-soft px-4 py-3.5">
             <button
               type="button"
               onClick={() => goToMonth(-1)}
-              className="grid size-7 place-items-center rounded-lg border border-border bg-white text-ink-soft transition-colors hover:border-ink-faint"
+              className="grid size-7 place-items-center rounded-lg border border-border bg-card text-ink-soft transition-colors hover:border-ink-faint"
             >
               <Icon d="M15 5l-7 7 7 7" size={13} strokeWidth={2} />
             </button>
@@ -183,11 +183,11 @@ export function CalendarView({
             <button
               type="button"
               onClick={() => goToMonth(1)}
-              className="grid size-7 place-items-center rounded-lg border border-border bg-white text-ink-soft transition-colors hover:border-ink-faint"
+              className="grid size-7 place-items-center rounded-lg border border-border bg-card text-ink-soft transition-colors hover:border-ink-faint"
             >
               <Icon d="M9 5l7 7-7 7" size={13} strokeWidth={2} />
             </button>
-            <button type="button" onClick={goToday} className="ml-1 rounded-lg border border-border bg-white px-2.5 py-1 text-[11.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint">
+            <button type="button" onClick={goToday} className="ml-1 rounded-lg border border-border bg-card px-2.5 py-1 text-[11.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint">
               Hoy
             </button>
             <div className="flex-1" />
@@ -214,7 +214,7 @@ export function CalendarView({
                   disabled={day === null}
                   onClick={() => day && setSelectedDay(day)}
                   className={`flex min-h-[84px] flex-col items-start gap-1 border-r border-b border-border-soft p-1.5 text-left transition-colors last:border-r-0 [&:nth-child(7n)]:border-r-0 ${
-                    day === null ? "bg-[#FAF9F7]" : "bg-white hover:bg-[#FEFCFA]"
+                    day === null ? "bg-[#FAF9F7]" : "bg-card hover:bg-[#FEFCFA]"
                   } ${isToday && !isSelected ? "shadow-[inset_0_0_0_1.5px_rgba(253,105,13,.35)]" : ""} ${isSelected ? "!bg-accent" : ""}`}
                 >
                   {day && (
@@ -242,7 +242,7 @@ export function CalendarView({
           </div>
         </div>
 
-        <div className="rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)] lg:sticky lg:top-[26px] lg:max-h-[calc(100vh-52px)] lg:overflow-y-auto">
+        <div className="rounded-[14px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)] lg:sticky lg:top-[26px] lg:max-h-[calc(100vh-52px)] lg:overflow-y-auto">
           <div className="mb-3 flex items-center gap-2">
             <span className="text-[13.5px] font-semibold tracking-tight capitalize">{selectedDateLabel ?? "Selecciona un día"}</span>
             {selectedDay && selectedItems.length > 0 && (

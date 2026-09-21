@@ -154,7 +154,7 @@ export function GuideSectionsField({
             </div>
 
             {editingImageFor === si ? (
-              <div className="flex flex-col gap-2 rounded-[10px] border border-border-soft bg-white p-3">
+              <div className="flex flex-col gap-2 rounded-[10px] border border-border-soft bg-card p-3">
                 <ImageSearchPicker
                   initialQuery={section.heading}
                   onSelect={(img) => {
@@ -167,7 +167,7 @@ export function GuideSectionsField({
                 </button>
               </div>
             ) : section.image ? (
-              <div className="flex items-start gap-3 rounded-[10px] border border-border-soft bg-white p-3">
+              <div className="flex items-start gap-3 rounded-[10px] border border-border-soft bg-card p-3">
                 {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
                 <img src={section.image.url} alt="" className="h-16 w-24 flex-none rounded-[8px] object-cover" />
                 <div className="flex min-w-0 flex-1 flex-col gap-1 pt-0.5">
@@ -189,7 +189,7 @@ export function GuideSectionsField({
               <button
                 type="button"
                 onClick={() => setEditingImageFor(si)}
-                className="self-start rounded-lg border border-dashed border-border bg-white px-3 py-1.5 text-[12px] font-medium text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
+                className="self-start rounded-lg border border-dashed border-border bg-card px-3 py-1.5 text-[12px] font-medium text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
               >
                 + Imagen en esta parada
               </button>
@@ -198,7 +198,7 @@ export function GuideSectionsField({
             <button
               type="button"
               onClick={() => improvePanelRef.current?.openFor(si, "expand")}
-              className="flex items-center gap-1.5 self-start rounded-lg border border-dashed border-border bg-white px-3 py-1.5 text-[12px] font-medium text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
+              className="flex items-center gap-1.5 self-start rounded-lg border border-dashed border-border bg-card px-3 py-1.5 text-[12px] font-medium text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
             >
               ✨ + Párrafos con IA
             </button>
@@ -222,7 +222,7 @@ export function GuideSectionsField({
       <button
         type="button"
         onClick={add}
-        className="self-start rounded-lg border border-border bg-white px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint"
+        className="self-start rounded-lg border border-border bg-card px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint"
       >
         + Parada
       </button>

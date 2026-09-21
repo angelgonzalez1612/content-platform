@@ -159,7 +159,7 @@ export function AlertaForm({ categories, existing }: { categories: Category[]; e
         />
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-[14px] border border-border bg-card p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="a-title" className={labelClass}>
             Título

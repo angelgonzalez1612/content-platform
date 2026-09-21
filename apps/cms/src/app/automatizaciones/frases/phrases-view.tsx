@@ -243,7 +243,7 @@ export function PhrasesView({
           type="button"
           onClick={runNow}
           disabled={running}
-          className="flex flex-none items-center gap-2 rounded-[10px] border border-border bg-white px-4 py-2.5 text-[13.5px] font-semibold text-ink shadow-[0_1px_2px_rgba(23,20,17,.03)] transition-colors hover:border-ink-faint disabled:cursor-default disabled:opacity-60"
+          className="flex flex-none items-center gap-2 rounded-[10px] border border-border bg-card px-4 py-2.5 text-[13.5px] font-semibold text-ink shadow-[0_1px_2px_rgba(23,20,17,.03)] transition-colors hover:border-ink-faint disabled:cursor-default disabled:opacity-60"
         >
           <Icon d={SPARK_ICON} size={14} strokeWidth={1.8} className={running ? "animate-spin text-brand" : "text-brand"} />
           {running ? "Ejecutando…" : "Ejecutar ahora"}
@@ -257,7 +257,7 @@ export function PhrasesView({
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
-        <div className="flex flex-col overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+        <div className="flex flex-col overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
           <div className="border-b border-border-soft px-5 py-3.5">
             <h2 className="text-[15px] font-semibold tracking-tight">
               Frases guardadas <span className="font-mono text-[12px] font-normal text-ink-faint">({visiblePhrases.length})</span>
@@ -285,7 +285,7 @@ export function PhrasesView({
           )}
         </div>
 
-        <div className="flex flex-col overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+        <div className="flex flex-col overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
           <div className="flex items-center justify-between border-b border-border-soft px-5 py-3.5">
             <h2 className="text-[15px] font-semibold tracking-tight">Ya procesadas (automático)</h2>
             {phraseRunsAll.length > 0 && <span className="font-mono text-[11px] text-ink-faint">{phraseRunsAll.length}</span>}
@@ -298,11 +298,11 @@ export function PhrasesView({
                 type="button"
                 onClick={() => setSiteFilter(t.key)}
                 className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
-                  siteFilter === t.key ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
+                  siteFilter === t.key ? "border-brand bg-accent text-accent-fg" : "border-border bg-card text-ink-soft hover:border-ink-faint"
                 }`}
               >
                 {t.label}
-                <span className={`rounded-full px-1.5 font-mono text-[10.5px] ${siteFilter === t.key ? "bg-white/60" : "bg-background text-ink-faint"}`}>
+                <span className={`rounded-full px-1.5 font-mono text-[10.5px] ${siteFilter === t.key ? "bg-card/60" : "bg-background text-ink-faint"}`}>
                   {t.count}
                 </span>
               </button>

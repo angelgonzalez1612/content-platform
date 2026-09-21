@@ -271,7 +271,7 @@ export function GenerateEventFlow({
                   disabled={step === "generating"}
                   title={p.hint}
                   className={`flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors ${
-                    provider === p.id ? "border-brand bg-accent" : "border-border bg-white hover:border-ink-faint"
+                    provider === p.id ? "border-brand bg-accent" : "border-border bg-card hover:border-ink-faint"
                   }`}
                 >
                   <span className="block text-[13px] font-semibold">{p.label}</span>
@@ -318,7 +318,7 @@ export function GenerateEventFlow({
             </span>
             <h1 className="mt-3 mb-5 text-[22px] font-semibold tracking-tight">{name}</h1>
 
-            <div className="flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+            <div className="flex flex-col gap-5 rounded-[14px] border border-border bg-card p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="event-description" className={labelClass}>
                   Descripción
@@ -426,7 +426,7 @@ export function GenerateEventFlow({
         </div>
 
         {/* Barra de acciones — flex-none: nunca hace scroll con el formulario. */}
-        <div className="flex flex-none items-center gap-3 border-t border-border-soft bg-white px-[26px] py-3.5">
+        <div className="flex flex-none items-center gap-3 border-t border-border-soft bg-card px-[26px] py-3.5">
           <button
             type="button"
             onClick={handleCreate}
@@ -443,7 +443,7 @@ export function GenerateEventFlow({
       </div>
 
       {/* Columna derecha: vista previa, fija con su propio scroll. */}
-      <div className="w-full flex-none border-t border-border-soft bg-white lg:h-full lg:w-[420px] lg:overflow-y-auto lg:border-t-0 lg:border-l xl:w-[460px]">
+      <div className="w-full flex-none border-t border-border-soft bg-card lg:h-full lg:w-[420px] lg:overflow-y-auto lg:border-t-0 lg:border-l xl:w-[460px]">
         <div className="p-[26px]">
           <PlanazoPreviewCard
             kind="evento"

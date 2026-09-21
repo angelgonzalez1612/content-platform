@@ -31,7 +31,7 @@ export function LamiraCrearTypePicker() {
             type="button"
             onClick={() => setType(t.value)}
             className={`rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
-              type === t.value ? "border-brand bg-accent text-accent-fg" : "border-border bg-white text-ink-soft hover:border-ink-faint"
+              type === t.value ? "border-brand bg-accent text-accent-fg" : "border-border bg-card text-ink-soft hover:border-ink-faint"
             }`}
           >
             {t.label}
@@ -42,7 +42,7 @@ export function LamiraCrearTypePicker() {
       <div className="grid grid-cols-1 gap-4 text-left sm:grid-cols-2">
         <Link
           href={`/centro-ia?site=lamira&type=${type}`}
-          className="group flex flex-col gap-4 rounded-[16px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)] transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-[#FFE2CC] hover:shadow-[0_16px_32px_-16px_rgba(253,105,13,.28)]"
+          className="group flex flex-col gap-4 rounded-[16px] border border-border bg-card p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)] transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-[#FFE2CC] hover:shadow-[0_16px_32px_-16px_rgba(253,105,13,.28)]"
         >
           <div className="grid size-[44px] place-items-center rounded-[13px] border border-[#FFE2CC] bg-accent">
             <Icon d={SPARK_ICON} size={20} strokeWidth={1.6} className="text-brand" />
@@ -66,7 +66,7 @@ export function LamiraCrearTypePicker() {
 
         <Link
           href={`/crear/manual?site=lamira&type=${type}`}
-          className="group flex flex-col gap-4 rounded-[16px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)] transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-[#E0DBD4] hover:shadow-[0_16px_32px_-16px_rgba(23,20,17,.12)]"
+          className="group flex flex-col gap-4 rounded-[16px] border border-border bg-card p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)] transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-[#E0DBD4] hover:shadow-[0_16px_32px_-16px_rgba(23,20,17,.12)]"
         >
           <div className="grid size-[44px] place-items-center rounded-[13px] border border-border bg-background">
             <Icon d={PENCIL_ICON} size={20} strokeWidth={1.6} className="text-ink" />

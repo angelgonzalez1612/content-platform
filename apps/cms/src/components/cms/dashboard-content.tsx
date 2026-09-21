@@ -189,7 +189,7 @@ export function DashboardContent({ user }: { user: AuthUser }) {
         {(stats ? kpis : Array.from<Kpi | null>({ length: 6 })).map((k, i) => (
           <div
             key={k?.label ?? i}
-            className="flex min-w-0 flex-col gap-2 bg-white px-4 pt-[15px] pb-3.5 transition-colors hover:bg-[#FEFCFA]"
+            className="flex min-w-0 flex-col gap-2 bg-card px-4 pt-[15px] pb-3.5 transition-colors hover:bg-[#FEFCFA]"
           >
             {k ? (
               <>
@@ -219,7 +219,7 @@ export function DashboardContent({ user }: { user: AuthUser }) {
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(420px,1fr))] items-start gap-4">
         <div className="flex flex-col gap-4">
-          <div className="overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+          <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
             <div className="flex items-center gap-2.5 border-b border-border-soft px-4 py-3.5">
               <span className="text-[13.5px] font-semibold tracking-tight">
                 Publicado recientemente
@@ -268,7 +268,7 @@ export function DashboardContent({ user }: { user: AuthUser }) {
           </div>
 
           <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
-            <div className="rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+            <div className="rounded-[14px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
               <div className="mb-3 flex items-center gap-2">
                 <span className="text-[13.5px] font-semibold tracking-tight">
                   Sin actualizar hace más tiempo
@@ -312,7 +312,7 @@ export function DashboardContent({ user }: { user: AuthUser }) {
               </div>
             </div>
 
-            <div className="rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+            <div className="rounded-[14px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
               <div className="mb-3 flex items-center gap-2">
                 <span className="text-[13.5px] font-semibold tracking-tight">
                   Qué busca la gente
@@ -417,7 +417,7 @@ export function DashboardContent({ user }: { user: AuthUser }) {
             </div>
           </div>
 
-          <div className="rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+          <div className="rounded-[14px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
             <span className="mb-3 block text-[13.5px] font-semibold tracking-tight">
               Alertas
             </span>
@@ -451,7 +451,7 @@ export function DashboardContent({ user }: { user: AuthUser }) {
             </div>
           </div>
 
-          <div className="rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+          <div className="rounded-[14px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
             <div className="mb-3 flex items-center gap-2">
               <span className="text-[13.5px] font-semibold tracking-tight">
                 Última subida a prod

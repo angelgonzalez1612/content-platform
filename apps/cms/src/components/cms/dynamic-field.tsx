@@ -6,7 +6,7 @@ import type { FieldSchemaEntry } from "@planazo/types";
 // generate-place-flow) — no se exportan de un lugar central todavía, se
 // copian aquí a propósito para no acoplar este componente a otro archivo.
 export const fieldClass =
-  "rounded-xl border border-border bg-white px-3.5 py-2.5 text-[14px] text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-brand focus:shadow-[0_0_0_4px_rgba(253,105,13,.12)]";
+  "rounded-xl border border-border bg-card px-3.5 py-2.5 text-[14px] text-ink outline-none transition-[border-color,box-shadow] duration-200 focus:border-brand focus:shadow-[0_0_0_4px_rgba(253,105,13,.12)]";
 export const labelClass = "flex items-center gap-1.5 font-mono text-[10px] font-medium tracking-[.1em] text-ink-faint uppercase";
 
 /** Un campo del field_schema de una categoría — la pieza que implementa

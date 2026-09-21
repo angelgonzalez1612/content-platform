@@ -51,7 +51,7 @@ export default async function PerfilPage() {
           />
 
           <div className="relative flex items-center gap-4">
-            <div className="grid size-[64px] flex-none place-items-center rounded-full border-2 border-white/15 bg-white/10 text-[21px] font-semibold backdrop-blur-sm">
+            <div className="grid size-[64px] flex-none place-items-center rounded-full border-2 border-white/15 bg-card/10 text-[21px] font-semibold backdrop-blur-sm">
               {initials}
             </div>
             <div className="flex flex-col gap-1.5">
@@ -68,7 +68,7 @@ export default async function PerfilPage() {
 
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {details.map((d) => (
-            <div key={d.label} className="flex items-start gap-3 rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+            <div key={d.label} className="flex items-start gap-3 rounded-[14px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
               <span className="grid size-8 flex-none place-items-center rounded-lg bg-accent">
                 <Icon d={d.icon} size={14} strokeWidth={1.6} className="text-brand" />
               </span>
@@ -79,7 +79,7 @@ export default async function PerfilPage() {
             </div>
           ))}
 
-          <div className="flex items-start gap-3 rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+          <div className="flex items-start gap-3 rounded-[14px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
             <span className="grid size-8 flex-none place-items-center rounded-lg bg-accent">
               <Icon d="M7 4h10l1 3h2v12H4V7h2z" size={14} strokeWidth={1.6} className="text-brand" />
             </span>
@@ -90,7 +90,7 @@ export default async function PerfilPage() {
           </div>
         </div>
 
-        <div className="mt-3 flex items-center justify-between rounded-[14px] border border-border bg-white p-5 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+        <div className="mt-3 flex items-center justify-between rounded-[14px] border border-border bg-card p-5 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
           <div className="flex flex-col gap-0.5">
             <span className="text-[13.5px] font-medium text-ink">Cerrar sesión</span>
             <span className="text-[12px] text-ink-faint">Salir de tu cuenta en este dispositivo.</span>

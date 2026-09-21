@@ -49,7 +49,7 @@ export function AutomationActivityCard() {
   }, [load]);
 
   return (
-    <div className="mb-[18px] overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+    <div className="mb-[18px] overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
       <div className="flex flex-wrap items-center gap-2.5 border-b border-border-soft px-4 py-3.5">
         <span
           className={`size-[6px] flex-none rounded-full ${status?.isRunning ? "animate-[pz-pulse_1.2s_ease-in-out_infinite] bg-brand" : status?.lastCheckedAt && Date.now() - new Date(status.lastCheckedAt).getTime() < 30 * 60 * 1000 ? "bg-positive" : "bg-ink-faint"}`}
@@ -68,7 +68,7 @@ export function AutomationActivityCard() {
           onClick={load}
           disabled={loading}
           title="Actualizar"
-          className="grid size-7 flex-none place-items-center rounded-md border border-border bg-white text-ink-soft transition-colors hover:border-ink-faint disabled:cursor-default disabled:opacity-60"
+          className="grid size-7 flex-none place-items-center rounded-md border border-border bg-card text-ink-soft transition-colors hover:border-ink-faint disabled:cursor-default disabled:opacity-60"
         >
           <Icon d={REFRESH_ICON} size={13} strokeWidth={1.8} className={loading ? "animate-spin" : ""} />
         </button>

@@ -119,14 +119,14 @@ export function UsuariosView({ initialUsers, currentUser }: { initialUsers: Auth
           { label: "Administradores", value: admins },
           { label: "Editores", value: users.length - admins },
         ].map((k) => (
-          <div key={k.label} className="flex min-w-0 flex-col gap-2 bg-white px-4 pt-[15px] pb-3.5">
+          <div key={k.label} className="flex min-w-0 flex-col gap-2 bg-card px-4 pt-[15px] pb-3.5">
             <span className="text-[11.5px] text-[#8A837B]">{k.label}</span>
             <span className="text-[23px] font-semibold tracking-tight [font-variant-numeric:tabular-nums]">{k.value}</span>
           </div>
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+      <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
         <div className="overflow-x-auto">
           <div className="grid min-w-[640px] grid-cols-[1fr_180px_140px_120px] items-center gap-0 border-b border-border-soft px-4 py-2.5 font-mono text-[9px] tracking-[.1em] text-[#BDB6AE] uppercase">
             <span>Usuario</span>
@@ -157,7 +157,7 @@ export function UsuariosView({ initialUsers, currentUser }: { initialUsers: Auth
                       value={u.role}
                       disabled={roleSaving === u.id}
                       onChange={(e) => updateRole(u, e.target.value as UserRole)}
-                      className="rounded-lg border border-border bg-white px-2 py-1 text-[12px] font-medium text-ink outline-none transition-colors focus:border-brand disabled:opacity-50"
+                      className="rounded-lg border border-border bg-card px-2 py-1 text-[12px] font-medium text-ink outline-none transition-colors focus:border-brand disabled:opacity-50"
                     >
                       <option value="editor">Editor</option>
                       <option value="admin">Administrador</option>
@@ -257,7 +257,7 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[420px] rounded-[16px] border border-border bg-white p-6 shadow-[0_24px_48px_-12px_rgba(23,20,17,.28)]"
+        className="w-full max-w-[420px] rounded-[16px] border border-border bg-card p-6 shadow-[0_24px_48px_-12px_rgba(23,20,17,.28)]"
       >
         <h2 className="mb-1 text-[17px] font-semibold tracking-tight">Nuevo usuario</h2>
         <p className="mb-4 text-[12.5px] text-ink-soft">Se crea con esta contraseña — compártesela para que inicie sesión y la cambie después.</p>

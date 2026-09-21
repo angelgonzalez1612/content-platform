@@ -30,7 +30,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-[560px] max-w-[92vw] overflow-hidden rounded-2xl border border-[#E4E0DA] bg-white shadow-[0_20px_50px_rgba(23,20,17,.22)]"
+        className="w-[560px] max-w-[92vw] overflow-hidden rounded-2xl border border-[#E4E0DA] bg-card shadow-[0_20px_50px_rgba(23,20,17,.22)]"
       >
         <div className="flex items-center gap-2.5 border-b border-border-soft px-4 py-3.5">
           <Icon d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z" size={15} strokeWidth={1.8} className="text-brand" />

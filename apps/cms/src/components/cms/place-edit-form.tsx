@@ -193,7 +193,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
           {improveMode === "expand" ? (
             <div className="flex flex-col gap-3 text-[13px]">
               {((improveResult.draft.content as ContentBlockValue[] | undefined) ?? []).slice(content.length).map((block, i) => (
-                <div key={i} className="rounded-[10px] border border-[#FFE2CC] bg-white p-3">
+                <div key={i} className="rounded-[10px] border border-[#FFE2CC] bg-card p-3">
                   {block.heading && <p className="font-semibold text-ink">{block.heading}</p>}
                   {block.paragraphs.map((p, pi) => (
                     <p key={pi} className="mt-1.5 text-ink-soft">
@@ -243,7 +243,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
               type="button"
               onClick={() => improveRef.current?.regenerate()}
               disabled={regenerating}
-              className="rounded-[10px] border border-border bg-white px-4 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand disabled:cursor-default disabled:opacity-70"
+              className="rounded-[10px] border border-border bg-card px-4 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand disabled:cursor-default disabled:opacity-70"
             >
               {regenerating ? "Generando…" : "Generar otra vez"}
             </button>
@@ -257,7 +257,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-[14px] border border-border bg-card p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="name" className={labelClass}>
             Nombre
@@ -286,7 +286,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
                 href={form.sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-none rounded-lg border border-border bg-white px-3 py-2.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
+                className="flex-none rounded-lg border border-border bg-card px-3 py-2.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
               >
                 Abrir ↗
               </a>

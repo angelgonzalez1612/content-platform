@@ -98,19 +98,19 @@ export function MediaSearchPanel({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+      <div className="rounded-[14px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
         <form onSubmit={handleSearch} className="flex flex-wrap items-center gap-2">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar imágenes libres (ej. terrazas cdmx, museo frida kahlo)…"
-            className="min-w-[240px] flex-1 rounded-[10px] border border-border bg-white px-3.5 py-2 text-[13px] placeholder:text-ink-faint focus:border-brand focus:outline-none"
+            className="min-w-[240px] flex-1 rounded-[10px] border border-border bg-card px-3.5 py-2 text-[13px] placeholder:text-ink-faint focus:border-brand focus:outline-none"
           />
           <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="rounded-[10px] border border-border bg-white px-3 py-2 text-[12.5px] text-ink-soft"
+            className="rounded-[10px] border border-border bg-card px-3 py-2 text-[12.5px] text-ink-soft"
           >
             <option value="">Sin categoría</option>
             {categories.map((c) => (
@@ -169,13 +169,13 @@ export function MediaSearchPanel({
           Guardadas sin usar <span className="font-mono text-[12px] font-normal text-ink-faint">({assets.length})</span>
         </h2>
         {assets.length === 0 ? (
-          <div className="rounded-[14px] border border-border bg-white p-8 text-center text-[13px] text-ink-soft">
+          <div className="rounded-[14px] border border-border bg-card p-8 text-center text-[13px] text-ink-soft">
             Todavía no has guardado ninguna imagen de este acervo — búscalas arriba.
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {assets.map((a) => (
-              <div key={a.id} className="group relative overflow-hidden rounded-[12px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+              <div key={a.id} className="group relative overflow-hidden rounded-[12px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
                 <div className="relative aspect-square overflow-hidden bg-[#F3F0EC]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={a.url} alt={a.credit ?? "Imagen guardada"} loading="lazy" className="size-full object-cover" />

@@ -345,7 +345,7 @@ export function GenerateLamiraContentFlow({
 
         <form
           onSubmit={handleGenerate}
-          className="flex flex-col gap-5 rounded-[16px] border border-border bg-white p-6 text-left shadow-[0_1px_2px_rgba(23,20,17,.03)] sm:p-7"
+          className="flex flex-col gap-5 rounded-[16px] border border-border bg-card p-6 text-left shadow-[0_1px_2px_rgba(23,20,17,.03)] sm:p-7"
         >
           <div className="flex flex-col gap-1.5">
             {/* "Tema / título" en vez de "Título de la noticia"/"de la
@@ -395,7 +395,7 @@ export function GenerateLamiraContentFlow({
                   onClick={() => setProvider(p.id)}
                   disabled={step === "generating"}
                   title={p.hint}
-                  className={`flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors ${provider === p.id ? "border-brand bg-accent" : "border-border bg-white hover:border-ink-faint"}`}
+                  className={`flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors ${provider === p.id ? "border-brand bg-accent" : "border-border bg-card hover:border-ink-faint"}`}
                 >
                   <span className="block text-[13px] font-semibold">{p.label}</span>
                   <span className="block text-[11px] text-ink-faint">{p.hint}</span>
@@ -454,11 +454,11 @@ export function GenerateLamiraContentFlow({
                 id="lc-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-[8px] border border-transparent bg-transparent px-0 py-1 text-[22px] font-semibold tracking-tight text-ink transition-colors focus:border-border-soft focus:bg-white focus:px-3 focus:outline-none"
+                className="w-full rounded-[8px] border border-transparent bg-transparent px-0 py-1 text-[22px] font-semibold tracking-tight text-ink transition-colors focus:border-border-soft focus:bg-card focus:px-3 focus:outline-none"
               />
             </div>
 
-            <div className="flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+            <div className="flex flex-col gap-5 rounded-[14px] border border-border bg-card p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
               <ImageField
                 image={image}
                 onChange={setImage}
@@ -737,7 +737,7 @@ export function GenerateLamiraContentFlow({
 
         {/* Barra de acciones — flex-none: nunca hace scroll con el formulario,
             siempre queda visible al fondo del panel izquierdo. */}
-        <div className="flex flex-none items-center gap-3 border-t border-border-soft bg-white px-[26px] py-3.5">
+        <div className="flex flex-none items-center gap-3 border-t border-border-soft bg-card px-[26px] py-3.5">
           <button
             type="button"
             onClick={handleCreate}
@@ -756,7 +756,7 @@ export function GenerateLamiraContentFlow({
       {/* Columna derecha: vista previa. En pantallas grandes es un panel de
           ancho fijo con SU PROPIO scroll (independiente del formulario) —
           en móvil se apila normal, sin altura forzada. */}
-      <div className="w-full flex-none border-t border-border-soft bg-white lg:h-full lg:w-[420px] lg:overflow-y-auto lg:border-t-0 lg:border-l xl:w-[460px]">
+      <div className="w-full flex-none border-t border-border-soft bg-card lg:h-full lg:w-[420px] lg:overflow-y-auto lg:border-t-0 lg:border-l xl:w-[460px]">
         <div className="p-[26px]">
           <LamiraPreviewCard
             type={type}

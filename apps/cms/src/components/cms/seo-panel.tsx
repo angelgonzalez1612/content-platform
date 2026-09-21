@@ -97,7 +97,7 @@ function GenerateSeoButton({ contentTitle, contentContext, onApply }: { contentT
       </button>
 
       {open && (
-        <div className="flex flex-col gap-2.5 rounded-[10px] border border-border-soft bg-white p-3">
+        <div className="flex flex-col gap-2.5 rounded-[10px] border border-border-soft bg-card p-3">
           <div className="flex gap-1.5">
             {providers.map((p) => (
               <button
@@ -105,7 +105,7 @@ function GenerateSeoButton({ contentTitle, contentContext, onApply }: { contentT
                 type="button"
                 onClick={() => setProvider(p.id)}
                 className={`flex-1 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors ${
-                  provider === p.id ? "border-brand bg-accent" : "border-border bg-white hover:border-ink-faint"
+                  provider === p.id ? "border-brand bg-accent" : "border-border bg-card hover:border-ink-faint"
                 }`}
               >
                 {p.label}

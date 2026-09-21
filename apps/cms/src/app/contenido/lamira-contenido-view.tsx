@@ -94,7 +94,7 @@ export function LamiraContenidoView({ rows, categories }: { rows: LamiraContentR
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="rounded-full border border-border bg-white px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint"
+          className="rounded-full border border-border bg-card px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint"
         >
           <option value="todos">Todas las categorías</option>
           {categoriesPresent.map((c) => (
@@ -134,7 +134,7 @@ export function LamiraContenidoView({ rows, categories }: { rows: LamiraContentR
         )}
       </div>
 
-      <div className="overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+      <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
         <div className="overflow-x-auto">
         <div className="grid min-w-[780px] grid-cols-[110px_1fr_150px_130px_100px_50px_44px] items-center gap-0 border-b border-border-soft px-4 py-2.5 font-mono text-[9px] tracking-[.1em] text-[#BDB6AE] uppercase">
           <span>Tipo</span>
@@ -206,7 +206,7 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
       type="button"
       onClick={onClick}
       className={`rounded-full px-3 py-1 text-[12.5px] font-semibold whitespace-nowrap transition-colors ${
-        active ? "bg-white text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+        active ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
       }`}
     >
       {children}

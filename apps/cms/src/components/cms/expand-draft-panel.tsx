@@ -97,7 +97,7 @@ export function ExpandDraftPanel({
   }
 
   return (
-    <div className="rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+    <div className="rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
       <button
         type="button"
         onClick={onToggle}
@@ -127,7 +127,7 @@ export function ExpandDraftPanel({
                       type="button"
                       onClick={() => setProvider(p.id)}
                       className={`flex-1 rounded-xl border px-3 py-2 text-[13px] font-medium transition-colors ${
-                        provider === p.id ? "border-brand bg-accent" : "border-border bg-white hover:border-ink-faint"
+                        provider === p.id ? "border-brand bg-accent" : "border-border bg-card hover:border-ink-faint"
                       }`}
                     >
                       {p.label}

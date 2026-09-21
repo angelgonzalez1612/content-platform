@@ -193,7 +193,7 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
         />
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-[14px] border border-border bg-card p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="r-title" className={labelClass}>
             Título
@@ -221,7 +221,7 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
                 href={form.sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-none rounded-lg border border-border bg-white px-3 py-2.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
+                className="flex-none rounded-lg border border-border bg-card px-3 py-2.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
               >
                 Abrir ↗
               </a>

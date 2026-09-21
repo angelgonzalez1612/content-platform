@@ -106,7 +106,7 @@ export function Sidebar({
           <Icon d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM16.5 16.5L21 21" size={13} strokeWidth={2} className="flex-none" />
           <span className={`flex flex-1 items-center gap-2 ${collapseText(collapsed)}`} style={{ maxWidth: collapsed ? 0 : 220 }}>
             <span className="flex-1">Buscar o preguntar…</span>
-            <span className="rounded border border-border bg-white px-1 py-px font-mono text-[9.5px] text-ink-faint">⌘K</span>
+            <span className="rounded border border-border bg-card px-1 py-px font-mono text-[9.5px] text-ink-faint">⌘K</span>
           </span>
         </button>
       </div>

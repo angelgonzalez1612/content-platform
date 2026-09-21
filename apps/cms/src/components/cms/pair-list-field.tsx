@@ -83,7 +83,7 @@ export function PairListField<K1 extends string, K2 extends string>({
       <button
         type="button"
         onClick={add}
-        className="self-start rounded-lg border border-border bg-white px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint"
+        className="self-start rounded-lg border border-border bg-card px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint"
       >
         {addLabel}
       </button>

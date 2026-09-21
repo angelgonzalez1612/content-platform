@@ -126,7 +126,7 @@ export const BlockImprovePanel = forwardRef<BlockImprovePanelHandle, {
   return (
     <div className="fixed right-6 bottom-6 z-30 flex flex-col items-end gap-2.5">
       {open && (
-        <div className="flex max-h-[min(72vh,640px)] w-[min(92vw,360px)] flex-col gap-3 overflow-y-auto rounded-[16px] border border-border bg-white p-4 shadow-[0_8px_28px_rgba(23,20,17,.16)]">
+        <div className="flex max-h-[min(72vh,640px)] w-[min(92vw,360px)] flex-col gap-3 overflow-y-auto rounded-[16px] border border-border bg-card p-4 shadow-[0_8px_28px_rgba(23,20,17,.16)]">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-[13px] font-semibold">
               <Icon d={SPARK_ICON} size={14} strokeWidth={1.8} className="text-brand" />
@@ -167,7 +167,7 @@ export const BlockImprovePanel = forwardRef<BlockImprovePanelHandle, {
                   setResult(null);
                 }}
                 className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-colors ${
-                  mode === m.id ? "bg-white text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+                  mode === m.id ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
                 }`}
               >
                 {m.label}
@@ -188,7 +188,7 @@ export const BlockImprovePanel = forwardRef<BlockImprovePanelHandle, {
                 type="button"
                 onClick={() => setProvider(p.id)}
                 className={`flex-1 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors ${
-                  provider === p.id ? "border-brand bg-accent" : "border-border bg-white hover:border-ink-faint"
+                  provider === p.id ? "border-brand bg-accent" : "border-border bg-card hover:border-ink-faint"
                 }`}
               >
                 {p.label}

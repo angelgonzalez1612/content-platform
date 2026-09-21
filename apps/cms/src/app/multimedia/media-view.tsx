@@ -89,7 +89,7 @@ export function MediaView({
               type="button"
               onClick={() => setTab(t.id)}
               className={`rounded-full px-3 py-1 text-[12.5px] font-semibold whitespace-nowrap transition-colors ${
-                tab === t.id ? "bg-white text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+                tab === t.id ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
               }`}
             >
               {t.label}
@@ -109,12 +109,12 @@ export function MediaView({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar por título o crédito…"
-          className="w-full max-w-[260px] rounded-full border border-border bg-white px-3.5 py-1.5 text-[12.5px] transition-colors placeholder:text-ink-faint focus:border-brand focus:outline-none"
+          className="w-full max-w-[260px] rounded-full border border-border bg-card px-3.5 py-1.5 text-[12.5px] transition-colors placeholder:text-ink-faint focus:border-brand focus:outline-none"
         />
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="rounded-full border border-border bg-white px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint"
+          className="rounded-full border border-border bg-card px-3 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-ink-faint"
         >
           <option value="all">Todas las categorías</option>
           {categoriesPresent.names.map((name) => (
@@ -137,7 +137,7 @@ export function MediaView({
               type="button"
               onClick={() => setSiteFilter(f.id)}
               className={`rounded-full px-3 py-1 text-[12.5px] font-semibold whitespace-nowrap transition-colors ${
-                siteFilter === f.id ? "bg-white text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+                siteFilter === f.id ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
               }`}
             >
               {f.label}
@@ -151,7 +151,7 @@ export function MediaView({
           type="button"
           onClick={() => setTypeFilter("all")}
           className={`rounded-full px-3 py-1 text-[12.5px] font-semibold whitespace-nowrap transition-colors ${
-            typeFilter === "all" ? "bg-white text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+            typeFilter === "all" ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
           }`}
         >
           Todos los tipos
@@ -162,7 +162,7 @@ export function MediaView({
             type="button"
             onClick={() => setTypeFilter(t)}
             className={`rounded-full px-3 py-1 text-[12.5px] font-semibold whitespace-nowrap transition-colors ${
-              typeFilter === t ? "bg-white text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+              typeFilter === t ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
             }`}
           >
             {contentTypeIcon(t)} {contentTypeLabel(t)}
@@ -171,7 +171,7 @@ export function MediaView({
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-[14px] border border-border bg-white p-10 text-center text-[13.5px] text-ink-soft">
+        <div className="rounded-[14px] border border-border bg-card p-10 text-center text-[13.5px] text-ink-soft">
           {initialItems.length === 0 ? "Todavía no hay imágenes en uso." : "Ninguna imagen coincide con estos filtros."}
         </div>
       ) : (
@@ -180,7 +180,7 @@ export function MediaView({
             <Link
               key={`${it.contentType}-${it.id}`}
               href={contentEditHref(it.contentType, it.contentId)}
-              className="group relative overflow-hidden rounded-[12px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]"
+              className="group relative overflow-hidden rounded-[12px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]"
             >
               <div className="relative aspect-square overflow-hidden bg-[#F3F0EC]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}

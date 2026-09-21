@@ -150,7 +150,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
   }
 
   const preview = (
-    <div className="overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+    <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
       {image ? (
         // eslint-disable-next-line @next/next/no-img-element -- preview de una URL externa arbitraria, mismo criterio que el resto del CMS
         <img src={image.url} alt="" className="h-[160px] w-full object-cover" />
@@ -196,7 +196,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
       />
     )}
 
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-[14px] border border-border bg-card p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
       <div className="flex flex-col gap-1.5">
         <label htmlFor="gu-title" className={labelClass}>
           Título

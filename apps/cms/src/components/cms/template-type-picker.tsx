@@ -64,7 +64,7 @@ export function TemplateTypePicker({
                     aria-selected={isActive}
                     onClick={() => setSelectedType(t.contentType)}
                     className={`rounded-full px-3 py-1 text-[12.5px] font-medium transition-colors ${
-                      isActive ? "bg-brand text-white shadow-[0_1px_2px_rgba(253,105,13,.35)]" : "border border-border bg-white text-ink-soft hover:border-ink-faint hover:text-ink"
+                      isActive ? "bg-brand text-white shadow-[0_1px_2px_rgba(253,105,13,.35)]" : "border border-border bg-card text-ink-soft hover:border-ink-faint hover:text-ink"
                     }`}
                   >
                     {t.label}
@@ -84,7 +84,7 @@ export function TemplateTypePicker({
                 value={selectedCategoryId}
                 onChange={(e) => setSelectedCategoryId(e.target.value)}
                 title="Cada categoría agrega sus propios campos — cámbiala para ver cuáles."
-                className="rounded-lg border border-border bg-white px-3 py-1 text-[12.5px] font-medium text-ink"
+                className="rounded-lg border border-border bg-card px-3 py-1 text-[12.5px] font-medium text-ink"
               >
                 {exclusiveCategories.length > 0 && (
                   <optgroup label={`Exclusivas de ${siteLabel}`}>

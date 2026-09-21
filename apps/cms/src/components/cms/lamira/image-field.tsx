@@ -51,7 +51,7 @@ export function ImageField({
               fija arriba, fuera de las pestañas de búsqueda, para poder
               recuperarla con un clic aunque ya se haya elegido otra. */}
           {image && (
-            <div className="flex items-center gap-3 rounded-[8px] border border-border-soft bg-white p-2">
+            <div className="flex items-center gap-3 rounded-[8px] border border-border-soft bg-card p-2">
               {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
               <img src={image.url} alt="" className="h-14 w-20 flex-none rounded-[6px] object-cover" />
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">

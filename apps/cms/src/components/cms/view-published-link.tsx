@@ -47,7 +47,7 @@ export function ViewPublishedLink({ href, available, compact = false }: { href: 
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-3 py-1 text-[12px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
+      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[12px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
     >
       Ver publicación
       {icon}
