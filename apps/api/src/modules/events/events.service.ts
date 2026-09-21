@@ -87,6 +87,7 @@ export class EventsService {
         categoryId: dto.categoryId ?? null,
         imageUrl: dto.imageUrl ?? null,
         imageCredit: dto.imageCredit ?? null,
+        sourceUrl: dto.sourceUrl ?? null,
         status: dto.status,
         categoryData: dto.categoryData ?? {},
         seo: dto.seo ?? null,

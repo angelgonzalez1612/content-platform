@@ -19,6 +19,7 @@ export const updatePlaceSchema = z
     reviewCount: z.number().int().min(0).optional(),
     phone: z.string().nullable().optional(),
     website: z.string().nullable().optional(),
+    sourceUrl: z.string().nullable().optional(),
     // Reemplaza la foto de portada (photos[0]) — `null` la quita, `undefined`
     // (campo ausente) la deja intacta. El resto de la galería, si la hay, no
     // se toca desde aquí (ver PlacesService.update).

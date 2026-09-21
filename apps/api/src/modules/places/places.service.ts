@@ -224,6 +224,7 @@ export class PlacesService {
         priceLevel: dto.priceLevel ?? null,
         price: dto.price ?? null,
         rating: dto.rating ?? null,
+        sourceUrl: dto.sourceUrl ?? null,
         status: dto.status,
         categoryData: dto.categoryData ?? {},
         content: dto.content ?? [],

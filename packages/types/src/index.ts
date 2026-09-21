@@ -356,6 +356,9 @@ export interface Place {
   reviewCount: number;
   phone: string | null;
   website: string | null;
+  // El artículo/tema original del que salió este lugar, cuando lo crea la
+  // automatización — mismo campo que Noticia/Reportaje de La Mira.
+  sourceUrl: string | null;
   status: ContentStatus;
   categories: Category[];
   tags: Tag[];
@@ -408,6 +411,8 @@ export interface PlanazoEvent {
   // Imagen propia del evento — independiente de la del `place` vinculado.
   imageUrl: string | null;
   imageCredit: string | null;
+  // Mismo campo que Place.sourceUrl y Noticia/Reportaje de La Mira.
+  sourceUrl: string | null;
   content: ContentBlock[];
   createdAt: string;
 }

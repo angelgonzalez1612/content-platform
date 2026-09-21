@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
 import type { ContentStatus, PlanazoGuide } from "@planazo/types";
@@ -8,6 +8,8 @@ import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { ImageField } from "@/components/cms/lamira/image-field";
 import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
 import { GuideSectionsField, type GuideSectionValue, type PlaceOption } from "@/components/cms/planazo/guide-sections-field";
+import { ImproveWithAiPanel, type ImproveWithAiHandle } from "@/components/cms/improve-with-ai-panel";
+import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
 
 const STATUS_OPTIONS: Array<{ value: ContentStatus; label: string }> = [
   { value: "draft", label: "Borrador" },
@@ -53,10 +55,22 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [improving, setImproving] = useState(false);
+  const [improveResult, setImproveResult] = useState<ImproveResult | null>(null);
+  const improveRef = useRef<ImproveWithAiHandle>(null);
+  const [regenerating, setRegenerating] = useState(false);
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }));
     setSavedAt(null);
+  }
+
+  function applyImprovement() {
+    if (!improveResult) return;
+    const { description, intro } = improveResult.draft as { description?: string; intro?: string };
+    if (description) set("description", description);
+    if (intro) set("intro", intro);
+    setImproveResult(null);
   }
 
   function addAudience() {
@@ -146,6 +160,33 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
   );
 
   const left = (
+    <div className="flex flex-col gap-4">
+    {isEdit && (
+      <ImproveWithAiPanel
+        ref={improveRef}
+        contentType="planazo-guia"
+        contentId={existing.id}
+        expanded={improving}
+        onToggle={() => setImproving((v) => !v)}
+        onResult={setImproveResult}
+        onLoadingChange={setRegenerating}
+      />
+    )}
+
+    {improveResult && (
+      <ImprovePreview
+        result={improveResult}
+        fields={[
+          { label: "Descripción", current: form.description, improved: (improveResult.draft.description as string) ?? "" },
+          { label: "Intro", current: form.intro, improved: (improveResult.draft.intro as string) ?? "" },
+        ]}
+        onApply={applyImprovement}
+        onDiscard={() => setImproveResult(null)}
+        onRegenerate={() => improveRef.current?.regenerate()}
+        regenerating={regenerating}
+      />
+    )}
+
     <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-[14px] border border-border bg-white p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
       <div className="flex flex-col gap-1.5">
         <label htmlFor="gu-title" className={labelClass}>
@@ -300,6 +341,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
         {savedAt && <span className="font-mono text-[12px] text-positive">Guardado ✓</span>}
       </div>
     </form>
+    </div>
   );
 
   return <EditPreviewLayout left={left} preview={preview} />;

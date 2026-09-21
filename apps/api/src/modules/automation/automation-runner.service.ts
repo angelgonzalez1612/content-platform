@@ -728,6 +728,7 @@ export class AutomationRunnerService {
           status,
           categoryData,
           seo,
+          sourceUrl: result.sourceUrl,
         });
         return { id: created.id, slug: created.slug };
       }
@@ -747,6 +748,7 @@ export class AutomationRunnerService {
           status,
           categoryData,
           seo,
+          sourceUrl: result.sourceUrl,
         });
         return { id: created.id, slug: created.slug };
       }

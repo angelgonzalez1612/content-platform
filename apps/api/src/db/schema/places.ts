@@ -33,6 +33,12 @@ export const places = sqliteTable('places', {
   reviewCount: integer('review_count').default(0).notNull(),
   phone: text('phone'),
   website: text('website'),
+  // El artículo/tema original del que salió este lugar, cuando lo crea la
+  // automatización (content-radar → Centro IA) — mismo campo que ya tenían
+  // noticia/reportaje de La Mira (ver schema/lamira.ts). AiDraftService.draft
+  // ya calculaba este valor para TODOS los tipos (urlFromHints), solo faltaba
+  // la columna para guardarlo.
+  sourceUrl: text('source_url'),
   status: text('status', { enum: CONTENT_STATUS_VALUES })
     .default('draft')
     .notNull(),

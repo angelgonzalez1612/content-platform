@@ -14,6 +14,7 @@ export const createEventSchema = z.object({
   categoryId: z.string().nullable().optional(),
   imageUrl: z.string().nullable().optional(),
   imageCredit: z.string().nullable().optional(),
+  sourceUrl: z.string().nullable().optional(),
   status: z
     .enum(['draft', 'in_review', 'scheduled', 'published', 'archived'])
     .default('draft'),

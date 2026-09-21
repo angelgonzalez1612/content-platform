@@ -28,6 +28,7 @@ interface PlaceRow {
   reviewCount: number;
   phone: string | null;
   website: string | null;
+  sourceUrl: string | null;
   status: Place['status'];
   categoryData: Record<string, unknown>;
   seo: Place['seo'];
@@ -99,6 +100,7 @@ export function toPlaceSummary(row: PlaceRow): Place {
     reviewCount: row.reviewCount,
     phone: row.phone,
     website: row.website,
+    sourceUrl: row.sourceUrl,
     status: row.status,
     categories: row.placeCategories.map((pc) => pc.category),
     tags: row.placeTags.map((pt) => pt.tag),

@@ -43,6 +43,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
     rating: place.rating,
     phone: place.phone ?? "",
     website: place.website ?? "",
+    sourceUrl: place.sourceUrl ?? "",
     status: place.status,
     allowPhotoModal: place.allowPhotoModal,
   });
@@ -85,6 +86,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
       rating: form.rating,
       phone: form.phone || null,
       website: form.website || null,
+      sourceUrl: form.sourceUrl || null,
       status,
       categoryData,
       seo,
@@ -261,6 +263,35 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
             Nombre
           </label>
           <input id="name" required value={form.name} onChange={(e) => set("name", e.target.value)} className={fieldClass} />
+        </div>
+
+        {/* Arriba de todo — es lo primero que se necesita para verificar el
+            tema contra el artículo/tema original antes de revisar el resto
+            del formulario, no algo que revisar hasta el final. Se llena solo
+            cuando lo crea la automatización (ver AutomationRunnerService). */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="place-source-url" className={labelClass}>
+            URL de la fuente
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="place-source-url"
+              value={form.sourceUrl}
+              onChange={(e) => set("sourceUrl", e.target.value)}
+              placeholder="https://…"
+              className={`${fieldClass} flex-1`}
+            />
+            {form.sourceUrl && (
+              <a
+                href={form.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-none rounded-lg border border-border bg-white px-3 py-2.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
+              >
+                Abrir ↗
+              </a>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col gap-1.5">

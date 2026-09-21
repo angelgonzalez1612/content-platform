@@ -58,6 +58,7 @@ export interface UpdatePlaceInput {
   rating?: number | null;
   phone?: string | null;
   website?: string | null;
+  sourceUrl?: string | null;
   status?: Place["status"];
   categoryData?: Record<string, unknown>;
   seo?: Seo | null;

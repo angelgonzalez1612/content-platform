@@ -18,6 +18,7 @@ import {
   lamiraEventos,
   lamiraLugares,
   reportajes,
+  planazoGuides,
   contentAuditLog,
   type ContentStatus,
 } from '../../db/schema';
@@ -980,6 +981,102 @@ export class AiDraftService {
     };
   }
 
+  /** "Mejorar" para guías de Planazo (planazo-guia) — mismo patrón que
+   * improvePlanazoEvento, pero más acotado todavía: `planazo_guides` no tiene
+   * columna `seo` ni `categoryId` real (solo `categoryLabel`, texto libre),
+   * así que solo hay description/intro que reescribir, sin SEO ni checks de
+   * hechos verificables por categoría. No ofrece modo 'expand' — agregar una
+   * sección nueva significa citar un lugar real por slug (mismo requisito
+   * que el draft inicial, ver placeCatalog en draft()), algo que este modo
+   * simple de "mejorar redacción" no está pensado para resolver todavía. */
+  async improvePlanazoGuia(
+    id: string,
+    dto: ImproveRequestDto,
+    actorId?: string,
+  ): Promise<DraftResult> {
+    const existing = await this.db.query.planazoGuides.findFirst({
+      where: eq(planazoGuides.id, id),
+    });
+    if (!existing) throw new NotFoundException(`Guía "${id}" no existe`);
+
+    const typeConfig = getContentTypeConfig('planazo-guia');
+    const fullSchema = z.object({
+      description: z.string().describe('1-2 líneas, resume qué resuelve la guía (para meta/subtítulo).'),
+      intro: z.string().describe('1 párrafo de apertura, tono de amigo que ya lo hizo — por qué esta selección, no una introducción genérica.'),
+    });
+
+    const originalFacts = { description: existing.description, intro: existing.intro };
+
+    const userPrompt = [
+      `Tipo de contenido: ${typeConfig.label}`,
+      `Título: ${existing.title}`,
+      `Categoría: ${existing.categoryLabel}`,
+      `Descripción actual: ${existing.description || '(vacía)'}`,
+      `Intro actual: ${existing.intro || '(vacía — redáctala desde cero con lo que sabes del título)'}`,
+      dto.instructions ? `Instrucción del editor: ${dto.instructions}` : '',
+      '',
+      'Tu trabajo es MEJORAR la redacción de description e intro. No te pido las secciones (sections) — esas se editan aparte porque citan lugares reales por slug.',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const improveSystemPrompt = `${typeConfig.systemPrompt}\n\nEstás MEJORANDO contenido existente, no creando desde cero: expande texto genérico/ambiguo. Tu respuesta solo lleva description e intro — nunca inventes ni cambies las secciones ni ningún dato de lugares reales.`;
+
+    const output = await this.providers.get(dto.provider).generateStructured({
+      systemPrompt: improveSystemPrompt,
+      userPrompt,
+      schema: fullSchema,
+      schemaName: 'planazo-guia_improve',
+    });
+
+    const { checksRun, decision } = this.checks.run({
+      mode: 'improve',
+      contentType: 'planazo-guia',
+      requiredFields: ['description', 'intro'],
+      factFields: [],
+      draftData: output,
+      originalFacts,
+      hasImageWithAlt: undefined,
+      slugAvailable: true,
+      bodyText: JSON.stringify(output),
+    });
+
+    const planazoSite = await this.db.query.sites.findFirst({
+      where: eq(sites.slug, 'planazo'),
+    });
+
+    await this.db.insert(contentAuditLog).values({
+      siteId: planazoSite!.id,
+      contentType: 'planazo-guia',
+      contentId: id,
+      mode: 'improve',
+      sourceContext: { instructions: dto.instructions ?? null },
+      inputFacts: originalFacts,
+      aiModel: dto.provider === 'claude-cli' ? 'claude-cli' : 'gpt-4o-mini',
+      aiOutput: output as Record<string, unknown>,
+      checksRun,
+      decision,
+      // Las guías de Planazo no tienen workflow de borrador (se publican de
+      // inmediato al crearse) — "mejorar" nunca cambia ese status.
+      statusBefore: existing.status,
+      statusAfter: existing.status,
+      actorId: actorId ?? null,
+    });
+
+    return {
+      draft: output,
+      checksRun,
+      decision,
+      image: null,
+      articleImages: [],
+      imageSearchQuery: '',
+      sourceUrl: null,
+      categoryId: '',
+      site: 'planazo',
+      contentType: 'planazo-guia',
+    };
+  }
+
   /** Los 6 tipos de la-mira con CRUD real (Fase 2) — 'place' sigue por separado
    * arriba porque su categoría es una relación N:M (placeCategories), no una
    * columna categoryId directa como en estos. `queryKey` es el nombre que usa
@@ -1061,6 +1158,7 @@ export class AiDraftService {
     actorId?: string,
   ): Promise<DraftResult> {
     if (type === 'place') return this.improvePlace(id, dto, actorId);
+    if (type === 'planazo-guia') return this.improvePlanazoGuia(id, dto, actorId);
     if (dto.mode === 'expand') {
       if (type === 'evento-planazo')
         return this.expandPlanazoEvento(id, dto, actorId);

@@ -17,6 +17,9 @@ export const createPlaceSchema = z.object({
   rating: z.number().min(0).max(5).nullable().optional(),
   categorySlug: z.string(),
   tags: z.array(z.string()).optional(),
+  // El artículo/tema original del que salió este lugar, cuando lo crea la
+  // automatización — mismo campo que noticia/reportaje de La Mira.
+  sourceUrl: z.string().nullable().optional(),
   // Imagen inicial (de la fuente scrapeada, de una búsqueda de uso libre, o
   // pegada a mano) — antes de esto, `create()` nunca insertaba en `photos`,
   // así que un lugar creado con IA se quedaba sin imagen aunque el borrador

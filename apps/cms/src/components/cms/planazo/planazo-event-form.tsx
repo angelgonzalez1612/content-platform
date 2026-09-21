@@ -49,6 +49,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
     locationName: existing.locationName ?? "",
     alcaldiaSlug: existing.alcaldiaSlug ?? "",
     categoryId: existing.categoryId ?? categories[0]?.id ?? "",
+    sourceUrl: existing.sourceUrl ?? "",
     status: existing.status,
   });
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(existing.categoryData ?? {});
@@ -103,6 +104,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
       categoryId: form.categoryId || null,
       imageUrl: image?.url ?? null,
       imageCredit: image?.credit ?? null,
+      sourceUrl: form.sourceUrl || null,
       status,
       categoryData,
       seo,
@@ -187,6 +189,34 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
             Nombre
           </label>
           <input id="pe-name" required value={form.name} onChange={(e) => set("name", e.target.value)} className={fieldClass} />
+        </div>
+
+        {/* Arriba de todo — se llena solo cuando lo crea la automatización
+            (ver AutomationRunnerService), mismo patrón que noticia/reportaje
+            de La Mira y Lugares de Planazo. */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="pe-source-url" className={labelClass}>
+            URL de la fuente
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="pe-source-url"
+              value={form.sourceUrl}
+              onChange={(e) => set("sourceUrl", e.target.value)}
+              placeholder="https://…"
+              className={`${fieldClass} flex-1`}
+            />
+            {form.sourceUrl && (
+              <a
+                href={form.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-none rounded-lg border border-border bg-white px-3 py-2.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
+              >
+                Abrir ↗
+              </a>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col gap-1.5">

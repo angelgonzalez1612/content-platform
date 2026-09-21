@@ -35,6 +35,10 @@ export const events = sqliteTable('events', {
   // diferencia de `places`, que modela una galería real en `photos`).
   imageUrl: text('image_url'),
   imageCredit: text('image_credit'),
+  // Mismo campo que noticia/reportaje de La Mira y places.sourceUrl — el
+  // artículo/tema original del que salió este evento, cuando lo crea la
+  // automatización.
+  sourceUrl: text('source_url'),
   status: text('status', { enum: CONTENT_STATUS_VALUES })
     .default('draft')
     .notNull(),
