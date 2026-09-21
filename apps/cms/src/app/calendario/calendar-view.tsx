@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { apiConfig } from "@planazo/config";
 import type { CalendarItem } from "@/lib/calendar-api";
-import { contentEditHref, contentTypeIcon, contentTypeLabel } from "@/lib/dashboard-api";
+import { contentEditHref, contentPublishedHref, contentTypeIcon, contentTypeLabel } from "@/lib/dashboard-api";
 import { Icon } from "@/components/icon";
+import { ViewPublishedLink } from "@/components/cms/view-published-link";
 
 const WEEKDAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const MONTH_LABEL = new Intl.DateTimeFormat("es-MX", { month: "long", year: "numeric" });
@@ -138,7 +139,12 @@ export function CalendarView({
       </div>
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1fr_300px]">
-        <div className="rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+        {/* El calendario tiene alto acotado (siempre ~5-6 semanas) — se queda
+            fijo (sticky) mientras se hace scroll de la lista de al lado, que
+            sí puede crecer mucho en un día con muchas publicaciones. Mismo
+            patrón que EditPreviewLayout (form + vista previa), aquí al
+            revés: el panel angosto es el que scrollea, no el ancho. */}
+        <div className="rounded-[14px] border border-border bg-white shadow-[0_1px_2px_rgba(23,20,17,.03)] lg:sticky lg:top-[26px]">
           <div className="flex items-center gap-2 border-b border-border-soft px-4 py-3.5">
             <button
               type="button"
@@ -210,7 +216,7 @@ export function CalendarView({
           </div>
         </div>
 
-        <div className="rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
+        <div className="rounded-[14px] border border-border bg-white p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)] lg:sticky lg:top-[26px] lg:max-h-[calc(100vh-52px)] lg:overflow-y-auto">
           <span className="mb-3 block text-[13.5px] font-semibold tracking-tight capitalize">{selectedDateLabel ?? "Selecciona un día"}</span>
           {!selectedDay ? (
             <p className="text-[12.5px] text-ink-faint">Haz clic en un día del calendario para ver qué se publicó.</p>
@@ -219,19 +225,21 @@ export function CalendarView({
           ) : (
             <div className="flex flex-col gap-2.5">
               {selectedItems.map((it) => (
-                <Link
+                <div
                   key={`${it.contentType}-${it.contentId}`}
-                  href={contentEditHref(it.contentType, it.contentId)}
-                  className="flex items-center gap-2 rounded-[9px] border border-border-soft px-2.5 py-2 transition-colors hover:border-[#FFD9BB] hover:bg-[#FFFCF9]"
+                  className="flex items-center gap-1 rounded-[9px] border border-border-soft px-2.5 py-2 transition-colors hover:border-[#FFD9BB] hover:bg-[#FFFCF9]"
                 >
-                  <span aria-hidden="true">{contentTypeIcon(it.contentType)}</span>
-                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="truncate text-[12.5px] font-medium">{it.title}</span>
-                    <span className="font-mono text-[9.5px] text-ink-faint">
-                      {contentTypeLabel(it.contentType)} · {it.site === "la-mira" ? "La Mira" : "Planazo"}
-                    </span>
-                  </div>
-                </Link>
+                  <Link href={contentEditHref(it.contentType, it.contentId)} className="flex min-w-0 flex-1 items-center gap-2">
+                    <span aria-hidden="true">{contentTypeIcon(it.contentType)}</span>
+                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="truncate text-[12.5px] font-medium">{it.title}</span>
+                      <span className="font-mono text-[9.5px] text-ink-faint">
+                        {contentTypeLabel(it.contentType)} · {it.site === "la-mira" ? "La Mira" : "Planazo"}
+                      </span>
+                    </div>
+                  </Link>
+                  <ViewPublishedLink compact href={contentPublishedHref(it.contentType, it.slug)} available />
+                </div>
               ))}
             </div>
           )}

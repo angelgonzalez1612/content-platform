@@ -7,6 +7,7 @@ export interface CalendarItem {
   contentType: string;
   contentId: string;
   title: string;
+  slug: string;
   site: "la-mira" | "planazo";
   date: string;
 }

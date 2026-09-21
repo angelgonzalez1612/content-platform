@@ -2,6 +2,9 @@
 // reales (apps/api DashboardService), no hay mock aquí. Ver
 // dashboard-content.tsx.
 
+import { siteConfig } from "@planazo/config";
+import { LAMIRA_TYPE_PATH } from "./lamira-paths";
+
 export interface DashboardContentRef {
   contentType: string;
   contentId: string;
@@ -63,6 +66,22 @@ export function contentEditHref(contentType: string, contentId: string): string 
   if (contentType === "planazo-guia") return `/contenido/planazo-guia/${contentId}`;
   if (LAMIRA_TYPES.has(contentType)) return `/contenido/lamira/${contentType}/${contentId}`;
   return "/contenido";
+}
+
+const PLANAZO_TYPE_PATH: Record<string, string> = {
+  place: "lugares",
+  "evento-planazo": "eventos",
+  "planazo-guia": "guias",
+};
+
+/** URL real en el sitio en vivo (La Mira o Planazo) — para el botón "Ver
+ * publicación" (ViewPublishedLink), a diferencia de contentEditHref (URL del
+ * CMS). Mismos mapas de ruta que ya usan lamira-contenido-view.tsx /
+ * planazo-contenido-view.tsx, centralizados aquí para no duplicarlos en
+ * cada pantalla que quiera ofrecer el mismo botón (ver calendar-view.tsx). */
+export function contentPublishedHref(contentType: string, slug: string): string {
+  if (contentType in PLANAZO_TYPE_PATH) return `${siteConfig.planazoUrl}/${PLANAZO_TYPE_PATH[contentType]}/${slug}`;
+  return `${siteConfig.lamiraUrl}/${LAMIRA_TYPE_PATH[contentType] ?? contentType}/${slug}`;
 }
 
 export function daysAgoLabel(iso: string): string {
