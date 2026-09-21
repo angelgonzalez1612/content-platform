@@ -154,6 +154,7 @@ export function getBreadcrumb(pathname: string, screenTitle: string): Breadcrumb
   if (pathname === "/contenido") return [home, { label: "Contenido" }];
   if (pathname.startsWith("/contenido/")) return [home, { label: "Contenido", href: "/contenido" }, { label: screenTitle }];
   if (pathname === "/perfil") return [home, { label: "Perfil" }];
+  if (pathname === "/usuarios") return [home, { label: "Usuarios" }];
 
   return [home, { label: screenTitle }];
 }

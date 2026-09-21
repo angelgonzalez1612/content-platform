@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { apiConfig } from "@planazo/config";
-import type { Place, PlaceDetail, Category, Seo, Noticia, Alerta, Guia, LamiraEvento, LamiraLugar, Reportaje, PlanazoEvent, ContentBlock, PlanazoGuide } from "@planazo/types";
+import type { Place, PlaceDetail, Category, Seo, Noticia, Alerta, Guia, LamiraEvento, LamiraLugar, Reportaje, PlanazoEvent, ContentBlock, PlanazoGuide, AuthUser } from "@planazo/types";
 import type { AutomationRule, AutomationRun, SearchPhrase } from "./automation-types";
 import type { CalendarItem } from "./calendar-api";
 import type { MediaItem, MediaAsset } from "./media-api";
@@ -247,4 +247,9 @@ export async function getMediaLibrary(): Promise<MediaItem[]> {
 /** Acervo de imágenes guardadas desde el buscador, todavía sin usar en ninguna pieza. */
 export async function getMediaAssets(): Promise<MediaAsset[]> {
   return safeList<MediaAsset>("/cms/media/assets");
+}
+
+/** Equipo con acceso al CMS — ver UsersService en la API. */
+export async function getCmsUsers(): Promise<AuthUser[]> {
+  return safeList<AuthUser>("/cms/users");
 }

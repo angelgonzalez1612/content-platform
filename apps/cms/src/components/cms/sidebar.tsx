@@ -18,6 +18,7 @@ const ROUTES: Record<string, string> = {
   automatizaciones: "/automatizaciones",
   "automatizaciones-frases": "/automatizaciones/frases",
   multimedia: "/multimedia",
+  usuarios: "/usuarios",
   config: "/configuracion",
 };
 

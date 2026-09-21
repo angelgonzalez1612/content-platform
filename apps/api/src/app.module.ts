@@ -24,6 +24,7 @@ import { ContentVersionsModule } from './modules/content-versions/content-versio
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { CalendarModule } from './modules/calendar/calendar.module';
 import { MediaModule } from './modules/media/media.module';
+import { UsersModule } from './modules/users/users.module';
 import { HealthController } from './modules/health/health.controller';
 
 @Module({
@@ -55,6 +56,7 @@ import { HealthController } from './modules/health/health.controller';
     DashboardModule,
     CalendarModule,
     MediaModule,
+    UsersModule,
   ],
   controllers: [HealthController],
 })
