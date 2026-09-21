@@ -32,7 +32,7 @@ export function ImprovePreview({
 }) {
   return (
     <div className="flex flex-col gap-4 rounded-[14px] border border-brand bg-accent p-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-mono text-[10px] font-medium tracking-[.1em] text-accent-fg uppercase">Borrador mejorado — revisa antes de aplicar</span>
         <span
           className={`rounded-full px-2.5 py-1 font-mono text-[10px] font-medium ${

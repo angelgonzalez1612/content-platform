@@ -17,7 +17,7 @@ export function CategoryFieldsPreview({ category }: { category: Category }) {
 
   return (
     <details className="group border-t border-border-soft pt-4">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+      <summary className="flex flex-wrap cursor-pointer list-none items-center justify-between gap-3">
         <span className="flex items-center gap-2">
           <span className="font-mono text-[9.5px] font-medium tracking-[.1em] text-ink-faint uppercase">Campos de &quot;{category.name}&quot;</span>
           <span

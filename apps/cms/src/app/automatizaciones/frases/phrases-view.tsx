@@ -231,7 +231,7 @@ export function PhrasesView({
 
   return (
     <div className="p-[26px] pb-[60px]">
-      <div className="mb-5 flex items-end justify-between gap-4">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="mb-1 text-[22px] font-semibold tracking-tight">Frases de búsqueda</h1>
           <p className="flex items-center gap-1.5 text-[12px] text-ink-faint">

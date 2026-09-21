@@ -20,7 +20,7 @@ export default async function ContenidoPage({ searchParams }: { searchParams: Pr
       <CmsShell user={session} title="Contenido">
         <div className="p-[26px] pb-[60px]">
           <SiteTabs site="lamira" basePath="/contenido" />
-          <div className="mb-5 flex items-end justify-between gap-4">
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
             <div>
               <h1 className="mb-1 text-[22px] font-semibold tracking-tight">La Mira</h1>
               <p className="text-[13.5px] text-ink-soft">

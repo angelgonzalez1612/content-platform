@@ -177,7 +177,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
 
       {improveResult && (
         <div className="flex flex-col gap-4 rounded-[14px] border border-brand bg-accent p-5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="font-mono text-[10px] font-medium tracking-[.1em] text-accent-fg uppercase">
               {improveMode === "expand" ? "Contenido nuevo — revisa antes de aplicar" : "Borrador mejorado — revisa antes de aplicar"}
             </span>
