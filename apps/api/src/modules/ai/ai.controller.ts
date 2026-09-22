@@ -85,6 +85,16 @@ export class AiController {
     return this.draftService.fetchImageFromUrl(dto.url);
   }
 
+  // Modo "Por liga" del formulario de Centro IA — título sugerido + fuente,
+  // antes de generar el borrador completo (que sigue siendo draft(), pasando
+  // la misma URL dentro de `hints`). Mismo DTO que fetch-image (una sola
+  // URL), ver AiDraftService.scrapePreview.
+  @Post('scrape-preview')
+  scrapePreview(@Body() body: unknown) {
+    const dto = fetchImageSchema.parse(body);
+    return this.draftService.scrapePreview(dto.url);
+  }
+
   // Subida manual de una imagen (además de buscarla o pegar una URL) — se
   // guarda en disco local y se sirve tal cual (ver ImageUploadService).
   @Post('upload-image')

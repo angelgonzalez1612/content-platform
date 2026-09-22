@@ -1302,4 +1302,17 @@ export class AiDraftService {
     if (!scraped?.imageUrl) return null;
     return { url: scraped.imageUrl, credit: `Foto: ${scraped.siteName}` };
   }
+
+  // Modo "Por liga" de Centro IA: el editor pega la URL de la nota original y
+  // esto le regresa un título sugerido (editable) + el nombre del sitio, para
+  // no tener que escribir el tema a mano — la lectura completa del artículo
+  // (para el prompt real) la vuelve a hacer draft() vía scrapeSourceFromHints,
+  // no se reusa este resultado (una sola llamada, sin estado entre ambas).
+  async scrapePreview(
+    url: string,
+  ): Promise<{ title: string | null; siteName: string } | null> {
+    const scraped = await this.scraper.scrape(url);
+    if (!scraped) return null;
+    return { title: scraped.title, siteName: scraped.siteName };
+  }
 }

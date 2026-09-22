@@ -11,6 +11,11 @@ import type { Readability as ReadabilityType } from '@mozilla/readability';
 
 export interface ScrapedArticle {
   text: string;
+  // Titular tal como lo detecta Readability (heurística sobre <h1>/<title>/
+  // meta tags) — solo para sugerir un punto de partida al editor (ver
+  // AiDraftService.scrapePreview); la IA sigue redactando su propio título
+  // en el draft final, nunca copia este literal.
+  title: string | null;
   imageUrl?: string;
   // Otras imágenes reales dentro del cuerpo del artículo (además del
   // og:image) — candidatas extra para el picker de imágenes del CMS, con el
@@ -107,6 +112,7 @@ export class ArticleScraperService {
     const siteName = this.extractSiteName(dom.window.document, url);
     return {
       text: text.slice(0, MAX_ARTICLE_CHARS),
+      title: article?.title?.trim() || null,
       imageUrl,
       additionalImageUrls,
       siteName,

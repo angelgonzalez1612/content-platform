@@ -126,6 +126,16 @@ export function GenerateLamiraContentFlow({
   const [publishedHref, setPublishedHref] = useState("");
   const [name, setName] = useState(initialName ?? "");
   const [hints, setHints] = useState(initialHints ?? "");
+  // "tema": como siempre (tema/título + lo que ya sabes, texto libre).
+  // "liga": el editor pega la URL de la nota original — el backend YA sabe
+  // leer una URL dentro de `hints` (ver AiDraftService.urlFromHints/
+  // scrapeSourceFromHints), esto solo lo vuelve un modo explícito en vez de
+  // un truco escondido, y agrega el título sugerido (scrape-preview) para no
+  // tener que escribirlo a mano.
+  const [mode, setMode] = useState<"tema" | "liga">("tema");
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [scrapedSiteName, setScrapedSiteName] = useState<string | null>(null);
+  const [scraping, setScraping] = useState(false);
   const [provider, setProvider] = useState<ProviderId>("openai");
   const openaiAvailable = useOpenAiAvailable();
   const providers = PROVIDERS.filter((p) => p.id !== "openai" || openaiAvailable === true);
@@ -198,6 +208,40 @@ export function GenerateLamiraContentFlow({
   const category = categories.find((c) => c.id === categoryId) ?? null;
   const isRichContent = type === "noticia" || type === "guia" || type === "reportaje";
 
+  // En modo "liga" se arma el mismo formato que ya usa content-radar
+  // ("— FUENTE (url)") para que el backend lo reconozca igual (URL para
+  // scrapear el artículo completo + crédito de imagen) — ver
+  // AiDraftService.urlFromHints/sourceLabelFromHints. El contexto extra que
+  // se haya escrito abajo se manda aparte, en su propia línea.
+  const effectiveHints =
+    mode === "liga" && sourceUrl.trim()
+      ? `— ${scrapedSiteName ?? "fuente externa"} (${sourceUrl.trim()})${hints.trim() ? `\n${hints.trim()}` : ""}`
+      : hints;
+
+  async function handleScrapeUrl(url: string) {
+    const trimmed = url.trim();
+    if (!/^https?:\/\//.test(trimmed)) return;
+    setScraping(true);
+    try {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/scrape-preview`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: trimmed }),
+      });
+      const data: { title: string | null; siteName: string } | null = res.ok ? await res.json() : null;
+      if (data) {
+        setScrapedSiteName(data.siteName);
+        if (data.title && !name.trim()) setName(data.title);
+      }
+    } catch {
+      // Silencioso — sin preview el editor igual puede escribir el tema a
+      // mano y generar (el backend vuelve a intentar leer la URL él solo).
+    } finally {
+      setScraping(false);
+    }
+  }
+
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -211,7 +255,7 @@ export function GenerateLamiraContentFlow({
         // categoryId se omite a propósito: sin ella, el backend clasifica sola
         // la categoría (ver AiDraftService.classifyCategory) a partir del tema
         // + la fuente completa — es lo que llega en data.categoryId abajo.
-        body: JSON.stringify({ site: "la-mira", contentType: type, name, hints: hints || undefined, provider }),
+        body: JSON.stringify({ site: "la-mira", contentType: type, name, hints: effectiveHints || undefined, provider }),
       });
 
       if (!res.ok) {
@@ -338,15 +382,64 @@ export function GenerateLamiraContentFlow({
           </span>
         )}
         <h1 className="mb-1.5 text-[24px] font-semibold tracking-tight">¿Sobre qué escribimos?</h1>
-        <p className="mx-auto mb-7 max-w-[46ch] text-[13.5px] leading-[1.6] text-ink-soft">
-          Dame el tema y lo que ya sabes — por ejemplo, un titular y fuente de content-radar. Escribo el borrador; los
-          datos verificables (fecha, ubicación, cifras) los completas tú.
+        <p className="mx-auto mb-5 max-w-[46ch] text-[13.5px] leading-[1.6] text-ink-soft">
+          {mode === "liga"
+            ? "Pega el link de la nota original — leo el artículo completo y escribo el borrador. Los datos verificables (fecha, ubicación, cifras) los completas tú."
+            : "Dame el tema y lo que ya sabes — por ejemplo, un titular y fuente de content-radar. Escribo el borrador; los datos verificables (fecha, ubicación, cifras) los completas tú."}
         </p>
+
+        {type !== "lugar" && (
+          <div className="mx-auto mb-6 inline-flex items-center gap-1 rounded-full border border-border bg-background p-0.5">
+            <button
+              type="button"
+              onClick={() => setMode("tema")}
+              className={`rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold whitespace-nowrap transition-colors ${
+                mode === "tema" ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+              }`}
+            >
+              Por tema
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("liga")}
+              className={`rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold whitespace-nowrap transition-colors ${
+                mode === "liga" ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+              }`}
+            >
+              Por liga
+            </button>
+          </div>
+        )}
 
         <form
           onSubmit={handleGenerate}
           className="flex flex-col gap-5 rounded-[16px] border border-border bg-card p-6 text-left shadow-[0_1px_2px_rgba(23,20,17,.03)] sm:p-7"
         >
+          {mode === "liga" && (
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="lc-url" className={labelClass}>
+                Link de la nota original
+              </label>
+              <input
+                id="lc-url"
+                type="url"
+                required
+                value={sourceUrl}
+                onChange={(e) => {
+                  setSourceUrl(e.target.value);
+                  setScrapedSiteName(null);
+                }}
+                onBlur={(e) => handleScrapeUrl(e.target.value)}
+                placeholder="https://www.milenio.com/..."
+                className={fieldClass}
+                disabled={step === "generating"}
+              />
+              <p className="text-[11.5px] text-ink-faint">
+                {scraping ? "Leyendo el artículo…" : scrapedSiteName ? `Fuente detectada: ${scrapedSiteName}.` : "Al salir del campo intento sugerir el título abajo."}
+              </p>
+            </div>
+          )}
+
           <div className="flex flex-col gap-1.5">
             {/* "Tema / título" en vez de "Título de la noticia"/"de la
                 alerta"/etc. — misma etiqueta que usa PublishFlow (el punto de
@@ -356,7 +449,7 @@ export function GenerateLamiraContentFlow({
                 tema que la IA convierte en encabezado, es el nombre propio
                 del lugar (la IA nunca lo reescribe). */}
             <label htmlFor="lc-name" className={labelClass}>
-              {type === "lugar" ? meta.nameLabel : "Tema / título"}
+              {type === "lugar" ? meta.nameLabel : mode === "liga" ? "Título sugerido" : "Tema / título"}
             </label>
             <input id="lc-name" required value={name} onChange={(e) => setName(e.target.value)} placeholder={meta.namePlaceholder} className={fieldClass} disabled={step === "generating"} />
           </div>
@@ -364,7 +457,7 @@ export function GenerateLamiraContentFlow({
           <div className="flex flex-col gap-1.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <label htmlFor="lc-hints" className={labelClass}>
-                Lo que ya sabes (fuentes, contexto, etc.)
+                {mode === "liga" ? "Contexto extra (opcional)" : "Lo que ya sabes (fuentes, contexto, etc.)"}
               </label>
               {initialHints && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 font-mono text-[10px] font-medium tracking-[.04em] text-accent-fg uppercase">
@@ -375,10 +468,10 @@ export function GenerateLamiraContentFlow({
             </div>
             <textarea
               id="lc-hints"
-              rows={4}
+              rows={mode === "liga" ? 2 : 4}
               value={hints}
               onChange={(e) => setHints(e.target.value)}
-              placeholder="ej. Fuente: MILENIO — 9 bloqueos en Reforma e Insurgentes hoy 25 de agosto…"
+              placeholder={mode === "liga" ? "ej. Enfócate en el impacto para vecinos de la zona…" : "ej. Fuente: MILENIO — 9 bloqueos en Reforma e Insurgentes hoy 25 de agosto…"}
               className={`${fieldClass} resize-none`}
               disabled={step === "generating"}
             />
