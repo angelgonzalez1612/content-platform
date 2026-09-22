@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiConfig } from "@planazo/config";
 import type { Category, CheckResult, AiDecision } from "@planazo/types";
 import { Icon } from "@/components/icon";
@@ -11,7 +11,30 @@ import { GenerateEventFlow } from "@/components/cms/planazo/generate-event-flow"
 import { useOpenAiAvailable } from "@/lib/use-openai-available";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
+const TRASH_ICON = "M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0v12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7";
+const PLUS_ICON = "M12 5v14M5 12h14";
+const SEARCH_ICON = "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM16.5 16.5L21 21";
+const CLOSE_ICON = "M6 6l12 12M18 6L6 18";
 type ProviderId = "openai" | "claude-cli" | "codex-cli";
+type Mode = "tema" | "liga" | "texto" | "planazo" | "radar";
+
+/** Tema pendiente del reporte más reciente de content-radar (ver
+ * extractTopics en @planazo/content-radar/render) — modo "Content Radar" de
+ * este formulario, para elegir uno sin salir de Centro IA. */
+export interface RadarTopic {
+  title: string;
+  hints: string;
+  categoryLabel: string;
+}
+
+/** Lugar/evento YA publicado de Planazo, con su resumen ya armado en texto
+ * — modo "Desde Planazo" de este formulario (ver buildPlanazoReferences en
+ * centro-ia/page.tsx). */
+export interface PlanazoReference {
+  slug: string;
+  label: string;
+  summary: string;
+}
 
 const PROVIDERS: Array<{ id: ProviderId; label: string; hint: string }> = [
   { id: "openai", label: "OpenAI", hint: "Salida estructurada garantizada · cuesta por token" },
@@ -29,6 +52,22 @@ const TYPE_LABEL: Record<string, string> = {
   reportaje: "Reportaje",
   place: "Lugar",
   "evento-planazo": "Evento",
+};
+
+const MODE_LABEL: Record<Mode, string> = {
+  tema: "Por tema",
+  liga: "Por liga",
+  texto: "Texto libre",
+  planazo: "Desde Planazo",
+  radar: "Content Radar",
+};
+
+const MODE_INTRO: Record<Mode, string> = {
+  tema: "Dame el tema y lo que ya sabes — por ejemplo, un titular y fuente de content-radar. Escribo el borrador; los datos verificables (fecha, ubicación, cifras) los completas tú.",
+  liga: "Pega el link (o varios) de la nota original — leo el artículo completo y escribo el borrador. Los datos verificables (fecha, ubicación, cifras) los completas tú.",
+  texto: "Pega el texto completo que ya tengas — un comunicado, notas de una llamada, un boletín. Lo reestructuro como nota, sin inventar nada que no esté ahí.",
+  planazo: "Elige un lugar o evento ya publicado en Planazo — uso sus datos reales como base, sin inventar nada más.",
+  radar: "Elige un tema pendiente del reporte más reciente de Content Radar, sin salir de aquí.",
 };
 
 interface DraftResponse {
@@ -49,17 +88,58 @@ interface Resolved {
   draftResponse: DraftResponse;
 }
 
-// Punto de entrada del botón "Publicar" de content-radar — a diferencia de
-// Centro IA con un sitio ya elegido (SiteTabs), aquí NO se sabe todavía si
-// esto va a La Mira o a Planazo, ni bajo qué tipo: se manda solo el tema +
-// hints a AiDraftService, que clasifica sitio+tipo+categoría juntos (ver
-// AiDraftService.classifyContentType) leyendo el artículo completo — señal
-// mucho mejor que la categoría de content-radar sola. Una vez resuelto, se
-// delega la revisión al flujo real de ese tipo (ya con el borrador listo,
-// sin volver a generar).
-export function PublishFlow({ initialName, initialHints }: { initialName?: string; initialHints?: string }) {
+// Punto de entrada del botón "Publicar" de content-radar — NO se sabe
+// todavía si esto va a La Mira o a Planazo, ni bajo qué tipo: se manda solo
+// el tema + hints a AiDraftService, que clasifica sitio+tipo+categoría
+// juntos (ver AiDraftService.classifyContentType) leyendo el artículo
+// completo — señal mucho mejor que la categoría de content-radar sola. Una
+// vez resuelto, se delega la revisión al flujo real de ese tipo (ya con el
+// borrador listo, sin volver a generar).
+//
+// `fixedSite`: mismo componente, reusado por Centro IA cuando el editor ya
+// eligió sitio a mano (SiteTabs/CrearSteps) pero todavía no tipo — el sitio
+// se manda fijo (classifyContentType solo elige tipo DENTRO de ese sitio,
+// nunca lo cambia) y se ocultan el pill de sitio y "publicar también en
+// [otro sitio]" (no aplica: ya se está en ese sitio a propósito).
+export function PublishFlow({
+  initialName,
+  initialHints,
+  fixedSite,
+  radarTopics = [],
+  planazoReferences = [],
+}: {
+  initialName?: string;
+  initialHints?: string;
+  fixedSite?: "la-mira" | "planazo";
+  radarTopics?: RadarTopic[];
+  planazoReferences?: PlanazoReference[];
+}) {
   const [name, setName] = useState(initialName ?? "");
   const [hints, setHints] = useState(initialHints ?? "");
+  const [mode, setMode] = useState<Mode>("tema");
+
+  // Modo "Por liga" — una o varias URLs (content-radar solo manda una nota
+  // sobre 2-3 fuentes distintas del mismo tema); cada una se manda como su
+  // propia línea "— FUENTE (url)" y el backend las scrapea todas (ver
+  // AiDraftService.urlsFromHints/scrapeSourceFromHints).
+  const [sourceUrls, setSourceUrls] = useState<string[]>([""]);
+  const [urlSiteNames, setUrlSiteNames] = useState<(string | null)[]>([null]);
+  const [scrapingIndex, setScrapingIndex] = useState<number | null>(null);
+
+  // Modo "Desde Planazo"
+  const [referenceSlug, setReferenceSlug] = useState("");
+  const selectedReference = planazoReferences.find((r) => r.slug === referenceSlug) ?? null;
+
+  // Modo "Content Radar"
+  const [radarFilter, setRadarFilter] = useState("");
+  const [radarTitle, setRadarTitle] = useState<string | null>(null);
+  const selectedRadarTopic = radarTopics.find((t) => t.title === radarTitle) ?? null;
+  const filteredRadarTopics = useMemo(() => {
+    const q = radarFilter.trim().toLowerCase();
+    const list = q ? radarTopics.filter((t) => t.title.toLowerCase().includes(q) || t.categoryLabel.toLowerCase().includes(q)) : radarTopics;
+    return list.slice(0, 40);
+  }, [radarTopics, radarFilter]);
+
   const [provider, setProvider] = useState<ProviderId>("openai");
   const [generating, setGenerating] = useState(false);
   const [switching, setSwitching] = useState(false);
@@ -72,19 +152,92 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
     if (openaiAvailable === false && provider === "openai") setProvider("claude-cli");
   }, [openaiAvailable, provider]);
 
+  const effectiveHints = useMemo(() => {
+    const extra = hints.trim();
+    if (mode === "liga") {
+      const lines = sourceUrls
+        .map((u, i) => (u.trim() ? `— ${urlSiteNames[i] ?? "fuente externa"} (${u.trim()})` : ""))
+        .filter(Boolean);
+      return [...lines, extra].filter(Boolean).join("\n");
+    }
+    if (mode === "planazo") return [selectedReference?.summary ?? "", extra].filter(Boolean).join("\n\n");
+    if (mode === "radar") return [selectedRadarTopic?.hints ?? "", extra].filter(Boolean).join("\n\n");
+    // "tema" y "texto" mandan tal cual — el texto libre pegado ES el hints,
+    // no necesita formato especial (AiDraftService ya lo trata como
+    // "Notas del editor", igual que cualquier otro contexto).
+    return hints;
+  }, [mode, hints, sourceUrls, urlSiteNames, selectedReference, selectedRadarTopic]);
+
+  async function handleScrapeUrlAt(index: number, url: string) {
+    const trimmed = url.trim();
+    if (!/^https?:\/\//.test(trimmed)) return;
+    setScrapingIndex(index);
+    try {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/scrape-preview`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: trimmed }),
+      });
+      const data: { title: string | null; siteName: string } | null = res.ok ? await res.json() : null;
+      if (data) {
+        setUrlSiteNames((prev) => prev.map((n, i) => (i === index ? data.siteName : n)));
+        if (index === 0 && data.title && !name.trim()) setName(data.title);
+      }
+    } catch {
+      // Silencioso — sin preview el editor igual puede escribir el tema a
+      // mano y generar (el backend vuelve a intentar leer la URL él solo).
+    } finally {
+      setScrapingIndex(null);
+    }
+  }
+
+  function addSourceUrl() {
+    setSourceUrls((prev) => [...prev, ""]);
+    setUrlSiteNames((prev) => [...prev, null]);
+  }
+
+  function removeSourceUrl(index: number) {
+    setSourceUrls((prev) => prev.filter((_, i) => i !== index));
+    setUrlSiteNames((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function pickReference(ref: PlanazoReference) {
+    setReferenceSlug(ref.slug);
+    // Quita el emoji inicial (📍/📅) — todo lo que viene antes del primer
+    // espacio, más simple y sin las sorpresas de \p{Emoji} (también matchea
+    // dígitos sueltos en algunos motores) para un caso tan chico.
+    if (!name.trim()) setName(ref.label.replace(/^\S+\s*/, ""));
+  }
+
+  function pickRadarTopic(topic: RadarTopic) {
+    setRadarTitle(topic.title);
+    setName(topic.title);
+  }
+
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    setGenerating(true);
 
+    if (mode === "planazo" && !selectedReference) {
+      setError("Elige un lugar o evento de la lista.");
+      return;
+    }
+    if (mode === "radar" && !selectedRadarTopic) {
+      setError("Elige un tema de la lista.");
+      return;
+    }
+
+    setGenerating(true);
     try {
       const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/draft`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        // Sin site/contentType/categoryId a propósito: el backend clasifica
-        // los tres juntos (ver AiDraftService.draft/classifyContentType).
-        body: JSON.stringify({ name, hints: hints || undefined, provider }),
+        // Sin contentType/categoryId a propósito: el backend los clasifica
+        // (ver AiDraftService.draft/classifyContentType) — con site fijo,
+        // solo entre los tipos de ese sitio; sin él, sitio+tipo juntos.
+        body: JSON.stringify({ name, hints: effectiveHints || undefined, provider, site: fixedSite }),
       });
 
       if (!res.ok) {
@@ -120,7 +273,7 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
-          hints: hints || undefined,
+          hints: effectiveHints || undefined,
           provider,
           site: targetSite,
           contentType: targetSite === "la-mira" ? "noticia" : "place",
@@ -171,9 +324,13 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
               simple cambio de vista previa. Si la IA se equivocó de sitio, la
               corrección real es "Empezar de nuevo" (abajo) y regenerar ya con
               el tema/hints tal cual — no un botón que parece inofensivo. */}
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-[12px] font-semibold text-ink">
-            {SITE_LABEL[site]}
-          </span>
+          {/* Con fixedSite este pill sería redundante — ya se ve en el
+              ProjectPill de CrearSteps arriba de este componente. */}
+          {!fixedSite && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-[12px] font-semibold text-ink">
+              {SITE_LABEL[site]}
+            </span>
+          )}
           <span className="inline-flex items-center gap-1.5 rounded-full bg-background px-2.5 py-1 font-mono text-[10px] font-medium tracking-[.04em] text-ink-faint uppercase">
             <Icon d={SPARK_ICON} size={10} strokeWidth={2} />
             {TYPE_LABEL[contentType] ?? contentType}
@@ -187,21 +344,21 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
               categories={resolved.categories}
               initialName={resolved.name}
               initialDraft={resolved.draftResponse}
-              crossSitePublish={crossSitePublish}
+              crossSitePublish={fixedSite ? undefined : crossSitePublish}
             />
           ) : contentType === "place" ? (
             <GeneratePlaceFlow
               categories={resolved.categories}
               initialName={resolved.name}
               initialDraft={resolved.draftResponse}
-              crossSitePublish={crossSitePublish}
+              crossSitePublish={fixedSite ? undefined : crossSitePublish}
             />
           ) : (
             <GenerateEventFlow
               categories={resolved.categories}
               initialName={resolved.name}
               initialDraft={resolved.draftResponse}
-              crossSitePublish={crossSitePublish}
+              crossSitePublish={fixedSite ? undefined : crossSitePublish}
             />
           )}
         </div>
@@ -210,7 +367,7 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
   }
 
   return (
-    <div className="mx-auto max-w-[620px] p-[26px] pb-[60px] text-center">
+    <div className="mx-auto max-w-[680px] p-[26px] pb-[60px] text-center">
       <div className="mx-auto mb-4 grid size-[46px] place-items-center rounded-2xl border border-[#FFE2CC] bg-accent">
         <Icon d={SPARK_ICON} size={22} strokeWidth={1.6} className="text-brand" />
       </div>
@@ -221,40 +378,201 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
         </span>
       )}
       <h1 className="mb-1.5 text-[24px] font-semibold tracking-tight">¿Sobre qué escribimos?</h1>
-      {/* Mismo párrafo que la pantalla de "¿Sobre qué escribimos?" cuando el
-          tipo ya está fijo (ver GenerateLamiraContentFlow) — para que ambos
-          puntos de entrada se sientan como la misma pantalla. */}
-      <p className="mx-auto mb-7 max-w-[46ch] text-[13.5px] leading-[1.6] text-ink-soft">
-        Dame el tema y lo que ya sabes — por ejemplo, un titular y fuente de content-radar. Escribo el borrador; los
-        datos verificables (fecha, ubicación, cifras) los completas tú.
-      </p>
+      <p className="mx-auto mb-5 max-w-[50ch] text-[13.5px] leading-[1.6] text-ink-soft">{MODE_INTRO[mode]}</p>
+
+      <div className="mx-auto mb-6 flex flex-wrap items-center justify-center gap-1 rounded-full border border-border bg-background p-0.5">
+        {(Object.keys(MODE_LABEL) as Mode[]).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            className={`rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold whitespace-nowrap transition-colors ${
+              mode === m ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+            }`}
+          >
+            {MODE_LABEL[m]}
+          </button>
+        ))}
+      </div>
 
       <form onSubmit={handleGenerate} className="flex flex-col gap-5 rounded-[16px] border border-border bg-card p-6 text-left shadow-[0_1px_2px_rgba(23,20,17,.03)] sm:p-7">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="pf-name" className={labelClass}>
-            Tema / título
-          </label>
-          <input id="pf-name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="ej. Bloqueo total en Eje Central por transportistas" className={fieldClass} disabled={generating} />
-        </div>
+        {mode === "liga" && (
+          <div className="flex flex-col gap-3">
+            {sourceUrls.map((url, i) => (
+              <div key={i} className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <label htmlFor={`pf-url-${i}`} className={labelClass}>
+                    {i === 0 ? "Link de la nota original" : `Fuente adicional ${i + 1}`}
+                  </label>
+                  {i > 0 && (
+                    <button type="button" onClick={() => removeSourceUrl(i)} className="text-ink-faint transition-colors hover:text-negative" title="Quitar esta fuente">
+                      <Icon d={TRASH_ICON} size={13} strokeWidth={1.8} />
+                    </button>
+                  )}
+                </div>
+                <input
+                  id={`pf-url-${i}`}
+                  type="url"
+                  required={i === 0}
+                  value={url}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setSourceUrls((prev) => prev.map((u, ui) => (ui === i ? next : u)));
+                    setUrlSiteNames((prev) => prev.map((n, ni) => (ni === i ? null : n)));
+                  }}
+                  onBlur={(e) => handleScrapeUrlAt(i, e.target.value)}
+                  placeholder="https://www.milenio.com/..."
+                  className={fieldClass}
+                  disabled={generating}
+                />
+                <p className="text-[11.5px] text-ink-faint">
+                  {scrapingIndex === i ? "Leyendo el artículo…" : urlSiteNames[i] ? `Fuente detectada: ${urlSiteNames[i]}.` : i === 0 ? "Al salir del campo intento sugerir el título abajo." : ""}
+                </p>
+              </div>
+            ))}
+            {sourceUrls.length < 4 && (
+              <button
+                type="button"
+                onClick={addSourceUrl}
+                className="flex w-fit items-center gap-1.5 rounded-lg border border-dashed border-border px-2.5 py-1.5 text-[12px] font-medium text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
+              >
+                <Icon d={PLUS_ICON} size={12} strokeWidth={2} />
+                Agregar otra fuente
+              </button>
+            )}
+          </div>
+        )}
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="pf-hints" className={labelClass}>
-            Lo que ya sabes (fuentes, contexto, etc.)
-          </label>
-          <textarea
-            id="pf-hints"
-            rows={4}
-            value={hints}
-            onChange={(e) => setHints(e.target.value)}
-            placeholder="ej. Fuente: MILENIO — 9 bloqueos en Reforma e Insurgentes hoy 25 de agosto…"
-            className={`${fieldClass} resize-none`}
-            disabled={generating}
-          />
-          <p className="text-[11.5px] text-ink-faint">
-            La IA decide en qué sitio (La Mira o Planazo), bajo qué tipo de contenido y qué categoría — todo lo
-            revisas después de generar.
-          </p>
-        </div>
+        {mode === "planazo" && (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="pf-reference" className={labelClass}>
+              Lugar o evento de Planazo
+            </label>
+            <select
+              id="pf-reference"
+              required
+              value={referenceSlug}
+              onChange={(e) => {
+                const ref = planazoReferences.find((r) => r.slug === e.target.value);
+                if (ref) pickReference(ref);
+                else setReferenceSlug("");
+              }}
+              className={fieldClass}
+              disabled={generating}
+            >
+              <option value="">Elige uno…</option>
+              {planazoReferences.map((r) => (
+                <option key={r.slug} value={r.slug}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+            {selectedReference && (
+              <pre className="mt-1 max-h-[140px] overflow-y-auto rounded-lg border border-border-soft bg-background p-3 text-[11.5px] leading-[1.5] whitespace-pre-wrap text-ink-soft">
+                {selectedReference.summary}
+              </pre>
+            )}
+          </div>
+        )}
+
+        {mode === "radar" && (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="pf-radar-filter" className={labelClass}>
+              Tema de Content Radar
+            </label>
+            {selectedRadarTopic ? (
+              <div className="flex items-start justify-between gap-2 rounded-lg border border-brand bg-accent px-3 py-2.5">
+                <div className="min-w-0">
+                  <span className="block truncate text-[13px] font-semibold text-accent-fg">{selectedRadarTopic.title}</span>
+                  <span className="block text-[11px] text-ink-faint">{selectedRadarTopic.categoryLabel}</span>
+                </div>
+                <button type="button" onClick={() => setRadarTitle(null)} className="flex-none text-ink-faint transition-colors hover:text-ink" title="Elegir otro tema">
+                  <Icon d={CLOSE_ICON} size={14} strokeWidth={1.8} />
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="relative">
+                  <Icon d={SEARCH_ICON} size={13} strokeWidth={2} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-faint" />
+                  <input
+                    id="pf-radar-filter"
+                    value={radarFilter}
+                    onChange={(e) => setRadarFilter(e.target.value)}
+                    placeholder="Buscar por título o categoría…"
+                    className={`${fieldClass} pl-8`}
+                    disabled={generating}
+                  />
+                </div>
+                <div className="flex max-h-[220px] flex-col gap-1 overflow-y-auto rounded-lg border border-border-soft p-1.5">
+                  {radarTopics.length === 0 ? (
+                    <p className="p-2 text-[12.5px] text-ink-faint">No hay temas pendientes en el reporte más reciente.</p>
+                  ) : filteredRadarTopics.length === 0 ? (
+                    <p className="p-2 text-[12.5px] text-ink-faint">Ningún tema coincide con &quot;{radarFilter}&quot;.</p>
+                  ) : (
+                    filteredRadarTopics.map((t) => (
+                      <button
+                        key={t.title}
+                        type="button"
+                        onClick={() => pickRadarTopic(t)}
+                        className="flex flex-col items-start gap-0.5 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-hover"
+                      >
+                        <span className="truncate text-[12.5px] font-medium text-ink">{t.title}</span>
+                        <span className="text-[10.5px] text-ink-faint">{t.categoryLabel}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {mode === "texto" ? (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="pf-hints" className={labelClass}>
+              Texto completo
+            </label>
+            <textarea
+              id="pf-hints"
+              required
+              rows={9}
+              value={hints}
+              onChange={(e) => setHints(e.target.value)}
+              placeholder="Pega aquí el comunicado, las notas de la llamada, el boletín…"
+              className={`${fieldClass} resize-none`}
+              disabled={generating}
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="pf-name" className={labelClass}>
+              {mode === "liga" ? "Título sugerido" : mode === "planazo" || mode === "radar" ? "Título" : "Tema / título"}
+            </label>
+            <input id="pf-name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="ej. Bloqueo total en Eje Central por transportistas" className={fieldClass} disabled={generating} />
+          </div>
+        )}
+
+        {mode !== "texto" && (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="pf-hints" className={labelClass}>
+              {mode === "tema" ? "Lo que ya sabes (fuentes, contexto, etc.)" : "Contexto extra (opcional)"}
+            </label>
+            <textarea
+              id="pf-hints"
+              rows={mode === "tema" ? 4 : 2}
+              value={hints}
+              onChange={(e) => setHints(e.target.value)}
+              placeholder={mode === "tema" ? "ej. Fuente: MILENIO — 9 bloqueos en Reforma e Insurgentes hoy 25 de agosto…" : "ej. Enfócate en el impacto para vecinos de la zona…"}
+              className={`${fieldClass} resize-none`}
+              disabled={generating}
+            />
+            <p className="text-[11.5px] text-ink-faint">
+              {fixedSite
+                ? "La IA decide bajo qué tipo de contenido y qué categoría — los revisas y puedes cambiarlos después de generar."
+                : "La IA decide en qué sitio (La Mira o Planazo), bajo qué tipo de contenido y qué categoría — todo lo revisas después de generar."}
+            </p>
+          </div>
+        )}
 
         <div className="flex flex-col gap-2">
           <span className={labelClass}>Proveedor de IA</span>
@@ -285,7 +603,7 @@ export function PublishFlow({ initialName, initialHints }: { initialName?: strin
           {generating ? (
             <>
               <Icon d={SPARK_ICON} size={15} strokeWidth={1.8} className="animate-spin" />
-              Decidiendo dónde va y escribiendo… {provider === "claude-cli" && "(puede tardar ~30s)"}
+              {fixedSite ? "Decidiendo el tipo y escribiendo…" : "Decidiendo dónde va y escribiendo…"} {provider === "claude-cli" && "(puede tardar ~30s)"}
             </>
           ) : (
             <>

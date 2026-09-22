@@ -144,12 +144,40 @@ export class AiDraftService {
     return hints?.match(/https?:\/\/\S+/)?.[0]?.replace(/[).,]+$/, '') || null;
   }
 
+  // Todas las URLs citadas en `hints` (no solo la primera) — modo "varias
+  // fuentes" del CMS manda una línea "— FUENTE (url)" por cada una (mismo
+  // formato que ya usaba content-radar para una sola). Deduplicadas por si
+  // el editor pegó la misma dos veces.
+  private urlsFromHints(hints?: string): string[] {
+    const matches = hints?.match(/https?:\/\/\S+/g) ?? [];
+    return [...new Set(matches.map((u) => u.replace(/[).,]+$/, '')))];
+  }
+
+  // Une varios artículos scrapeados en un solo ScrapedArticle (texto con un
+  // encabezado "[Fuente N]" por cada uno) para no tener que propagar un
+  // array por classifyContentType/classifyCategory/draft, que ya asumen uno
+  // solo — la imagen/additionalImageUrls se toman del primero que sí trajo
+  // (el resto solo aporta texto). `null` solo si NINGUNA fuente se pudo leer.
   private async scrapeSourceFromHints(
     hints?: string,
   ): Promise<ScrapedArticle | null> {
-    const url = this.urlFromHints(hints);
-    if (!url) return null;
-    return this.scraper.scrape(url);
+    const urls = this.urlsFromHints(hints);
+    if (urls.length === 0) return null;
+
+    const results = await Promise.all(urls.map((u) => this.scraper.scrape(u)));
+    const scraped = results.filter((r): r is ScrapedArticle => r !== null);
+    if (scraped.length === 0) return null;
+    if (scraped.length === 1) return scraped[0];
+
+    return {
+      text: scraped
+        .map((a, i) => `[Fuente ${i + 1}${a.title ? ` — ${a.title}` : ''}]\n${a.text}`)
+        .join('\n\n'),
+      title: scraped[0].title,
+      imageUrl: scraped.find((a) => a.imageUrl)?.imageUrl,
+      additionalImageUrls: scraped.flatMap((a) => a.additionalImageUrls).slice(0, 5),
+      siteName: [...new Set(scraped.map((a) => a.siteName))].join(', '),
+    };
   }
 
   // Nombre de la fuente ("MILENIO", "La Jornada"...) tal como content-radar ya
@@ -229,11 +257,19 @@ export class AiDraftService {
   // ganó, no se pregunta aparte, porque razonar directo sobre "¿qué tipo de
   // pieza es esto?" es más concreto para el modelo que un "¿qué sitio?"
   // abstracto primero.
+  // `fixedSite`: cuando el editor ya eligió sitio a mano (Centro IA de La
+  // Mira sin tipo — ver centro-ia/page.tsx) pero no tipo, solo se clasifica
+  // entre los tipos DE ESE sitio y el sitio nunca cambia. Sin `fixedSite`
+  // (Publicar desde content-radar, PublishFlow): se clasifican los 8 tipos
+  // de los dos sitios juntos, como siempre.
   private async classifyContentType(
     dto: DraftRequestDto,
     scrapedArticle: ScrapedArticle | null,
+    fixedSite?: 'la-mira' | 'planazo',
   ): Promise<{ site: 'la-mira' | 'planazo'; contentType: string }> {
-    const entries = Object.values(CONTENT_TYPES);
+    const entries = Object.values(CONTENT_TYPES).filter(
+      (e) => !fixedSite || e.site === fixedSite,
+    );
     const keys = entries.map((e) => e.contentType) as [string, ...string[]];
     const classifySchema = z.object({
       contentType: z
@@ -261,15 +297,16 @@ export class AiDraftService {
       .join('\n');
 
     const output = await this.providers.generateWithFallback(dto.provider, {
-      systemPrompt:
-        'Eres un editor que decide en qué sitio y bajo qué tipo de contenido publicar un tema, entre dos publicaciones digitales de la Ciudad de México: La Mira (periodismo hiperlocal — noticias, alertas, guías, eventos y lugares con angle noticioso) y Planazo (directorio evergreen de planes — lugares y eventos recomendados, sin angle de cobertura). Elige el tipo que mejor encaja — nunca inventes uno que no esté en la lista.',
+      systemPrompt: fixedSite
+        ? `Eres un editor de ${fixedSite === 'la-mira' ? 'La Mira (periodismo hiperlocal de la Ciudad de México — noticias, alertas, guías, eventos y lugares con angle noticioso)' : 'Planazo (directorio evergreen de planes en la Ciudad de México — lugares y eventos recomendados, sin angle de cobertura)'} que decide bajo qué tipo de contenido publicar un tema. Elige el tipo que mejor encaja — nunca inventes uno que no esté en la lista.`
+        : 'Eres un editor que decide en qué sitio y bajo qué tipo de contenido publicar un tema, entre dos publicaciones digitales de la Ciudad de México: La Mira (periodismo hiperlocal — noticias, alertas, guías, eventos y lugares con angle noticioso) y Planazo (directorio evergreen de planes — lugares y eventos recomendados, sin angle de cobertura). Elige el tipo que mejor encaja — nunca inventes uno que no esté en la lista.',
       userPrompt: `${material}\n\nTipos disponibles (responde con el id de exactamente uno de ellos):\n${typeList}`,
       schema: classifySchema,
       schemaName: 'content_type_classification',
     });
 
     const contentType = output.contentType;
-    return { site: getContentTypeConfig(contentType).site, contentType };
+    return { site: fixedSite ?? getContentTypeConfig(contentType).site, contentType };
   }
 
   async draft(dto: DraftRequestDto): Promise<DraftResult> {
@@ -285,6 +322,7 @@ export class AiDraftService {
       ({ site, contentType } = await this.classifyContentType(
         dto,
         scrapedArticle,
+        site,
       ));
     }
 

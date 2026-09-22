@@ -36,9 +36,10 @@ export default async function CrearPage({ searchParams }: { searchParams: Promis
         ) : isLamira ? (
           <div className="text-center">
             <ProjectPill site="lamira" />
-            <h1 className="mb-1.5 text-[24px] font-semibold tracking-tight">¿Qué quieres crear?</h1>
+            <h1 className="mb-1.5 text-[24px] font-semibold tracking-tight">¿Cómo quieres crear?</h1>
             <p className="mx-auto mb-8 max-w-[52ch] text-[13.5px] leading-[1.6] text-ink-soft">
-              Elige el tipo de contenido y cómo quieres armarlo — con IA a partir de un tema, o llenando la ficha tú mismo.
+              Con IA a partir de un tema o un link (el tipo de contenido lo elegimos por ti), o llenando la ficha tú
+              mismo.
             </p>
             <LamiraCrearTypePicker />
           </div>
