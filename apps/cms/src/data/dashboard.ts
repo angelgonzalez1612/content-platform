@@ -28,7 +28,6 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: "M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18zM12 12l5-3M12 3v4M12 17v4M3 12h4M17 12h4",
       },
       { id: "crear", name: "Crear", icon: "M12 5v14M5 12h14" },
-      { id: "ia", name: "Centro IA", icon: "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z", badge: "IA" },
       {
         // Referencia de qué pide cada tipo de contenido antes de generar — no
         // es un paso del flujo en sí, por eso va después de Crear/Centro IA.
