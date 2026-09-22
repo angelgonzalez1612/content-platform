@@ -122,16 +122,27 @@ interface Resolved {
 // se manda fijo (classifyContentType solo elige tipo DENTRO de ese sitio,
 // nunca lo cambia) y se ocultan el pill de sitio y "publicar también en
 // [otro sitio]" (no aplica: ya se está en ese sitio a propósito).
+// Fuentes que llegan con `initialName` ya puesto (deep link con tema
+// pre-llenado) — el badge de arriba dice de dónde salió. "content-radar" es
+// el default por compatibilidad: los links viejos del botón "Publicar" de
+// content-radar no mandan `source` explícito.
+const SOURCE_LABEL: Record<string, string> = {
+  "content-radar": "Content Radar",
+  entidades: "Entidades",
+};
+
 export function PublishFlow({
   initialName,
   initialHints,
   fixedSite,
+  source = "content-radar",
   radarTopics = [],
   savedPhrases = [],
 }: {
   initialName?: string;
   initialHints?: string;
   fixedSite?: "la-mira" | "planazo";
+  source?: string;
   radarTopics?: RadarTopic[];
   savedPhrases?: SavedPhrase[];
 }) {
@@ -450,7 +461,7 @@ export function PublishFlow({
       {initialName && (
         <span className="mx-auto mb-2.5 inline-flex items-center gap-1 rounded-full bg-background px-2.5 py-1 font-mono text-[10px] font-medium tracking-[.04em] text-ink-faint uppercase">
           <Icon d={SPARK_ICON} size={10} strokeWidth={2} />
-          Desde Content Radar
+          Desde {SOURCE_LABEL[source] ?? SOURCE_LABEL["content-radar"]}
         </span>
       )}
       <h1 className="mb-1.5 text-[24px] font-semibold tracking-tight">¿Sobre qué escribimos?</h1>

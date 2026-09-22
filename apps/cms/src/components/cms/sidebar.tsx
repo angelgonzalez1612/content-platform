@@ -17,6 +17,7 @@ const ROUTES: Record<string, string> = {
   calendario: "/calendario",
   automatizaciones: "/automatizaciones",
   "automatizaciones-frases": "/automatizaciones/frases",
+  entidades: "/entidades",
   multimedia: "/multimedia",
   usuarios: "/usuarios",
   config: "/configuracion",

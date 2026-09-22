@@ -67,12 +67,12 @@ async function getSavedPhrasesForGeneration(): Promise<SavedPhrase[]> {
 export default async function CentroIaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ site?: string; type?: string; name?: string; hints?: string }>;
+  searchParams: Promise<{ site?: string; type?: string; name?: string; hints?: string; source?: string }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const { site, type: rawType, name, hints } = await searchParams;
+  const { site, type: rawType, name, hints, source } = await searchParams;
 
   // Sin `site`: viene del botón Publicar de content-radar, que ya no fija el
   // destino de antemano — la IA decide sitio+tipo+categoría juntos (ver
@@ -83,7 +83,7 @@ export default async function CentroIaPage({
     const [radarTopics, savedPhrases] = await Promise.all([getPendingRadarTopics(), getSavedPhrasesForGeneration()]);
     return (
       <CmsShell user={session} title="Centro IA">
-        <PublishFlow initialName={name} initialHints={hints} radarTopics={radarTopics} savedPhrases={savedPhrases} />
+        <PublishFlow initialName={name} initialHints={hints} source={source} radarTopics={radarTopics} savedPhrases={savedPhrases} />
       </CmsShell>
     );
   }
@@ -110,6 +110,7 @@ export default async function CentroIaPage({
               initialName={name}
               initialHints={hints}
               fixedSite="la-mira"
+              source={source}
               radarTopics={radarTopics}
               savedPhrases={savedPhrases}
             />
