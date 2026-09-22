@@ -214,7 +214,7 @@ export function CalendarView({
                   disabled={day === null}
                   onClick={() => day && setSelectedDay(day)}
                   className={`flex min-h-[84px] flex-col items-start gap-1 border-r border-b border-border-soft p-1.5 text-left transition-colors last:border-r-0 [&:nth-child(7n)]:border-r-0 ${
-                    day === null ? "bg-[#FAF9F7]" : "bg-card hover:bg-hover"
+                    day === null ? "bg-background" : "bg-card hover:bg-hover"
                   } ${isToday && !isSelected ? "shadow-[inset_0_0_0_1.5px_rgba(253,105,13,.35)]" : ""} ${isSelected ? "!bg-accent" : ""}`}
                 >
                   {day && (
@@ -246,7 +246,7 @@ export function CalendarView({
           <div className="mb-3 flex items-center gap-2">
             <span className="text-[13.5px] font-semibold tracking-tight capitalize">{selectedDateLabel ?? "Selecciona un día"}</span>
             {selectedDay && selectedItems.length > 0 && (
-              <span className="inline-flex flex-none items-center rounded-full bg-[#F3F0EC] px-2 py-0.5 text-[11px] font-semibold text-[#5C564F]">
+              <span className="inline-flex flex-none items-center rounded-full bg-hover px-2 py-0.5 text-[11px] font-semibold text-ink-soft">
                 {selectedItems.length}
               </span>
             )}
@@ -260,7 +260,7 @@ export function CalendarView({
               {selectedItems.map((it) => (
                 <div
                   key={`${it.contentType}-${it.contentId}`}
-                  className="flex items-center gap-1 rounded-[9px] border border-border-soft px-2.5 py-2 transition-colors hover:border-[#FFD9BB] hover:bg-[#FFFCF9]"
+                  className="flex items-center gap-1 rounded-[9px] border border-border-soft px-2.5 py-2 transition-colors hover:border-brand/30 hover:bg-hover"
                 >
                   <Link href={contentEditHref(it.contentType, it.contentId)} className="flex min-w-0 flex-1 items-center gap-2">
                     <span aria-hidden="true">{contentTypeIcon(it.contentType)}</span>
