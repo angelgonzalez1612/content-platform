@@ -14,6 +14,7 @@ import { ProviderRegistry } from './provider-registry.service';
 import { ArticleScraperService } from './article-scraper.service';
 import { ImageSearchService } from './image-search.service';
 import { ImageUploadService } from './image-upload.service';
+import { GooglePlacesService } from './google-places.service';
 import { CategoriesModule } from '../categories/categories.module';
 import { PlacesModule } from '../places/places.module';
 
@@ -31,6 +32,7 @@ import { PlacesModule } from '../places/places.module';
     ArticleScraperService,
     ImageSearchService,
     ImageUploadService,
+    GooglePlacesService,
     AiDraftService,
     BlockImproveService,
     SeoGenerateService,

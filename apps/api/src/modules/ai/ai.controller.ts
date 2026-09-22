@@ -27,11 +27,13 @@ import { searchImagesSchema } from './dto/search-images.dto';
 import { fetchImageSchema } from './dto/fetch-image.dto';
 import { improveBlockSchema } from './dto/improve-block.dto';
 import { generateSeoSchema } from './dto/generate-seo.dto';
+import { nearbyPlacesSchema } from './dto/nearby-places.dto';
 import { AiDraftService } from './ai-draft.service';
 import { BlockImproveService } from './block-improve.service';
 import { SeoGenerateService } from './seo-generate.service';
 import { ImageSearchService } from './image-search.service';
 import { ImageUploadService } from './image-upload.service';
+import { GooglePlacesService } from './google-places.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('cms/ai')
@@ -43,6 +45,7 @@ export class AiController {
     private readonly seoGenerate: SeoGenerateService,
     private readonly imageSearch: ImageSearchService,
     private readonly imageUpload: ImageUploadService,
+    private readonly googlePlaces: GooglePlacesService,
   ) {}
 
   @Post('generate-place')
@@ -93,6 +96,16 @@ export class AiController {
   scrapePreview(@Body() body: unknown) {
     const dto = fetchImageSchema.parse(body);
     return this.draftService.scrapePreview(dto.url);
+  }
+
+  // Modo "Zona" de Centro IA — el editor escribe un nombre de zona
+  // ("Coacalco") y se buscan los lugares mejor calificados cerca de ahí
+  // (proxy de popularidad, ver GooglePlacesService) como material real para
+  // generar contenido tipo "lo más popular en la zona".
+  @Post('nearby-places')
+  nearbyPlaces(@Body() body: unknown) {
+    const dto = nearbyPlacesSchema.parse(body);
+    return this.googlePlaces.popularPlacesNear(dto.query);
   }
 
   // Subida manual de una imagen (además de buscarla o pegar una URL) — se

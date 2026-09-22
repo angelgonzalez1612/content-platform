@@ -15,8 +15,9 @@ const TRASH_ICON = "M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0v12a1 1 0 
 const PLUS_ICON = "M12 5v14M5 12h14";
 const SEARCH_ICON = "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM16.5 16.5L21 21";
 const CLOSE_ICON = "M6 6l12 12M18 6L6 18";
+const PIN_ICON = "M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z";
 type ProviderId = "openai" | "claude-cli" | "codex-cli";
-type Mode = "tema" | "liga" | "texto" | "planazo" | "radar";
+type Mode = "tema" | "liga" | "texto" | "frases" | "radar" | "zona";
 
 /** Tema pendiente del reporte más reciente de content-radar (ver
  * extractTopics en @planazo/content-radar/render) — modo "Content Radar" de
@@ -27,13 +28,31 @@ export interface RadarTopic {
   categoryLabel: string;
 }
 
-/** Lugar/evento YA publicado de Planazo, con su resumen ya armado en texto
- * — modo "Desde Planazo" de este formulario (ver buildPlanazoReferences en
- * centro-ia/page.tsx). */
-export interface PlanazoReference {
-  slug: string;
+/** Frase guardada en /automatizaciones/frases (SearchPhrasesService) con
+ * resultados de búsqueda reales ya investigados — modo "Frases guardadas"
+ * de este formulario (ver buildSavedPhrases en centro-ia/page.tsx). */
+export interface SavedPhrase {
+  phrase: string;
+  categoryLabel: string | null;
+  hints: string;
+}
+
+interface NearbyPlace {
+  name: string;
+  rating: number | null;
+  userRatingsTotal: number | null;
+  address: string | null;
+}
+
+interface NearbyPlaceCategory {
+  type: string;
   label: string;
-  summary: string;
+  places: NearbyPlace[];
+}
+
+interface NearbyPlacesResult {
+  zoneName: string;
+  categories: NearbyPlaceCategory[];
 }
 
 const PROVIDERS: Array<{ id: ProviderId; label: string; hint: string }> = [
@@ -58,16 +77,18 @@ const MODE_LABEL: Record<Mode, string> = {
   tema: "Por tema",
   liga: "Por liga",
   texto: "Texto libre",
-  planazo: "Desde Planazo",
+  frases: "Frases guardadas",
   radar: "Content Radar",
+  zona: "Zona",
 };
 
 const MODE_INTRO: Record<Mode, string> = {
   tema: "Dame el tema y lo que ya sabes — por ejemplo, un titular y fuente de content-radar. Escribo el borrador; los datos verificables (fecha, ubicación, cifras) los completas tú.",
   liga: "Pega el link (o varios) de la nota original — leo el artículo completo y escribo el borrador. Los datos verificables (fecha, ubicación, cifras) los completas tú.",
   texto: "Pega el texto completo que ya tengas — un comunicado, notas de una llamada, un boletín. Lo reestructuro como nota, sin inventar nada que no esté ahí.",
-  planazo: "Elige un lugar o evento ya publicado en Planazo — uso sus datos reales como base, sin inventar nada más.",
+  frases: "Elige una frase guardada en Frases de búsqueda — uso las fuentes que ya se investigaron para esa frase.",
   radar: "Elige un tema pendiente del reporte más reciente de Content Radar, sin salir de aquí.",
+  zona: "Escribe una zona (\"Coacalco\", \"Polanco\") y busco los lugares mejor calificados cerca de ahí — un proxy de lo más popular, no búsquedas reales.",
 };
 
 interface DraftResponse {
@@ -106,13 +127,13 @@ export function PublishFlow({
   initialHints,
   fixedSite,
   radarTopics = [],
-  planazoReferences = [],
+  savedPhrases = [],
 }: {
   initialName?: string;
   initialHints?: string;
   fixedSite?: "la-mira" | "planazo";
   radarTopics?: RadarTopic[];
-  planazoReferences?: PlanazoReference[];
+  savedPhrases?: SavedPhrase[];
 }) {
   const [name, setName] = useState(initialName ?? "");
   const [hints, setHints] = useState(initialHints ?? "");
@@ -126,9 +147,21 @@ export function PublishFlow({
   const [urlSiteNames, setUrlSiteNames] = useState<(string | null)[]>([null]);
   const [scrapingIndex, setScrapingIndex] = useState<number | null>(null);
 
-  // Modo "Desde Planazo"
-  const [referenceSlug, setReferenceSlug] = useState("");
-  const selectedReference = planazoReferences.find((r) => r.slug === referenceSlug) ?? null;
+  // Modo "Frases guardadas"
+  const [phraseFilter, setPhraseFilter] = useState("");
+  const [selectedPhraseText, setSelectedPhraseText] = useState<string | null>(null);
+  const selectedPhrase = savedPhrases.find((p) => p.phrase === selectedPhraseText) ?? null;
+  const filteredPhrases = useMemo(() => {
+    const q = phraseFilter.trim().toLowerCase();
+    const list = q ? savedPhrases.filter((p) => p.phrase.toLowerCase().includes(q) || p.categoryLabel?.toLowerCase().includes(q)) : savedPhrases;
+    return list.slice(0, 40);
+  }, [savedPhrases, phraseFilter]);
+
+  // Modo "Zona"
+  const [zoneQuery, setZoneQuery] = useState("");
+  const [zoneSearching, setZoneSearching] = useState(false);
+  const [zoneError, setZoneError] = useState("");
+  const [zoneResult, setZoneResult] = useState<NearbyPlacesResult | null>(null);
 
   // Modo "Content Radar"
   const [radarFilter, setRadarFilter] = useState("");
@@ -160,13 +193,23 @@ export function PublishFlow({
         .filter(Boolean);
       return [...lines, extra].filter(Boolean).join("\n");
     }
-    if (mode === "planazo") return [selectedReference?.summary ?? "", extra].filter(Boolean).join("\n\n");
+    if (mode === "frases") return [selectedPhrase?.hints ?? "", extra].filter(Boolean).join("\n\n");
     if (mode === "radar") return [selectedRadarTopic?.hints ?? "", extra].filter(Boolean).join("\n\n");
+    if (mode === "zona") {
+      if (!zoneResult) return extra;
+      const lines = [
+        `Lugares mejor calificados cerca de ${zoneResult.zoneName} (proxy de popularidad por rating y número de reseñas — no son datos de búsquedas reales, acláralo si lo mencionas):`,
+        ...zoneResult.categories.map((c) =>
+          [`${c.label}:`, ...c.places.map((p) => `- ${p.name}${p.rating ? ` (${p.rating}★, ${p.userRatingsTotal} reseñas)` : ""}${p.address ? ` — ${p.address}` : ""}`)].join("\n"),
+        ),
+      ];
+      return [lines.join("\n\n"), extra].filter(Boolean).join("\n\n");
+    }
     // "tema" y "texto" mandan tal cual — el texto libre pegado ES el hints,
     // no necesita formato especial (AiDraftService ya lo trata como
     // "Notas del editor", igual que cualquier otro contexto).
     return hints;
-  }, [mode, hints, sourceUrls, urlSiteNames, selectedReference, selectedRadarTopic]);
+  }, [mode, hints, sourceUrls, urlSiteNames, selectedPhrase, selectedRadarTopic, zoneResult]);
 
   async function handleScrapeUrlAt(index: number, url: string) {
     const trimmed = url.trim();
@@ -202,12 +245,9 @@ export function PublishFlow({
     setUrlSiteNames((prev) => prev.filter((_, i) => i !== index));
   }
 
-  function pickReference(ref: PlanazoReference) {
-    setReferenceSlug(ref.slug);
-    // Quita el emoji inicial (📍/📅) — todo lo que viene antes del primer
-    // espacio, más simple y sin las sorpresas de \p{Emoji} (también matchea
-    // dígitos sueltos en algunos motores) para un caso tan chico.
-    if (!name.trim()) setName(ref.label.replace(/^\S+\s*/, ""));
+  function pickPhrase(p: SavedPhrase) {
+    setSelectedPhraseText(p.phrase);
+    setName(p.phrase);
   }
 
   function pickRadarTopic(topic: RadarTopic) {
@@ -215,16 +255,52 @@ export function PublishFlow({
     setName(topic.title);
   }
 
+  async function searchZone() {
+    const q = zoneQuery.trim();
+    if (!q) return;
+    setZoneSearching(true);
+    setZoneError("");
+    setZoneResult(null);
+    try {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/ai/nearby-places`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { message?: string } | null;
+        setZoneError(body?.message ?? "No se pudo buscar esa zona.");
+        return;
+      }
+      const data: NearbyPlacesResult = await res.json();
+      if (data.categories.length === 0) {
+        setZoneError(`No se encontraron lugares con suficientes reseñas cerca de ${data.zoneName}.`);
+        return;
+      }
+      setZoneResult(data);
+      if (!name.trim()) setName(`Lo más popular en ${data.zoneName}`);
+    } catch {
+      setZoneError("No se pudo conectar con el servidor.");
+    } finally {
+      setZoneSearching(false);
+    }
+  }
+
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
-    if (mode === "planazo" && !selectedReference) {
-      setError("Elige un lugar o evento de la lista.");
+    if (mode === "frases" && !selectedPhrase) {
+      setError("Elige una frase de la lista.");
       return;
     }
     if (mode === "radar" && !selectedRadarTopic) {
       setError("Elige un tema de la lista.");
+      return;
+    }
+    if (mode === "zona" && !zoneResult) {
+      setError("Busca una zona primero.");
       return;
     }
 
@@ -443,34 +519,54 @@ export function PublishFlow({
           </div>
         )}
 
-        {mode === "planazo" && (
+        {mode === "frases" && (
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="pf-reference" className={labelClass}>
-              Lugar o evento de Planazo
+            <label htmlFor="pf-phrase-filter" className={labelClass}>
+              Frase guardada
             </label>
-            <select
-              id="pf-reference"
-              required
-              value={referenceSlug}
-              onChange={(e) => {
-                const ref = planazoReferences.find((r) => r.slug === e.target.value);
-                if (ref) pickReference(ref);
-                else setReferenceSlug("");
-              }}
-              className={fieldClass}
-              disabled={generating}
-            >
-              <option value="">Elige uno…</option>
-              {planazoReferences.map((r) => (
-                <option key={r.slug} value={r.slug}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
-            {selectedReference && (
-              <pre className="mt-1 max-h-[140px] overflow-y-auto rounded-lg border border-border-soft bg-background p-3 text-[11.5px] leading-[1.5] whitespace-pre-wrap text-ink-soft">
-                {selectedReference.summary}
-              </pre>
+            {selectedPhrase ? (
+              <div className="flex items-start justify-between gap-2 rounded-lg border border-brand bg-accent px-3 py-2.5">
+                <div className="min-w-0">
+                  <span className="block truncate text-[13px] font-semibold text-accent-fg">{selectedPhrase.phrase}</span>
+                  {selectedPhrase.categoryLabel && <span className="block text-[11px] text-ink-faint">{selectedPhrase.categoryLabel}</span>}
+                </div>
+                <button type="button" onClick={() => setSelectedPhraseText(null)} className="flex-none text-ink-faint transition-colors hover:text-ink" title="Elegir otra frase">
+                  <Icon d={CLOSE_ICON} size={14} strokeWidth={1.8} />
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="relative">
+                  <Icon d={SEARCH_ICON} size={13} strokeWidth={2} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-faint" />
+                  <input
+                    id="pf-phrase-filter"
+                    value={phraseFilter}
+                    onChange={(e) => setPhraseFilter(e.target.value)}
+                    placeholder="Buscar por frase o categoría…"
+                    className={`${fieldClass} pl-8`}
+                    disabled={generating}
+                  />
+                </div>
+                <div className="flex max-h-[220px] flex-col gap-1 overflow-y-auto rounded-lg border border-border-soft p-1.5">
+                  {savedPhrases.length === 0 ? (
+                    <p className="p-2 text-[12.5px] text-ink-faint">No hay frases guardadas todavía — agrégalas en Frases de búsqueda.</p>
+                  ) : filteredPhrases.length === 0 ? (
+                    <p className="p-2 text-[12.5px] text-ink-faint">Ninguna frase coincide con &quot;{phraseFilter}&quot;.</p>
+                  ) : (
+                    filteredPhrases.map((p) => (
+                      <button
+                        key={p.phrase}
+                        type="button"
+                        onClick={() => pickPhrase(p)}
+                        className="flex flex-col items-start gap-0.5 rounded-md px-2.5 py-2 text-left transition-colors hover:bg-hover"
+                      >
+                        <span className="truncate text-[12.5px] font-medium text-ink">{p.phrase}</span>
+                        {p.categoryLabel && <span className="text-[10.5px] text-ink-faint">{p.categoryLabel}</span>}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </>
             )}
           </div>
         )}
@@ -527,6 +623,69 @@ export function PublishFlow({
           </div>
         )}
 
+        {mode === "zona" && (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="pf-zone" className={labelClass}>
+              Zona
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="pf-zone"
+                value={zoneQuery}
+                onChange={(e) => setZoneQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    searchZone();
+                  }
+                }}
+                placeholder="ej. Coacalco, Estado de México"
+                className={fieldClass}
+                disabled={generating || zoneSearching}
+              />
+              <button
+                type="button"
+                onClick={searchZone}
+                disabled={generating || zoneSearching || !zoneQuery.trim()}
+                className="flex flex-none items-center gap-1.5 rounded-[10px] border border-border bg-background px-3.5 py-2 text-[12.5px] font-semibold text-ink transition-colors hover:border-ink-faint disabled:opacity-60"
+              >
+                <Icon d={zoneSearching ? SPARK_ICON : SEARCH_ICON} size={13} strokeWidth={2} className={zoneSearching ? "animate-spin" : ""} />
+                Buscar
+              </button>
+            </div>
+            {zoneError && <p className="text-[11.5px] font-medium text-[#C4453A]">{zoneError}</p>}
+            {zoneResult && (
+              <div className="flex flex-col gap-2 rounded-lg border border-brand bg-accent p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-1.5 text-[13px] font-semibold text-accent-fg">
+                    <Icon d={PIN_ICON} size={13} strokeWidth={1.8} />
+                    {zoneResult.zoneName}
+                  </span>
+                  <button type="button" onClick={() => setZoneResult(null)} className="flex-none text-ink-faint transition-colors hover:text-ink" title="Buscar otra zona">
+                    <Icon d={CLOSE_ICON} size={14} strokeWidth={1.8} />
+                  </button>
+                </div>
+                <div className="flex max-h-[220px] flex-col gap-2.5 overflow-y-auto">
+                  {zoneResult.categories.map((c) => (
+                    <div key={c.type}>
+                      <span className="mb-1 block text-[10.5px] font-semibold tracking-[.02em] text-ink-faint uppercase">{c.label}</span>
+                      <div className="flex flex-col gap-0.5">
+                        {c.places.map((p) => (
+                          <span key={p.name} className="text-[12.5px] text-ink">
+                            {p.name}
+                            {p.rating && <span className="text-ink-faint"> · {p.rating}★ ({p.userRatingsTotal})</span>}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10.5px] text-ink-faint">Ordenado por rating y número de reseñas — un proxy de popularidad, no datos reales de búsquedas.</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {mode === "texto" ? (
           <div className="flex flex-col gap-1.5">
             <label htmlFor="pf-hints" className={labelClass}>
@@ -546,7 +705,7 @@ export function PublishFlow({
         ) : (
           <div className="flex flex-col gap-1.5">
             <label htmlFor="pf-name" className={labelClass}>
-              {mode === "liga" ? "Título sugerido" : mode === "planazo" || mode === "radar" ? "Título" : "Tema / título"}
+              {mode === "liga" ? "Título sugerido" : mode === "frases" || mode === "radar" || mode === "zona" ? "Título" : "Tema / título"}
             </label>
             <input id="pf-name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="ej. Bloqueo total en Eje Central por transportistas" className={fieldClass} disabled={generating} />
           </div>

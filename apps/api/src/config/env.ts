@@ -62,6 +62,15 @@ const envSchema = z.object({
   VERCEL_DEPLOY_HOOK_CMS: z.url().optional(),
   VERCEL_DEPLOY_HOOK_LA_MIRA: z.url().optional(),
   VERCEL_DEPLOY_HOOK_PLANAZO: z.url().optional(),
+  // Google Maps Platform (Geocoding + Places Nearby Search) — modo "Zona" de
+  // Centro IA: el editor escribe un nombre de zona ("Coacalco"), se
+  // geocodifica y se buscan los lugares mejor calificados cerca de ese punto
+  // como material real para generar contenido (ver GooglePlacesService). NO
+  // hay dato real de "qué es lo más buscado" en Places API — esto es un
+  // proxy de popularidad (rating + número de reseñas), nunca se presenta
+  // como búsquedas reales. Opcional: sin ella, ese modo falla con un mensaje
+  // claro en vez de tronar el arranque del server.
+  GOOGLE_MAPS_API_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

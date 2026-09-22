@@ -1,14 +1,13 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { getCmsCategories, getCmsPlaces, getCmsEvents, getContentRadarPublishedTitles } from "@/lib/cms-api";
+import { getCmsCategories, getContentRadarPublishedTitles, getSearchPhrases } from "@/lib/cms-api";
 import { listReports, readReportFile, extractTopics, normalizeTitle } from "@planazo/content-radar/render";
 import { DEFAULT_SITE_ID } from "@planazo/content-radar/sites";
-import type { Place, PlanazoEvent } from "@planazo/types";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { GeneratePlaceFlow } from "@/components/cms/generate-place-flow";
 import { GenerateLamiraContentFlow } from "@/components/cms/lamira/generate-lamira-content-flow";
 import { GenerateEventFlow } from "@/components/cms/planazo/generate-event-flow";
-import { PublishFlow, type RadarTopic, type PlanazoReference } from "@/components/cms/publish-flow";
+import { PublishFlow, type RadarTopic, type SavedPhrase } from "@/components/cms/publish-flow";
 import { CrearSteps, ProjectPill } from "@/components/cms/crear-steps";
 
 const LAMIRA_TYPES = new Set(["noticia", "alerta", "guia", "evento", "lugar", "reportaje"]);
@@ -38,48 +37,31 @@ async function getPendingRadarTopics(): Promise<RadarTopic[]> {
     .map((t) => ({ title: t.title, hints: t.hints, categoryLabel: t.categoryLabel }));
 }
 
-// Modo "Desde Planazo" — lugares/eventos YA publicados como material de
-// referencia real para una pieza de La Mira (ej. una alerta sobre un lugar
-// que cierra). El resumen se arma aquí, servidor, con los datos tal como
-// están en la base — el cliente solo lo manda como `hints`, mismo mecanismo
-// que cualquier otro texto libre (ver AiDraftService.draft, no lee nada
-// especial de este formato, es material para el prompt como cualquier otro).
-function buildPlanazoReferences(places: Place[], events: PlanazoEvent[]): PlanazoReference[] {
-  const fromPlaces = places
-    .filter((p) => p.status === "published")
+// Modo "Frases guardadas" — frases reales de "qué busca la gente" en
+// /automatizaciones/frases (SearchPhrasesService), como tema de partida sin
+// tener que volver a escribirlo. Se excluyen "used"/"discarded" (ya se
+// usaron o se descartaron a propósito). Cuando ya se investigó y tiene
+// fuentes reales (candidateLinks — requiere GOOGLE_SEARCH_API_KEY
+// configurada, ver env.ts), se incluyen como material citable; sin ellas,
+// la frase igual sirve como tema (mismo tratamiento que el modo "Por tema").
+// Los hints se arman aquí, servidor — el cliente solo los manda como
+// `hints`, igual que cualquier otro texto libre (ver AiDraftService.draft).
+async function getSavedPhrasesForGeneration(): Promise<SavedPhrase[]> {
+  const phrases = await getSearchPhrases();
+  return phrases
+    .filter((p) => p.status !== "used" && p.status !== "discarded")
     .map((p) => ({
-      slug: `place:${p.slug}`,
-      label: `📍 ${p.name}`,
-      summary: [
-        "Lugar de referencia (dato real de Planazo — no inventes nada más allá de esto):",
-        `Nombre: ${p.name}`,
-        p.categories.length ? `Categoría: ${p.categories.map((c) => c.name).join(", ")}` : "",
-        p.zone ? `Zona: ${p.zone}` : "",
-        p.address ? `Dirección: ${p.address}` : "",
-        p.description ? `Descripción: ${p.description}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n"),
+      phrase: p.phrase,
+      categoryLabel: p.categoryLabel,
+      hints:
+        p.candidateLinks.length > 0
+          ? [
+              `Frase de búsqueda investigada: "${p.phrase}"${p.categoryLabel ? ` (categoría: ${p.categoryLabel})` : ""}.`,
+              "Fuentes encontradas para esta frase:",
+              ...p.candidateLinks.map((l) => `- ${l.title} — ${l.snippet} (${l.url})`),
+            ].join("\n")
+          : `Frase real de "Qué busca la gente": "${p.phrase}"${p.categoryLabel ? ` (categoría: ${p.categoryLabel})` : ""}. Sin fuentes investigadas todavía — trátalo como tema, no inventes datos verificables (fecha, ubicación, cifras).`,
     }));
-
-  const fromEvents = events
-    .filter((e) => e.status === "published")
-    .map((e) => ({
-      slug: `event:${e.slug}`,
-      label: `📅 ${e.name}`,
-      summary: [
-        "Evento de referencia (dato real de Planazo — no inventes nada más allá de esto):",
-        `Nombre: ${e.name}`,
-        e.category ? `Categoría: ${e.category.name}` : "",
-        e.locationName ? `Lugar: ${e.locationName}` : "",
-        e.startDate ? `Fecha: ${e.startDate}` : "",
-        e.description ? `Descripción: ${e.description}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    }));
-
-  return [...fromPlaces, ...fromEvents].sort((a, b) => a.label.localeCompare(b.label));
 }
 
 export default async function CentroIaPage({
@@ -98,10 +80,10 @@ export default async function CentroIaPage({
   // SiteTabs, el humano ya eligió el sitio a propósito — comportamiento sin
   // cambios.
   if (!site) {
-    const [radarTopics, places, events] = await Promise.all([getPendingRadarTopics(), getCmsPlaces(), getCmsEvents()]);
+    const [radarTopics, savedPhrases] = await Promise.all([getPendingRadarTopics(), getSavedPhrasesForGeneration()]);
     return (
       <CmsShell user={session} title="Centro IA">
-        <PublishFlow initialName={name} initialHints={hints} radarTopics={radarTopics} planazoReferences={buildPlanazoReferences(places, events)} />
+        <PublishFlow initialName={name} initialHints={hints} radarTopics={radarTopics} savedPhrases={savedPhrases} />
       </CmsShell>
     );
   }
@@ -115,7 +97,7 @@ export default async function CentroIaPage({
   // PublishFlow que usa el botón "Publicar" de content-radar, pero con el
   // sitio ya fijo — ver AiDraftService.classifyContentType/fixedSite).
   if (isLamira && !validType) {
-    const [radarTopics, places, events] = await Promise.all([getPendingRadarTopics(), getCmsPlaces(), getCmsEvents()]);
+    const [radarTopics, savedPhrases] = await Promise.all([getPendingRadarTopics(), getSavedPhrasesForGeneration()]);
     return (
       <CmsShell user={session} title="Centro IA">
         <div className="flex flex-col lg:h-full">
@@ -129,7 +111,7 @@ export default async function CentroIaPage({
               initialHints={hints}
               fixedSite="la-mira"
               radarTopics={radarTopics}
-              planazoReferences={buildPlanazoReferences(places, events)}
+              savedPhrases={savedPhrases}
             />
           </div>
         </div>
