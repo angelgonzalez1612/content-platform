@@ -3,13 +3,13 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { Icon } from "@/components/icon";
+import { CrearSteps, ProjectPill } from "@/components/cms/crear-steps";
 import { LamiraCrearTypePicker } from "@/components/cms/lamira/crear-type-picker";
 import { PlanazoCrearTypePicker } from "@/components/cms/planazo/crear-type-picker";
 
 const PIN_ICON = "M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z";
 const NEWSPAPER_ICON = "M4 5h16v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5zM8 9h8M8 13h8M8 17h5";
 const ARROW_ICON = "M5 12h14M13 6l6 6-6 6";
-const CHECK_ICON = "M5 13l4 4L19 7";
 
 export default async function CrearPage({ searchParams }: { searchParams: Promise<{ site?: string }> }) {
   const session = await getSession();
@@ -23,7 +23,7 @@ export default async function CrearPage({ searchParams }: { searchParams: Promis
   return (
     <CmsShell user={session} title="Crear">
       <div className="mx-auto max-w-[760px] p-[26px] pb-[60px]">
-        <Steps step={step} />
+        <CrearSteps current={step} />
 
         {step === 1 ? (
           <div className="text-center">
@@ -35,7 +35,7 @@ export default async function CrearPage({ searchParams }: { searchParams: Promis
           </div>
         ) : isLamira ? (
           <div className="text-center">
-            <ProjectPill icon={NEWSPAPER_ICON} label="La Mira" />
+            <ProjectPill site="lamira" />
             <h1 className="mb-1.5 text-[24px] font-semibold tracking-tight">¿Qué quieres crear?</h1>
             <p className="mx-auto mb-8 max-w-[52ch] text-[13.5px] leading-[1.6] text-ink-soft">
               Elige el tipo de contenido y cómo quieres armarlo — con IA a partir de un tema, o llenando la ficha tú mismo.
@@ -44,7 +44,7 @@ export default async function CrearPage({ searchParams }: { searchParams: Promis
           </div>
         ) : (
           <div className="text-center">
-            <ProjectPill icon={PIN_ICON} label="Planazo" />
+            <ProjectPill site="planazo" />
             <h1 className="mb-1.5 text-[24px] font-semibold tracking-tight">¿Qué quieres crear?</h1>
             <p className="mx-auto mb-8 max-w-[52ch] text-[13.5px] leading-[1.6] text-ink-soft">
               Elige el tipo de contenido y cómo quieres armarlo — con IA a partir del nombre, o llenando la ficha tú mismo.
@@ -54,66 +54,6 @@ export default async function CrearPage({ searchParams }: { searchParams: Promis
         )}
       </div>
     </CmsShell>
-  );
-}
-
-/** Franja de pasos del wizard — el paso 1 (Proyecto) enlaza de vuelta a
- * /crear cuando ya se avanzó al paso 2, para poder cambiar de proyecto sin
- * perder el lugar donde se estaba. */
-function Steps({ step }: { step: 1 | 2 }) {
-  return (
-    <div className="mb-9 flex items-center justify-center gap-3">
-      <StepBadge n={1} label="Proyecto" state={step === 1 ? "current" : "done"} href={step === 2 ? "/crear" : undefined} />
-      <span className={`h-px w-12 flex-none transition-colors ${step === 2 ? "bg-brand" : "bg-border"}`} />
-      <StepBadge n={2} label="Cómo crear" state={step === 2 ? "current" : "upcoming"} />
-    </div>
-  );
-}
-
-function StepBadge({
-  n,
-  label,
-  state,
-  href,
-}: {
-  n: number;
-  label: string;
-  state: "done" | "current" | "upcoming";
-  href?: string;
-}) {
-  const content = (
-    <div className="flex items-center gap-2">
-      <span
-        className={`grid size-7 flex-none place-items-center rounded-full text-[12px] font-semibold transition-colors ${
-          state === "done" ? "bg-brand text-white" : state === "current" ? "bg-ink-solid text-white" : "border border-border bg-card text-ink-faint"
-        }`}
-      >
-        {state === "done" ? <Icon d={CHECK_ICON} size={12} strokeWidth={2.4} /> : n}
-      </span>
-      <span className={`text-[12.5px] font-medium ${state === "upcoming" ? "text-ink-faint" : "text-ink"}`}>{label}</span>
-    </div>
-  );
-
-  return href ? (
-    <Link href={href} className="rounded-lg transition-opacity hover:opacity-70">
-      {content}
-    </Link>
-  ) : (
-    content
-  );
-}
-
-/** Recuerda en qué proyecto se está creando — el paso 1 ya no es visible
- * en el paso 2, así que sin esto no hay ninguna pista en pantalla de si
- * se está viendo Planazo o La Mira. */
-function ProjectPill({ icon, label }: { icon: string; label: string }) {
-  return (
-    <div className="mb-4 flex justify-center">
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[12px] font-medium text-ink-soft">
-        <Icon d={icon} size={12} strokeWidth={1.8} />
-        {label}
-      </span>
-    </div>
   );
 }
 

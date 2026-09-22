@@ -6,7 +6,7 @@ import { GeneratePlaceFlow } from "@/components/cms/generate-place-flow";
 import { GenerateLamiraContentFlow } from "@/components/cms/lamira/generate-lamira-content-flow";
 import { GenerateEventFlow } from "@/components/cms/planazo/generate-event-flow";
 import { PublishFlow } from "@/components/cms/publish-flow";
-import { SiteTabs } from "@/components/cms/site-tabs";
+import { CrearSteps, ProjectPill } from "@/components/cms/crear-steps";
 
 const LAMIRA_TYPES = new Set(["noticia", "alerta", "guia", "evento", "lugar", "reportaje"]);
 
@@ -42,7 +42,8 @@ export default async function CentroIaPage({
     <CmsShell user={session} title="Centro IA">
       <div className="flex flex-col lg:h-full">
         <div className="flex-none px-[26px] pt-[26px]">
-          <SiteTabs site={isLamira ? "lamira" : "planazo"} basePath="/centro-ia" />
+          <CrearSteps current={3} site={isLamira ? "lamira" : "planazo"} />
+          <ProjectPill site={isLamira ? "lamira" : "planazo"} />
         </div>
         <div className="lg:min-h-0 lg:flex-1">
           {isLamira ? (
