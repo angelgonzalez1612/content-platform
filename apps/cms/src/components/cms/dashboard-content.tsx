@@ -363,7 +363,7 @@ export function DashboardContent({ user }: { user: AuthUser }) {
         </div>
 
         <div className="flex flex-col gap-4">
-          <div className="relative overflow-hidden rounded-[14px] bg-ink p-4 text-white">
+          <div className="relative overflow-hidden rounded-[14px] bg-ink-solid p-4 text-white">
             <div
               className="absolute -right-[30px] -bottom-10 size-[150px] rounded-full"
               style={{

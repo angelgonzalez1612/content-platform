@@ -210,7 +210,7 @@ export function Sidebar({
         <div
           role="tooltip"
           style={{ top: tooltip.top, left: tooltip.left }}
-          className="pointer-events-none fixed z-50 -translate-y-1/2 animate-[pz-in_.12s_ease-out] rounded-md bg-ink px-2.5 py-1.5 text-[11.5px] font-medium whitespace-nowrap text-white shadow-[0_6px_16px_-4px_rgba(23,20,17,.32)]"
+          className="pointer-events-none fixed z-50 -translate-y-1/2 animate-[pz-in_.12s_ease-out] rounded-md bg-ink-solid px-2.5 py-1.5 text-[11.5px] font-medium whitespace-nowrap text-white shadow-[0_6px_16px_-4px_rgba(23,20,17,.32)]"
         >
           {tooltip.label}
         </div>

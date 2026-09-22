@@ -27,6 +27,14 @@
   /* Hover sutil sobre card/background — antes era #F5F3F0/#FEFCFA/#F6F4F1
      sueltos por todo el CMS (ver hover:bg-hover). */
   --color-hover: #f5f3f0;
+  /* Superficie "siempre oscura" (avatares, tooltips, tarjeta Resumen,
+     botón activo de Copiloto) — a propósito SIN override en modo oscuro
+     más abajo. --color-ink es texto y se invierte con el tema (casi
+     blanco en oscuro); estos usos quieren un fondo oscuro con texto
+     blanco fijo en los dos modos, así que necesitan su propio token en
+     vez de bg-ink, que ahora se volvería casi blanco con texto blanco
+     encima. */
+  --color-ink-solid: #17140f;
 }
 
 /* Tema oscuro — solo cubre los tokens semánticos de arriba (fondo, texto,

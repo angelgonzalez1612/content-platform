@@ -105,7 +105,7 @@ export function Topbar({
           onClick={onToggleCopilot}
           title="Copiloto"
           className={`flex items-center gap-[7px] rounded-lg border py-1.5 pr-2.5 pl-2.5 font-sans text-[12.5px] font-medium transition-colors sm:pr-[11px] ${
-            copilotOpen ? "border-ink bg-ink text-white" : "border-border bg-card text-ink"
+            copilotOpen ? "border-ink-solid bg-ink-solid text-white" : "border-border bg-card text-ink"
           }`}
         >
           <Icon d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z" size={14} strokeWidth={1.6} />

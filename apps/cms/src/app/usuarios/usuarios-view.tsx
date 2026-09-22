@@ -25,7 +25,7 @@ function RoleBadge({ role }: { role: UserRole }) {
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap ${
-        role === "admin" ? "bg-ink text-white" : "bg-[#F3F0EC] text-[#5C564F]"
+        role === "admin" ? "bg-ink-solid text-white" : "bg-[#F3F0EC] text-[#5C564F]"
       }`}
     >
       {ROLE_LABELS[role]}
@@ -141,7 +141,7 @@ export function UsuariosView({ initialUsers, currentUser }: { initialUsers: Auth
             return (
               <div key={u.id} className="grid min-w-[640px] grid-cols-[1fr_180px_140px_120px] items-center gap-0 border-b border-border-soft px-4 py-2.5 transition-colors last:border-b-0 hover:bg-hover">
                 <div className="flex min-w-0 items-center gap-2.5 pr-3">
-                  <span className="grid size-8 flex-none place-items-center rounded-full bg-ink text-[11px] font-semibold text-white">{initials(u.name)}</span>
+                  <span className="grid size-8 flex-none place-items-center rounded-full bg-ink-solid text-[11px] font-semibold text-white">{initials(u.name)}</span>
                   <div className="flex min-w-0 flex-col gap-0.5">
                     <span className="flex items-center gap-1.5 truncate text-[13.5px] font-medium">
                       {u.name}

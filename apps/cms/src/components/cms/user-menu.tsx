@@ -50,7 +50,7 @@ export function UserMenu({ user }: { user: AuthUser }) {
         aria-haspopup="menu"
         aria-expanded={open}
         title={user.name}
-        className="grid size-8 flex-none place-items-center rounded-full bg-ink text-[11.5px] font-semibold text-white transition-shadow duration-150 hover:shadow-[0_0_0_3px_rgba(23,20,17,.1)]"
+        className="grid size-8 flex-none place-items-center rounded-full bg-ink-solid text-[11.5px] font-semibold text-white transition-shadow duration-150 hover:shadow-[0_0_0_3px_rgba(23,20,17,.1)]"
       >
         {initials}
       </button>
@@ -61,7 +61,7 @@ export function UserMenu({ user }: { user: AuthUser }) {
           className="absolute top-[calc(100%+8px)] right-0 z-50 w-[220px] overflow-hidden rounded-[12px] border border-border bg-card shadow-[0_16px_36px_-12px_rgba(23,20,17,.22)]"
         >
           <div className="flex items-center gap-2.5 border-b border-border-soft px-3.5 py-3">
-            <div className="grid size-8 flex-none place-items-center rounded-full bg-ink text-[11.5px] font-semibold text-white">
+            <div className="grid size-8 flex-none place-items-center rounded-full bg-ink-solid text-[11.5px] font-semibold text-white">
               {initials}
             </div>
             <div className="flex min-w-0 flex-col leading-[1.25]">

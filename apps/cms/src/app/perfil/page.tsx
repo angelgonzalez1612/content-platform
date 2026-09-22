@@ -35,7 +35,7 @@ export default async function PerfilPage() {
         <h1 className="mb-1 text-[22px] font-semibold tracking-tight">Perfil</h1>
         <p className="mb-6 text-[13.5px] text-ink-soft">Tu información de cuenta en Content CMS.</p>
 
-        <div className="relative overflow-hidden rounded-[18px] bg-ink px-7 py-8 text-white">
+        <div className="relative overflow-hidden rounded-[18px] bg-ink-solid px-7 py-8 text-white">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 opacity-[0.04]"
