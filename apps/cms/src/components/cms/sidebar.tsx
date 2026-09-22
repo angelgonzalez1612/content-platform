@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { apiConfig } from "@planazo/config";
 import { NAV_GROUPS } from "@/data/dashboard";
 import { Icon } from "@/components/icon";
 import { useIsMobile } from "@/lib/use-is-mobile";
@@ -50,6 +51,23 @@ export function Sidebar({
   // ahí, donde el drawer ya se abre y cierra por completo.
   const collapsed = isMobile ? false : collapsedPref;
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  // Badge de "Contenido" — piezas en revisión (mismo counts.inReview que la
+  // tarjeta "Resumen" del dashboard), no un total fijo. null mientras carga
+  // = sin badge, en vez de parpadear un número viejo.
+  const [inReviewCount, setInReviewCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${apiConfig.clientBaseUrl}/cms/dashboard/stats`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { counts?: { inReview?: number } } | null) => {
+        if (!cancelled && data?.counts) setInReviewCount(data.counts.inReview ?? 0);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function handleEnter(label: string) {
     return (e: React.MouseEvent<HTMLElement>) => {
@@ -144,22 +162,18 @@ export function Sidebar({
                 collapsed ? "justify-center gap-0 px-0" : "gap-2.5 px-2.5"
               } ${active ? "bg-accent font-semibold text-accent-fg" : "text-ink hover:bg-hover"} ${!href ? "cursor-default opacity-55" : ""}`;
 
+              // "Contenido" muestra piezas en revisión (dato real, ver
+              // fetch arriba) en vez del badge fijo que trae NAV_GROUPS —
+              // los demás ítems (p.ej. Keywords) todavía usan el suyo tal cual.
+              const badge = item.id === "contenido" ? (inReviewCount ? String(inReviewCount) : null) : item.badge;
+
               const content = (
                 <>
                   <Icon d={item.icon} size={15} strokeWidth={1.6} className="flex-none" />
                   <span className={`flex flex-1 items-center gap-1.5 ${collapseText(collapsed)}`} style={{ maxWidth: collapsed ? 0 : 180 }}>
                     <span className="flex-1 tracking-tight">{item.name}</span>
-                    {item.badge && (
-                      <span
-                        className="rounded font-mono text-[9.5px] font-medium"
-                        style={{
-                          padding: "1px 5px",
-                          background: item.badge === "IA" ? "#FD690D" : "#F3F0EC",
-                          color: item.badge === "IA" ? "#fff" : "#8A837B",
-                        }}
-                      >
-                        {item.badge}
-                      </span>
+                    {badge && (
+                      <span className="rounded bg-hover px-[5px] py-px font-mono text-[9.5px] font-medium text-ink-soft">{badge}</span>
                     )}
                   </span>
                 </>
