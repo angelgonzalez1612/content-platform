@@ -7,7 +7,7 @@ import Link from "next/link";
 export function SiteTabs({ site, basePath, extraQuery = "" }: { site: "planazo" | "lamira"; basePath: string; extraQuery?: string }) {
   const tabClass = (active: boolean) =>
     `rounded-md px-3 py-1.5 text-[12.5px] font-medium transition-colors ${
-      active ? "bg-accent text-accent-fg" : "text-ink-soft hover:bg-[#F5F3F0]"
+      active ? "bg-accent text-accent-fg" : "text-ink-soft hover:bg-hover"
     }`;
   return (
     <div className="mb-5 flex gap-1 border-b border-border-soft pb-3">

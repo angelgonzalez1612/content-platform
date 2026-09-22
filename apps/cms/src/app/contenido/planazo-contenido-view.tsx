@@ -220,7 +220,7 @@ export function PlanazoContenidoView({
               filteredPlaces.map((place) => (
                 <div
                   key={place.id}
-                  className="grid min-w-[600px] grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-[#FEFCFA]"
+                  className="grid min-w-[600px] grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-hover"
                 >
                   <Link href={`/contenido/${place.id}`} className="min-w-0 py-2 pr-3">
                     <span className="block truncate text-[13.5px] font-medium tracking-tight hover:text-brand">{place.name}</span>
@@ -273,7 +273,7 @@ export function PlanazoContenidoView({
               filteredEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="grid min-w-[600px] grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-[#FEFCFA]"
+                  className="grid min-w-[600px] grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-hover"
                 >
                   <Link href={`/contenido/planazo-evento/${event.id}`} className="min-w-0 py-2 pr-3">
                     <span className="block truncate text-[13.5px] font-medium tracking-tight hover:text-brand">{event.name}</span>
@@ -326,7 +326,7 @@ export function PlanazoContenidoView({
               filteredGuides.map((guide) => (
                 <div
                   key={guide.id}
-                  className="grid min-w-[600px] grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-[#FEFCFA]"
+                  className="grid min-w-[600px] grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-hover"
                 >
                   <Link href={`/contenido/planazo-guia/${guide.id}`} className="min-w-0 py-2 pr-3">
                     <span className="block truncate text-[13.5px] font-medium tracking-tight hover:text-brand">{guide.title}</span>

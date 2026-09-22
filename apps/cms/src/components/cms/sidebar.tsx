@@ -87,7 +87,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={onCloseMobile}
-          className="mr-2 grid size-7 flex-none place-items-center rounded-md text-ink-soft hover:bg-[#F5F3F0] md:hidden"
+          className="mr-2 grid size-7 flex-none place-items-center rounded-md text-ink-soft hover:bg-hover md:hidden"
         >
           <Icon d="M6 6l12 12M18 6L6 18" size={15} strokeWidth={1.8} />
         </button>
@@ -99,7 +99,7 @@ export function Sidebar({
           onClick={onOpenCommand}
           onMouseEnter={handleEnter("Buscar o preguntar (⌘K)")}
           onMouseLeave={handleLeave}
-          className={`flex w-full items-center rounded-[9px] border border-border bg-background text-left font-sans text-[12.5px] text-ink-faint transition-colors hover:border-[#E0DBD4] hover:bg-[#F6F4F1] ${
+          className={`flex w-full items-center rounded-[9px] border border-border bg-background text-left font-sans text-[12.5px] text-ink-faint transition-colors hover:border-[#E0DBD4] hover:bg-hover ${
             collapsed ? "justify-center gap-0 px-0 py-1.5" : "gap-2 px-2.5 py-1.5"
           }`}
         >
@@ -143,7 +143,7 @@ export function Sidebar({
                 : false;
               const className = `flex w-full items-center rounded-lg py-[6.5px] text-left text-[13px] transition-colors ${
                 collapsed ? "justify-center gap-0 px-0" : "gap-2.5 px-2.5"
-              } ${active ? "bg-accent font-semibold text-accent-fg" : "text-ink hover:bg-[#F5F3F0]"} ${!href ? "cursor-default opacity-55" : ""}`;
+              } ${active ? "bg-accent font-semibold text-accent-fg" : "text-ink hover:bg-hover"} ${!href ? "cursor-default opacity-55" : ""}`;
 
               const content = (
                 <>
@@ -194,7 +194,7 @@ export function Sidebar({
             onClick={onToggleCollapsed}
             onMouseEnter={handleEnter(collapsed ? "Expandir menú" : "Colapsar menú")}
             onMouseLeave={handleLeave}
-            className={`flex w-full items-center rounded-lg py-2 text-[12.5px] font-medium text-ink-soft transition-colors hover:bg-[#F5F3F0] ${
+            className={`flex w-full items-center rounded-lg py-2 text-[12.5px] font-medium text-ink-soft transition-colors hover:bg-hover ${
               collapsed ? "justify-center gap-0 px-0" : "gap-2 px-2.5"
             }`}
           >

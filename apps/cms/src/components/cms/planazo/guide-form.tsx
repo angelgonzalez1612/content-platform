@@ -296,7 +296,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
             placeholder="ej. En pareja — Enter para agregar"
             className={`${fieldClass} flex-1`}
           />
-          <button type="button" onClick={addAudience} className="rounded-xl border border-border bg-background px-3.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-[#F5F3F0]">
+          <button type="button" onClick={addAudience} className="rounded-xl border border-border bg-background px-3.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-hover">
             Agregar
           </button>
         </div>

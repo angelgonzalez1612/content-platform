@@ -189,7 +189,7 @@ export function DashboardContent({ user }: { user: AuthUser }) {
         {(stats ? kpis : Array.from<Kpi | null>({ length: 6 })).map((k, i) => (
           <div
             key={k?.label ?? i}
-            className="flex min-w-0 flex-col gap-2 bg-card px-4 pt-[15px] pb-3.5 transition-colors hover:bg-[#FEFCFA]"
+            className="flex min-w-0 flex-col gap-2 bg-card px-4 pt-[15px] pb-3.5 transition-colors hover:bg-hover"
           >
             {k ? (
               <>
@@ -245,7 +245,7 @@ export function DashboardContent({ user }: { user: AuthUser }) {
                 <Link
                   key={`${item.contentType}-${item.contentId}`}
                   href={contentEditHref(item.contentType, item.contentId)}
-                  className="flex items-center gap-2.5 border-t border-border-soft px-4 py-2.5 transition-colors first:border-t-0 hover:bg-[#FEFCFA]"
+                  className="flex items-center gap-2.5 border-t border-border-soft px-4 py-2.5 transition-colors first:border-t-0 hover:bg-hover"
                 >
                   <span aria-hidden="true">
                     {contentTypeIcon(item.contentType)}

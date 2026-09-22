@@ -154,7 +154,7 @@ export function LamiraContenidoView({ rows, categories }: { rows: LamiraContentR
           filtered.map((row) => (
             <div
               key={`${row.type}-${row.id}`}
-              className="grid min-w-[780px] grid-cols-[110px_1fr_150px_130px_100px_50px_44px] items-center gap-0 border-b border-border-soft px-4 py-1.5 transition-colors last:border-b-0 hover:bg-[#FEFCFA]"
+              className="grid min-w-[780px] grid-cols-[110px_1fr_150px_130px_100px_50px_44px] items-center gap-0 border-b border-border-soft px-4 py-1.5 transition-colors last:border-b-0 hover:bg-hover"
             >
               <span className="flex items-center gap-1.5 text-[12px] text-ink-soft">
                 <span aria-hidden="true">{TYPE_ICON[row.type]}</span>

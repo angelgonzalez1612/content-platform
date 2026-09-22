@@ -285,7 +285,7 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
             placeholder="Escribe y presiona Enter"
             className={`${fieldClass} flex-1`}
           />
-          <button type="button" onClick={addTag} className="rounded-xl border border-border bg-background px-3.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-[#F5F3F0]">
+          <button type="button" onClick={addTag} className="rounded-xl border border-border bg-background px-3.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-hover">
             Agregar
           </button>
         </div>

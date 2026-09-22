@@ -51,7 +51,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
               key={s.label}
               type="button"
               onClick={onClose}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] hover:bg-[#F5F3F0]"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] hover:bg-hover"
             >
               <span
                 className="grid size-6 flex-none place-items-center rounded-md text-[11px]"
@@ -71,7 +71,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
               onClose();
               router.push("/");
             }}
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] hover:bg-[#F5F3F0]"
+            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] hover:bg-hover"
           >
             <span className="grid size-6 flex-none place-items-center rounded-md bg-[#F3F0EC] text-[11px] text-ink-soft">◱</span>
             <span className="flex-1">Ir al Dashboard</span>

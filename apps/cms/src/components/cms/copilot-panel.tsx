@@ -22,7 +22,7 @@ export function CopilotPanel({ screenTitle, onClose }: { screenTitle: string; on
           type="button"
           onClick={onClose}
           aria-label="Cerrar copiloto"
-          className="grid size-6 place-items-center rounded-md text-ink-faint hover:bg-[#F5F3F0]"
+          className="grid size-6 place-items-center rounded-md text-ink-faint hover:bg-hover"
         >
           ×
         </button>

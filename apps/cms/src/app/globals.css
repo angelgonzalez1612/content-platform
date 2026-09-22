@@ -24,6 +24,9 @@
   --color-positive: #2e9e5b;
   --color-negative: #c4453a;
   --color-warning: #9a6b12;
+  /* Hover sutil sobre card/background — antes era #F5F3F0/#FEFCFA/#F6F4F1
+     sueltos por todo el CMS (ver hover:bg-hover). */
+  --color-hover: #f5f3f0;
 }
 
 /* Tema oscuro — solo cubre los tokens semánticos de arriba (fondo, texto,
@@ -51,6 +54,7 @@
     --color-negative: #e2685c;
     --color-warning: #d7a53a;
     --color-brand-pressed: #ff7d29;
+    --color-hover: #2a2521;
   }
 }
 

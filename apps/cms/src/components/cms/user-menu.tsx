@@ -75,7 +75,7 @@ export function UserMenu({ user }: { user: AuthUser }) {
               href="/perfil"
               role="menuitem"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-[13px] text-ink transition-colors hover:bg-[#F5F3F0]"
+              className="flex items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-[13px] text-ink transition-colors hover:bg-hover"
             >
               <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20a7.5 7.5 0 0 1 15 0" size={14} strokeWidth={1.6} className="text-ink-faint" />
               Perfil

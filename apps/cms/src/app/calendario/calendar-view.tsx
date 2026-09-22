@@ -214,7 +214,7 @@ export function CalendarView({
                   disabled={day === null}
                   onClick={() => day && setSelectedDay(day)}
                   className={`flex min-h-[84px] flex-col items-start gap-1 border-r border-b border-border-soft p-1.5 text-left transition-colors last:border-r-0 [&:nth-child(7n)]:border-r-0 ${
-                    day === null ? "bg-[#FAF9F7]" : "bg-card hover:bg-[#FEFCFA]"
+                    day === null ? "bg-[#FAF9F7]" : "bg-card hover:bg-hover"
                   } ${isToday && !isSelected ? "shadow-[inset_0_0_0_1.5px_rgba(253,105,13,.35)]" : ""} ${isSelected ? "!bg-accent" : ""}`}
                 >
                   {day && (

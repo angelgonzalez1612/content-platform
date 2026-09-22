@@ -139,7 +139,7 @@ export function UsuariosView({ initialUsers, currentUser }: { initialUsers: Auth
             const isSelf = u.id === currentUser.id;
             const error = rowError?.id === u.id ? rowError.message : null;
             return (
-              <div key={u.id} className="grid min-w-[640px] grid-cols-[1fr_180px_140px_120px] items-center gap-0 border-b border-border-soft px-4 py-2.5 transition-colors last:border-b-0 hover:bg-[#FEFCFA]">
+              <div key={u.id} className="grid min-w-[640px] grid-cols-[1fr_180px_140px_120px] items-center gap-0 border-b border-border-soft px-4 py-2.5 transition-colors last:border-b-0 hover:bg-hover">
                 <div className="flex min-w-0 items-center gap-2.5 pr-3">
                   <span className="grid size-8 flex-none place-items-center rounded-full bg-ink text-[11px] font-semibold text-white">{initials(u.name)}</span>
                   <div className="flex min-w-0 flex-col gap-0.5">
@@ -186,7 +186,7 @@ export function UsuariosView({ initialUsers, currentUser }: { initialUsers: Auth
                       <button
                         type="button"
                         onClick={() => setConfirmDeleteId(null)}
-                        className="rounded-md px-2 py-1 text-[11px] font-medium text-ink-faint hover:bg-[#F5F3F0]"
+                        className="rounded-md px-2 py-1 text-[11px] font-medium text-ink-faint hover:bg-hover"
                       >
                         Cancelar
                       </button>
@@ -296,7 +296,7 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
           {error && <p className="text-[12.5px] text-negative">{error}</p>}
 
           <div className="mt-1 flex items-center justify-end gap-2">
-            <button type="button" onClick={onClose} className="rounded-[10px] px-4 py-2.5 text-[13px] font-medium text-ink-soft hover:bg-[#F5F3F0]">
+            <button type="button" onClick={onClose} className="rounded-[10px] px-4 py-2.5 text-[13px] font-medium text-ink-soft hover:bg-hover">
               Cancelar
             </button>
             <button
