@@ -10,6 +10,7 @@ import { ZmvmMap } from "./zmvm-map";
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
 const PIN_ICON = "M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z";
 const ARROW_ICON = "M5 12h14M13 6l6 6-6 6";
+const SEARCH_ICON = "M21 21l-4.3-4.3M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z";
 
 // Google Trends no tiene datos confiables a nivel municipio/alcaldía (se
 // probó en vivo, ver zmvm-municipios-map.ts) — el drill-down de la Zona
@@ -100,16 +101,42 @@ export function EntidadesExplorer() {
   const phrases = phrasesState.key === phrasesKey ? phrasesState.phrases : null;
   const phrasesError = phrasesState.key === phrasesKey ? phrasesState.error : null;
 
-  // "Búsquedas locales" — solo tiene sentido con un municipio/alcaldía
-  // puntual (no con todo el estado): Trends no distingue tan fino, pero un
-  // buscador real sí puede acotar por nombre de lugar (ver LocalSearchService).
-  const localSearchKey = municipio ? `${municipio.code}:${categoryId}` : "";
+  // "Búsquedas locales" — a diferencia de Trends (que no distingue fino), un
+  // buscador real sí puede acotar por nombre de lugar (ver LocalSearchService),
+  // así que aplica tanto a nivel estado como municipio/alcaldía: se usa el
+  // municipio si hay uno seleccionado, si no el estado completo.
+  const localPlace = municipio ?? selected;
+  const localSearchKey = localPlace ? `${localPlace.code}:${categoryId}` : "";
   const [localSearchState, setLocalSearchState] = useState<LocalSearchState>({ key: "", results: null, error: null });
-  const localSearchLoading = !!municipio && localSearchState.key !== localSearchKey;
+  const localSearchLoading = !!localPlace && localSearchState.key !== localSearchKey;
   const localSearchResults = localSearchState.key === localSearchKey ? localSearchState.results : null;
   const localSearchError = localSearchState.key === localSearchKey ? localSearchState.error : null;
 
+  // Notas reales de una FRASE de Trends — cuando el editor hace clic en una
+  // frase ("noticias hoy"), en vez de mandarla al generador como "tema" (que
+  // producía un meta-artículo sobre la tendencia), se busca esa frase en un
+  // buscador real acotada al lugar (ver /local-search?q=…) y se muestran notas
+  // reales para elegir cuál convertir en artículo.
+  const [activePhrase, setActivePhrase] = useState<string | null>(null);
+  // El panel derecho tiene dos caras: las notas reales (lo que genera contenido
+  // = protagonista, tab por default) y las tendencias de Trends (descubrimiento).
+  // Separarlas en un segmented control evita el scroll largo de apilar ambas.
+  const [panelTab, setPanelTab] = useState<"notas" | "tendencias">("notas");
+  const phraseNotesKey = activePhrase && localPlace ? `${localPlace.code}:${activePhrase}` : "";
+  const [phraseNotesState, setPhraseNotesState] = useState<LocalSearchState>({ key: "", results: null, error: null });
+  const phraseNotesLoading = !!phraseNotesKey && phraseNotesState.key !== phraseNotesKey;
+  const phraseNotesResults = phraseNotesState.key === phraseNotesKey ? phraseNotesState.results : null;
+  const phraseNotesError = phraseNotesState.key === phraseNotesKey ? phraseNotesState.error : null;
+
   const categoryLabel = CATEGORIES.find((c) => c.id === categoryId)?.label ?? categoryId;
+
+  // Notas UNIFICADAS: antes había dos listas separadas (notas de una frase y
+  // "búsquedas locales" de la categoría) que eran lo mismo y duplicaban scroll.
+  // Ahora es una sola lista cuya fuente es la frase activa si hay una, si no la
+  // categoría del lugar.
+  const notesLoading = activePhrase ? phraseNotesLoading : localSearchLoading;
+  const notesResults = activePhrase ? phraseNotesResults : localSearchResults;
+  const notesError = activePhrase ? phraseNotesError : localSearchError;
 
   useEffect(() => {
     let cancelled = false;
@@ -143,18 +170,32 @@ export function EntidadesExplorer() {
   }, [phrasesKey]);
 
   useEffect(() => {
-    if (!municipio) return;
+    if (!localPlace) return;
     let cancelled = false;
     const key = localSearchKey;
-    fetchJson<WebSearchResult[]>(`/cms/entidades/local-search?category=${categoryId}&place=${encodeURIComponent(municipio.name)}`).then(({ data, error }) => {
+    fetchJson<WebSearchResult[]>(`/cms/entidades/local-search?category=${categoryId}&place=${encodeURIComponent(localPlace.name)}`).then(({ data, error }) => {
       if (cancelled) return;
       setLocalSearchState({ key, results: error ? null : data, error });
     });
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- localSearchKey ya deriva de [municipio, categoryId]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- localSearchKey ya deriva de [localPlace, categoryId]
   }, [localSearchKey]);
+
+  useEffect(() => {
+    if (!activePhrase || !localPlace) return;
+    let cancelled = false;
+    const key = phraseNotesKey;
+    fetchJson<WebSearchResult[]>(`/cms/entidades/local-search?q=${encodeURIComponent(activePhrase)}&place=${encodeURIComponent(localPlace.name)}`).then(({ data, error }) => {
+      if (cancelled) return;
+      setPhraseNotesState({ key, results: error ? null : data, error });
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- phraseNotesKey ya deriva de [activePhrase, localPlace]
+  }, [phraseNotesKey]);
 
   function selectState(code: string, name: string) {
     setSelected({ code, name });
@@ -169,30 +210,34 @@ export function EntidadesExplorer() {
 
   const locationLabel = municipio ? `${municipio.name}, ${selected?.name}` : (selected?.name ?? "");
 
-  function centroIaHref(query: string) {
-    const hints = `Frase real de Google Trends en ${locationLabel} (categoría: ${categoryLabel}): "${query}". Sin fuentes adicionales — trátalo como tema, no inventes datos verificables (fecha, ubicación, cifras).`;
-    const params = new URLSearchParams({ name: query, hints, source: "entidades" });
-    // `municipio.code` ya es el slug canónico del catálogo real de
-    // ubicaciones (ver zmvm-municipios-map.ts) — se preselecciona el mismo
-    // selector de alcaldía/municipio que ya usan las pantallas de revisión,
-    // en vez de solo mencionar el lugar en el texto libre de `hints`.
-    if (municipio) params.set("alcaldiaSlug", municipio.code);
-    return `/centro-ia?${params.toString()}`;
+  // Tocar una frase de tendencias fija esa frase como fuente de las notas y
+  // salta al tab de notas — el usuario ve las notas reales de inmediato.
+  function pickPhrase(query: string) {
+    setActivePhrase(query);
+    setPanelTab("notas");
   }
 
-  // A diferencia de centroIaHref (una frase suelta de Trends), aquí ya hay
-  // una nota REAL encontrada — se manda como cita "— FUENTE (url)", el mismo
-  // formato que el modo "Por liga" de Centro IA, para que el backend
-  // scrapee el artículo de verdad (ver AiDraftService.scrapeSourceFromHints)
+  // Una nota REAL encontrada (búsqueda local o por frase) se manda al generador
+  // como cita "— FUENTE (url)", el mismo formato que el modo "Por liga" de
+  // Centro IA, para que el backend scrapee el artículo de verdad (ver
+  // AiDraftService.scrapeSourceFromHints)
   // en vez de que la IA escriba solo a partir de un título.
   function centroIaLocalHref(result: WebSearchResult) {
-    const siteName = (() => {
-      try {
-        return new URL(result.url).hostname.replace(/^www\./, "");
-      } catch {
-        return "fuente externa";
-      }
-    })();
+    // El medio real ("El Sol de México", "MILENIO"...) viene en el snippet
+    // como "MEDIO · fecha" (ver WebSearchService, feed de Google News). Se
+    // prefiere sobre el hostname de la URL porque las ligas de Google News son
+    // de redirección (news.google.com) y no identifican al medio real — así el
+    // crédito de la nota sale correcto (ver sourceLabelFromHints en el backend).
+    const outletFromSnippet = result.snippet.split("·")[0]?.trim();
+    const siteName =
+      outletFromSnippet ||
+      (() => {
+        try {
+          return new URL(result.url).hostname.replace(/^www\./, "");
+        } catch {
+          return "fuente externa";
+        }
+      })();
     const hints = `— ${siteName} (${result.url})`;
     const params = new URLSearchParams({ name: result.title, hints, source: "entidades" });
     if (municipio) params.set("alcaldiaSlug", municipio.code);
@@ -276,9 +321,6 @@ export function EntidadesExplorer() {
               <Icon d={PIN_ICON} size={16} strokeWidth={1.6} className="text-brand" />
               <h2 className="text-[15px] font-semibold tracking-tight">{locationLabel}</h2>
             </div>
-            <p className="text-[11.5px] text-ink-faint">
-              Frases relacionadas con &quot;{categoryLabel.toLowerCase()}&quot; en {municipio ? "este estado (Trends no tiene dato propio por alcaldía/municipio)" : "este estado"}.
-            </p>
 
             {ZMVM_STATE_CODES.has(selected.code) && (
               <button
@@ -291,31 +333,69 @@ export function EntidadesExplorer() {
               </button>
             )}
 
-            {phrasesLoading && <p className="py-6 text-center text-[12.5px] text-ink-faint">Consultando Google Trends…</p>}
-            {phrasesError && (
-              <div className="flex flex-col items-center gap-1.5 py-6 text-center">
-                <p className="text-[12.5px] font-medium text-ink-soft">No disponible ahora mismo.</p>
-                <p className="text-[11.5px] text-ink-faint">{phrasesError}</p>
-              </div>
-            )}
-            {phrases && !phrasesLoading && !phrasesError && (
-              <PhraseLists phrases={phrases} centroIaHref={centroIaHref} />
-            )}
+            {/* Segmented control: notas reales (protagonista) vs tendencias (descubrimiento) */}
+            <div className="flex gap-1 rounded-full border border-border bg-background p-0.5">
+              {([["notas", "Notas reales"], ["tendencias", "Tendencias"]] as const).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setPanelTab(id)}
+                  className={`flex-1 rounded-full px-3 py-1.5 text-[12px] font-semibold transition-colors ${
+                    panelTab === id ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
-            {municipio && (
-              <div className="flex flex-col gap-1.5 border-t border-border-soft pt-3">
-                <span className="text-[10.5px] font-semibold tracking-[.02em] text-ink-faint uppercase">Búsquedas locales en {municipio.name}</span>
-                <p className="text-[11px] text-ink-faint">Notas reales encontradas (no Trends) para &quot;{categoryLabel.toLowerCase()}&quot; en este lugar.</p>
-
-                {localSearchLoading && <p className="py-4 text-center text-[12.5px] text-ink-faint">Buscando notas reales…</p>}
-                {localSearchError && (
-                  <div className="flex flex-col items-center gap-1.5 py-4 text-center">
-                    <p className="text-[12.5px] font-medium text-ink-soft">No disponible ahora mismo.</p>
-                    <p className="text-[11.5px] text-ink-faint">{localSearchError}</p>
-                  </div>
+            {panelTab === "notas" ? (
+              <div className="flex flex-col gap-2">
+                {/* Fuente de las notas: categoría por default, o la frase activa (removible) */}
+                {activePhrase ? (
+                  <button
+                    type="button"
+                    onClick={() => setActivePhrase(null)}
+                    className="flex w-fit max-w-full items-center gap-1.5 rounded-full border border-brand/40 bg-brand/5 px-2.5 py-1 text-[11.5px] font-medium text-brand transition-colors hover:bg-brand/10"
+                    title="Quitar la frase y volver a las notas de la categoría"
+                  >
+                    <Icon d={SEARCH_ICON} size={11} strokeWidth={2} />
+                    <span className="min-w-0 flex-1 truncate">{activePhrase}</span>
+                    <span className="flex-none text-[13px] leading-none">×</span>
+                  </button>
+                ) : (
+                  <p className="text-[11px] text-ink-faint">
+                    Notas reales de <span className="font-semibold text-ink-soft">{categoryLabel.toLowerCase()}</span> en {localPlace?.name}.
+                  </p>
                 )}
-                {localSearchResults && !localSearchLoading && !localSearchError && (
-                  <LocalSearchResults results={localSearchResults} centroIaLocalHref={centroIaLocalHref} />
+
+                {notesLoading && <PanelSkeleton />}
+                {notesError && <PanelError message={notesError} />}
+                {notesResults && !notesLoading && !notesError && (
+                  <>
+                    {notesResults.length > 0 && (
+                      <Link
+                        href={centroIaLocalHref(notesResults[0])}
+                        className="flex w-fit items-center gap-1 rounded-md border border-brand/40 bg-brand/5 px-2 py-1 text-[11px] font-semibold text-brand transition-colors hover:bg-brand/10"
+                        title="Generar directo desde la nota más relevante"
+                      >
+                        <Icon d={SPARK_ICON} size={10} strokeWidth={2} />
+                        Generar de la 1ª nota
+                      </Link>
+                    )}
+                    <LocalSearchResults results={notesResults} centroIaLocalHref={centroIaLocalHref} />
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <p className="text-[11px] text-ink-faint">
+                  Qué busca la gente en {selected.name} (Google Trends){municipio ? ", a nivel estado" : ""}. Toca una frase para ver sus notas reales.
+                </p>
+                {phrasesLoading && <PanelSkeleton />}
+                {phrasesError && <PanelError message={phrasesError} />}
+                {phrases && !phrasesLoading && !phrasesError && (
+                  <PhraseLists phrases={phrases} activePhrase={activePhrase} onPhrasePick={pickPhrase} />
                 )}
               </div>
             )}
@@ -326,36 +406,70 @@ export function EntidadesExplorer() {
   );
 }
 
-function LocalSearchResults({ results, centroIaLocalHref }: { results: WebSearchResult[]; centroIaLocalHref: (result: WebSearchResult) => string }) {
-  if (results.length === 0) {
-    return <p className="py-4 text-center text-[12.5px] text-ink-faint">Sin notas reales encontradas para esta combinación todavía.</p>;
-  }
-
+// Skeleton en vez de spinner/texto (patrón del register product) — tres filas
+// que insinúan el shape de las notas mientras cargan.
+function PanelSkeleton() {
   return (
-    <div className="flex flex-col gap-2">
-      {results.map((r) => (
-        <div key={r.url} className="flex flex-col gap-1 rounded-lg px-2 py-2 transition-colors hover:bg-hover">
-          <div className="flex items-start justify-between gap-2">
-            <a href={r.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-ink hover:text-brand hover:underline">
-              {r.title}
-            </a>
-            <Link
-              href={centroIaLocalHref(r)}
-              className="flex flex-none items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
-              title="Generar contenido a partir de esta nota real en Centro IA"
-            >
-              <Icon d={SPARK_ICON} size={10} strokeWidth={2} />
-              Generar
-            </Link>
-          </div>
-          {r.snippet && <p className="line-clamp-2 text-[11px] text-ink-faint">{r.snippet}</p>}
+    <div className="flex flex-col gap-3 py-1">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="flex flex-col gap-1.5">
+          <div className="h-2.5 w-24 rounded bg-hover motion-safe:animate-pulse" />
+          <div className="h-3 w-full rounded bg-hover motion-safe:animate-pulse" />
+          <div className="h-3 w-3/4 rounded bg-hover motion-safe:animate-pulse" />
         </div>
       ))}
     </div>
   );
 }
 
-function PhraseLists({ phrases, centroIaHref }: { phrases: StatePhrases; centroIaHref: (query: string) => string }) {
+function PanelError({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1.5 py-4 text-center">
+      <p className="text-[12.5px] font-medium text-ink-soft">No disponible ahora mismo.</p>
+      <p className="text-[11.5px] text-ink-faint">{message}</p>
+    </div>
+  );
+}
+
+function LocalSearchResults({ results, centroIaLocalHref }: { results: WebSearchResult[]; centroIaLocalHref: (result: WebSearchResult) => string }) {
+  if (results.length === 0) {
+    return <p className="py-4 text-center text-[12.5px] text-ink-faint">Sin notas reales para esta combinación todavía.</p>;
+  }
+
+  return (
+    <div className="flex flex-col">
+      {results.map((r) => {
+        // El snippet viene como "MEDIO · fecha" (ver WebSearchService); se separa
+        // para dar al medio jerarquía de badge y a la fecha un tono secundario.
+        const [source, ...rest] = r.snippet.split(" · ");
+        const date = rest.join(" · ");
+        return (
+          <div key={r.url} className="group flex flex-col gap-1.5 border-b border-border-soft py-2.5 last:border-0">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-1.5">
+                {source && <span className="max-w-[150px] truncate rounded bg-hover px-1.5 py-0.5 text-[10px] font-semibold text-ink-soft">{source}</span>}
+                {date && <span className="flex-none text-[10px] text-ink-faint">{date}</span>}
+              </div>
+              <Link
+                href={centroIaLocalHref(r)}
+                className="flex flex-none items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
+                title="Generar contenido a partir de esta nota real en Centro IA"
+              >
+                <Icon d={SPARK_ICON} size={10} strokeWidth={2} />
+                Generar
+              </Link>
+            </div>
+            <a href={r.url} target="_blank" rel="noreferrer" className="line-clamp-2 text-[12.5px] font-medium leading-snug text-ink transition-colors hover:text-brand hover:underline">
+              {r.title}
+            </a>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function PhraseLists({ phrases, activePhrase, onPhrasePick }: { phrases: StatePhrases; activePhrase: string | null; onPhrasePick: (query: string) => void }) {
   if (phrases.top.length === 0 && phrases.rising.length === 0) {
     return <p className="py-6 text-center text-[12.5px] text-ink-faint">Sin frases suficientes para esta combinación todavía.</p>;
   }
@@ -363,36 +477,37 @@ function PhraseLists({ phrases, centroIaHref }: { phrases: StatePhrases; centroI
   return (
     <div className="flex flex-col gap-4">
       {phrases.top.length > 0 && (
-        <PhraseGroup title="Más buscadas" items={phrases.top} centroIaHref={centroIaHref} />
+        <PhraseGroup title="Más buscadas" items={phrases.top} activePhrase={activePhrase} onPhrasePick={onPhrasePick} />
       )}
       {phrases.rising.length > 0 && (
-        <PhraseGroup title="En crecimiento" items={phrases.rising} centroIaHref={centroIaHref} />
+        <PhraseGroup title="En crecimiento" items={phrases.rising} activePhrase={activePhrase} onPhrasePick={onPhrasePick} />
       )}
     </div>
   );
 }
 
-function PhraseGroup({ title, items, centroIaHref }: { title: string; items: RelatedQuery[]; centroIaHref: (query: string) => string }) {
+function PhraseGroup({ title, items, activePhrase, onPhrasePick }: { title: string; items: RelatedQuery[]; activePhrase: string | null; onPhrasePick: (query: string) => void }) {
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-[10.5px] font-semibold tracking-[.02em] text-ink-faint uppercase">{title}</span>
-      <div className="flex flex-col gap-1">
-        {items.slice(0, 8).map((item) => (
-          <div key={item.query} className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-hover">
-            <div className="min-w-0">
-              <span className="block truncate text-[12.5px] font-medium text-ink">{item.query}</span>
-              {item.breakout && <span className="text-[10px] font-semibold text-brand">Breakout</span>}
-            </div>
-            <Link
-              href={centroIaHref(item.query)}
-              className="flex flex-none items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
-              title="Generar contenido con esta frase en Centro IA"
+      <div className="flex flex-wrap gap-1.5">
+        {items.slice(0, 8).map((item) => {
+          const isActive = activePhrase === item.query;
+          return (
+            <button
+              key={item.query}
+              type="button"
+              onClick={() => onPhrasePick(item.query)}
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11.5px] font-medium transition-colors ${
+                isActive ? "border-brand bg-brand/10 text-brand" : "border-border text-ink-soft hover:border-brand/50 hover:text-ink"
+              }`}
+              title="Ver notas reales de esta frase"
             >
-              <Icon d={SPARK_ICON} size={10} strokeWidth={2} />
-              Generar
-            </Link>
-          </div>
-        ))}
+              {item.query}
+              {item.breakout && <span className="text-[9px] font-bold text-brand" title="Breakout">↑</span>}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
