@@ -37,18 +37,11 @@ const envSchema = z.object({
   // imágenes, opcional (sin ella, ImageSearchService simplemente no incluye
   // resultados de Bing, igual que ya pasa con OPENAI_API_KEY).
   BING_API_KEY: z.string().optional(),
-  // Google Programmable Search (Custom Search JSON API) — busca ligas reales
-  // por cada frase de "Qué busca la gente" en /automatizaciones/frases, para
-  // que el humano elija una como fuente citada antes de generar contenido
-  // (ver WebSearchService). NO usa "buscar en toda la Web" (Google ya no lo
-  // ofrece a buscadores nuevos, ver soporte 12397162) — en vez de eso, el
-  // buscador de Google se configuró con una lista curada de sitios reales de
-  // CDMX (noticias + gob.mx + planes), que si acepta gratis sin tarjeta.
-  // Se probó Tavily antes — pide tarjeta incluso en su plan gratuito, se
-  // descartó. Opcionales: sin ellas, "Buscar ligas" falla con un mensaje
-  // claro en vez de tronar el arranque del server.
-  GOOGLE_SEARCH_API_KEY: z.string().optional(),
-  GOOGLE_SEARCH_ENGINE_ID: z.string().optional(),
+  // (Las búsquedas de ligas reales — "Qué busca la gente" y "Búsquedas
+  // locales" de Entidades — ya no usan Google Custom Search JSON API: requería
+  // key + engine id en un proyecto de Google Cloud y chocaba con la gobernanza
+  // de la cuenta. Ahora WebSearchService usa el feed público de Google News
+  // RSS, gratis y sin API key, así que no hay variables de entorno que definir.)
   // Token personal de Vercel (Account Settings -> Tokens) — solo lectura de
   // deployments, usado por el Dashboard del CMS para mostrar "cuándo fue la
   // última vez que se subió a prod" de los 4 proyectos (ver

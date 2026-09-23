@@ -25,18 +25,21 @@ export class LocalSearchService {
 
   constructor(private readonly webSearch: WebSearchService) {}
 
+  // `term` es la categoría "suave": el keyword general (ej. "noticias",
+  // "eventos", "tráfico"), no la lista angosta de sucesos. Antes se mandaba
+  // `"{lugar}" (accidente OR choque OR ...)`, que encasillaba los resultados en
+  // 2-3 tipos de suceso; ahora se busca `{lugar} {tema}` (ej. "México
+  // noticias") para traer lo relacionado al lugar en general, guiado por la
+  // categoría pero sin cerrarse. `term` vacío = solo el lugar (todo).
   async searchLocal(
     placeName: string,
-    keywords: string[],
+    term: string,
   ): Promise<WebSearchResult[]> {
-    const cacheKey = `${placeName.toLowerCase()}:${keywords.join(',')}`;
+    const cacheKey = `${placeName.toLowerCase()}:${term.toLowerCase()}`;
     const cached = this.cache.get(cacheKey);
     if (cached && Date.now() - cached.ts < TTL_MS) return cached.data;
 
-    const orGroup = keywords
-      .map((k) => (k.includes(' ') ? `"${k}"` : k))
-      .join(' OR ');
-    const query = `"${placeName}" (${orGroup})`;
+    const query = `${placeName} ${term}`.trim();
     const results = await this.webSearch.search(query);
 
     this.cache.set(cacheKey, { data: results, ts: Date.now() });

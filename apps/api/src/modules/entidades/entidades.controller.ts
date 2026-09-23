@@ -14,7 +14,6 @@ import { LocalSearchService } from './local-search.service';
 import {
   ENTIDADES_CATEGORIES,
   getCategoryKeyword,
-  getCategoryLocalKeywords,
 } from './entidades-categories';
 import { MEXICO_STATES } from './mexico-states';
 import {
@@ -81,9 +80,10 @@ export class EntidadesController {
   @Get('local-search')
   localSearch(@Query() query: Record<string, unknown>) {
     const dto = localSearchQuerySchema.parse(query);
-    return this.localSearchService.searchLocal(
-      dto.place,
-      getCategoryLocalKeywords(dto.category),
-    );
+    // Frase libre (`q`) tiene prioridad — así una frase de Trends ("noticias
+    // hoy") se busca tal cual como nota real; si no, se usa el keyword general
+    // de la categoría (categoría "suave", ver LocalSearchService).
+    const term = dto.q ?? getCategoryKeyword(dto.category!);
+    return this.localSearchService.searchLocal(dto.place, term);
   }
 }
