@@ -17,6 +17,7 @@ import { ReportajesService } from '../lamira-reportajes/reportajes.service';
 import { PlanazoGuidesService } from '../planazo-guides/guides.service';
 import { AutomationRulesService } from './automation-rules.service';
 import { SearchPhrasesService } from './search-phrases.service';
+import { WebSearchService } from './web-search.service';
 import { RadarTopicsService } from './radar-topics.service';
 import { AUTOMATABLE_CONTENT_TYPES } from './dto/automation-rule.dto';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
@@ -181,6 +182,7 @@ export class AutomationRunnerService {
     private readonly reportajes: ReportajesService,
     private readonly guides: PlanazoGuidesService,
     private readonly searchPhrasesService: SearchPhrasesService,
+    private readonly webSearch: WebSearchService,
     private readonly radarTopicsService: RadarTopicsService,
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
   ) {}
@@ -399,6 +401,13 @@ export class AutomationRunnerService {
         );
         if (candidates.length === 0) continue;
 
+        // Frase de búsqueda sin fuente: antes de generar, se busca la nota REAL
+        // en Google News y se reescribe el tema (titular real) + `hints` con la
+        // cita "— MEDIO (url)", para que la IA redacte con fuente citada en vez
+        // de a ciegas. Solo se busca aquí, con un candidato ya confirmado, para
+        // no gastar búsquedas de más.
+        await this.enrichSearchPhraseTopic(topic);
+
         evaluated += 1;
         if (await this.assignTopic(candidates, topic)) {
           created += 1;
@@ -505,6 +514,32 @@ export class AutomationRunnerService {
     if (!rule.site) return true;
     if (topic.sites.length === 0) return true;
     return topic.sites.includes(rule.site);
+  }
+
+  /**
+   * Frase de búsqueda → nota real citable. Busca la frase en Google News RSS
+   * (mismo WebSearchService que "Buscar ligas" y el mapa de Entidades) y, si
+   * hay resultado, reescribe el tema con el titular real y arma `hints` con la
+   * cita "— MEDIO (url)" que AiDraftService sabe extraer/citar (ver
+   * urlFromHints/sourceLabelFromHints). Así la IA redacta con fuente en vez de
+   * a ciegas. No-op para temas del reporte (ya traen fuente en `hints`) o si la
+   * búsqueda no devuelve nada — en ese caso se conserva el comportamiento
+   * previo (generación sin fuente), sin romper la corrida.
+   */
+  private async enrichSearchPhraseTopic(topic: Topic): Promise<void> {
+    if (topic.source !== 'search-phrase' || topic.hints) return;
+    try {
+      const results = await this.webSearch.search(`${topic.title} Ciudad de México`);
+      const top = results[0];
+      if (!top) return;
+      const source = top.snippet.split(' · ')[0]?.trim() || 'fuente externa';
+      topic.title = top.title;
+      topic.hints = `— ${source} (${top.url})`;
+    } catch (err) {
+      this.logger.warn(
+        `No se pudo enriquecer la frase "${topic.title}" con una nota real: ${(err as Error).message}`,
+      );
+    }
   }
 
   // Antes, la primera regla candidata (mismo sitio) se quedaba con el tema
