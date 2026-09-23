@@ -39,6 +39,12 @@ interface StatePhrases {
   rising: RelatedQuery[];
 }
 
+interface WebSearchResult {
+  title: string;
+  url: string;
+  snippet: string;
+}
+
 async function fetchJson<T>(path: string): Promise<{ data: T | null; error: string | null }> {
   try {
     const res = await fetch(`${apiConfig.clientBaseUrl}${path}`, { credentials: "include" });
@@ -61,6 +67,12 @@ interface InterestState {
 interface PhrasesState {
   key: string;
   phrases: StatePhrases | null;
+  error: string | null;
+}
+
+interface LocalSearchState {
+  key: string;
+  results: WebSearchResult[] | null;
   error: string | null;
 }
 
@@ -87,6 +99,15 @@ export function EntidadesExplorer() {
   const phrasesLoading = !!selected && phrasesState.key !== phrasesKey;
   const phrases = phrasesState.key === phrasesKey ? phrasesState.phrases : null;
   const phrasesError = phrasesState.key === phrasesKey ? phrasesState.error : null;
+
+  // "Búsquedas locales" — solo tiene sentido con un municipio/alcaldía
+  // puntual (no con todo el estado): Trends no distingue tan fino, pero un
+  // buscador real sí puede acotar por nombre de lugar (ver LocalSearchService).
+  const localSearchKey = municipio ? `${municipio.code}:${categoryId}` : "";
+  const [localSearchState, setLocalSearchState] = useState<LocalSearchState>({ key: "", results: null, error: null });
+  const localSearchLoading = !!municipio && localSearchState.key !== localSearchKey;
+  const localSearchResults = localSearchState.key === localSearchKey ? localSearchState.results : null;
+  const localSearchError = localSearchState.key === localSearchKey ? localSearchState.error : null;
 
   const categoryLabel = CATEGORIES.find((c) => c.id === categoryId)?.label ?? categoryId;
 
@@ -121,6 +142,20 @@ export function EntidadesExplorer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- phrasesKey ya deriva de [selected, categoryId]
   }, [phrasesKey]);
 
+  useEffect(() => {
+    if (!municipio) return;
+    let cancelled = false;
+    const key = localSearchKey;
+    fetchJson<WebSearchResult[]>(`/cms/entidades/local-search?category=${categoryId}&place=${encodeURIComponent(municipio.name)}`).then(({ data, error }) => {
+      if (cancelled) return;
+      setLocalSearchState({ key, results: error ? null : data, error });
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- localSearchKey ya deriva de [municipio, categoryId]
+  }, [localSearchKey]);
+
   function selectState(code: string, name: string) {
     setSelected({ code, name });
     setMunicipio(null);
@@ -141,6 +176,25 @@ export function EntidadesExplorer() {
     // ubicaciones (ver zmvm-municipios-map.ts) — se preselecciona el mismo
     // selector de alcaldía/municipio que ya usan las pantallas de revisión,
     // en vez de solo mencionar el lugar en el texto libre de `hints`.
+    if (municipio) params.set("alcaldiaSlug", municipio.code);
+    return `/centro-ia?${params.toString()}`;
+  }
+
+  // A diferencia de centroIaHref (una frase suelta de Trends), aquí ya hay
+  // una nota REAL encontrada — se manda como cita "— FUENTE (url)", el mismo
+  // formato que el modo "Por liga" de Centro IA, para que el backend
+  // scrapee el artículo de verdad (ver AiDraftService.scrapeSourceFromHints)
+  // en vez de que la IA escriba solo a partir de un título.
+  function centroIaLocalHref(result: WebSearchResult) {
+    const siteName = (() => {
+      try {
+        return new URL(result.url).hostname.replace(/^www\./, "");
+      } catch {
+        return "fuente externa";
+      }
+    })();
+    const hints = `— ${siteName} (${result.url})`;
+    const params = new URLSearchParams({ name: result.title, hints, source: "entidades" });
     if (municipio) params.set("alcaldiaSlug", municipio.code);
     return `/centro-ia?${params.toString()}`;
   }
@@ -247,9 +301,56 @@ export function EntidadesExplorer() {
             {phrases && !phrasesLoading && !phrasesError && (
               <PhraseLists phrases={phrases} centroIaHref={centroIaHref} />
             )}
+
+            {municipio && (
+              <div className="flex flex-col gap-1.5 border-t border-border-soft pt-3">
+                <span className="text-[10.5px] font-semibold tracking-[.02em] text-ink-faint uppercase">Búsquedas locales en {municipio.name}</span>
+                <p className="text-[11px] text-ink-faint">Notas reales encontradas (no Trends) para &quot;{categoryLabel.toLowerCase()}&quot; en este lugar.</p>
+
+                {localSearchLoading && <p className="py-4 text-center text-[12.5px] text-ink-faint">Buscando notas reales…</p>}
+                {localSearchError && (
+                  <div className="flex flex-col items-center gap-1.5 py-4 text-center">
+                    <p className="text-[12.5px] font-medium text-ink-soft">No disponible ahora mismo.</p>
+                    <p className="text-[11.5px] text-ink-faint">{localSearchError}</p>
+                  </div>
+                )}
+                {localSearchResults && !localSearchLoading && !localSearchError && (
+                  <LocalSearchResults results={localSearchResults} centroIaLocalHref={centroIaLocalHref} />
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function LocalSearchResults({ results, centroIaLocalHref }: { results: WebSearchResult[]; centroIaLocalHref: (result: WebSearchResult) => string }) {
+  if (results.length === 0) {
+    return <p className="py-4 text-center text-[12.5px] text-ink-faint">Sin notas reales encontradas para esta combinación todavía.</p>;
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {results.map((r) => (
+        <div key={r.url} className="flex flex-col gap-1 rounded-lg px-2 py-2 transition-colors hover:bg-hover">
+          <div className="flex items-start justify-between gap-2">
+            <a href={r.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-ink hover:text-brand hover:underline">
+              {r.title}
+            </a>
+            <Link
+              href={centroIaLocalHref(r)}
+              className="flex flex-none items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
+              title="Generar contenido a partir de esta nota real en Centro IA"
+            >
+              <Icon d={SPARK_ICON} size={10} strokeWidth={2} />
+              Generar
+            </Link>
+          </div>
+          {r.snippet && <p className="line-clamp-2 text-[11px] text-ink-faint">{r.snippet}</p>}
+        </div>
+      ))}
     </div>
   );
 }

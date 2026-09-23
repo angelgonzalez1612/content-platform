@@ -10,15 +10,18 @@ import {
   GoogleTrendsService,
   TrendsUnavailableError,
 } from './google-trends.service';
+import { LocalSearchService } from './local-search.service';
 import {
   ENTIDADES_CATEGORIES,
   getCategoryKeyword,
+  getCategoryLocalKeywords,
 } from './entidades-categories';
 import { MEXICO_STATES } from './mexico-states';
 import {
   interestQuerySchema,
   phrasesQuerySchema,
 } from './dto/entidades-query.dto';
+import { localSearchQuerySchema } from './dto/local-search-query.dto';
 
 // Convierte el único error de dominio (Trends bloqueado/caído) en una
 // respuesta HTTP con el mensaje real — sin esto, NestJS lo aplana a un 500
@@ -33,7 +36,10 @@ function toHttpError(err: unknown): never {
 @UseGuards(JwtAuthGuard)
 @Controller('cms/entidades')
 export class EntidadesController {
-  constructor(private readonly trends: GoogleTrendsService) {}
+  constructor(
+    private readonly trends: GoogleTrendsService,
+    private readonly localSearchService: LocalSearchService,
+  ) {}
 
   // Catálogo de estados + categorías editoriales — el CMS los pide una vez al
   // cargar la página en vez de hardcodearlos por triplicado en el cliente.
@@ -65,5 +71,19 @@ export class EntidadesController {
     } catch (err) {
       toHttpError(err);
     }
+  }
+
+  // "Búsquedas locales" — notas reales (buscador real, no Trends) para un
+  // municipio/alcaldía específico. A diferencia de /phrases, el error de
+  // WebSearchService (ya un HttpException con mensaje real, ver
+  // WebSearchService.search) no necesita toHttpError: Nest lo propaga tal
+  // cual sin aplanarlo a "Internal server error".
+  @Get('local-search')
+  localSearch(@Query() query: Record<string, unknown>) {
+    const dto = localSearchQuerySchema.parse(query);
+    return this.localSearchService.searchLocal(
+      dto.place,
+      getCategoryLocalKeywords(dto.category),
+    );
   }
 }

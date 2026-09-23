@@ -5,7 +5,7 @@ import { AutomationRulesService } from './automation-rules.service';
 import { AutomationRunnerService } from './automation-runner.service';
 import { SearchPhrasesService } from './search-phrases.service';
 import { RadarTopicsService } from './radar-topics.service';
-import { WebSearchService } from './web-search.service';
+import { WebSearchModule } from './web-search.module';
 import { AiModule } from '../ai/ai.module';
 import { CategoriesModule } from '../categories/categories.module';
 import { ContentRadarPublishedModule } from '../content-radar-published/content-radar-published.module';
@@ -17,8 +17,24 @@ import { ReportajesModule } from '../lamira-reportajes/reportajes.module';
 import { PlanazoGuidesModule } from '../planazo-guides/guides.module';
 
 @Module({
-  imports: [AiModule, CategoriesModule, ContentRadarPublishedModule, PlacesModule, EventsModule, NoticiasModule, AlertasModule, ReportajesModule, PlanazoGuidesModule],
+  imports: [
+    AiModule,
+    CategoriesModule,
+    ContentRadarPublishedModule,
+    PlacesModule,
+    EventsModule,
+    NoticiasModule,
+    AlertasModule,
+    ReportajesModule,
+    PlanazoGuidesModule,
+    WebSearchModule,
+  ],
   controllers: [AutomationController, AutomationCronController],
-  providers: [AutomationRulesService, AutomationRunnerService, SearchPhrasesService, RadarTopicsService, WebSearchService],
+  providers: [
+    AutomationRulesService,
+    AutomationRunnerService,
+    SearchPhrasesService,
+    RadarTopicsService,
+  ],
 })
 export class AutomationModule {}
