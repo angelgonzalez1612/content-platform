@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { apiConfig } from "@planazo/config";
 import type { Category, CheckResult, AiDecision } from "@planazo/types";
 import { Icon } from "@/components/icon";
@@ -109,6 +109,17 @@ interface Resolved {
   draftResponse: DraftResponse;
 }
 
+// Cuando el backend responde con un JSON de error real (ej. Zod, o cualquier
+// HttpException con mensaje), lo mostramos tal cual. Cuando el cuerpo NO es
+// JSON válido (ej. un proxy/timeout que corta la conexión antes de que
+// termine una generación lenta con claude-cli/codex-cli y devuelve una
+// página de error en vez del backend) el fallback ya no es un texto ciego
+// sin pistas — incluye el status HTTP para poder diagnosticarlo.
+async function describeErrorResponse(res: Response): Promise<string> {
+  const body = (await res.json().catch(() => null)) as { message?: string } | null;
+  return body?.message ?? `El servidor respondió con un error (${res.status}). Intenta de nuevo.`;
+}
+
 // Punto de entrada del botón "Publicar" de content-radar — NO se sabe
 // todavía si esto va a La Mira o a Planazo, ni bajo qué tipo: se manda solo
 // el tema + hints a AiDraftService, que clasifica sitio+tipo+categoría
@@ -184,17 +195,23 @@ export function PublishFlow({
     return list.slice(0, 40);
   }, [radarTopics, radarFilter]);
 
-  const [provider, setProvider] = useState<ProviderId>("openai");
+  // `null` = el editor no ha tocado el selector todavía. Antes el estado
+  // arrancaba en "openai" a secas y un efecto lo corregía a "claude-cli" en
+  // cuanto se confirmaba que no hay OPENAI_API_KEY — pero si el editor le
+  // daba "Generar con IA" ANTES de que useOpenAiAvailable() resolviera (la
+  // llamada a /cms/settings/ai), el fetch salía con provider:"openai" real
+  // aunque en pantalla solo se vieran los botones de Claude/Codex (ninguno
+  // marcado como seleccionado) — el backend fallaba con la key faltante.
+  // `effectiveProvider` nunca resuelve a "openai" mientras openaiAvailable
+  // siga sin confirmar, así que ya no hay ventana para ese fetch corrupto.
+  const [provider, setProvider] = useState<ProviderId | null>(null);
   const [generating, setGenerating] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [error, setError] = useState("");
   const [resolved, setResolved] = useState<Resolved | null>(null);
   const openaiAvailable = useOpenAiAvailable();
   const providers = PROVIDERS.filter((p) => p.id !== "openai" || openaiAvailable === true);
-
-  useEffect(() => {
-    if (openaiAvailable === false && provider === "openai") setProvider("claude-cli");
-  }, [openaiAvailable, provider]);
+  const effectiveProvider: ProviderId = provider ?? (openaiAvailable === true ? "openai" : "claude-cli");
 
   const effectiveHints = useMemo(() => {
     const extra = hints.trim();
@@ -324,12 +341,11 @@ export function PublishFlow({
         // Sin contentType/categoryId a propósito: el backend los clasifica
         // (ver AiDraftService.draft/classifyContentType) — con site fijo,
         // solo entre los tipos de ese sitio; sin él, sitio+tipo juntos.
-        body: JSON.stringify({ name, hints: effectiveHints || undefined, provider, site: fixedSite }),
+        body: JSON.stringify({ name, hints: effectiveHints || undefined, provider: effectiveProvider, site: fixedSite }),
       });
 
       if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { message?: string } | null;
-        setError(body?.message ?? "No se pudo generar el borrador.");
+        setError(await describeErrorResponse(res));
         setGenerating(false);
         return;
       }
@@ -361,15 +377,14 @@ export function PublishFlow({
         body: JSON.stringify({
           name,
           hints: effectiveHints || undefined,
-          provider,
+          provider: effectiveProvider,
           site: targetSite,
           contentType: targetSite === "la-mira" ? "noticia" : "place",
         }),
       });
 
       if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { message?: string } | null;
-        setError(body?.message ?? "No se pudo generar el borrador para el otro sitio.");
+        setError(await describeErrorResponse(res));
         setSwitching(false);
         return;
       }
@@ -754,7 +769,7 @@ export function PublishFlow({
                 onClick={() => setProvider(p.id)}
                 disabled={generating}
                 title={p.hint}
-                className={`flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors ${provider === p.id ? "border-brand bg-accent" : "border-border bg-card hover:border-ink-faint"}`}
+                className={`flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors ${effectiveProvider === p.id ? "border-brand bg-accent" : "border-border bg-card hover:border-ink-faint"}`}
               >
                 <span className="block text-[13px] font-semibold">{p.label}</span>
                 <span className="block text-[11px] text-ink-faint">{p.hint}</span>
@@ -773,7 +788,7 @@ export function PublishFlow({
           {generating ? (
             <>
               <Icon d={SPARK_ICON} size={15} strokeWidth={1.8} className="animate-spin" />
-              {fixedSite ? "Decidiendo el tipo y escribiendo…" : "Decidiendo dónde va y escribiendo…"} {provider === "claude-cli" && "(puede tardar ~30s)"}
+              {fixedSite ? "Decidiendo el tipo y escribiendo…" : "Decidiendo dónde va y escribiendo…"} {effectiveProvider === "claude-cli" && "(puede tardar ~30s)"}
             </>
           ) : (
             <>
