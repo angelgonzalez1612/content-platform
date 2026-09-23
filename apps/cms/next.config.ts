@@ -22,6 +22,20 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [{ source: "/api/:path*", destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*` }];
   },
+
+  // Next corta cualquier rewrite a un destino externo a los 30s por default
+  // (proxy-request.js: `proxyTimeout: proxyTimeout || 30000`, sin exponerlo
+  // en la config pública) — no hay forma de verlo desde el error real: el
+  // backend puede terminar bien 5s después y da igual, el navegador ya
+  // recibió "socket hang up"/500 de Next, no del backend. /cms/ai/draft con
+  // claude-cli o codex-cli (ambos con su propio timeout interno de 60s, ver
+  // CLAUDE_TIMEOUT_MS/las llamadas a runCodexCommand en apps/api) lo pasaba
+  // seguido — cualquier generación de más de 30s tronaba aquí sin importar
+  // que el backend sí hubiera funcionado. 90s le da margen a los 60s de esos
+  // dos proveedores sin dejarlo indefinido.
+  experimental: {
+    proxyTimeout: 90_000,
+  },
 };
 
 export default nextConfig;
