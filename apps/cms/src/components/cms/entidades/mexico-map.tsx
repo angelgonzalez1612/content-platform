@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { MEXICO_MAP_VIEWBOX, MEXICO_STATE_SHAPES } from "@/data/mexico-states-map";
+import { MapTooltip, type TooltipPosition } from "./map-tooltip";
 
 // Interpola entre el neutro más claro de la paleta y el naranja de marca —
 // mismo criterio que el heatmap de prospect-finder (más oscuro = más
@@ -17,6 +18,11 @@ function interpolateColor(value: number): string {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
+// Únicos dos estados con vista de alcaldías/municipios (ver zmvm-map.tsx) —
+// se marcan en el mapa nacional para que se note ANTES de hacer clic, no
+// solo después (cuando ya aparece el botón "Ver alcaldías / municipios").
+const DRILLDOWN_CODES = new Set(["cmx", "mex"]);
+
 export function MexicoMap({
   interest,
   selected,
@@ -27,25 +33,22 @@ export function MexicoMap({
   selected: string | null;
   onSelect: (code: string, name: string) => void;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState<string | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<TooltipPosition | null>(null);
 
-  // Etiqueta controlada por React en vez de <title> nativo por <path> — un
-  // <title> anidado en cada uno de los 32 <path> disparaba un mismatch de
-  // hidratación en Next (server/cliente veían árboles distintos), además de
-  // depender del tooltip nativo del navegador en vez de un estilo propio.
   const hoveredState = MEXICO_STATE_SHAPES.find((s) => s.code === hovered);
   const hoveredValue = hovered ? interest?.[hovered] : undefined;
 
+  function handleMove(e: React.MouseEvent<SVGPathElement>, code: string) {
+    setHovered(code);
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  }
+
   return (
-    <div>
-      <div className="mb-1.5 h-[18px] text-[12.5px] font-medium text-ink-soft">
-        {hoveredState && (
-          <>
-            {hoveredState.name}
-            {hoveredValue != null && <span className="text-ink-faint"> — {hoveredValue}</span>}
-          </>
-        )}
-      </div>
+    <div ref={containerRef} className="relative">
       <svg viewBox={MEXICO_MAP_VIEWBOX} className="h-auto w-full" role="img" aria-label="Mapa de México por estados">
         {MEXICO_STATE_SHAPES.map((s) => {
           const value = interest?.[s.code];
@@ -62,13 +65,26 @@ export function MexicoMap({
               strokeWidth={isSelected ? 1.6 : 0.6}
               className="cursor-pointer transition-[stroke-width,opacity] duration-150"
               style={{ opacity: isHovered && !isSelected ? 0.82 : 1 }}
-              onMouseEnter={() => setHovered(s.code)}
-              onMouseLeave={() => setHovered(null)}
+              onMouseEnter={(e) => handleMove(e, s.code)}
+              onMouseMove={(e) => handleMove(e, s.code)}
+              onMouseLeave={() => {
+                setHovered(null);
+                setTooltipPos(null);
+              }}
               onClick={() => onSelect(s.code, s.name)}
             />
           );
         })}
       </svg>
+      {hoveredState && tooltipPos && (
+        <MapTooltip position={tooltipPos}>
+          <span className="font-semibold">{hoveredState.name}</span>
+          {hoveredValue != null && <span className="text-white/70"> — {hoveredValue}</span>}
+          {DRILLDOWN_CODES.has(hoveredState.code) && (
+            <span className="mt-0.5 block text-[10px] font-medium text-white/70">Alcaldías / municipios disponibles</span>
+          )}
+        </MapTooltip>
+      )}
     </div>
   );
 }
