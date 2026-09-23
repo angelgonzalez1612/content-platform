@@ -6,6 +6,7 @@ import { apiConfig } from "@planazo/config";
 import { Icon } from "@/components/icon";
 import { MexicoMap } from "./mexico-map";
 import { ZmvmMap } from "./zmvm-map";
+import { MEXICO_STATE_SHAPES } from "@/data/mexico-states-map";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
 const PIN_ICON = "M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z";
@@ -138,6 +139,16 @@ export function EntidadesExplorer() {
   const notesResults = activePhrase ? phraseNotesResults : localSearchResults;
   const notesError = activePhrase ? phraseNotesError : localSearchError;
 
+  // Recomendación de lugares: los estados con más interés de búsqueda (Google
+  // Trends) para la categoría actual — atajo para saber dónde hay tema sin
+  // escanear el choropleth a ojo. Se recalcula al cambiar de categoría.
+  const topStates = interest
+    ? MEXICO_STATE_SHAPES.map((s) => ({ code: s.code, name: s.name, value: interest[s.code] ?? 0 }))
+        .filter((s) => s.value > 0)
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5)
+    : [];
+
   useEffect(() => {
     let cancelled = false;
     const key = interestKey;
@@ -268,6 +279,28 @@ export function EntidadesExplorer() {
             </button>
           ))}
         </div>
+
+        {!interestError && !showZmvm && topStates.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-medium text-ink-faint">Con más actividad:</span>
+            {topStates.map((s) => {
+              const isActive = selected?.code === s.code;
+              return (
+                <button
+                  key={s.code}
+                  type="button"
+                  onClick={() => selectState(s.code, s.name)}
+                  className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11.5px] font-medium transition-colors ${
+                    isActive ? "border-brand bg-brand/10 text-brand" : "border-border text-ink-soft hover:border-brand/50 hover:text-ink"
+                  }`}
+                  title={`Interés ${s.value}/100 — ver ${s.name}`}
+                >
+                  {s.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div className="rounded-[16px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
           {interestError ? (
