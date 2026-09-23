@@ -5,9 +5,17 @@ import Link from "next/link";
 import { apiConfig } from "@planazo/config";
 import { Icon } from "@/components/icon";
 import { MexicoMap } from "./mexico-map";
+import { ZmvmMap } from "./zmvm-map";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
 const PIN_ICON = "M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z";
+const ARROW_ICON = "M5 12h14M13 6l6 6-6 6";
+
+// Google Trends no tiene datos confiables a nivel municipio/alcaldía (se
+// probó en vivo, ver zmvm-municipios-map.ts) — el drill-down de la Zona
+// Metropolitana solo existe para estos dos estados, cuyas frases/valor
+// siguen siendo los del estado completo.
+const ZMVM_STATE_CODES = new Set(["cmx", "mex"]);
 
 // Mismos 5 ids/keywords que apps/api/src/modules/entidades/entidades-categories.ts
 // — sin paquete compartido entre api/cms para una lista tan chica, igual que
@@ -60,6 +68,8 @@ export function EntidadesExplorer() {
   const [categoryId, setCategoryId] = useState(CATEGORIES[0].id);
   const [retryToken, setRetryToken] = useState(0);
   const [selected, setSelected] = useState<{ code: string; name: string } | null>(null);
+  const [municipio, setMunicipio] = useState<{ code: string; name: string } | null>(null);
+  const [showZmvm, setShowZmvm] = useState(false);
 
   // `key` guarda para qué categoría (o estado+categoría) es el resultado
   // guardado — mientras no coincida con el pedido actual, se considera
@@ -111,8 +121,21 @@ export function EntidadesExplorer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- phrasesKey ya deriva de [selected, categoryId]
   }, [phrasesKey]);
 
+  function selectState(code: string, name: string) {
+    setSelected({ code, name });
+    setMunicipio(null);
+  }
+
+  function selectMunicipio(code: string, name: string, parentState: "cmx" | "mex") {
+    const parentName = parentState === "cmx" ? "Ciudad de México" : "Estado de México";
+    setSelected({ code: parentState, name: parentName });
+    setMunicipio({ code, name });
+  }
+
+  const locationLabel = municipio ? `${municipio.name}, ${selected?.name}` : (selected?.name ?? "");
+
   function centroIaHref(query: string) {
-    const hints = `Frase real de Google Trends en ${selected?.name} (categoría: ${categoryLabel}): "${query}". Sin fuentes adicionales — trátalo como tema, no inventes datos verificables (fecha, ubicación, cifras).`;
+    const hints = `Frase real de Google Trends en ${locationLabel} (categoría: ${categoryLabel}): "${query}". Sin fuentes adicionales — trátalo como tema, no inventes datos verificables (fecha, ubicación, cifras).`;
     const params = new URLSearchParams({ name: query, hints, source: "entidades" });
     return `/centro-ia?${params.toString()}`;
   }
@@ -155,8 +178,20 @@ export function EntidadesExplorer() {
                 Reintentar
               </button>
             </div>
+          ) : showZmvm ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowZmvm(false)}
+                className="mb-2 flex items-center gap-1 text-[12px] font-semibold text-ink-soft transition-colors hover:text-ink"
+              >
+                <Icon d={ARROW_ICON} size={12} strokeWidth={2} className="rotate-180" />
+                Volver al mapa nacional
+              </button>
+              <ZmvmMap selected={municipio?.code ?? null} onSelect={selectMunicipio} />
+            </>
           ) : (
-            <MexicoMap interest={interestLoading ? null : interest} selected={selected?.code ?? null} onSelect={(code, name) => setSelected({ code, name })} />
+            <MexicoMap interest={interestLoading ? null : interest} selected={selected?.code ?? null} onSelect={selectState} />
           )}
         </div>
 
@@ -180,9 +215,22 @@ export function EntidadesExplorer() {
           <>
             <div className="flex items-center gap-2">
               <Icon d={PIN_ICON} size={16} strokeWidth={1.6} className="text-brand" />
-              <h2 className="text-[15px] font-semibold tracking-tight">{selected.name}</h2>
+              <h2 className="text-[15px] font-semibold tracking-tight">{locationLabel}</h2>
             </div>
-            <p className="text-[11.5px] text-ink-faint">Frases relacionadas con &quot;{categoryLabel.toLowerCase()}&quot; en este estado.</p>
+            <p className="text-[11.5px] text-ink-faint">
+              Frases relacionadas con &quot;{categoryLabel.toLowerCase()}&quot; en {municipio ? "este estado (Trends no tiene dato propio por alcaldía/municipio)" : "este estado"}.
+            </p>
+
+            {ZMVM_STATE_CODES.has(selected.code) && (
+              <button
+                type="button"
+                onClick={() => setShowZmvm(true)}
+                className="flex w-fit items-center gap-1.5 rounded-lg border border-dashed border-border px-2.5 py-1.5 text-[12px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
+              >
+                <Icon d={PIN_ICON} size={12} strokeWidth={1.8} />
+                {municipio ? `Cambiar alcaldía/municipio (${municipio.name})` : "Ver alcaldías / municipios"}
+              </button>
+            )}
 
             {phrasesLoading && <p className="py-6 text-center text-[12.5px] text-ink-faint">Consultando Google Trends…</p>}
             {phrasesError && (
