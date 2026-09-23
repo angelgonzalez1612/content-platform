@@ -137,6 +137,11 @@ export function EntidadesExplorer() {
   function centroIaHref(query: string) {
     const hints = `Frase real de Google Trends en ${locationLabel} (categoría: ${categoryLabel}): "${query}". Sin fuentes adicionales — trátalo como tema, no inventes datos verificables (fecha, ubicación, cifras).`;
     const params = new URLSearchParams({ name: query, hints, source: "entidades" });
+    // `municipio.code` ya es el slug canónico del catálogo real de
+    // ubicaciones (ver zmvm-municipios-map.ts) — se preselecciona el mismo
+    // selector de alcaldía/municipio que ya usan las pantallas de revisión,
+    // en vez de solo mencionar el lugar en el texto libre de `hints`.
+    if (municipio) params.set("alcaldiaSlug", municipio.code);
     return `/centro-ia?${params.toString()}`;
   }
 

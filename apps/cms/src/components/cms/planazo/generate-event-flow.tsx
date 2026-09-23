@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
 import type { Category, CheckResult, AiDecision, Seo } from "@planazo/types";
@@ -63,6 +63,7 @@ export function GenerateEventFlow({
   categories,
   initialName,
   initialDraft,
+  initialAlcaldiaSlug,
   crossSitePublish,
 }: {
   categories: Category[];
@@ -71,6 +72,9 @@ export function GenerateEventFlow({
   // fijo), el borrador ya se generó ahí — este componente arranca directo en
   // "review" con estos datos, sin pedirle al humano que genere de nuevo.
   initialDraft?: DraftResponse;
+  // Slug del catálogo real de ubicaciones (GET /cms/locations) — viene del
+  // mapa de Entidades cuando ya se eligió una alcaldía/municipio específica.
+  initialAlcaldiaSlug?: string;
   // Solo lo manda PublishFlow (ver ahí): al crear con esto presente, en vez
   // de navegar de inmediato se muestra una pantalla de éxito con la opción
   // de generar TAMBIÉN una segunda pieza para el otro sitio.
@@ -82,13 +86,13 @@ export function GenerateEventFlow({
   const [publishedHref, setPublishedHref] = useState("");
   const [name, setName] = useState(initialName ?? "");
   const [hints, setHints] = useState("");
-  const [provider, setProvider] = useState<ProviderId>("openai");
+  // `null` = todavía no se toca el selector — evita mandar "openai" real si
+  // el editor le da a generar antes de que useOpenAiAvailable() confirme que
+  // no hay key (mismo bug/arreglo que PublishFlow, ver ahí el porqué).
+  const [provider, setProvider] = useState<ProviderId | null>(null);
   const openaiAvailable = useOpenAiAvailable();
   const providers = PROVIDERS.filter((p) => p.id !== "openai" || openaiAvailable === true);
-
-  useEffect(() => {
-    if (openaiAvailable === false && provider === "openai") setProvider("claude-cli");
-  }, [openaiAvailable, provider]);
+  const effectiveProvider: ProviderId = provider ?? (openaiAvailable === true ? "openai" : "claude-cli");
   const [categoryId, setCategoryId] = useState(initialDraft?.categoryId ?? "");
   const [categoryWasAiChosen, setCategoryWasAiChosen] = useState(!!initialDraft);
   const [error, setError] = useState("");
@@ -109,7 +113,7 @@ export function GenerateEventFlow({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [locationName, setLocationName] = useState("");
-  const [alcaldiaSlug, setAlcaldiaSlug] = useState("");
+  const [alcaldiaSlug, setAlcaldiaSlug] = useState(initialAlcaldiaSlug ?? "");
   const [content, setContent] = useState<ContentBlockValue[]>([]);
   const [expandOpen, setExpandOpen] = useState(false);
 
@@ -127,7 +131,7 @@ export function GenerateEventFlow({
         headers: { "Content-Type": "application/json" },
         // categoryId se omite a propósito: sin ella, el backend clasifica sola
         // la categoría (ver AiDraftService.classifyCategory) — llega en data.categoryId abajo.
-        body: JSON.stringify({ site: "planazo", contentType: "evento-planazo", name, hints: hints || undefined, provider }),
+        body: JSON.stringify({ site: "planazo", contentType: "evento-planazo", name, hints: hints || undefined, provider: effectiveProvider }),
       });
 
       if (!res.ok) {
@@ -271,7 +275,7 @@ export function GenerateEventFlow({
                   disabled={step === "generating"}
                   title={p.hint}
                   className={`flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors ${
-                    provider === p.id ? "border-brand bg-accent" : "border-border bg-card hover:border-ink-faint"
+                    effectiveProvider === p.id ? "border-brand bg-accent" : "border-border bg-card hover:border-ink-faint"
                   }`}
                 >
                   <span className="block text-[13px] font-semibold">{p.label}</span>
@@ -291,7 +295,7 @@ export function GenerateEventFlow({
             {step === "generating" ? (
               <>
                 <Icon d={SPARK_ICON} size={15} strokeWidth={1.8} className="animate-spin" />
-                Investigando y escribiendo… {provider === "claude-cli" && "(puede tardar ~30s)"}
+                Investigando y escribiendo… {effectiveProvider === "claude-cli" && "(puede tardar ~30s)"}
               </>
             ) : (
               <>

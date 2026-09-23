@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
 import type { Category, CheckResult, AiDecision, Seo, AlertaStatus, EventoStatus, LugarKind } from "@planazo/types";
@@ -103,6 +103,7 @@ export function GenerateLamiraContentFlow({
   initialName,
   initialHints,
   initialDraft,
+  initialAlcaldiaSlug,
   crossSitePublish,
 }: {
   type: string;
@@ -113,6 +114,11 @@ export function GenerateLamiraContentFlow({
   // fijo), el borrador ya se generó ahí — este componente arranca directo en
   // "review" con estos datos, sin pedirle al humano que genere de nuevo.
   initialDraft?: DraftResponse;
+  // Slug del catálogo real de ubicaciones (GET /cms/locations) — viene del
+  // mapa de Entidades cuando ya se eligió una alcaldía/municipio específica
+  // (ver PublishFlow). Solo aplica a "alerta"/"evento"/"lugar" (los tipos
+  // con AlcaldiaSelect); en los demás no tiene dónde mostrarse y se ignora.
+  initialAlcaldiaSlug?: string;
   // Solo lo manda PublishFlow (ver ahí): al crear con esto presente, en vez
   // de navegar de inmediato se muestra una pantalla de éxito con la opción
   // de generar TAMBIÉN una segunda pieza para el otro sitio, reusando el
@@ -136,13 +142,13 @@ export function GenerateLamiraContentFlow({
   const [sourceUrl, setSourceUrl] = useState("");
   const [scrapedSiteName, setScrapedSiteName] = useState<string | null>(null);
   const [scraping, setScraping] = useState(false);
-  const [provider, setProvider] = useState<ProviderId>("openai");
+  // `null` = todavía no se toca el selector — evita mandar "openai" real si
+  // el editor le da a generar antes de que useOpenAiAvailable() confirme que
+  // no hay key (mismo bug/arreglo que PublishFlow, ver ahí el porqué).
+  const [provider, setProvider] = useState<ProviderId | null>(null);
   const openaiAvailable = useOpenAiAvailable();
   const providers = PROVIDERS.filter((p) => p.id !== "openai" || openaiAvailable === true);
-
-  useEffect(() => {
-    if (openaiAvailable === false && provider === "openai") setProvider("claude-cli");
-  }, [openaiAvailable, provider]);
+  const effectiveProvider: ProviderId = provider ?? (openaiAvailable === true ? "openai" : "claude-cli");
   // La categoría ya no la elige el humano de entrada — la clasifica la IA a
   // partir del tema (ver AiDraftService.classifyCategory), y llega aquí ya
   // resuelta en la respuesta del draft. Sigue siendo 100% editable en la
@@ -190,7 +196,7 @@ export function GenerateLamiraContentFlow({
     tags: [] as string[],
     imageCaption: "",
     alertaStatus: "activa" as AlertaStatus,
-    alcaldiaSlug: "",
+    alcaldiaSlug: initialAlcaldiaSlug ?? "",
     tag: "",
     eventoStatus: "proximo" as EventoStatus,
     date: "",
@@ -255,7 +261,7 @@ export function GenerateLamiraContentFlow({
         // categoryId se omite a propósito: sin ella, el backend clasifica sola
         // la categoría (ver AiDraftService.classifyCategory) a partir del tema
         // + la fuente completa — es lo que llega en data.categoryId abajo.
-        body: JSON.stringify({ site: "la-mira", contentType: type, name, hints: effectiveHints || undefined, provider }),
+        body: JSON.stringify({ site: "la-mira", contentType: type, name, hints: effectiveHints || undefined, provider: effectiveProvider }),
       });
 
       if (!res.ok) {
@@ -488,7 +494,7 @@ export function GenerateLamiraContentFlow({
                   onClick={() => setProvider(p.id)}
                   disabled={step === "generating"}
                   title={p.hint}
-                  className={`flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors ${provider === p.id ? "border-brand bg-accent" : "border-border bg-card hover:border-ink-faint"}`}
+                  className={`flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors ${effectiveProvider === p.id ? "border-brand bg-accent" : "border-border bg-card hover:border-ink-faint"}`}
                 >
                   <span className="block text-[13px] font-semibold">{p.label}</span>
                   <span className="block text-[11px] text-ink-faint">{p.hint}</span>
@@ -507,7 +513,7 @@ export function GenerateLamiraContentFlow({
             {step === "generating" ? (
               <>
                 <Icon d={SPARK_ICON} size={15} strokeWidth={1.8} className="animate-spin" />
-                Investigando y escribiendo… {provider === "claude-cli" && "(puede tardar ~30s)"}
+                Investigando y escribiendo… {effectiveProvider === "claude-cli" && "(puede tardar ~30s)"}
               </>
             ) : (
               <>

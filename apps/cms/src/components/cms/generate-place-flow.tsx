@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
 import type { Category, CheckResult, AiDecision, Seo } from "@planazo/types";
@@ -58,6 +58,7 @@ export function GeneratePlaceFlow({
   categories,
   initialName,
   initialDraft,
+  initialAlcaldiaSlug,
   crossSitePublish,
 }: {
   categories: Category[];
@@ -66,6 +67,9 @@ export function GeneratePlaceFlow({
   // fijo), el borrador ya se generó ahí — este componente arranca directo en
   // "review" con estos datos, sin pedirle al humano que genere de nuevo.
   initialDraft?: DraftResponse;
+  // Slug del catálogo real de ubicaciones (GET /cms/locations) — viene del
+  // mapa de Entidades cuando ya se eligió una alcaldía/municipio específica.
+  initialAlcaldiaSlug?: string;
   // Solo lo manda PublishFlow (ver ahí): al crear con esto presente, en vez
   // de navegar de inmediato se muestra una pantalla de éxito con la opción
   // de generar TAMBIÉN una segunda pieza para el otro sitio.
@@ -77,13 +81,13 @@ export function GeneratePlaceFlow({
   const [publishedHref, setPublishedHref] = useState("");
   const [name, setName] = useState(initialName ?? "");
   const [hints, setHints] = useState("");
-  const [provider, setProvider] = useState<ProviderId>("openai");
+  // `null` = todavía no se toca el selector — evita mandar "openai" real si
+  // el editor le da a generar antes de que useOpenAiAvailable() confirme que
+  // no hay key (mismo bug/arreglo que PublishFlow, ver ahí el porqué).
+  const [provider, setProvider] = useState<ProviderId | null>(null);
   const openaiAvailable = useOpenAiAvailable();
   const providers = PROVIDERS.filter((p) => p.id !== "openai" || openaiAvailable === true);
-
-  useEffect(() => {
-    if (openaiAvailable === false && provider === "openai") setProvider("claude-cli");
-  }, [openaiAvailable, provider]);
+  const effectiveProvider: ProviderId = provider ?? (openaiAvailable === true ? "openai" : "claude-cli");
   // La categoría ya no la elige el humano de entrada — la clasifica la IA a
   // partir del tema (ver AiDraftService.classifyCategory). Sigue siendo 100%
   // editable en la revisión, justo debajo, por si la IA se equivocó.
@@ -92,7 +96,7 @@ export function GeneratePlaceFlow({
   const [error, setError] = useState("");
 
   const [description, setDescription] = useState(initialParsed?.description ?? "");
-  const [alcaldiaSlug, setAlcaldiaSlug] = useState("");
+  const [alcaldiaSlug, setAlcaldiaSlug] = useState(initialAlcaldiaSlug ?? "");
   const [tags, setTags] = useState<string[]>(initialParsed?.tags ?? []);
   const [seo, setSeo] = useState<Seo>(initialParsed?.seo ?? {});
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(initialParsed?.categoryData ?? {});
@@ -120,7 +124,7 @@ export function GeneratePlaceFlow({
         headers: { "Content-Type": "application/json" },
         // categoryId se omite a propósito: sin ella, el backend clasifica sola
         // la categoría (ver AiDraftService.classifyCategory) — llega en data.categoryId abajo.
-        body: JSON.stringify({ site: "planazo", contentType: "place", name, hints: hints || undefined, provider }),
+        body: JSON.stringify({ site: "planazo", contentType: "place", name, hints: hints || undefined, provider: effectiveProvider }),
       });
 
       if (!res.ok) {
@@ -262,7 +266,7 @@ export function GeneratePlaceFlow({
                   disabled={step === "generating"}
                   title={p.hint}
                   className={`flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors ${
-                    provider === p.id ? "border-brand bg-accent" : "border-border bg-card hover:border-ink-faint"
+                    effectiveProvider === p.id ? "border-brand bg-accent" : "border-border bg-card hover:border-ink-faint"
                   }`}
                 >
                   <span className="block text-[13px] font-semibold">{p.label}</span>
@@ -282,7 +286,7 @@ export function GeneratePlaceFlow({
             {step === "generating" ? (
               <>
                 <Icon d={SPARK_ICON} size={15} strokeWidth={1.8} className="animate-spin" />
-                Investigando y escribiendo… {provider === "claude-cli" && "(puede tardar ~30s)"}
+                Investigando y escribiendo… {effectiveProvider === "claude-cli" && "(puede tardar ~30s)"}
               </>
             ) : (
               <>

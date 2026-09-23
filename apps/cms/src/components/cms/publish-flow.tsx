@@ -147,6 +147,7 @@ export function PublishFlow({
   initialHints,
   fixedSite,
   source = "content-radar",
+  initialAlcaldiaSlug,
   radarTopics = [],
   savedPhrases = [],
 }: {
@@ -154,6 +155,12 @@ export function PublishFlow({
   initialHints?: string;
   fixedSite?: "la-mira" | "planazo";
   source?: string;
+  /** Slug del catálogo real de ubicaciones (GET /cms/locations) — viene del
+   * mapa de Entidades cuando el editor ya eligió una alcaldía/municipio
+   * específica. Preselecciona el mismo AlcaldiaSelect que ya usan las 3
+   * pantallas de revisión, en vez de que el lugar solo viva en el texto de
+   * `hints` (ver ZmvmMap/EntidadesExplorer.centroIaHref). */
+  initialAlcaldiaSlug?: string;
   radarTopics?: RadarTopic[];
   savedPhrases?: SavedPhrase[];
 }) {
@@ -446,6 +453,7 @@ export function PublishFlow({
               categories={resolved.categories}
               initialName={resolved.name}
               initialDraft={resolved.draftResponse}
+              initialAlcaldiaSlug={initialAlcaldiaSlug}
               crossSitePublish={fixedSite ? undefined : crossSitePublish}
             />
           ) : contentType === "place" ? (
@@ -453,6 +461,7 @@ export function PublishFlow({
               categories={resolved.categories}
               initialName={resolved.name}
               initialDraft={resolved.draftResponse}
+              initialAlcaldiaSlug={initialAlcaldiaSlug}
               crossSitePublish={fixedSite ? undefined : crossSitePublish}
             />
           ) : (
@@ -460,6 +469,7 @@ export function PublishFlow({
               categories={resolved.categories}
               initialName={resolved.name}
               initialDraft={resolved.draftResponse}
+              initialAlcaldiaSlug={initialAlcaldiaSlug}
               crossSitePublish={fixedSite ? undefined : crossSitePublish}
             />
           )}
