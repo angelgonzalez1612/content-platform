@@ -100,8 +100,8 @@ const EMPTY_FORM: RuleFormState = {
   site: "",
   categorySlugs: [],
   contentTypes: [],
-  provider: "claude-cli",
-  dailyLimit: 3,
+  provider: "codex-cli",
+  dailyLimit: 0, // 0 = sin tope (ver checkbox del form)
   expandIfShort: false,
   includeSearchPhrases: false,
 };
@@ -435,19 +435,31 @@ export function AutomationView({
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="rule-limit" className={labelClass}>
-                Tope diario de publicaciones
+              <label className="flex items-center gap-2.5 text-[13px] font-medium text-ink">
+                <input
+                  type="checkbox"
+                  checked={form.dailyLimit > 0}
+                  onChange={(e) => set("dailyLimit", e.target.checked ? 3 : 0)}
+                  className="size-4 rounded border-border accent-brand"
+                />
+                Poner un tope diario de publicaciones
               </label>
-              <input
-                id="rule-limit"
-                type="number"
-                min={1}
-                max={50}
-                value={form.dailyLimit}
-                onChange={(e) => set("dailyLimit", Number(e.target.value) || 1)}
-                className={`${fieldClass} max-w-[140px]`}
-              />
-              <p className="text-[11.5px] leading-[1.4] text-ink-faint">Protege contra gastar todos los créditos de IA en una sola corrida.</p>
+              {form.dailyLimit > 0 && (
+                <input
+                  id="rule-limit"
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={form.dailyLimit}
+                  onChange={(e) => set("dailyLimit", Math.max(1, Number(e.target.value) || 1))}
+                  className={`${fieldClass} ml-[26px] max-w-[140px]`}
+                />
+              )}
+              <p className="ml-[26px] text-[11.5px] leading-[1.4] text-ink-faint">
+                {form.dailyLimit > 0
+                  ? "Máximo de piezas que esta regla crea al día — protege contra gastar créditos de IA en una sola corrida."
+                  : "Sin tope: la regla crea todas las piezas que encuentre. Actívalo para limitar el gasto de IA por día."}
+              </p>
             </div>
           </div>
 
@@ -562,8 +574,8 @@ export function AutomationView({
                         {rule.categorySlugs.length ? `${rule.categorySlugs.length} categoría(s)` : "cualquier categoría"}
                         {" · "}
                         {PROVIDER_LABEL[rule.provider]}
-                        {" · hasta "}
-                        {rule.dailyLimit}/día
+                        {" · "}
+                        {rule.dailyLimit > 0 ? `hasta ${rule.dailyLimit}/día` : "sin tope"}
                       </p>
                     </div>
                     <div className="flex flex-none items-center gap-1">

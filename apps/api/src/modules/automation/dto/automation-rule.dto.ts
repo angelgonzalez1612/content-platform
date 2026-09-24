@@ -25,7 +25,10 @@ const automationRuleShape = {
   categorySlugs: z.array(z.string()),
   contentTypes: z.array(z.enum(AUTOMATABLE_CONTENT_TYPES)),
   provider: z.enum(['openai', 'claude-cli', 'codex-cli']),
-  dailyLimit: z.coerce.number().int().min(1).max(50),
+  // 0 = sin tope (la regla crea todas las piezas que encuentre). >0 = máximo de
+  // piezas por día. Se modela con 0 en vez de null para no requerir migración
+  // de la columna en Turso (integer notNull). El runner trata 0 como ilimitado.
+  dailyLimit: z.coerce.number().int().min(0).max(50),
   expandIfShort: z.boolean(),
   includeSearchPhrases: z.boolean(),
 };
@@ -34,8 +37,8 @@ export const automationRuleSchema = z.object(automationRuleShape).extend({
   active: z.boolean().default(true),
   categorySlugs: z.array(z.string()).default([]),
   contentTypes: z.array(z.enum(AUTOMATABLE_CONTENT_TYPES)).default([]),
-  provider: z.enum(['openai', 'claude-cli', 'codex-cli']).default('claude-cli'),
-  dailyLimit: z.coerce.number().int().min(1).max(50).default(3),
+  provider: z.enum(['openai', 'claude-cli', 'codex-cli']).default('codex-cli'),
+  dailyLimit: z.coerce.number().int().min(0).max(50).default(0),
   expandIfShort: z.boolean().default(false),
   includeSearchPhrases: z.boolean().default(false),
 });

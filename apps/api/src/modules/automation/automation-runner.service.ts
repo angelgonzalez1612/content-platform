@@ -395,7 +395,8 @@ export class AutomationRunnerService {
 
         const candidates = ruleStates.filter(
           (state) =>
-            state.createdCount < state.rule.dailyLimit &&
+            // dailyLimit 0 = sin tope (ver automation-rule.dto.ts).
+            (state.rule.dailyLimit === 0 || state.createdCount < state.rule.dailyLimit) &&
             this.ruleCouldMatch(state.rule, topic) &&
             (topic.source !== 'search-phrase' || state.rule.includeSearchPhrases),
         );
