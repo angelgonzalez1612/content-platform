@@ -9,4 +9,16 @@ describe('automation rule schemas', () => {
     expect(automationRuleSchema.parse({ name: 'General' }).dailyLimit).toBe(0);
     expect(automationRuleSchema.parse({ name: 'General', dailyLimit: 0 }).dailyLimit).toBe(0);
   });
+
+  it('un update parcial preserva los campos que no vienen (no los borra)', () => {
+    expect(updateAutomationRuleSchema.parse({ dailyLimit: 5 })).toEqual({ dailyLimit: 5 });
+  });
+
+  it('un update rechaza llaves desconocidas (strict)', () => {
+    expect(() => updateAutomationRuleSchema.parse({ active: true, foo: 'bar' })).toThrow();
+  });
+
+  it('el default de proveedor es codex-cli', () => {
+    expect(automationRuleSchema.parse({ name: 'General' }).provider).toBe('codex-cli');
+  });
 });

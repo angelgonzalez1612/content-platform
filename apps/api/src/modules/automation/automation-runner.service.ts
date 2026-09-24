@@ -20,6 +20,7 @@ import { SearchPhrasesService } from './search-phrases.service';
 import { WebSearchService } from './web-search.service';
 import { RadarTopicsService } from './radar-topics.service';
 import { looksLikeSameStory, normalizeTitle, resolvedTopicWasHandled } from './topic-deduplication';
+import { ruleAccepts, ruleCouldMatch } from './rule-matching';
 import { AUTOMATABLE_CONTENT_TYPES } from './dto/automation-rule.dto';
 import { type AutomationRuleRow } from '../../db/schema';
 
@@ -348,7 +349,7 @@ export class AutomationRunnerService {
           (state) =>
             // dailyLimit 0 = sin tope (ver automation-rule.dto.ts).
             (state.rule.dailyLimit === 0 || state.createdCount < state.rule.dailyLimit) &&
-            this.ruleCouldMatch(state.rule, topic) &&
+            ruleCouldMatch(state.rule, topic) &&
             (topic.source !== 'search-phrase' || state.rule.includeSearchPhrases),
         );
         if (candidates.length === 0) continue;
@@ -485,7 +486,7 @@ export class AutomationRunnerService {
         title: topic.sourceKey,
         categoryLabel: topic.categoryLabel,
         hasCandidateRule: activeRules.some(
-          (rule) => this.ruleCouldMatch(rule, topic) && (topic.source !== 'search-phrase' || rule.includeSearchPhrases),
+          (rule) => ruleCouldMatch(rule, topic) && (topic.source !== 'search-phrase' || rule.includeSearchPhrases),
         ),
         source: topic.source,
       });
@@ -494,17 +495,6 @@ export class AutomationRunnerService {
     return { totalTopics: seen.size, alreadyHandled, pending };
   }
 
-  /** Filtro barato ANTES de gastar una llamada a IA — usa el mapeo de sitio
-   * que content-radar ya trae por categoría (grueso, no perfecto). La
-   * clasificación real de sitio/tipo/categoría la hace la IA después; esto
-   * solo evita intentar reglas obviamente del sitio equivocado. Un tema sin
-   * sitio conocido (ej. "Lo más caliente", cruza categorías) siempre pasa —
-   * no hay con qué prefiltrarlo. */
-  private ruleCouldMatch(rule: AutomationRuleRow, topic: Topic): boolean {
-    if (!rule.site) return true;
-    if (topic.sites.length === 0) return true;
-    return topic.sites.includes(rule.site);
-  }
 
   /**
    * Frase de búsqueda → nota real citable. Busca la frase en Google News RSS
@@ -565,7 +555,7 @@ export class AutomationRunnerService {
       }
 
       lastClassified = entry;
-      if (!this.ruleAccepts(rule, entry.result, entry.category)) continue;
+      if (!ruleAccepts(rule, entry.result, entry.category)) continue;
 
       const finalResult = await this.maybeExpandContent(rule, entry.result, topic);
       return this.finalizeCreate(state, topic, finalResult, entry.category);
@@ -627,16 +617,6 @@ export class AutomationRunnerService {
     }
   }
 
-  /** Misma validación que antes (sitio, tipo automatizable, tipo permitido,
-   * categoría permitida) pero como chequeo puro reutilizable contra varias
-   * reglas candidatas para el mismo resultado ya clasificado. */
-  private ruleAccepts(rule: AutomationRuleRow, result: DraftResult, category: Category): boolean {
-    if (rule.site && result.site !== rule.site) return false;
-    if (!AUTOMATABLE_CONTENT_TYPES.includes(result.contentType as AutomatableType)) return false;
-    if (rule.contentTypes.length && !rule.contentTypes.includes(result.contentType)) return false;
-    if (rule.categorySlugs.length && !rule.categorySlugs.includes(category.slug)) return false;
-    return true;
-  }
 
   /** "Agregar más contenido con IA" de la regla (checkbox en Automatizaciones)
    * — si el borrador quedó corto según el mismo check no-bloqueante
