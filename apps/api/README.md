@@ -1,98 +1,58 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# apps/api — Backend (NestJS)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API que alimenta el CMS y los dos sitios (La Mira, Planazo). Parte del monorepo
+`content-platform` — para correrlo, convenciones y el sistema de automatización
+ver **[`../../AGENTS.md`](../../AGENTS.md)** primero.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+- **Stack:** NestJS 11 · Drizzle ORM sobre **SQLite/Turso** (`@libsql/client`) ·
+  validación con **zod** · auth por **cookie de sesión JWT** · `@nestjs/schedule`.
+- **Puerto:** `4001` (`apps/api/.env` → `PORT`). Dev: `pnpm dev` (o `pnpm start:dev`).
+- **Entrada:** `src/main.ts` → `src/bootstrap.ts` → `src/app.module.ts`.
+- **Env validado:** `src/config/env.ts` (zod; si falta algo obligatorio, no
+  arranca). Opcionales degradan con mensaje claro, no tumban el server.
 
-## Description
+## Módulos (`src/modules/`)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Tipos de contenido:** `lamira-noticias`, `lamira-alertas`, `lamira-reportajes`,
+  `lamira-eventos`, `lamira-lugares`, `lamira-guias`, `places`, `events`,
+  `planazo-guides`, `articles`.
+- **Plataforma:** `auth`, `users`, `sites`, `categories`, `locations`, `entidades`.
+- **IA & automatización:** `ai` (`AiDraftService` genera/clasifica/mejora),
+  `automation` (reglas + runner + búsqueda de noticias), `content-radar-published`.
+- **Infra/soporte:** `health`, `dashboard`, `media`, `calendar`, `content-versions`.
 
-## Project setup
+## Base de datos (Drizzle)
 
-```bash
-$ pnpm install
-```
-
-## Compile and run the project
+Esquema en `src/db/schema/*.ts` (`index.ts` reexporta; `relations.ts` define
+relaciones). Comandos (desde `apps/api`):
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+pnpm db:generate   # genera migraciones a partir del schema
+pnpm db:migrate    # aplica migraciones
+pnpm db:studio     # Drizzle Studio (inspección visual)
+pnpm db:seed       # semilla base (admin, etc.)
 ```
 
-## Run tests
+> `package.json` tiene además **muchos scripts `db:*` de mantenimiento puntual**
+> (dedupe, fix de fotos, borrado de contenido mal clasificado, etc.). Son
+> one-offs históricos — **no los corras a ciegas**; cada uno muta datos reales.
 
-```bash
-# unit tests
-$ pnpm run test
+## Auth
 
-# e2e tests
-$ pnpm run test:e2e
+`POST /api/auth/login` `{email,password}` valida contra la DB y setea una cookie
+`httpOnly` de sesión (JWT). Las rutas `cms/*` están protegidas con
+`JwtAuthGuard`. Credenciales de admin sembrado: `SEED_ADMIN_*` en `.env`.
 
-# test coverage
-$ pnpm run test:cov
-```
+## Rutas destacadas
 
-## Deployment
+- `GET /api/health` — healthcheck.
+- `POST /api/auth/login` · `POST /api/auth/logout` · `GET /api/auth/me`.
+- `cms/automation/*` — reglas de automatización (ver [`../../AGENTS.md`](../../AGENTS.md) §5).
+- `cms/entidades/*` — interés por estado, frases, y `local-search` (notas reales
+  de Google News; ver AGENTS.md §4).
+- `cron/automation` — corrida de automatización para Vercel Cron (`Bearer CRON_SECRET`).
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Antes de commitear
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+`pnpm typecheck` (raíz o en `apps/api`) y `pnpm lint`. Ver convenciones en
+[`../../AGENTS.md`](../../AGENTS.md) §3.

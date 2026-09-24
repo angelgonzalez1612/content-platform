@@ -28,6 +28,7 @@ packages/
   Entidades y el sistema de reglas de automatización. `CLAUDE.md` apunta ahí.
 - [`apps/cms/PRODUCT.md`](./apps/cms/PRODUCT.md) — usuarios, propósito y
   principios de diseño del CMS.
-
-Documentación detallada por app aún sin consolidar (ver los README originales
-de `apps/api` y `apps/cms` mientras tanto).
+- [`apps/api/README.md`](./apps/api/README.md) — backend: stack, módulos, DB
+  (Drizzle), auth, rutas.
+- [`apps/cms/README.md`](./apps/cms/README.md) — CMS: rutas, componentes, cómo
+  habla con la API, convenciones de UI.
