@@ -1,6 +1,6 @@
 import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { hash } from 'bcryptjs';
-import { count, eq } from 'drizzle-orm';
+import { count, eq, sql } from 'drizzle-orm';
 import type { AuthUser, UserRole } from '@planazo/types';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
 import { users } from '../../db/schema';
@@ -38,14 +38,33 @@ export class UsersService {
   async update(id: string, dto: UpdateUserDto): Promise<AuthUser> {
     if (dto.role) await this.assertNotDemotingLastAdmin(id, dto.role);
 
-    const [row] = await this.db.update(users).set(dto).where(eq(users.id, id)).returning();
+    const current = await this.db.query.users.findFirst({ where: eq(users.id, id) });
+    if (!current) throw new NotFoundException('Usuario no encontrado.');
+    const roleChanged = dto.role !== undefined && dto.role !== current.role;
+    const [row] = await this.db
+      .update(users)
+      .set({
+        ...dto,
+        ...(roleChanged ? { sessionVersion: sql`${users.sessionVersion} + 1` } : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning();
     if (!row) throw new NotFoundException('Usuario no encontrado.');
     return toAuthUser(row);
   }
 
   async resetPassword(id: string, dto: ResetPasswordDto): Promise<void> {
     const passwordHash = await hash(dto.password, SALT_ROUNDS);
-    const [row] = await this.db.update(users).set({ passwordHash }).where(eq(users.id, id)).returning({ id: users.id });
+    const [row] = await this.db
+      .update(users)
+      .set({
+        passwordHash,
+        sessionVersion: sql`${users.sessionVersion} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning({ id: users.id });
     if (!row) throw new NotFoundException('Usuario no encontrado.');
   }
 

@@ -1,8 +1,8 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { execFile } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import path from 'node:path';
-import { and, desc, eq } from 'drizzle-orm';
 import { slugify } from '@planazo/shared';
 import type { Category, ContentBlock, Seo } from '@planazo/types';
 import { AiDraftService, type DraftResult } from '../ai/ai-draft.service';
@@ -19,9 +19,9 @@ import { AutomationRulesService } from './automation-rules.service';
 import { SearchPhrasesService } from './search-phrases.service';
 import { WebSearchService } from './web-search.service';
 import { RadarTopicsService } from './radar-topics.service';
+import { looksLikeSameStory, normalizeTitle, resolvedTopicWasHandled } from './topic-deduplication';
 import { AUTOMATABLE_CONTENT_TYPES } from './dto/automation-rule.dto';
-import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
-import { contentAuditLog, type AutomationRuleRow } from '../../db/schema';
+import { type AutomationRuleRow } from '../../db/schema';
 
 // Cada cuánto revisa solo, mientras la API esté prendida — no es un cron a
 // hora fija: mientras el proceso viva, cada 15 min vuelve a mirar el reporte
@@ -32,15 +32,10 @@ import { contentAuditLog, type AutomationRuleRow } from '../../db/schema';
 // arrancar retoma solo, sin depender de pegarle exacto a una hora.
 const CHECK_INTERVAL_MS = 15 * 60 * 1000;
 
-// evento-planazo y planazo-guia SIEMPRE caen en 'in_review' por el check
-// 'revision-humana' (ver checks.service.ts), sin importar qué tan bien
-// salieron — es una regla de diseño, no una señal de que algo esté mal. Cada
-// 3h se revisa si, aparte de esa, pasaron TODAS las demás checadas reales
-// (hechos, SEO, completitud, slug único, alt de imagen) y si sí, se publican
-// solas. Si además fallaron una checada real, se quedan en revisión para que
-// las vea una persona — auto-publicar eso sería reintroducir justo el
-// contenido de bajo valor por el que Google rechazó los sitios.
-const AUTO_PUBLISH_INTERVAL_MS = 3 * 60 * 60 * 1000;
+// El runner nunca publica directamente. Los checks determinan qué necesita
+// atención, pero toda pieza termina en `in_review` hasta que una persona la
+// aprueba desde el CMS.
+const RUN_LOCK_LEASE_MS = 30 * 60 * 1000;
 
 type AutomatableType = (typeof AUTOMATABLE_CONTENT_TYPES)[number];
 
@@ -73,12 +68,22 @@ interface ExtractedYoutubeVideo {
 // separarlas — ver getQueueStatus).
 interface Topic extends ExtractedTopic {
   source: 'report' | 'search-phrase';
+  // Identidad estable previa a cualquier enriquecimiento. Para frases es el
+  // texto buscado; `title` puede cambiar al titular de Google News.
+  sourceKey: string;
 }
 
 const SEARCH_PHRASE_CATEGORY_LABEL = 'Qué busca la gente (frase real)';
 
 function toSearchPhraseTopic(phrase: string): Topic {
-  return { title: phrase, hints: '', categoryLabel: SEARCH_PHRASE_CATEGORY_LABEL, sites: [], source: 'search-phrase' };
+  return {
+    title: phrase,
+    sourceKey: phrase,
+    hints: '',
+    categoryLabel: SEARCH_PHRASE_CATEGORY_LABEL,
+    sites: [],
+    source: 'search-phrase',
+  };
 }
 
 export interface PendingTopic {
@@ -91,10 +96,6 @@ export interface PendingTopic {
 // Mismo criterio que ContentRadarPublishedService/render.ts (normaliza antes
 // de comparar por título) — copiado en vez de importado para no acoplar esta
 // comparación puntual a todo lo que arrastra el módulo de render.
-function normalizeTitle(title: string): string {
-  return title.trim().replace(/\s+/g, ' ').toLowerCase();
-}
-
 // Content Radar no dedupea por historia real — cuando 2-4 medios cubren el
 // mismo hecho, cada uno aparece como su propio "tema" en el reporte (mismo
 // evento, encabezado distinto). Sin este chequeo, la IA redacta y publica la
@@ -108,29 +109,6 @@ function normalizeTitle(title: string): string {
 // Metro CDMX) y contra temas genuinamente distintos del mismo reporte: 0.5
 // atrapa los 5/5 duplicados reales sin ningún falso positivo; 0.6 dejaba
 // pasar 1 de los 5 (títulos que reformulan más de la mitad de las palabras).
-const TITLE_STOPWORDS = new Set([
-  'de', 'la', 'el', 'en', 'y', 'a', 'que', 'un', 'una', 'los', 'las', 'del',
-  'al', 'su', 'con', 'por', 'para', 'se', 'es', 'lo', 'ya', 'más', 'tras',
-  'no', 'le', 'sus', 'como', 'entre', 'este', 'esta',
-]);
-
-function significantWords(title: string): Set<string> {
-  return new Set(
-    normalizeTitle(title)
-      .split(/[^a-záéíóúñ0-9]+/i)
-      .filter((w) => w.length >= 4 && !TITLE_STOPWORDS.has(w)),
-  );
-}
-
-function looksLikeSameStory(a: string, b: string): boolean {
-  const wa = significantWords(a);
-  const wb = significantWords(b);
-  if (wa.size === 0 || wb.size === 0) return false;
-  let shared = 0;
-  for (const w of wa) if (wb.has(w)) shared += 1;
-  return shared / Math.min(wa.size, wb.size) >= 0.5;
-}
-
 // Soporta las 3 formas reales de URL que trae la YouTube Data API / que un
 // editor podría pegar a mano: watch?v=, youtu.be/ y /embed/.
 function extractYoutubeVideoId(url: string): string | null {
@@ -184,56 +162,11 @@ export class AutomationRunnerService {
     private readonly searchPhrasesService: SearchPhrasesService,
     private readonly webSearch: WebSearchService,
     private readonly radarTopicsService: RadarTopicsService,
-    @Inject(DRIZZLE) private readonly db: DrizzleDb,
   ) {}
 
   @Interval(CHECK_INTERVAL_MS)
   async runScheduled() {
     await this.run();
-  }
-
-  @Interval(AUTO_PUBLISH_INTERVAL_MS)
-  async autoPublishSafeReviewed(): Promise<{ published: number; skipped: number }> {
-    let published = 0;
-    let skipped = 0;
-
-    const candidates: { contentType: 'evento-planazo' | 'planazo-guia'; id: string }[] = [
-      ...(await this.events.findAllForCms())
-        .filter((e) => e.status === 'in_review')
-        .map((e) => ({ contentType: 'evento-planazo' as const, id: e.id })),
-      ...(await this.guides.findAllForCms())
-        .filter((g) => g.status === 'in_review')
-        .map((g) => ({ contentType: 'planazo-guia' as const, id: g.id })),
-    ];
-
-    for (const candidate of candidates) {
-      const lastRun = await this.db.query.contentAuditLog.findFirst({
-        where: and(eq(contentAuditLog.contentType, candidate.contentType), eq(contentAuditLog.contentId, candidate.id)),
-        orderBy: [desc(contentAuditLog.createdAt)],
-      });
-
-      const onlyBlockedByHumanReview =
-        !!lastRun && lastRun.checksRun.length > 0 && lastRun.checksRun.every((c) => c.passed || c.name === 'revision-humana');
-
-      if (!onlyBlockedByHumanReview) {
-        skipped += 1;
-        continue;
-      }
-
-      if (candidate.contentType === 'evento-planazo') {
-        await this.events.update(candidate.id, { status: 'published' });
-      } else {
-        await this.guides.update(candidate.id, { status: 'published' });
-      }
-      published += 1;
-      this.logger.log(`Auto-publicado tras revisión (${candidate.contentType} ${candidate.id}) — pasó todas las checadas reales.`);
-    }
-
-    if (published || skipped) {
-      this.logger.log(`autoPublishSafeReviewed: ${published} publicados, ${skipped} siguen en revisión.`);
-    }
-
-    return { published, skipped };
   }
 
   // Solo la mitad "conoce la DB" del cruce sitio↔categoría — la otra mitad
@@ -331,6 +264,11 @@ export class AutomationRunnerService {
       this.logger.warn('run() se omitió: ya hay una corrida activa (ver isRunning).');
       return { evaluated: 0, created: 0 };
     }
+    const lockOwner = randomUUID();
+    if (!(await this.rules.tryAcquireRunLock(lockOwner, RUN_LOCK_LEASE_MS))) {
+      this.logger.warn('run() se omitió: otra instancia tiene el lease de automatización.');
+      return { evaluated: 0, created: 0 };
+    }
     this.runningFlag = true;
     try {
       await this.rules.touchLastChecked();
@@ -338,14 +276,25 @@ export class AutomationRunnerService {
       const activeRules = await this.rules.findActive();
       if (activeRules.length === 0) return { evaluated: 0, created: 0 };
 
-      const { fileName, topics, searchPhrases, youtubeVideos } = await this.extractTopics();
-      if (!fileName) {
-        this.logger.warn('No hay reportes de content-radar todavía — nada que evaluar.');
-        return { evaluated: 0, created: 0 };
+      let youtubeVideos: ExtractedYoutubeVideo[] = [];
+      try {
+        const extracted = await this.extractTopics();
+        youtubeVideos = extracted.youtubeVideos;
+        if (extracted.fileName) {
+          await this.searchPhrasesService.syncFromExtraction(extracted.searchPhrases, SEARCH_PHRASE_CATEGORY_LABEL);
+          await this.radarTopicsService.syncFromExtraction(extracted.topics);
+        } else {
+          this.logger.warn('No hay reporte local; la corrida continuará con temas y frases persistidos.');
+        }
+      } catch (error) {
+        this.logger.warn(
+          `No se pudo leer content-radar local; la corrida continuará desde la base de datos: ${(error as Error).message}`,
+        );
       }
-      await this.searchPhrasesService.syncFromExtraction(searchPhrases, SEARCH_PHRASE_CATEGORY_LABEL);
-      await this.radarTopicsService.syncFromExtraction(topics);
-      const accumulatedTopics = await this.radarTopicsService.findAll();
+      const [accumulatedTopics, persistedSearchPhrases] = await Promise.all([
+        this.radarTopicsService.findAll(),
+        this.searchPhrasesService.findAutomationCandidates(),
+      ]);
 
       const [alreadyPublished, alreadyEvaluated, todaysCounts] = await Promise.all([
         this.contentRadarPublished.findAllTitles().then((titles) => new Set(titles.map(normalizeTitle))),
@@ -371,12 +320,14 @@ export class AutomationRunnerService {
           categoryLabel: t.categoryLabel ?? '',
           sites: t.sites,
           source: 'report' as const,
+          sourceKey: t.title,
         })),
-        ...searchPhrases.map(toSearchPhraseTopic),
+        ...persistedSearchPhrases.map((row) => toSearchPhraseTopic(row.phrase)),
       ];
 
       for (const topic of allTopics) {
-        const key = normalizeTitle(topic.title);
+        await this.rules.renewRunLock(lockOwner, RUN_LOCK_LEASE_MS);
+        const key = normalizeTitle(topic.sourceKey);
         if (handledThisRun.has(key)) continue; // mismo tema repetido en "Lo más caliente" + su categoría
         handledThisRun.add(key);
 
@@ -409,6 +360,30 @@ export class AutomationRunnerService {
         // no gastar búsquedas de más.
         await this.enrichSearchPhraseTopic(topic);
 
+        // El enriquecimiento puede transformar una frase genérica en un
+        // titular ya tratado. Hay que repetir la deduplicación con esa nueva
+        // identidad antes de gastar una llamada de IA o crear otra pieza.
+        if (
+          resolvedTopicWasHandled({
+            sourceKey: topic.sourceKey,
+            resolvedTitle: topic.title,
+            alreadyPublished,
+            alreadyEvaluated,
+            createdTitles: createdTitlesThisRun,
+          })
+        ) {
+          await this.rules.logRun({
+            ruleId: null,
+            ruleName: null,
+            topic: topic.sourceKey,
+            categoryLabel: topic.categoryLabel,
+            outcome: 'skipped_duplicate',
+            detail: `La frase resolvió a un titular ya tratado: "${topic.title}".`,
+            source: topic.source,
+          });
+          continue;
+        }
+
         evaluated += 1;
         if (await this.assignTopic(candidates, topic)) {
           created += 1;
@@ -421,6 +396,11 @@ export class AutomationRunnerService {
       return { evaluated, created };
     } finally {
       this.runningFlag = false;
+      try {
+        await this.rules.releaseRunLock(lockOwner);
+      } catch (error) {
+        this.logger.error(`No se pudo liberar el lease de automatización: ${(error as Error).message}`);
+      }
     }
   }
 
@@ -456,11 +436,19 @@ export class AutomationRunnerService {
    * "nadie lo va a tocar, ninguna regla activa aplica a su sitio". */
   async getQueueStatus(): Promise<{ totalTopics: number; alreadyHandled: number; pending: PendingTopic[] }> {
     const activeRules = await this.rules.findActive();
-    const { fileName, topics, searchPhrases } = await this.extractTopics();
-    if (!fileName) return { totalTopics: 0, alreadyHandled: 0, pending: [] };
-    await this.searchPhrasesService.syncFromExtraction(searchPhrases, SEARCH_PHRASE_CATEGORY_LABEL);
-    await this.radarTopicsService.syncFromExtraction(topics);
-    const accumulatedTopics = await this.radarTopicsService.findAll();
+    try {
+      const extracted = await this.extractTopics();
+      if (extracted.fileName) {
+        await this.searchPhrasesService.syncFromExtraction(extracted.searchPhrases, SEARCH_PHRASE_CATEGORY_LABEL);
+        await this.radarTopicsService.syncFromExtraction(extracted.topics);
+      }
+    } catch (error) {
+      this.logger.warn(`Cola servida desde DB porque content-radar local no está disponible: ${(error as Error).message}`);
+    }
+    const [accumulatedTopics, persistedSearchPhrases] = await Promise.all([
+      this.radarTopicsService.findAll(),
+      this.searchPhrasesService.findAutomationCandidates(),
+    ]);
 
     const [alreadyPublished, alreadyEvaluated] = await Promise.all([
       this.contentRadarPublished.findAllTitles().then((titles) => new Set(titles.map(normalizeTitle))),
@@ -476,14 +464,15 @@ export class AutomationRunnerService {
         title: t.title,
         hints: t.hints,
         categoryLabel: t.categoryLabel ?? '',
-        sites: t.sites,
-        source: 'report' as const,
-      })),
-      ...searchPhrases.map(toSearchPhraseTopic),
+          sites: t.sites,
+          source: 'report' as const,
+          sourceKey: t.title,
+        })),
+      ...persistedSearchPhrases.map((row) => toSearchPhraseTopic(row.phrase)),
     ];
 
     for (const topic of allTopics) {
-      const key = normalizeTitle(topic.title);
+      const key = normalizeTitle(topic.sourceKey);
       if (seen.has(key)) continue;
       seen.add(key);
 
@@ -493,7 +482,7 @@ export class AutomationRunnerService {
       }
 
       pending.push({
-        title: topic.title,
+        title: topic.sourceKey,
         categoryLabel: topic.categoryLabel,
         hasCandidateRule: activeRules.some(
           (rule) => this.ruleCouldMatch(rule, topic) && (topic.source !== 'search-phrase' || rule.includeSearchPhrases),
@@ -589,7 +578,7 @@ export class AutomationRunnerService {
       await this.rules.logRun({
         ruleId: null,
         ruleName: null,
-        topic: topic.title,
+        topic: topic.sourceKey,
         categoryLabel: topic.categoryLabel,
         site: lastClassified.result.site,
         contentType: lastClassified.result.contentType,
@@ -601,7 +590,7 @@ export class AutomationRunnerService {
       await this.rules.logRun({
         ruleId: null,
         ruleName: null,
-        topic: topic.title,
+        topic: topic.sourceKey,
         categoryLabel: topic.categoryLabel,
         outcome: 'error',
         detail: lastError ?? 'No se pudo generar el borrador con ninguna de las reglas candidatas.',
@@ -689,11 +678,14 @@ export class AutomationRunnerService {
 
   private async finalizeCreate(state: RuleState, topic: Topic, result: DraftResult, category: Category): Promise<boolean> {
     const { rule } = state;
-    const published = result.decision === 'auto-published';
+      // La IA prepara y valida; la decisión de publicar siempre queda en una
+      // persona, de acuerdo con PRODUCT.md. Incluso un borrador que pasa todos
+      // los checks entra a la cola editorial como `in_review`.
+      const published = false;
     try {
       const createdRow = await this.createContent(result.contentType as AutomatableType, result, category, topic.title, published);
       await this.contentRadarPublished.markPublished({
-        title: topic.title,
+        title: topic.sourceKey,
         site: result.site,
         contentType: result.contentType,
         contentId: createdRow.id,
@@ -701,14 +693,17 @@ export class AutomationRunnerService {
       await this.rules.logRun({
         ruleId: rule.id,
         ruleName: rule.name,
-        topic: topic.title,
+        topic: topic.sourceKey,
         categoryLabel: topic.categoryLabel,
         site: result.site,
         contentType: result.contentType,
-        outcome: published ? 'published' : 'draft',
+        outcome: 'draft',
         contentId: createdRow.id,
         contentSlug: createdRow.slug,
-        detail: published ? null : 'No pasó todos los checks automáticos — se creó como borrador, para revisión.',
+        detail:
+          result.decision === 'auto-published'
+            ? 'Pasó los checks automáticos; requiere aprobación humana antes de publicarse.'
+            : 'No pasó todos los checks automáticos — requiere revisión humana.',
         source: topic.source,
       });
       state.createdCount += 1;
@@ -717,7 +712,7 @@ export class AutomationRunnerService {
       await this.rules.logRun({
         ruleId: rule.id,
         ruleName: rule.name,
-        topic: topic.title,
+        topic: topic.sourceKey,
         categoryLabel: topic.categoryLabel,
         site: result.site,
         contentType: result.contentType,

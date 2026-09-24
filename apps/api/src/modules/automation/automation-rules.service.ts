@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { eq, and, gte, inArray } from 'drizzle-orm';
+import { eq, and, gte, inArray, isNull, lt, or } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
 import { automationRules, automationRuns, automationState } from '../../db/schema';
 import { AutomationRuleDto, UpdateAutomationRuleDto } from './dto/automation-rule.dto';
@@ -104,6 +104,50 @@ export class AutomationRulesService {
     }
   }
 
+  async tryAcquireRunLock(owner: string, leaseMs: number): Promise<boolean> {
+    const now = new Date();
+    await this.db
+      .insert(automationState)
+      .values({ id: 'singleton', lastCheckedAt: now })
+      .onConflictDoNothing();
+    const acquired = await this.db
+      .update(automationState)
+      .set({ lockOwner: owner, lockExpiresAt: new Date(now.getTime() + leaseMs) })
+      .where(
+        and(
+          eq(automationState.id, 'singleton'),
+          or(isNull(automationState.lockExpiresAt), lt(automationState.lockExpiresAt, now), eq(automationState.lockOwner, owner)),
+        ),
+      )
+      .returning({ id: automationState.id });
+    return acquired.length === 1;
+  }
+
+  async renewRunLock(owner: string, leaseMs: number): Promise<boolean> {
+    const renewed = await this.db
+      .update(automationState)
+      .set({ lockExpiresAt: new Date(Date.now() + leaseMs) })
+      .where(and(eq(automationState.id, 'singleton'), eq(automationState.lockOwner, owner)))
+      .returning({ id: automationState.id });
+    return renewed.length === 1;
+  }
+
+  async releaseRunLock(owner: string): Promise<void> {
+    await this.db
+      .update(automationState)
+      .set({ lockOwner: null, lockExpiresAt: null })
+      .where(and(eq(automationState.id, 'singleton'), eq(automationState.lockOwner, owner)));
+  }
+
+  async isRunLocked(): Promise<boolean> {
+    const now = new Date();
+    const row = await this.db.query.automationState.findFirst({
+      where: and(eq(automationState.id, 'singleton'), gte(automationState.lockExpiresAt, now)),
+      columns: { lockOwner: true },
+    });
+    return Boolean(row?.lockOwner);
+  }
+
   async getLastCheckedAt(): Promise<string | null> {
     const row = await this.db.query.automationState.findFirst({ where: eq(automationState.id, 'singleton') });
     return row ? row.lastCheckedAt.toISOString() : null;
@@ -127,15 +171,12 @@ export class AutomationRulesService {
     return counts;
   }
 
-  /** Temas que ya se intentaron de verdad (se les gastó una llamada de IA, o
-   * ya se crearon) — sin esto, un tema que nunca va a encajar con ninguna
-   * regla se reintentaría cada 15 minutos para siempre. `skipped_duplicate`
-   * NO cuenta aquí a propósito: ese es barato (nunca llegó a llamar a la IA),
-   * así que si mañana ese tema deja de estar publicado en otro lado no hay
-   * ningún costo en volver a mirarlo. */
+  /** Temas que ya se resolvieron, se intentaron o se crearon. Los duplicados
+   * también cuentan: una frase que siempre resuelve al mismo titular no debe
+   * repetir la búsqueda cada 15 minutos. */
   async alreadyEvaluatedTitles(): Promise<Set<string>> {
     const rows = await this.db.query.automationRuns.findMany({
-      where: inArray(automationRuns.outcome, ['published', 'draft', 'skipped_no_match']),
+      where: inArray(automationRuns.outcome, ['published', 'draft', 'skipped_no_match', 'skipped_duplicate']),
       columns: { topic: true },
     });
     return new Set(rows.map((r) => normalizeTitle(r.topic)));

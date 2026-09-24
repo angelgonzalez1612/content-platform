@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { loginSchema } from './dto/login.dto';
 import { JwtAuthGuard, type RequestWithSession } from './jwt-auth.guard';
@@ -14,9 +14,11 @@ export class AuthController {
   ) {}
 
   @Post('login')
-  async login(@Body() body: unknown, @Res({ passthrough: true }) res: Response) {
+  async login(@Body() body: unknown, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const dto = loginSchema.parse(body);
-    const { token, user } = await this.authService.login(dto);
+    const forwarded = req.headers['x-forwarded-for'];
+    const clientIp = (Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(',')[0])?.trim() || req.ip || 'unknown';
+    const { token, user } = await this.authService.login(dto, clientIp);
 
     res.cookie(SESSION_COOKIE_NAME, token, {
       httpOnly: true,

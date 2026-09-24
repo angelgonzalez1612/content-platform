@@ -23,6 +23,7 @@ interface Status {
  * para no generar tráfico de fondo cada vez que alguien deja el Dashboard
  * abierto. */
 export function AutomationActivityCard() {
+  const [renderedAt] = useState(() => Date.now());
   const [status, setStatus] = useState<Status | null>(null);
   const [queue, setQueue] = useState<AutomationQueue | null>(null);
   const [runs, setRuns] = useState<AutomationRun[] | null>(null);
@@ -45,14 +46,15 @@ export function AutomationActivityCard() {
   }, []);
 
   useEffect(() => {
-    load();
+    const timeout = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(timeout);
   }, [load]);
 
   return (
     <div className="mb-[18px] overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
       <div className="flex flex-wrap items-center gap-2.5 border-b border-border-soft px-4 py-3.5">
         <span
-          className={`size-[6px] flex-none rounded-full ${status?.isRunning ? "animate-[pz-pulse_1.2s_ease-in-out_infinite] bg-brand" : status?.lastCheckedAt && Date.now() - new Date(status.lastCheckedAt).getTime() < 30 * 60 * 1000 ? "bg-positive" : "bg-ink-faint"}`}
+          className={`size-[6px] flex-none rounded-full ${status?.isRunning ? "animate-[pz-pulse_1.2s_ease-in-out_infinite] bg-brand" : status?.lastCheckedAt && renderedAt - new Date(status.lastCheckedAt).getTime() < 30 * 60 * 1000 ? "bg-positive" : "bg-ink-faint"}`}
         />
         <span className="text-[13.5px] font-semibold tracking-tight">Automatizaciones en tiempo real</span>
         {status && (

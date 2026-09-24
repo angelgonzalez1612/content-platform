@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard, type RequestWithSession } from '../auth/jwt-auth.guard';
+import { assertAdmin } from '../auth/assert-admin';
 import { DashboardService } from './dashboard.service';
 import { VercelDeploymentsService } from './vercel-deployments.service';
 
@@ -22,7 +23,8 @@ export class DashboardController {
   }
 
   @Post('deploys/:project')
-  triggerDeploy(@Param('project') project: string) {
+  triggerDeploy(@Req() req: RequestWithSession, @Param('project') project: string) {
+    assertAdmin(req);
     return this.vercelDeployments.triggerDeploy(project);
   }
 }

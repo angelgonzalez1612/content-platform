@@ -41,7 +41,11 @@ pnpm db:seed       # semilla base (admin, etc.)
 
 `POST /api/auth/login` `{email,password}` valida contra la DB y setea una cookie
 `httpOnly` de sesión (JWT). Las rutas `cms/*` están protegidas con
-`JwtAuthGuard`. Credenciales de admin sembrado: `SEED_ADMIN_*` en `.env`.
+`JwtAuthGuard`. El login bloquea durante 15 minutos una combinación IP/correo
+tras cinco fallos. Cambiar rol o contraseña incrementa `sessionVersion` y
+revoca los JWT anteriores. Configuración de IA, reglas/ejecuciones automáticas,
+deploys y administración de usuarios requieren rol `admin`.
+Credenciales de admin sembrado: `SEED_ADMIN_*` en `.env`.
 
 ## Rutas destacadas
 

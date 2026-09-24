@@ -1,5 +1,6 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { BadRequestException, Body, Controller, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard, type RequestWithSession } from '../auth/jwt-auth.guard';
+import { assertAdmin } from '../auth/assert-admin';
 import { AiSettingsService } from './ai-settings.service';
 import { updateAiSettingsSchema, updateProviderPreferenceSchema } from './dto/ai-settings.dto';
 import { ProviderRegistry, AI_PROVIDER_IDS, type AiProviderId } from './provider-registry.service';
@@ -18,13 +19,15 @@ export class AiSettingsController {
   }
 
   @Put()
-  update(@Body() body: unknown) {
+  update(@Req() req: RequestWithSession, @Body() body: unknown) {
+    assertAdmin(req);
     const { openaiApiKey } = updateAiSettingsSchema.parse(body);
     return this.settings.setOpenAiApiKey(openaiApiKey);
   }
 
   @Put('preference')
-  updatePreference(@Body() body: unknown) {
+  updatePreference(@Req() req: RequestWithSession, @Body() body: unknown) {
+    assertAdmin(req);
     const { preferredProvider, fallbackProvider } = updateProviderPreferenceSchema.parse(body);
     return this.settings.setProviderPreference(preferredProvider, fallbackProvider);
   }

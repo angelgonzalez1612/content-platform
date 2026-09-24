@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { apiConfig } from "@planazo/config";
 import type { CheckResult, AiDecision, Seo } from "@planazo/types";
 import { Icon } from "@/components/icon";
@@ -40,10 +40,7 @@ function GenerateSeoButton({ contentTitle, contentContext, onApply }: { contentT
   const [result, setResult] = useState<Seo | null>(null);
   const openaiAvailable = useOpenAiAvailable();
   const providers = PROVIDERS.filter((p) => p.id !== "openai" || openaiAvailable === true);
-
-  useEffect(() => {
-    if (openaiAvailable === false && provider === "openai") setProvider("claude-cli");
-  }, [openaiAvailable, provider]);
+  const effectiveProvider = openaiAvailable === false && provider === "openai" ? "claude-cli" : provider;
 
   async function handleGenerate() {
     if (!contentTitle.trim()) {
@@ -59,7 +56,7 @@ function GenerateSeoButton({ contentTitle, contentContext, onApply }: { contentT
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          provider,
+          provider: effectiveProvider,
           contentTitle,
           contentContext: contentContext || undefined,
           instructions: instructions || undefined,

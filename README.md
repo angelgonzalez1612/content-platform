@@ -13,7 +13,7 @@ de arquitectura en la conversación que originó este repo).
 
 ```
 apps/
-  api/      NestJS 11 + Drizzle ORM sobre Postgres — antes planazo_backend/apps/api
+  api/      NestJS 11 + Drizzle ORM sobre SQLite/Turso (libsql) — antes planazo_backend/apps/api
   cms/      Next.js 16 (App Router) — antes planazo_cms/apps/cms
 packages/
   types/    Contrato de datos compartido (workspace real, ya no se copia a mano)

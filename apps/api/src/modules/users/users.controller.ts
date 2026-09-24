@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, ForbiddenException, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard, type RequestWithSession } from '../auth/jwt-auth.guard';
+import { assertAdmin } from '../auth/assert-admin';
 import { UsersService } from './users.service';
 import { createUserSchema, resetPasswordSchema, updateUserSchema } from './dto/user.dto';
 
@@ -8,12 +9,6 @@ import { createUserSchema, resetPasswordSchema, updateUserSchema } from './dto/u
 // rol admin. Sin un RolesGuard reusable todavía en el proyecto (ningún otro
 // endpoint lo necesitó hasta ahora), el check va inline aquí en vez de
 // construir esa abstracción para un solo consumidor.
-function assertAdmin(req: RequestWithSession): void {
-  if (req.session?.role !== 'admin') {
-    throw new ForbiddenException('Solo un administrador puede hacer esto.');
-  }
-}
-
 @UseGuards(JwtAuthGuard)
 @Controller('cms/users')
 export class UsersController {

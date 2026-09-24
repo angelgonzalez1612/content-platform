@@ -140,7 +140,7 @@ export class ClaudeCliProvider implements ContentProvider {
           if (settled) return;
           settled = true;
           clearTimeout(timer);
-          if (err) reject(err);
+          if (err) reject(new Error(err.message, { cause: err }));
           else resolve(stdout);
         },
       );

@@ -1,6 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { z } from 'zod';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import type { RequestWithSession } from '../auth/jwt-auth.guard';
+import { assertAdmin } from '../auth/assert-admin';
 import { AutomationRulesService } from './automation-rules.service';
 import { AutomationRunnerService } from './automation-runner.service';
 import { SearchPhrasesService } from './search-phrases.service';
@@ -23,17 +25,20 @@ export class AutomationController {
   }
 
   @Post('rules')
-  createRule(@Body() body: unknown) {
+  createRule(@Req() req: RequestWithSession, @Body() body: unknown) {
+    assertAdmin(req);
     return this.rules.create(automationRuleSchema.parse(body));
   }
 
   @Patch('rules/:id')
-  updateRule(@Param('id') id: string, @Body() body: unknown) {
+  updateRule(@Req() req: RequestWithSession, @Param('id') id: string, @Body() body: unknown) {
+    assertAdmin(req);
     return this.rules.update(id, updateAutomationRuleSchema.parse(body));
   }
 
   @Delete('rules/:id')
-  removeRule(@Param('id') id: string) {
+  removeRule(@Req() req: RequestWithSession, @Param('id') id: string) {
+    assertAdmin(req);
     return this.rules.remove(id);
   }
 
@@ -53,14 +58,15 @@ export class AutomationController {
       lastCheckedAt: await this.rules.getLastCheckedAt(),
       checkIntervalMinutes: 15,
       activeRulesCount: activeRules.length,
-      isRunning: this.runner.isRunning,
+      isRunning: this.runner.isRunning || (await this.rules.isRunLocked()),
     };
   }
 
   // "Ejecutar ahora" en la pantalla de Automatizaciones — misma lógica exacta
   // que la corrida automática del interval (ver AutomationRunnerService.run).
   @Post('run-now')
-  runNow() {
+  runNow(@Req() req: RequestWithSession) {
+    assertAdmin(req);
     return this.runner.run();
   }
 

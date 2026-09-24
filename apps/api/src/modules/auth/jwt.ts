@@ -4,6 +4,7 @@ export interface SessionPayload {
   sub: string;
   email: string;
   role: 'admin' | 'editor';
+  sessionVersion: number;
 }
 
 const SESSION_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days

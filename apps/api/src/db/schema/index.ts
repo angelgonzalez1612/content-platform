@@ -15,4 +15,5 @@ export * from './content-versions';
 export * from './automation';
 export * from './relations';
 export * from './users';
+export * from './auth-login-attempts';
 export * from './media-assets';

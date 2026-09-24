@@ -19,7 +19,7 @@ async function bootstrap() {
   const hot = (module as unknown as { hot?: { accept(): void; dispose(cb: () => void): void } }).hot;
   if (hot) {
     hot.accept();
-    hot.dispose(() => app.close());
+    hot.dispose(() => void app.close());
   }
 }
 void bootstrap();

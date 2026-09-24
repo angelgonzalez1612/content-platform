@@ -133,6 +133,7 @@ export function AutomationView({
   lamiraCategories: Category[];
   planazoCategories: Category[];
 }) {
+  const [renderedAt] = useState(() => Date.now());
   const [rules, setRules] = useState(initialRules);
   const [runs, setRuns] = useState(initialRuns);
   const [status, setStatus] = useState(initialStatus);
@@ -302,7 +303,7 @@ export function AutomationView({
         <div>
           <h1 className="mb-1 text-[22px] font-semibold tracking-tight">Reglas de automatización</h1>
           <p className="flex items-center gap-1.5 text-[12px] text-ink-faint">
-            <span className={`size-[6px] rounded-full ${status.lastCheckedAt && Date.now() - new Date(status.lastCheckedAt).getTime() < 30 * 60 * 1000 ? "bg-positive" : "bg-ink-faint"}`} />
+            <span className={`size-[6px] rounded-full ${status.lastCheckedAt && renderedAt - new Date(status.lastCheckedAt).getTime() < 30 * 60 * 1000 ? "bg-positive" : "bg-ink-faint"}`} />
             Última revisión: {timeAgo(status.lastCheckedAt)}
             <span className="text-ink-faint">·</span>
             <Link href="/automatizaciones/frases" className="font-medium text-brand hover:text-brand-pressed">
@@ -451,7 +452,7 @@ export function AutomationView({
                   min={1}
                   max={50}
                   value={form.dailyLimit}
-                  onChange={(e) => set("dailyLimit", Math.max(1, Number(e.target.value) || 1))}
+                  onChange={(e) => set("dailyLimit", Math.min(50, Math.max(1, Number(e.target.value) || 1)))}
                   className={`${fieldClass} ml-[26px] max-w-[140px]`}
                 />
               )}

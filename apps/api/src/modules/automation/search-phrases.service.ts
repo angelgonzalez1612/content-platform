@@ -23,6 +23,12 @@ export class SearchPhrasesService {
     });
   }
 
+  /** Fuente persistente del runner. No depende de que el reporte local exista
+   * en el filesystem de la instancia que ejecuta el cron. */
+  findAutomationCandidates() {
+    return this.findAll();
+  }
+
   async findById(id: string) {
     const row = await this.db.query.searchPhrases.findFirst({ where: eq(searchPhrases.id, id) });
     if (!row) throw new NotFoundException(`Frase "${id}" no existe`);

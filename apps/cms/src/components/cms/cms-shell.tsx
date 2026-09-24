@@ -27,8 +27,10 @@ export function CmsShell({
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    if (window.localStorage.getItem("planazo-cms-sidebar-collapsed") === "1") setSidebarCollapsed(true);
-    if (document.documentElement.dataset.theme === "dark") setTheme("dark");
+    const timeout = window.setTimeout(() => {
+      if (window.localStorage.getItem("planazo-cms-sidebar-collapsed") === "1") setSidebarCollapsed(true);
+      if (document.documentElement.dataset.theme === "dark") setTheme("dark");
+    }, 0);
 
     function onKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -37,7 +39,10 @@ export function CmsShell({
       }
     }
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      window.clearTimeout(timeout);
+      window.removeEventListener("keydown", onKeyDown);
+    };
   }, []);
 
   function toggleSidebarCollapsed() {

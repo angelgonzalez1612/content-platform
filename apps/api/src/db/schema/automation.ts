@@ -1,7 +1,7 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import { idColumn, createdAtColumn, updatedAtColumn } from './columns.helpers';
 
-// Reglas que deciden qué temas de Content Radar se auto-publican solos en la
+// Reglas que deciden qué temas de Content Radar generan borradores en la
 // corrida diaria (ver AutomationRunnerService) — sin regla activa que aplique,
 // un tema nunca se toca automáticamente, solo aparece con su botón "Publicar"
 // de siempre en Content Radar. `site`/`categorySlugs`/`contentTypes` vacíos o
@@ -56,9 +56,9 @@ export const automationRuns = sqliteTable('automation_runs', {
   categoryLabel: text('category_label'),
   site: text('site', { enum: ['la-mira', 'planazo'] }),
   contentType: text('content_type'),
-  // 'published': pasó los checks y se creó ya publicado.
-  // 'draft': se creó pero como borrador (no pasó los checks — nunca se pierde,
-  //          queda para revisión humana, ver contentId).
+  // 'published': valor histórico de corridas anteriores a la revisión humana
+  // obligatoria. Las corridas nuevas siempre registran 'draft'.
+  // 'draft': se creó para revisión humana, haya pasado o no los checks.
   // 'skipped_duplicate': el tema ya estaba marcado como publicado antes.
   // 'skipped_no_match': se generó el borrador pero la IA clasificó
   //          sitio/tipo/categoría fuera de lo que permite la regla, o el tipo
@@ -89,6 +89,11 @@ export const automationRuns = sqliteTable('automation_runs', {
 export const automationState = sqliteTable('automation_state', {
   id: text('id').primaryKey(),
   lastCheckedAt: createdAtColumn('last_checked_at'),
+  // Lease compartido entre procesos/instancias. La bandera en memoria del
+  // runner solo evita solapamientos dentro de un mismo proceso; estas dos
+  // columnas hacen la adquisición atómica también en serverless.
+  lockOwner: text('lock_owner'),
+  lockExpiresAt: integer('lock_expires_at', { mode: 'timestamp' }),
 });
 
 // Antes efímeras (se recalculaban leyendo el reporte del día en disco cada

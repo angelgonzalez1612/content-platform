@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 const MOBILE_QUERY = "(max-width: 767px)";
 
@@ -12,15 +12,13 @@ const MOBILE_QUERY = "(max-width: 767px)";
  * expandido dentro del drawer).
  */
 export function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
+  return useSyncExternalStore(
+    (onChange) => {
     const mql = window.matchMedia(MOBILE_QUERY);
-    setIsMobile(mql.matches);
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
     mql.addEventListener("change", onChange);
     return () => mql.removeEventListener("change", onChange);
-  }, []);
-
-  return isMobile;
+    },
+    () => window.matchMedia(MOBILE_QUERY).matches,
+    () => false,
+  );
 }

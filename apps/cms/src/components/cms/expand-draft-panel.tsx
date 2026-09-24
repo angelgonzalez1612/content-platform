@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { apiConfig } from "@planazo/config";
 import { Icon } from "@/components/icon";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
@@ -49,10 +49,7 @@ export function ExpandDraftPanel({
   const [result, setResult] = useState<ContentBlockValue[] | null>(null);
   const openaiAvailable = useOpenAiAvailable();
   const providers = PROVIDERS.filter((p) => p.id !== "openai" || openaiAvailable === true);
-
-  useEffect(() => {
-    if (openaiAvailable === false && provider === "openai") setProvider("claude-cli");
-  }, [openaiAvailable, provider]);
+  const effectiveProvider = openaiAvailable === false && provider === "openai" ? "claude-cli" : provider;
 
   async function handleGenerate() {
     setLoading(true);
@@ -70,7 +67,7 @@ export function ExpandDraftPanel({
           content: content.length ? content : undefined,
           categoryId: categoryId || undefined,
           instructions: instructions || undefined,
-          provider,
+          provider: effectiveProvider,
         }),
       });
 

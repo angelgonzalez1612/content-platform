@@ -32,8 +32,8 @@ apps/
 packages/
   types/  config/  shared/  tsconfig/   (workspaces reales, no se copian a mano)
 ```
-> El README dice "Postgres"; el estado real es **SQLite/Turso (libsql)** — ver
-> `apps/api/.env` (`DATABASE_URL`, `DATABASE_AUTH_TOKEN`) y `apps/api/src/db`.
+La base real es **SQLite/Turso (libsql)** — ver `apps/api/.env`
+(`DATABASE_URL`, `DATABASE_AUTH_TOKEN`) y `apps/api/src/db`.
 
 ---
 
@@ -126,13 +126,12 @@ Campos (DTO: `dto/automation-rule.dto.ts`):
 - `site`: `'la-mira' | 'planazo' | null` (null = ambos)
 - `categorySlugs: string[]` (`[]` = todas), `contentTypes: string[]` (`[]` = todos)
 - `provider`: `'openai' | 'claude-cli' | 'codex-cli'`
-- `dailyLimit` (1-50, piezas/día por regla), `expandIfShort`, `includeSearchPhrases`
+- `dailyLimit` (0-50 borradores/día por regla; **0 = sin tope**, el runner lo trata como ilimitado), `expandIfShort`, `includeSearchPhrases`
 
 **6 tipos de contenido automatizables:** `noticia`, `alerta`, `reportaje`
-(La Mira) · `place`, `evento-planazo`, `planazo-guia` (Planazo). Los últimos dos
-**siempre caen en `in_review`** por el check `revision-humana` (por diseño, no
-se autopublican solos). No hay trigger/schedule por regla — el "cuándo" es
-global (§ runner).
+(La Mira) · `place`, `evento-planazo`, `planazo-guia` (Planazo). Todos se crean
+en `in_review`: los checks automáticos informan la revisión, pero nunca sustituyen
+la aprobación humana. No hay trigger/schedule por regla — el "cuándo" es global.
 
 ### Gestionar reglas
 - **UI:** `/automatizaciones` (crear/editar/activar, "Ejecutar ahora", bitácora).
@@ -152,24 +151,24 @@ global (§ runner).
   (bug histórico del 2026-09-07). Manda solo los campos que cambias.
 
 ### Runner (`automation-runner.service.ts`) — qué corre y cuándo
-- `@Interval(15 min)` mientras la API viva → `run()`. `@Interval(3h)`
-  `autoPublishSafeReviewed` (publica eventos/guías de Planazo que quedaron en
-  review solo por `revision-humana` y pasaron todo lo demás).
+- `@Interval(15 min)` mientras la API viva → `run()`. Un lease persistido en
+  `automationState` impide que dos procesos/instancias ejecuten la corrida a la vez.
 - Serverless (Vercel, donde `@Interval` no vive): `GET /cron/automation` con
   `Authorization: Bearer CRON_SECRET`, disparado por Vercel Cron.
-- **De dónde salen los temas:** el reporte diario de **content-radar** (invocado
-  por subproceso `tsx`; el `.md` del reporte está gitignoreado y **solo existe
-  en local** — pendiente migrar a Turso para prod) **+** las frases de "Qué
-  busca la gente".
+- **De dónde salen los temas:** los temas y frases acumulados en Turso. En local,
+  el reporte diario de **content-radar** se extrae por subproceso `tsx` y alimenta
+  esas tablas; en producción el runner continúa con lo ya persistido aunque el
+  archivo `.md` no exista.
 - **Frases → nota real:** para temas `search-phrase`, antes de generar y solo si
   ya hay una regla candidata, `enrichSearchPhraseTopic()` busca la frase en
   Google News RSS, toma el 1er resultado y reescribe el tema con el titular real
   + `hints = "— MEDIO (url)"`, para que la IA genere **citando fuente** en vez
   de a ciegas (antes mandaba `hints:''`). Esto además hace que la automatización
-  por frases funcione en **producción/Vercel** sin el reporte local.
+  por frases funcione en **producción/Vercel** sin el reporte local. La frase
+  original se conserva como clave estable y el titular resuelto se vuelve a
+  deduplicar antes de llamar a la IA.
 - `AiDraftService.draft()` clasifica sitio/tipo/categoría y redacta; si la regla
-  acepta la clasificación, crea la pieza (status `published` si pasó todos los
-  checks, o `in_review`).
+  acepta la clasificación, crea la pieza con status `in_review` para aprobación humana.
 
 ---
 
@@ -191,7 +190,6 @@ global (§ runner).
 
 ## 7. Pendientes conocidos / deuda
 
-- El reporte de content-radar es local y gitignoreado → la automatización por
-  temas de reporte **no corre en producción** todavía (migrar a Turso). La ruta
-  por **frases** sí, gracias a News RSS (§5).
-- Documentación por app (`apps/api`, `apps/cms`) aún sin consolidar (README §).
+- La captura de temas nuevos desde content-radar sigue dependiendo del reporte
+  local; producción puede procesar los temas/frases ya persistidos, pero todavía
+  no genera por sí sola un reporte nuevo.

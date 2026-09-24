@@ -12,11 +12,6 @@ const WEEKDAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const MONTH_LABEL = new Intl.DateTimeFormat("es-MX", { month: "long", year: "numeric" });
 const DAY_LABEL = new Intl.DateTimeFormat("es-MX", { weekday: "long", day: "numeric", month: "long" });
 
-function localDayKey(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-}
-
 function todayParts(): { year: number; month: number; day: number } {
   const now = new Date();
   return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
@@ -40,28 +35,30 @@ export function CalendarView({
   const [selectedDay, setSelectedDay] = useState<number | null>(year === today.year && month === today.month ? today.day : null);
 
   useEffect(() => {
-    if (year === initialYear && month === initialMonth) {
-      setItems(initialItems);
-      return;
-    }
     let cancelled = false;
-    setLoading(true);
-    fetch(`${apiConfig.clientBaseUrl}/cms/calendar?year=${year}&month=${month}`, { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data: CalendarItem[]) => {
-        if (!cancelled) setItems(data);
-      })
-      .catch(() => {
-        if (!cancelled) setItems([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    const timeout = window.setTimeout(() => {
+      if (year === initialYear && month === initialMonth) {
+        setItems(initialItems);
+        return;
+      }
+      setLoading(true);
+      fetch(`${apiConfig.clientBaseUrl}/cms/calendar?year=${year}&month=${month}`, { credentials: "include" })
+        .then((res) => (res.ok ? res.json() : []))
+        .then((data: CalendarItem[]) => {
+          if (!cancelled) setItems(data);
+        })
+        .catch(() => {
+          if (!cancelled) setItems([]);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    }, 0);
     return () => {
       cancelled = true;
+      window.clearTimeout(timeout);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [year, month]);
+  }, [year, month, initialItems, initialMonth, initialYear]);
 
   const filteredItems = useMemo(() => (siteFilter === "all" ? items : items.filter((i) => i.site === siteFilter)), [items, siteFilter]);
 

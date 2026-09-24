@@ -2,7 +2,6 @@ import 'dotenv/config';
 import * as fs from 'fs';
 import * as path from 'path';
 import { NestFactory } from '@nestjs/core';
-import { eq } from 'drizzle-orm';
 import { AppModule } from '../app.module';
 import { DRIZZLE, type DrizzleDb } from './db.module';
 import { ImageSearchService } from '../modules/ai/image-search.service';

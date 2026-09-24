@@ -2,7 +2,6 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { DRIZZLE, type DrizzleDb } from './db.module';
-import * as schema from './schema';
 
 // Auditoría de calidad de contenido, solo-lectura (2026-09-07) — consolida
 // en un script real del repo las verificaciones que antes se hacían con
