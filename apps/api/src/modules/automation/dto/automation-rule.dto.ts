@@ -39,7 +39,7 @@ export const automationRuleSchema = z.object(automationRuleShape).extend({
   contentTypes: z.array(z.enum(AUTOMATABLE_CONTENT_TYPES)).default([]),
   provider: z.enum(['openai', 'claude-cli', 'codex-cli']).default('codex-cli'),
   dailyLimit: z.coerce.number().int().min(0).max(50).default(0),
-  expandIfShort: z.boolean().default(false),
+  expandIfShort: z.boolean().default(true),
   includeSearchPhrases: z.boolean().default(false),
 });
 export type AutomationRuleDto = z.infer<typeof automationRuleSchema>;

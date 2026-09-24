@@ -102,7 +102,7 @@ const EMPTY_FORM: RuleFormState = {
   contentTypes: [],
   provider: "codex-cli",
   dailyLimit: 0, // 0 = sin tope (ver checkbox del form)
-  expandIfShort: false,
+  expandIfShort: true,
   includeSearchPhrases: false,
 };
 
@@ -532,6 +532,27 @@ export function AutomationView({
               </span>
             )}
           </div>
+
+          <details className="border-b border-border-soft px-5 py-2.5">
+            <summary className="cursor-pointer text-[12.5px] font-medium text-ink-soft transition-colors hover:text-ink">
+              ¿Reglas por categoría o generales?
+            </summary>
+            <div className="mt-2 flex flex-col gap-2 text-[12px] leading-[1.5] text-ink-faint">
+              <p>
+                <span className="font-semibold text-ink-soft">Por categoría</span> (ej. &quot;Música — La Mira&quot;): acotada a una
+                categoría del sitio, así que solo toma temas de ese tema. Úsalas para cobertura enfocada y consistente de un área.
+              </p>
+              <p>
+                <span className="font-semibold text-ink-soft">General / catch-all</span> (ej. &quot;General — Noticias&quot;, sin
+                categorías): toma cualquier tema del sitio + tipo que ninguna regla más específica haya agarrado. Son la red de
+                seguridad para no dejar temas sin cubrir.
+              </p>
+              <p>
+                Cada tema se asigna a <span className="font-semibold text-ink-soft">una sola</span> regla candidata (la primera que
+                lo acepta), así que conviene tener las de categoría cubriendo su tema y las generales atrapando el resto.
+              </p>
+            </div>
+          </details>
 
           {rules.length === 0 && !editingId ? (
             <p className="p-6 text-center text-[13.5px] text-ink-faint">
