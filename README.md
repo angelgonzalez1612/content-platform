@@ -21,5 +21,13 @@ packages/
   tsconfig/ Presets de TypeScript compartidos
 ```
 
-Documentación detallada por app pendiente de consolidar (ver los README
-originales de `apps/api` y `apps/cms` mientras tanto).
+## Documentación
+
+- **[`AGENTS.md`](./AGENTS.md)** — guía operativa para agentes (Claude Code /
+  Codex) y humanos: cómo correrlo, convenciones, la fuente de noticias de
+  Entidades y el sistema de reglas de automatización. `CLAUDE.md` apunta ahí.
+- [`apps/cms/PRODUCT.md`](./apps/cms/PRODUCT.md) — usuarios, propósito y
+  principios de diseño del CMS.
+
+Documentación detallada por app aún sin consolidar (ver los README originales
+de `apps/api` y `apps/cms` mientras tanto).
