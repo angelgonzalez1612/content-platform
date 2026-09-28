@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
-import { getCmsPlaces, getCmsLamiraContent, getCmsEvents, getCmsCategories, getCmsPlanazoGuides } from "@/lib/cms-api";
+import { getCmsLamiraContent, getCmsCategories, getCmsPlanazoContent } from "@/lib/cms-api";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { SiteTabs } from "@/components/cms/site-tabs";
 import { LamiraContenidoView } from "./lamira-contenido-view";
@@ -42,12 +42,7 @@ export default async function ContenidoPage({ searchParams }: { searchParams: Pr
     );
   }
 
-  const [places, events, guides, planazoCategories] = await Promise.all([
-    getCmsPlaces(),
-    getCmsEvents(),
-    getCmsPlanazoGuides(),
-    getCmsCategories("planazo"),
-  ]);
+  const [{ places, events, guides }, planazoCategories] = await Promise.all([getCmsPlanazoContent(), getCmsCategories("planazo")]);
 
   return (
     <CmsShell user={session} title="Contenido">

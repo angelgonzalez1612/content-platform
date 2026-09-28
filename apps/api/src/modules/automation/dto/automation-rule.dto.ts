@@ -24,7 +24,8 @@ const automationRuleShape = {
   site: z.enum(['la-mira', 'planazo']).nullable().optional(),
   categorySlugs: z.array(z.string()),
   contentTypes: z.array(z.enum(AUTOMATABLE_CONTENT_TYPES)),
-  provider: z.enum(['openai', 'claude-cli', 'codex-cli']),
+  // 'default' = el proveedor predeterminado de Configuración (ver ProviderRegistry.resolveProvider).
+  provider: z.enum(['default', 'openai', 'claude-cli', 'codex-cli']),
   // 0 = sin tope (la regla crea todas las piezas que encuentre). >0 = máximo de
   // piezas por día. Se modela con 0 en vez de null para no requerir migración
   // de la columna en Turso (integer notNull). El runner trata 0 como ilimitado.
@@ -37,7 +38,7 @@ export const automationRuleSchema = z.object(automationRuleShape).extend({
   active: z.boolean().default(true),
   categorySlugs: z.array(z.string()).default([]),
   contentTypes: z.array(z.enum(AUTOMATABLE_CONTENT_TYPES)).default([]),
-  provider: z.enum(['openai', 'claude-cli', 'codex-cli']).default('codex-cli'),
+  provider: z.enum(['default', 'openai', 'claude-cli', 'codex-cli']).default('default'),
   dailyLimit: z.coerce.number().int().min(0).max(50).default(0),
   expandIfShort: z.boolean().default(true),
   includeSearchPhrases: z.boolean().default(false),

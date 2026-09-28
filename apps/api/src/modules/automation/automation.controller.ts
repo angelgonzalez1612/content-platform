@@ -6,6 +6,8 @@ import { assertAdmin } from '../auth/assert-admin';
 import { AutomationRulesService } from './automation-rules.service';
 import { AutomationRunnerService } from './automation-runner.service';
 import { SearchPhrasesService } from './search-phrases.service';
+import { ProviderHealthService } from '../ai/provider-health';
+import { ProviderRegistry, DEFAULT_PROVIDER_CHOICE } from '../ai/provider-registry.service';
 import { automationRuleSchema, updateAutomationRuleSchema } from './dto/automation-rule.dto';
 
 const useSearchPhraseSchema = z.object({ url: z.string().min(1) });
@@ -17,6 +19,8 @@ export class AutomationController {
     private readonly rules: AutomationRulesService,
     private readonly runner: AutomationRunnerService,
     private readonly searchPhrases: SearchPhrasesService,
+    private readonly providerHealth: ProviderHealthService,
+    private readonly providers: ProviderRegistry,
   ) {}
 
   @Get('rules')
@@ -59,6 +63,10 @@ export class AutomationController {
       checkIntervalMinutes: 15,
       activeRulesCount: activeRules.length,
       isRunning: this.runner.isRunning || (await this.rules.isRunLocked()),
+      // Proveedor que usan hoy las reglas en "default" + salud de cada
+      // proveedor (sin tokens / dejó de generar) para el aviso del topbar.
+      defaultProvider: await this.providers.resolveProvider(DEFAULT_PROVIDER_CHOICE),
+      providerHealth: this.providerHealth.getAll(),
     };
   }
 

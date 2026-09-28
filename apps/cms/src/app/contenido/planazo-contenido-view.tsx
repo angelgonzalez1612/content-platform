@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ShowMoreRow, useVisibleRows } from "@/components/cms/show-more";
 import Link from "next/link";
-import type { Category, Place, PlanazoEvent, PlanazoGuide } from "@planazo/types";
+import type { Category } from "@planazo/types";
+import type { PlanazoEventRow, PlanazoGuideRow, PlanazoPlaceRow } from "@/lib/cms-api";
 import { StatusBadge } from "@/components/cms/status-badge";
 import { ViewPublishedLink } from "@/components/cms/view-published-link";
 import { siteConfig } from "@planazo/config";
@@ -26,9 +28,9 @@ export function PlanazoContenidoView({
   guides,
   categories,
 }: {
-  places: Place[];
-  events: PlanazoEvent[];
-  guides: PlanazoGuide[];
+  places: PlanazoPlaceRow[];
+  events: PlanazoEventRow[];
+  guides: PlanazoGuideRow[];
   categories: Category[];
 }) {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("todos");
@@ -70,6 +72,11 @@ export function PlanazoContenidoView({
     places.filter((p) => p.status === "in_review").length +
     events.filter((e) => e.status === "in_review").length +
     guides.filter((g) => g.status === "in_review").length;
+
+  const filtersKey = `${typeFilter}|${categoryFilter}|${statusFilter}`;
+  const placesPage = useVisibleRows(filteredPlaces, filtersKey);
+  const eventsPage = useVisibleRows(filteredEvents, filtersKey);
+  const guidesPage = useVisibleRows(filteredGuides, filtersKey);
 
   const showPlaces = typeFilter === "todos" || typeFilter === "lugares";
   const showEvents = typeFilter === "todos" || typeFilter === "eventos";
@@ -217,7 +224,7 @@ export function PlanazoContenidoView({
                 )}
               </p>
             ) : (
-              filteredPlaces.map((place) => (
+              placesPage.visible.map((place) => (
                 <div
                   key={place.id}
                   className="grid min-w-[600px] grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-hover"
@@ -238,6 +245,7 @@ export function PlanazoContenidoView({
               ))
             )}
             </div>
+            <ShowMoreRow remaining={placesPage.remaining} onClick={placesPage.showMore} />
           </div>
         </>
       )}
@@ -270,7 +278,7 @@ export function PlanazoContenidoView({
                 {events.length === 0 ? "Todavía no hay eventos. Créalos con el botón de arriba." : "Ningún evento coincide con estos filtros."}
               </p>
             ) : (
-              filteredEvents.map((event) => (
+              eventsPage.visible.map((event) => (
                 <div
                   key={event.id}
                   className="grid min-w-[600px] grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-hover"
@@ -291,6 +299,7 @@ export function PlanazoContenidoView({
               ))
             )}
             </div>
+            <ShowMoreRow remaining={eventsPage.remaining} onClick={eventsPage.showMore} />
           </div>
         </>
       )}
@@ -323,7 +332,7 @@ export function PlanazoContenidoView({
                 {guides.length === 0 ? "Todavía no hay guías. Créalas con el botón de arriba." : "Ninguna guía coincide con estos filtros."}
               </p>
             ) : (
-              filteredGuides.map((guide) => (
+              guidesPage.visible.map((guide) => (
                 <div
                   key={guide.id}
                   className="grid min-w-[600px] grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-hover"
@@ -346,6 +355,7 @@ export function PlanazoContenidoView({
               ))
             )}
             </div>
+            <ShowMoreRow remaining={guidesPage.remaining} onClick={guidesPage.showMore} />
           </div>
         </>
       )}

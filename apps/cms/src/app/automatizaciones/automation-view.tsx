@@ -9,6 +9,8 @@ import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { ViewPublishedLink } from "@/components/cms/view-published-link";
 import { timeAgo } from "@/lib/time-ago";
 import { LAMIRA_TYPE_PATH } from "@/lib/lamira-paths";
+import { AI_PROVIDER_LABEL, describeProviderHealth, unhealthyProviders } from "@/lib/provider-health";
+import type { AutomationStatus } from "@/lib/cms-api";
 import {
   AUTOMATABLE_CONTENT_TYPES,
   OUTCOME_META,
@@ -37,6 +39,7 @@ const TYPE_SITE: Record<AutomatableContentType, "la-mira" | "planazo"> = {
 };
 const SITE_LABEL: Record<"la-mira" | "planazo", string> = { "la-mira": "La Mira", planazo: "Planazo" };
 const PROVIDER_LABEL: Record<AutomationRule["provider"], string> = {
+  default: "Predeterminado",
   openai: "OpenAI",
   "claude-cli": "Claude (sesión)",
   "codex-cli": "Codex (sesión)",
@@ -100,7 +103,7 @@ const EMPTY_FORM: RuleFormState = {
   site: "",
   categorySlugs: [],
   contentTypes: [],
-  provider: "codex-cli",
+  provider: "default", // el de Configuración (Codex si no hay uno guardado)
   dailyLimit: 0, // 0 = sin tope (ver checkbox del form)
   expandIfShort: true,
   includeSearchPhrases: false,
@@ -129,7 +132,7 @@ export function AutomationView({
 }: {
   initialRules: AutomationRule[];
   initialRuns: AutomationRun[];
-  initialStatus: { lastCheckedAt: string | null; checkIntervalMinutes: number };
+  initialStatus: Pick<AutomationStatus, "lastCheckedAt" | "checkIntervalMinutes" | "defaultProvider" | "providerHealth">;
   lamiraCategories: Category[];
   planazoCategories: Category[];
 }) {
@@ -331,6 +334,19 @@ export function AutomationView({
         </div>
       </div>
 
+      {unhealthyProviders(status.providerHealth).map((h) => (
+        <div
+          key={h.provider}
+          role="alert"
+          className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#F4C7C1] bg-[#FDECEA] px-3.5 py-2.5 text-[13px] text-[#C4453A]"
+        >
+          <p className="font-medium">{describeProviderHealth(h).long}</p>
+          <Link href="/configuracion" className="flex-none text-[12.5px] font-semibold underline underline-offset-2">
+            Ir a Configuración
+          </Link>
+        </div>
+      ))}
+
       {runResult && (
         <p className="mb-5 rounded-lg bg-accent px-3.5 py-2.5 text-[13px] font-medium text-accent-fg">
           Corrida terminada: {runResult.evaluated} tema(s) evaluados, {runResult.created} pieza(s) creada(s). Revisa el detalle abajo, en
@@ -421,7 +437,7 @@ export function AutomationView({
             <div className="flex flex-col gap-1.5">
               <span className={labelClass}>Proveedor de IA</span>
               <div className="flex gap-2">
-                {(["claude-cli", "codex-cli", "openai"] as const).map((p) => (
+                {(["default", "codex-cli", "claude-cli", "openai"] as const).map((p) => (
                   <button
                     key={p}
                     type="button"
@@ -434,6 +450,15 @@ export function AutomationView({
                   </button>
                 ))}
               </div>
+              {form.provider === "default" && (
+                <p className="text-[11.5px] text-ink-faint">
+                  Usa el de{" "}
+                  <Link href="/configuracion" className="font-medium text-brand hover:text-brand-pressed">
+                    Configuración
+                  </Link>{" "}
+                  — hoy: {AI_PROVIDER_LABEL[status.defaultProvider] ?? "Codex"}.
+                </p>
+              )}
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="flex items-center gap-2.5 text-[13px] font-medium text-ink">
@@ -595,7 +620,9 @@ export function AutomationView({
                         {" · "}
                         {rule.categorySlugs.length ? `${rule.categorySlugs.length} categoría(s)` : "cualquier categoría"}
                         {" · "}
-                        {PROVIDER_LABEL[rule.provider]}
+                        {rule.provider === "default"
+                          ? `${PROVIDER_LABEL.default} (${AI_PROVIDER_LABEL[status.defaultProvider] ?? "Codex"})`
+                          : PROVIDER_LABEL[rule.provider]}
                         {" · "}
                         {rule.dailyLimit > 0 ? `hasta ${rule.dailyLimit}/día` : "sin tope"}
                       </p>

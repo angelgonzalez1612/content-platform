@@ -36,5 +36,6 @@ import { PlanazoGuidesModule } from '../planazo-guides/guides.module';
     SearchPhrasesService,
     RadarTopicsService,
   ],
+  exports: [AutomationRulesService, AutomationRunnerService], // NotificationsModule (campanita)
 })
 export class AutomationModule {}

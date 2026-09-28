@@ -8,6 +8,13 @@ import { apiConfig } from "@planazo/config";
 import { getBreadcrumb } from "@/data/dashboard";
 import { Icon } from "@/components/icon";
 import { UserMenu } from "@/components/cms/user-menu";
+import { NotificationsBell } from "@/components/cms/notifications-bell";
+import type { CmsNotification, ProviderHealth } from "@/lib/automation-types";
+import { describeProviderHealth, unhealthyProviders } from "@/lib/provider-health";
+
+// Solo lee estado (no gasta IA) — cada minuto para que el aviso de "sin
+// tokens" aparezca sin recargar la página.
+const STATUS_POLL_MS = 60_000;
 
 export function Topbar({
   user,
@@ -29,20 +36,59 @@ export function Topbar({
   const pathname = usePathname();
   const crumbs = getBreadcrumb(pathname, title);
 
-  const [automation, setAutomation] = useState<{ activeRulesCount: number; isRunning: boolean } | null>(null);
+  const [automation, setAutomation] = useState<{ activeRulesCount: number; isRunning: boolean; providerHealth: ProviderHealth[] } | null>(
+    null,
+  );
+
+  const [notifications, setNotifications] = useState<CmsNotification[]>([]);
+  const [apiDownSince, setApiDownSince] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${apiConfig.clientBaseUrl}/cms/automation/status`, { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { activeRulesCount?: number; isRunning?: boolean } | null) => {
-        if (!cancelled && data) setAutomation({ activeRulesCount: data.activeRulesCount ?? 0, isRunning: !!data.isRunning });
-      })
-      .catch(() => {});
+    const load = async () => {
+      try {
+        const [statusRes, notificationsRes] = await Promise.all([
+          fetch(`${apiConfig.clientBaseUrl}/cms/automation/status`, { credentials: "include" }),
+          fetch(`${apiConfig.clientBaseUrl}/cms/notifications`, { credentials: "include" }),
+        ]);
+        if (cancelled) return;
+        setApiDownSince(null);
+        if (statusRes.ok) {
+          const data = (await statusRes.json()) as { activeRulesCount?: number; isRunning?: boolean; providerHealth?: ProviderHealth[] };
+          setAutomation({
+            activeRulesCount: data.activeRulesCount ?? 0,
+            isRunning: !!data.isRunning,
+            providerHealth: data.providerHealth ?? [],
+          });
+        }
+        if (notificationsRes.ok) setNotifications((await notificationsRes.json()) as CmsNotification[]);
+      } catch {
+        // fetch solo truena si no hay respuesta en absoluto: la API está caída.
+        if (!cancelled) setApiDownSince((prev) => prev ?? new Date().toISOString());
+      }
+    };
+    void load();
+    const timer = setInterval(() => void load(), STATUS_POLL_MS);
     return () => {
       cancelled = true;
+      clearInterval(timer);
     };
   }, []);
+
+  const providerProblem = unhealthyProviders(automation?.providerHealth)[0];
+  const allNotifications: CmsNotification[] = apiDownSince
+    ? [
+        {
+          id: `api-down:${apiDownSince}`,
+          severity: "critical",
+          title: "Sin conexión con la API",
+          detail: "El CMS no puede comunicarse con el servidor: no se generan borradores ni corren automatizaciones. Revisa que la API esté encendida.",
+          at: apiDownSince,
+          href: "/automatizaciones",
+        },
+        ...notifications,
+      ]
+    : notifications;
 
   return (
     <header className="flex h-[60px] flex-none items-center gap-2 border-b border-border bg-card/86 px-3 backdrop-blur-sm sm:gap-3 sm:px-[22px]">
@@ -69,6 +115,16 @@ export function Topbar({
       </nav>
       <div className="flex-1" />
       <div className="flex items-center gap-1.5">
+        {providerProblem && (
+          <Link
+            href="/configuracion"
+            title={describeProviderHealth(providerProblem).long}
+            className="flex items-center gap-1.5 rounded-lg border border-negative/30 bg-negative/10 px-2.5 py-[5px] transition-colors hover:border-negative"
+          >
+            <span className="size-[5px] rounded-full bg-negative" />
+            <span className="text-[11.5px] font-semibold text-negative">{describeProviderHealth(providerProblem).short}</span>
+          </Link>
+        )}
         {automation && (
           <Link
             href="/automatizaciones"
@@ -80,14 +136,7 @@ export function Topbar({
             </span>
           </Link>
         )}
-        <button
-          type="button"
-          title="Notificaciones"
-          className="relative hidden size-8 place-items-center rounded-lg border border-border bg-card text-ink-soft transition-colors hover:border-[#E0DBD4] sm:grid"
-        >
-          <Icon d="M12 4a5.5 5.5 0 0 0-5.5 5.5c0 4-1.5 5.5-1.5 5.5h14s-1.5-1.5-1.5-5.5A5.5 5.5 0 0 0 12 4zM10 18.5a2 2 0 0 0 4 0" />
-          <span className="absolute top-[5px] right-1.5 size-[5px] rounded-full border-[1.5px] border-card bg-brand" />
-        </button>
+        <NotificationsBell notifications={allNotifications} />
         <button
           type="button"
           onClick={onToggleTheme}

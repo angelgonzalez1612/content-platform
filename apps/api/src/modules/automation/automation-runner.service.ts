@@ -7,6 +7,8 @@ import { slugify } from '@planazo/shared';
 import type { Category, ContentBlock, Seo } from '@planazo/types';
 import { AiDraftService, type DraftResult } from '../ai/ai-draft.service';
 import { getContentTypeConfig } from '../ai/content-types';
+import { ProviderRegistry, type AiProviderId } from '../ai/provider-registry.service';
+import { ProviderQuotaExceededError } from '../ai/provider-health';
 import { CategoriesService } from '../categories/categories.service';
 import { ContentRadarPublishedService } from '../content-radar-published/content-radar-published.service';
 import { PlacesService } from '../places/places.service';
@@ -38,10 +40,18 @@ const CHECK_INTERVAL_MS = 15 * 60 * 1000;
 // aprueba desde el CMS.
 const RUN_LOCK_LEASE_MS = 30 * 60 * 1000;
 
+// La cola del Dashboard (getQueueStatus) se pide en cada visita — extraer el
+// reporte lanza un subproceso tsx (2-7 s). Con este mínimo entre extracciones
+// la cola sale de la DB casi siempre; run() sigue extrayendo en cada tick.
+const QUEUE_EXTRACTION_MIN_INTERVAL_MS = 10 * 60 * 1000;
+
 type AutomatableType = (typeof AUTOMATABLE_CONTENT_TYPES)[number];
 
 interface RuleState {
   rule: AutomationRuleRow;
+  // rule.provider ya resuelto ("default" → el predeterminado de Configuración),
+  // una sola vez por corrida.
+  provider: AiProviderId;
   createdCount: number;
 }
 
@@ -144,6 +154,7 @@ export class AutomationRunnerService {
   // pasa nada, vuelve a false) para que la pantalla de Dashboard pueda
   // mostrar "ejecutando ahora" sin adivinar a partir de timestamps.
   private runningFlag = false;
+  private lastExtractionAt = 0;
 
   get isRunning(): boolean {
     return this.runningFlag;
@@ -163,6 +174,7 @@ export class AutomationRunnerService {
     private readonly searchPhrasesService: SearchPhrasesService,
     private readonly webSearch: WebSearchService,
     private readonly radarTopicsService: RadarTopicsService,
+    private readonly providers: ProviderRegistry,
   ) {}
 
   @Interval(CHECK_INTERVAL_MS)
@@ -280,6 +292,7 @@ export class AutomationRunnerService {
       let youtubeVideos: ExtractedYoutubeVideo[] = [];
       try {
         const extracted = await this.extractTopics();
+        this.lastExtractionAt = Date.now();
         youtubeVideos = extracted.youtubeVideos;
         if (extracted.fileName) {
           await this.searchPhrasesService.syncFromExtraction(extracted.searchPhrases, SEARCH_PHRASE_CATEGORY_LABEL);
@@ -309,7 +322,13 @@ export class AutomationRunnerService {
       // tema no encontró regla que lo aceptara, su fracaso no debería bloquear
       // a un tema parecido que sí encuentre una regla distinta.
       const createdTitlesThisRun: string[] = [];
-      const ruleStates: RuleState[] = activeRules.map((rule) => ({ rule, createdCount: todaysCounts.get(rule.id) ?? 0 }));
+      const ruleStates: RuleState[] = await Promise.all(
+        activeRules.map(async (rule) => ({
+          rule,
+          provider: await this.providers.resolveProvider(rule.provider),
+          createdCount: todaysCounts.get(rule.id) ?? 0,
+        })),
+      );
 
       let created = 0;
       let evaluated = 0;
@@ -386,9 +405,20 @@ export class AutomationRunnerService {
         }
 
         evaluated += 1;
-        if (await this.assignTopic(candidates, topic)) {
-          created += 1;
-          createdTitlesThisRun.push(topic.title);
+        try {
+          if (await this.assignTopic(candidates, topic)) {
+            created += 1;
+            createdTitlesThisRun.push(topic.title);
+          }
+        } catch (err) {
+          // Sin tokens: cada tema siguiente fallaría igual (y antes cada uno
+          // quedaba como 'error' y se reintentaba en el siguiente tick). Se
+          // corta la corrida entera; el aviso lo ve el editor vía
+          // ProviderHealthService (topbar, Automatizaciones, Configuración) y
+          // el tema queda pendiente para cuando vuelvan los tokens.
+          if (!(err instanceof ProviderQuotaExceededError)) throw err;
+          this.logger.warn(`Corrida detenida: ${err.message.slice(0, 300)}`);
+          break;
         }
       }
 
@@ -437,14 +467,19 @@ export class AutomationRunnerService {
    * "nadie lo va a tocar, ninguna regla activa aplica a su sitio". */
   async getQueueStatus(): Promise<{ totalTopics: number; alreadyHandled: number; pending: PendingTopic[] }> {
     const activeRules = await this.rules.findActive();
-    try {
-      const extracted = await this.extractTopics();
-      if (extracted.fileName) {
-        await this.searchPhrasesService.syncFromExtraction(extracted.searchPhrases, SEARCH_PHRASE_CATEGORY_LABEL);
-        await this.radarTopicsService.syncFromExtraction(extracted.topics);
+    if (Date.now() - this.lastExtractionAt >= QUEUE_EXTRACTION_MIN_INTERVAL_MS) {
+      // Se marca antes de extraer: si llegan dos visitas a la vez (el
+      // Dashboard pide la cola desde dos tarjetas), solo una lanza el subproceso.
+      this.lastExtractionAt = Date.now();
+      try {
+        const extracted = await this.extractTopics();
+        if (extracted.fileName) {
+          await this.searchPhrasesService.syncFromExtraction(extracted.searchPhrases, SEARCH_PHRASE_CATEGORY_LABEL);
+          await this.radarTopicsService.syncFromExtraction(extracted.topics);
+        }
+      } catch (error) {
+        this.logger.warn(`Cola servida desde DB porque content-radar local no está disponible: ${(error as Error).message}`);
       }
-    } catch (error) {
-      this.logger.warn(`Cola servida desde DB porque content-radar local no está disponible: ${(error as Error).message}`);
     }
     const [accumulatedTopics, persistedSearchPhrases] = await Promise.all([
       this.radarTopicsService.findAll(),
@@ -541,11 +576,11 @@ export class AutomationRunnerService {
       const { rule } = state;
       const forcedType = rule.contentTypes.length === 1 ? (rule.contentTypes[0] as AutomatableType) : undefined;
       const forcedSite = forcedType ? getContentTypeConfig(forcedType).site : undefined;
-      const cacheKey = `${forcedSite ?? '*'}|${forcedType ?? '*'}|${rule.provider}`;
+      const cacheKey = `${forcedSite ?? '*'}|${forcedType ?? '*'}|${state.provider}`;
 
       let entry = drafts.get(cacheKey);
       if (!entry) {
-        entry = await this.classifyTopic(forcedSite, forcedType, rule.provider, topic);
+        entry = await this.classifyTopic(forcedSite, forcedType, state.provider, topic);
         drafts.set(cacheKey, entry);
       }
 
@@ -557,7 +592,7 @@ export class AutomationRunnerService {
       lastClassified = entry;
       if (!ruleAccepts(rule, entry.result, entry.category)) continue;
 
-      const finalResult = await this.maybeExpandContent(rule, entry.result, topic);
+      const finalResult = await this.maybeExpandContent(state, entry.result, topic);
       return this.finalizeCreate(state, topic, finalResult, entry.category);
     }
 
@@ -596,7 +631,7 @@ export class AutomationRunnerService {
   private async classifyTopic(
     forcedSite: 'la-mira' | 'planazo' | undefined,
     forcedType: AutomatableType | undefined,
-    provider: AutomationRuleRow['provider'],
+    provider: AiProviderId,
     topic: Topic,
   ): Promise<{ result: DraftResult; category: Category } | { error: string }> {
     try {
@@ -610,6 +645,7 @@ export class AutomationRunnerService {
       const category = await this.categories.findOne(result.categoryId);
       return { result, category };
     } catch (err) {
+      if (err instanceof ProviderQuotaExceededError) throw err; // lo maneja run()
       // 2000 y no 300: un límite corto ya escondió la causa real de un lote
       // de fallos (todas las corridas del 4 de septiembre quedaron con el
       // mensaje cortado a media línea, sin forma de saber qué pasó de verdad).
@@ -630,7 +666,8 @@ export class AutomationRunnerService {
    * borrador original, así que la pieza siempre queda para revisión humana en
    * vez de publicarse sola.
    */
-  private async maybeExpandContent(rule: AutomationRuleRow, result: DraftResult, topic: Topic): Promise<DraftResult> {
+  private async maybeExpandContent(state: RuleState, result: DraftResult, topic: Topic): Promise<DraftResult> {
+    const { rule } = state;
     if (!rule.expandIfShort) return result;
 
     const tooShort = result.checksRun.some((c) => c.name === 'calidad-longitud' && !c.passed);
@@ -647,7 +684,7 @@ export class AutomationRunnerService {
         description: (draft.dek as string | undefined) ?? null,
         content,
         categoryId: result.categoryId,
-        provider: rule.provider,
+        provider: state.provider,
       });
       const mergedContent = (expanded.draft as { content: ContentBlock[] }).content;
       return { ...result, draft: { ...draft, content: mergedContent }, decision: 'needs-review' };

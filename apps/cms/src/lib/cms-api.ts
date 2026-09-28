@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { apiConfig } from "@planazo/config";
 import type { Place, PlaceDetail, Category, Seo, Noticia, Alerta, Guia, LamiraEvento, LamiraLugar, Reportaje, PlanazoEvent, ContentBlock, PlanazoGuide, AuthUser } from "@planazo/types";
-import type { AutomationRule, AutomationRun, SearchPhrase } from "./automation-types";
+import type { AutomationRule, AutomationRun, ProviderHealth, SearchPhrase } from "./automation-types";
 import type { CalendarItem } from "./calendar-api";
 import type { MediaItem, MediaAsset } from "./media-api";
 
@@ -103,11 +103,14 @@ export interface AutomationStatus {
   checkIntervalMinutes: number;
   activeRulesCount: number;
   isRunning: boolean;
+  defaultProvider: AiProviderId;
+  providerHealth: ProviderHealth[];
 }
 
 export async function getAutomationStatus(): Promise<AutomationStatus> {
   const res = await cmsFetch("/cms/automation/status");
-  if (!res.ok) return { lastCheckedAt: null, checkIntervalMinutes: 15, activeRulesCount: 0, isRunning: false };
+  if (!res.ok)
+    return { lastCheckedAt: null, checkIntervalMinutes: 15, activeRulesCount: 0, isRunning: false, defaultProvider: "codex-cli", providerHealth: [] };
   return res.json();
 }
 
@@ -124,11 +127,12 @@ export interface AiSettingsStatus {
   openaiApiKeyPreview: string | null;
   preferredProvider: AiProviderId | null;
   fallbackProvider: AiProviderId | null;
+  providerHealth: ProviderHealth[];
 }
 
 export async function getAiSettingsStatus(): Promise<AiSettingsStatus> {
   const res = await cmsFetch("/cms/settings/ai");
-  if (!res.ok) return { openaiApiKeySet: false, openaiApiKeyPreview: null, preferredProvider: null, fallbackProvider: null };
+  if (!res.ok) return { openaiApiKeySet: false, openaiApiKeyPreview: null, preferredProvider: null, fallbackProvider: null, providerHealth: [] };
   return res.json();
 }
 
@@ -225,6 +229,51 @@ export async function getCmsEvent(id: string): Promise<PlanazoEvent | null> {
 /** Guías de Planazo (listicles/itinerarios que curan places/events por slug) — mismo patrón que places/events. */
 export async function getCmsPlanazoGuides(): Promise<PlanazoGuide[]> {
   return safeList<PlanazoGuide>("/cms/guides");
+}
+
+// Filas de la tabla de Contenido de Planazo — solo lo que la tabla pinta. Los
+// objetos completos (descripciones, fotos, categoryData, SEO…) pesaban ~800 KB
+// y se serializaban enteros al navegador en cada visita.
+export type PlanazoPlaceRow = Pick<Place, "id" | "slug" | "name" | "address" | "status" | "updatedAt"> & {
+  categories: { id: string; name: string }[];
+};
+export type PlanazoEventRow = Pick<PlanazoEvent, "id" | "slug" | "name" | "status" | "categoryId" | "locationName" | "startDate">;
+export type PlanazoGuideRow = Pick<PlanazoGuide, "id" | "slug" | "title" | "status" | "categoryLabel" | "updatedAt"> & {
+  placeSlugs: string[];
+};
+
+export async function getCmsPlanazoContent(): Promise<{ places: PlanazoPlaceRow[]; events: PlanazoEventRow[]; guides: PlanazoGuideRow[] }> {
+  const [places, events, guides] = await Promise.all([getCmsPlaces(), getCmsEvents(), getCmsPlanazoGuides()]);
+  return {
+    places: places.map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      address: p.address,
+      status: p.status,
+      updatedAt: p.updatedAt,
+      categories: p.categories.map((c) => ({ id: c.id, name: c.name })),
+    })),
+    events: events.map((e) => ({
+      id: e.id,
+      slug: e.slug,
+      name: e.name,
+      status: e.status,
+      categoryId: e.categoryId,
+      locationName: e.locationName,
+      startDate: e.startDate,
+    })),
+    guides: guides.map((g) => ({
+      id: g.id,
+      slug: g.slug,
+      title: g.title,
+      status: g.status,
+      categoryLabel: g.categoryLabel,
+      updatedAt: g.updatedAt,
+      // Solo se usa el conteo de paradas; se conserva la lista para no cambiar la vista.
+      placeSlugs: g.placeSlugs,
+    })),
+  };
 }
 
 export async function getCmsPlanazoGuide(id: string): Promise<PlanazoGuide | null> {

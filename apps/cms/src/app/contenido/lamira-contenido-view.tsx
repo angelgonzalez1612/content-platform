@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ShowMoreRow, useVisibleRows } from "@/components/cms/show-more";
 import Link from "next/link";
 import type { Category } from "@planazo/types";
 import type { LamiraContentRow } from "@/lib/cms-api";
@@ -64,6 +65,7 @@ export function LamiraContenidoView({ rows, categories }: { rows: LamiraContentR
   });
 
   const inReviewCount = rows.filter((r) => r.status === "in_review").length;
+  const page = useVisibleRows(filtered, `${typeFilter}|${categoryFilter}|${statusFilter}`);
 
   return (
     <>
@@ -151,7 +153,7 @@ export function LamiraContenidoView({ rows, categories }: { rows: LamiraContentR
             {rows.length === 0 ? "Todavía no hay contenido de la-mira. Créalo con el botón de arriba." : "Ningún elemento coincide con estos filtros."}
           </p>
         ) : (
-          filtered.map((row) => (
+          page.visible.map((row) => (
             <div
               key={`${row.type}-${row.id}`}
               className="grid min-w-[780px] grid-cols-[110px_1fr_150px_130px_100px_50px_44px] items-center gap-0 border-b border-border-soft px-4 py-1.5 transition-colors last:border-b-0 hover:bg-hover"
@@ -195,6 +197,7 @@ export function LamiraContenidoView({ rows, categories }: { rows: LamiraContentR
           ))
         )}
         </div>
+        <ShowMoreRow remaining={page.remaining} onClick={page.showMore} />
       </div>
     </>
   );

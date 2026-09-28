@@ -11,6 +11,7 @@ import { AiDraftService } from './ai-draft.service';
 import { BlockImproveService } from './block-improve.service';
 import { SeoGenerateService } from './seo-generate.service';
 import { ProviderRegistry } from './provider-registry.service';
+import { ProviderHealthService } from './provider-health';
 import { ArticleScraperService } from './article-scraper.service';
 import { ImageSearchService } from './image-search.service';
 import { ImageUploadService } from './image-upload.service';
@@ -37,7 +38,10 @@ import { PlacesModule } from '../places/places.module';
     BlockImproveService,
     SeoGenerateService,
     AiSettingsService,
+    ProviderHealthService,
   ],
-  exports: [AiDraftService], // AutomationModule lo usa para generar el borrador
+  // AutomationModule usa AiDraftService para generar el borrador, ProviderRegistry
+  // para resolver el proveedor "default" y ProviderHealthService para el aviso de tokens.
+  exports: [AiDraftService, ProviderRegistry, ProviderHealthService],
 })
 export class AiModule {}

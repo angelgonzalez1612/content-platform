@@ -18,7 +18,10 @@ export const automationRules = sqliteTable('automation_rules', {
   // Tipos de contenido permitidos (noticia/alerta/guia/evento/lugar/reportaje/
   // place/evento-planazo) — [] = todos los del sitio elegido.
   contentTypes: text('content_types', { mode: 'json' }).$type<string[]>().notNull().default([]),
-  provider: text('provider', { enum: ['openai', 'claude-cli', 'codex-cli'] }).notNull().default('openai'),
+  // 'default' = el predeterminado de Configuración al momento de correr (ver
+  // ProviderRegistry.resolveProvider). El enum es solo de TypeScript en SQLite,
+  // agregar 'default' no requiere migración.
+  provider: text('provider', { enum: ['default', 'openai', 'claude-cli', 'codex-cli'] }).notNull().default('openai'),
   // Tope de publicaciones automáticas reales por corrida — protege contra
   // gastar todos los créditos de IA o inundar el sitio en una sola pasada.
   dailyLimit: integer('daily_limit').notNull().default(3),

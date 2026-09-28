@@ -26,6 +26,7 @@ import { CalendarModule } from './modules/calendar/calendar.module';
 import { MediaModule } from './modules/media/media.module';
 import { UsersModule } from './modules/users/users.module';
 import { EntidadesModule } from './modules/entidades/entidades.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { HealthController } from './modules/health/health.controller';
 
 @Module({
@@ -59,6 +60,7 @@ import { HealthController } from './modules/health/health.controller';
     MediaModule,
     UsersModule,
     EntidadesModule,
+    NotificationsModule,
   ],
   controllers: [HealthController],
 })

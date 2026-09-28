@@ -10,6 +10,9 @@ function normalizeTitle(title: string): string {
   return title.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
+// Intentos con error antes de dejar de reintentar un tema (ver alreadyEvaluatedTitles).
+const MAX_ERROR_ATTEMPTS_PER_TOPIC = 2;
+
 @Injectable()
 export class AutomationRulesService {
   constructor(@Inject(DRIZZLE) private readonly db: DrizzleDb) {}
@@ -61,6 +64,16 @@ export class AutomationRulesService {
     return this.db.query.automationRuns.findMany({
       orderBy: (r, { desc }) => [desc(r.ranAt)],
       limit,
+    });
+  }
+
+  /** Errores de la bitácora desde `since` — para la campanita de notificaciones. */
+  findRecentErrors(since = new Date(Date.now() - 24 * 60 * 60 * 1000)) {
+    return this.db.query.automationRuns.findMany({
+      where: and(eq(automationRuns.outcome, 'error'), gte(automationRuns.ranAt, since)),
+      columns: { ranAt: true, topic: true, detail: true },
+      orderBy: (r, { desc }) => [desc(r.ranAt)],
+      limit: 200,
     });
   }
 
@@ -176,9 +189,24 @@ export class AutomationRulesService {
    * repetir la búsqueda cada 15 minutos. */
   async alreadyEvaluatedTitles(): Promise<Set<string>> {
     const rows = await this.db.query.automationRuns.findMany({
-      where: inArray(automationRuns.outcome, ['published', 'draft', 'skipped_no_match', 'skipped_duplicate']),
-      columns: { topic: true },
+      where: inArray(automationRuns.outcome, ['published', 'draft', 'skipped_no_match', 'skipped_duplicate', 'error']),
+      columns: { topic: true, outcome: true },
     });
-    return new Set(rows.map((r) => normalizeTitle(r.topic)));
+    const evaluated = new Set<string>();
+    const errorCounts = new Map<string, number>();
+    for (const row of rows) {
+      const key = normalizeTitle(row.topic);
+      if (row.outcome !== 'error') {
+        evaluated.add(key);
+        continue;
+      }
+      // Un error suelto se reintenta en el siguiente tick (timeout, JSON mal
+      // formado…), pero sin tope cada tema roto volvía a gastar IA cada 15
+      // min para siempre. Tras MAX_ERROR_ATTEMPTS_PER_TOPIC se da por evaluado.
+      const count = (errorCounts.get(key) ?? 0) + 1;
+      errorCounts.set(key, count);
+      if (count >= MAX_ERROR_ATTEMPTS_PER_TOPIC) evaluated.add(key);
+    }
+    return evaluated;
   }
 }

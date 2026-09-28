@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { execFile } from 'node:child_process';
+import { execFile, type ExecFileException } from 'node:child_process';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -48,6 +48,24 @@ function describeType(field: z.ZodTypeAny): string {
   if (unwrapped instanceof z.ZodArray) return `array de ${describeType(unwrapped.element as z.ZodTypeAny)}`;
   if (unwrapped instanceof z.ZodObject) return `objeto {${Object.keys(unwrapped.shape).join(', ')}}`;
   return 'string';
+}
+
+// El `err.message` de execFile es "Command failed: claude -p <prompt entero>"
+// — con el prompt de por medio, la bitácora (cortada a 2000 chars) nunca
+// llegaba a la causa real, que el CLI deja en stdout (envoltura JSON con
+// is_error, p.ej. el aviso de límite de uso) o en stderr. Se reporta eso en
+// su lugar, que además es lo que ProviderRegistry necesita para detectar
+// "sin tokens" (ver provider-health.ts).
+function describeCliFailure(err: ExecFileException, stdout: string, stderr: string): string {
+  if (err.code === 'ENOENT') return err.message;
+  try {
+    const envelope = JSON.parse(stdout) as ClaudeCliResultEnvelope;
+    if (envelope.result) return `El CLI terminó con error: ${envelope.result}`;
+  } catch {
+    // stdout no era la envoltura JSON — se cae a stderr/stdout crudos.
+  }
+  const detail = (stderr || stdout).trim().slice(-1000);
+  return `El CLI terminó con código ${String(err.code ?? '?')}${detail ? `: ${detail}` : ' sin más detalle.'}`;
 }
 
 function unwrap(field: z.ZodTypeAny): z.ZodTypeAny {
@@ -136,11 +154,11 @@ export class ClaudeCliProvider implements ContentProvider {
         'claude',
         args,
         { cwd, maxBuffer: 10 * 1024 * 1024 },
-        (err, stdout) => {
+        (err, stdout, stderr) => {
           if (settled) return;
           settled = true;
           clearTimeout(timer);
-          if (err) reject(new Error(err.message, { cause: err }));
+          if (err) reject(new Error(describeCliFailure(err, stdout, stderr), { cause: err }));
           else resolve(stdout);
         },
       );

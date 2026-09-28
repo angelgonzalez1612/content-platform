@@ -17,12 +17,35 @@ export interface AutomationRule {
   site: "la-mira" | "planazo" | null;
   categorySlugs: string[];
   contentTypes: AutomatableContentType[];
-  provider: "openai" | "claude-cli" | "codex-cli";
+  // "default" = el proveedor predeterminado de Configuración al correr.
+  provider: "default" | "openai" | "claude-cli" | "codex-cli";
   dailyLimit: number;
   expandIfShort: boolean;
   includeSearchPhrases: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+// Salud de un proveedor de IA según las generaciones reales (ver
+// apps/api/src/modules/ai/provider-health.ts): "sin-tokens" = se acabó la
+// cuota de la cuenta, "fallando" = varios errores seguidos, ya no genera.
+export interface ProviderHealth {
+  provider: "openai" | "claude-cli" | "codex-cli";
+  state: "ok" | "sin-tokens" | "fallando";
+  consecutiveFailures: number;
+  lastError: string | null;
+  since: string | null;
+  lastSuccessAt: string | null;
+}
+
+// Campanita del topbar — ver apps/api/src/modules/notifications/build-notifications.ts.
+export interface CmsNotification {
+  id: string;
+  severity: "critical" | "warning" | "resolved";
+  title: string;
+  detail: string;
+  at: string;
+  href: string;
 }
 
 export interface AutomationRun {

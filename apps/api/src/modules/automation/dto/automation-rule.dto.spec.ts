@@ -18,7 +18,7 @@ describe('automation rule schemas', () => {
     expect(() => updateAutomationRuleSchema.parse({ active: true, foo: 'bar' })).toThrow();
   });
 
-  it('el default de proveedor es codex-cli', () => {
-    expect(automationRuleSchema.parse({ name: 'General' }).provider).toBe('codex-cli');
+  it('el default de proveedor es el predeterminado de Configuración', () => {
+    expect(automationRuleSchema.parse({ name: 'General' }).provider).toBe('default');
   });
 });

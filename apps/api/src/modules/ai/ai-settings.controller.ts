@@ -4,6 +4,7 @@ import { assertAdmin } from '../auth/assert-admin';
 import { AiSettingsService } from './ai-settings.service';
 import { updateAiSettingsSchema, updateProviderPreferenceSchema } from './dto/ai-settings.dto';
 import { ProviderRegistry, AI_PROVIDER_IDS, type AiProviderId } from './provider-registry.service';
+import { ProviderHealthService } from './provider-health';
 
 @UseGuards(JwtAuthGuard)
 @Controller('cms/settings/ai')
@@ -11,11 +12,12 @@ export class AiSettingsController {
   constructor(
     private readonly settings: AiSettingsService,
     private readonly providers: ProviderRegistry,
+    private readonly providerHealth: ProviderHealthService,
   ) {}
 
   @Get()
-  getStatus() {
-    return this.settings.getStatus();
+  async getStatus() {
+    return { ...(await this.settings.getStatus()), providerHealth: this.providerHealth.getAll() };
   }
 
   @Put()

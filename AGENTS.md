@@ -125,7 +125,9 @@ Campos (DTO: `dto/automation-rule.dto.ts`):
 - `name`, `active` (bool)
 - `site`: `'la-mira' | 'planazo' | null` (null = ambos)
 - `categorySlugs: string[]` (`[]` = todas), `contentTypes: string[]` (`[]` = todos)
-- `provider`: `'openai' | 'claude-cli' | 'codex-cli'`
+- `provider`: `'default' | 'openai' | 'claude-cli' | 'codex-cli'` — `default` (el valor por defecto)
+  usa el **proveedor predeterminado de Configuración** al correr (Codex si no hay uno guardado; ver
+  `ProviderRegistry.resolveProvider`). Así se cambia el proveedor de todas las reglas en un solo lugar.
 - `dailyLimit` (0-50 borradores/día por regla; **0 = sin tope**, el runner lo trata como ilimitado), `expandIfShort`, `includeSearchPhrases`
 
 **6 tipos de contenido automatizables:** `noticia`, `alerta`, `reportaje`
@@ -169,6 +171,14 @@ la aprobación humana. No hay trigger/schedule por regla — el "cuándo" es glo
   deduplicar antes de llamar a la IA.
 - `AiDraftService.draft()` clasifica sitio/tipo/categoría y redacta; si la regla
   acepta la clasificación, crea la pieza con status `in_review` para aprobación humana.
+- **Sin tokens / dejó de generar:** `ProviderHealthService` (`modules/ai/provider-health.ts`)
+  registra cada generación real. Un error de cuota ("usage limit", "insufficient_quota"…) marca
+  al proveedor `sin-tokens` y lanza `ProviderQuotaExceededError`: el runner **corta la corrida**
+  en vez de seguir tema por tema. 3 errores seguidos → `fallando`. Se expone en
+  `GET /api/cms/automation/status` y `GET /api/cms/settings/ai` (`providerHealth`) y se avisa en
+  el topbar, en `/automatizaciones` y en `/configuracion`. Es en memoria: se reinicia con la API.
+- Un tema con `error` se reintenta en el siguiente tick, pero tras 2 errores ya no
+  (`MAX_ERROR_ATTEMPTS_PER_TOPIC` en `automation-rules.service.ts`).
 
 ---
 
