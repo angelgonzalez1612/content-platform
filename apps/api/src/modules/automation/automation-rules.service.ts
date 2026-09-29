@@ -84,7 +84,7 @@ export class AutomationRulesService {
     categoryLabel?: string;
     site?: string | null;
     contentType?: string | null;
-    outcome: 'published' | 'draft' | 'skipped_duplicate' | 'skipped_no_match' | 'error';
+    outcome: 'published' | 'draft' | 'skipped_duplicate' | 'skipped_no_match' | 'skipped_capped' | 'error';
     contentId?: string | null;
     contentSlug?: string | null;
     detail?: string | null;
@@ -189,13 +189,20 @@ export class AutomationRulesService {
    * repetir la búsqueda cada 15 minutos. */
   async alreadyEvaluatedTitles(): Promise<Set<string>> {
     const rows = await this.db.query.automationRuns.findMany({
-      where: inArray(automationRuns.outcome, ['published', 'draft', 'skipped_no_match', 'skipped_duplicate', 'error']),
-      columns: { topic: true, outcome: true },
+      where: inArray(automationRuns.outcome, ['published', 'draft', 'skipped_no_match', 'skipped_duplicate', 'skipped_capped', 'error']),
+      columns: { topic: true, outcome: true, ranAt: true },
     });
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
     const evaluated = new Set<string>();
     const errorCounts = new Map<string, number>();
     for (const row of rows) {
       const key = normalizeTitle(row.topic);
+      // Aplazado por topes: solo cuenta hoy; mañana, con cupo, se vuelve a intentar.
+      if (row.outcome === 'skipped_capped') {
+        if (row.ranAt >= startOfDay) evaluated.add(key);
+        continue;
+      }
       if (row.outcome !== 'error') {
         evaluated.add(key);
         continue;

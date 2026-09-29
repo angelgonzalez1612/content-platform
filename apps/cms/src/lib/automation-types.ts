@@ -57,7 +57,7 @@ export interface AutomationRun {
   categoryLabel: string | null;
   site: "la-mira" | "planazo" | null;
   contentType: string | null;
-  outcome: "published" | "draft" | "skipped_duplicate" | "skipped_no_match" | "error";
+  outcome: "published" | "draft" | "skipped_duplicate" | "skipped_no_match" | "skipped_capped" | "error";
   contentId: string | null;
   contentSlug: string | null;
   detail: string | null;
@@ -106,5 +106,6 @@ export const OUTCOME_META: Record<AutomationRun["outcome"], { label: string; bg:
   draft: { label: "Creado como borrador", bg: "#FEF6E7", fg: "#9A6B12" },
   skipped_duplicate: { label: "Ya publicado antes", bg: "#F3F0EC", fg: "#8A837B" },
   skipped_no_match: { label: "No encajó con la regla", bg: "#F3F0EC", fg: "#8A837B" },
+  skipped_capped: { label: "Aplazado por tope diario", bg: "#F3F0EC", fg: "#8A837B" },
   error: { label: "Error", bg: "#FDECEA", fg: "#C4453A" },
 };

@@ -43,6 +43,13 @@ const RUN_LOCK_LEASE_MS = 30 * 60 * 1000;
 // La cola del Dashboard (getQueueStatus) se pide en cada visita — extraer el
 // reporte lanza un subproceso tsx (2-7 s). Con este mínimo entre extracciones
 // la cola sale de la DB casi siempre; run() sigue extrayendo en cada tick.
+// En Vercel (Fluid compute) la instancia puede quedar viva y el @Interval
+// SÍ se dispara, pero el CPU se congela entre peticiones: una corrida ahí
+// avanzaba a pedazos durante horas reteniendo el lease y bloqueando la de esta
+// máquina (visto el 2026-09-29). Además los proveedores CLI no existen ahí.
+const IS_SERVERLESS = !!process.env.VERCEL;
+const CLI_PROVIDERS: ReadonlySet<AiProviderId> = new Set(['claude-cli', 'codex-cli']);
+
 const QUEUE_EXTRACTION_MIN_INTERVAL_MS = 10 * 60 * 1000;
 
 type AutomatableType = (typeof AUTOMATABLE_CONTENT_TYPES)[number];
@@ -179,6 +186,8 @@ export class AutomationRunnerService {
 
   @Interval(CHECK_INTERVAL_MS)
   async runScheduled() {
+    // En serverless el disparador es el cron (ver automation-cron.controller.ts).
+    if (IS_SERVERLESS) return;
     await this.run();
   }
 
@@ -277,6 +286,20 @@ export class AutomationRunnerService {
       this.logger.warn('run() se omitió: ya hay una corrida activa (ver isRunning).');
       return { evaluated: 0, created: 0 };
     }
+    // Se resuelve antes de tomar el lease: si en este entorno ninguna regla
+    // puede correr (CLI en Vercel), no se bloquea a la instancia que sí puede.
+    const activeRules = await this.rules.findActive();
+    const resolvedRules = await Promise.all(
+      activeRules.map(async (rule) => ({ rule, provider: await this.providers.resolveProvider(rule.provider) })),
+    );
+    const runnableRules = IS_SERVERLESS ? resolvedRules.filter((r) => !CLI_PROVIDERS.has(r.provider)) : resolvedRules;
+    if (runnableRules.length === 0) {
+      if (activeRules.length > 0) {
+        this.logger.warn('run() se omitió: las reglas activas usan proveedores CLI, que solo corren en el servidor local.');
+      }
+      return { evaluated: 0, created: 0 };
+    }
+
     const lockOwner = randomUUID();
     if (!(await this.rules.tryAcquireRunLock(lockOwner, RUN_LOCK_LEASE_MS))) {
       this.logger.warn('run() se omitió: otra instancia tiene el lease de automatización.');
@@ -285,9 +308,6 @@ export class AutomationRunnerService {
     this.runningFlag = true;
     try {
       await this.rules.touchLastChecked();
-
-      const activeRules = await this.rules.findActive();
-      if (activeRules.length === 0) return { evaluated: 0, created: 0 };
 
       let youtubeVideos: ExtractedYoutubeVideo[] = [];
       try {
@@ -322,13 +342,11 @@ export class AutomationRunnerService {
       // tema no encontró regla que lo aceptara, su fracaso no debería bloquear
       // a un tema parecido que sí encuentre una regla distinta.
       const createdTitlesThisRun: string[] = [];
-      const ruleStates: RuleState[] = await Promise.all(
-        activeRules.map(async (rule) => ({
-          rule,
-          provider: await this.providers.resolveProvider(rule.provider),
-          createdCount: todaysCounts.get(rule.id) ?? 0,
-        })),
-      );
+      const ruleStates: RuleState[] = runnableRules.map(({ rule, provider }) => ({
+        rule,
+        provider,
+        createdCount: todaysCounts.get(rule.id) ?? 0,
+      }));
 
       let created = 0;
       let evaluated = 0;
@@ -364,14 +382,18 @@ export class AutomationRunnerService {
           [...alreadyPublished].some((t) => looksLikeSameStory(topic.title, t));
         if (isDuplicateStory) continue;
 
-        const candidates = ruleStates.filter(
-          (state) =>
-            // dailyLimit 0 = sin tope (ver automation-rule.dto.ts).
-            (state.rule.dailyLimit === 0 || state.createdCount < state.rule.dailyLimit) &&
-            ruleCouldMatch(state.rule, topic) &&
-            (topic.source !== 'search-phrase' || state.rule.includeSearchPhrases),
+        const couldMatch = ruleStates.filter(
+          (state) => ruleCouldMatch(state.rule, topic) && (topic.source !== 'search-phrase' || state.rule.includeSearchPhrases),
         );
+        // dailyLimit 0 = sin tope (ver automation-rule.dto.ts).
+        const candidates = couldMatch.filter((state) => state.rule.dailyLimit === 0 || state.createdCount < state.rule.dailyLimit);
         if (candidates.length === 0) continue;
+        // Si alguna regla que podría quedárselo ya llegó a su tope de hoy, un
+        // "no encajó" no es definitivo: con las demás reglas llenas, el tema
+        // solo se prueba contra lo que queda (p.ej. lugares de Planazo) y se
+        // perdía para siempre — visto el 2026-09-29: 94 noticias descartadas
+        // así en una noche. Se aplaza a mañana en vez de descartarlo.
+        const someRuleCapped = candidates.length < couldMatch.length;
 
         // Frase de búsqueda sin fuente: antes de generar, se busca la nota REAL
         // en Google News y se reescribe el tema (titular real) + `hints` con la
@@ -406,7 +428,7 @@ export class AutomationRunnerService {
 
         evaluated += 1;
         try {
-          if (await this.assignTopic(candidates, topic)) {
+          if (await this.assignTopic(candidates, topic, someRuleCapped)) {
             created += 1;
             createdTitlesThisRun.push(topic.title);
           }
@@ -567,7 +589,7 @@ export class AutomationRunnerService {
   // borrador de IA entre reglas que piden exactamente el mismo
   // sitio+tipo+proveedor forzado, así no se multiplica el gasto de IA por
   // cada regla candidata (la clasificación no cambia entre ellas).
-  private async assignTopic(candidates: RuleState[], topic: Topic): Promise<boolean> {
+  private async assignTopic(candidates: RuleState[], topic: Topic, someRuleCapped = false): Promise<boolean> {
     const drafts = new Map<string, { result: DraftResult; category: Category } | { error: string }>();
     let lastClassified: { result: DraftResult; category: Category } | null = null;
     let lastError: string | null = null;
@@ -607,8 +629,10 @@ export class AutomationRunnerService {
         categoryLabel: topic.categoryLabel,
         site: lastClassified.result.site,
         contentType: lastClassified.result.contentType,
-        outcome: 'skipped_no_match',
-        detail: `La IA lo clasificó como "${lastClassified.category.name}" (${lastClassified.result.contentType}) — ninguna de las ${candidates.length} regla(s) candidata(s) para este tema acepta esa categoría o tipo.`,
+        outcome: someRuleCapped ? 'skipped_capped' : 'skipped_no_match',
+        detail: someRuleCapped
+          ? `La IA lo clasificó como "${lastClassified.category.name}" (${lastClassified.result.contentType}) y ninguna regla con cupo lo acepta; otras reglas ya llegaron a su tope de hoy. Se reintenta mañana.`
+          : `La IA lo clasificó como "${lastClassified.category.name}" (${lastClassified.result.contentType}) — ninguna de las ${candidates.length} regla(s) candidata(s) para este tema acepta esa categoría o tipo.`,
         source: topic.source,
       });
     } else {
