@@ -34,10 +34,13 @@ export function ImageFocusEditor({
   url,
   position,
   onChange,
+  embedded = false,
 }: {
   url: string;
   position: string | null;
   onChange: (position: string | null) => void;
+  /** Dentro de otra tarjeta (ImageField): sin borde propio. */
+  embedded?: boolean;
 }) {
   const { x, y } = parseImagePosition(position);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -92,7 +95,7 @@ export function ImageFocusEditor({
   const canMove = natural ? Math.abs(natural.w / natural.h - 16 / 9) > 0.01 : true;
 
   return (
-    <div className="flex flex-col gap-2.5 rounded-[10px] border border-border-soft bg-background p-3">
+    <div className={`flex flex-col gap-2.5 p-3 ${embedded ? "" : "rounded-[10px] border border-border-soft bg-background"}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-[12px] font-semibold text-ink">Encuadre</span>
         <span className="inline-flex items-center gap-0.5 rounded-full border border-border bg-card p-0.5">

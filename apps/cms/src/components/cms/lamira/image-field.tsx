@@ -127,38 +127,87 @@ export function ImageField({
           </button>
         </div>
       ) : image ? (
-        <>
-        <div className="flex items-start gap-3 rounded-[10px] border border-border-soft bg-background p-3">
-          {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
-          <img src={image.url} alt="" className="h-20 w-28 flex-none rounded-[8px] object-cover" style={position ? { objectPosition: position } : undefined} />
-          <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-0.5">
-            <p className="truncate text-[12px] text-ink-soft">{image.credit || "(sin crédito)"}</p>
-            <div className="flex items-center gap-3">
-              <a href={image.url} target="_blank" rel="noopener noreferrer" className="text-[12px] font-medium text-ink-soft hover:text-brand">
-                Abrir ↗
-              </a>
-              <button type="button" onClick={startEdit} className="text-[12px] font-medium text-ink-soft hover:text-brand">
-                Reemplazar
-              </button>
-              {onPositionChange && (
+        <div className={`overflow-hidden rounded-[10px] border bg-background transition-colors ${adjusting ? "border-brand/40" : "border-border-soft"}`}>
+          <div className="flex items-start gap-3 p-3">
+            {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
+            <img src={image.url} alt="" className="h-20 w-28 flex-none rounded-[8px] object-cover" style={position ? { objectPosition: position } : undefined} />
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                <p className="min-w-0 truncate text-[12px] text-ink-soft" title={image.credit || undefined}>
+                  {image.credit || "(sin crédito)"}
+                </p>
+                {position && !adjusting && (
+                  <span className="inline-flex flex-none items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[10.5px] font-semibold text-accent-fg" title={`Encuadre: ${position}`}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4" />
+                    </svg>
+                    Encuadre ajustado
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                {onPositionChange && (
+                  <button
+                    type="button"
+                    onClick={() => setAdjusting((v) => !v)}
+                    aria-expanded={adjusting}
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-semibold transition-colors ${
+                      adjusting
+                        ? "bg-brand text-white hover:bg-brand-pressed"
+                        : "border border-border bg-card text-ink hover:border-brand hover:text-brand"
+                    }`}
+                  >
+                    {adjusting ? (
+                      <>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                          <path d="M5 12.5l4.5 4.5L19 7.5" />
+                        </svg>
+                        Listo
+                      </>
+                    ) : (
+                      <>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                          <path d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4M12 9v6M9 12h6" />
+                        </svg>
+                        Ajustar encuadre
+                      </>
+                    )}
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={() => setAdjusting((v) => !v)}
-                  aria-expanded={adjusting}
-                  className={`text-[12px] font-medium hover:text-brand ${adjusting ? "text-brand" : "text-ink-soft"}`}
+                  onClick={startEdit}
+                  className="inline-flex items-center rounded-lg border border-border bg-card px-2.5 py-1.5 text-[12px] font-medium text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
                 >
-                  {adjusting ? "Listo" : position ? "Ajustar encuadre ·" : "Ajustar encuadre"}
-                  {!adjusting && position && <span className="ml-1 font-normal text-ink-faint">ajustado</span>}
+                  Reemplazar
                 </button>
-              )}
-              <button type="button" onClick={() => changeImage(null)} className="text-[12px] font-medium text-ink-soft hover:text-negative">
-                Quitar imagen
-              </button>
+                <span className="ml-auto flex items-center gap-0.5">
+                  <a
+                    href={image.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-md px-2 py-1.5 text-[12px] font-medium text-ink-faint transition-colors hover:bg-hover hover:text-ink"
+                  >
+                    Abrir ↗
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => changeImage(null)}
+                    className="rounded-md px-2 py-1.5 text-[12px] font-medium text-ink-faint transition-colors hover:bg-negative/10 hover:text-negative"
+                  >
+                    Quitar
+                  </button>
+                </span>
+              </div>
             </div>
           </div>
+          {adjusting && onPositionChange && (
+            <div className="border-t border-border-soft">
+              <ImageFocusEditor url={image.url} position={position ?? null} onChange={onPositionChange} embedded />
+            </div>
+          )}
         </div>
-        {adjusting && onPositionChange && <ImageFocusEditor url={image.url} position={position ?? null} onChange={onPositionChange} />}
-        </>
       ) : (
         <button
           type="button"
