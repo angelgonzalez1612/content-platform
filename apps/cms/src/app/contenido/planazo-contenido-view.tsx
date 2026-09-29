@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ShowMoreRow, useVisibleRows } from "@/components/cms/show-more";
+import { ContentSearch, matchesSearch } from "@/components/cms/content-search";
 import { SourceLink } from "@/components/cms/source-link";
 import { ReviewBanner } from "@/components/cms/review-banner";
 import type { StatusFilter } from "./lamira-contenido-view";
@@ -39,6 +40,7 @@ export function PlanazoContenidoView({
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("todos");
   const [categoryFilter, setCategoryFilter] = useState<string>("todos");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatusFilter);
+  const [search, setSearch] = useState("");
 
   const categoryNameById = new Map(categories.map((c) => [c.id, c.name]));
   const categoriesPresent = useMemo(() => {
@@ -53,14 +55,14 @@ export function PlanazoContenidoView({
     if (statusFilter === "publicado" && p.status !== "published") return false;
     if (statusFilter === "en_revision" && p.status !== "in_review") return false;
     if (statusFilter === "sin_publicar" && p.status === "published") return false;
-    return true;
+    return matchesSearch(search, p.name, p.address, p.slug, ...p.categories.map((c) => c.name));
   });
   const filteredEvents = events.filter((e) => {
     if (categoryFilter !== "todos" && e.categoryId !== categoryFilter) return false;
     if (statusFilter === "publicado" && e.status !== "published") return false;
     if (statusFilter === "en_revision" && e.status !== "in_review") return false;
     if (statusFilter === "sin_publicar" && e.status === "published") return false;
-    return true;
+    return matchesSearch(search, e.name, e.locationName, e.slug, e.categoryId ? categoryNameById.get(e.categoryId) : null);
   });
   // Las guías no tienen categoría del catálogo (categoryLabel es texto libre,
   // ver PlanazoGuide) — el filtro de categoría de arriba no les aplica.
@@ -68,7 +70,7 @@ export function PlanazoContenidoView({
     if (statusFilter === "publicado" && g.status !== "published") return false;
     if (statusFilter === "en_revision" && g.status !== "in_review") return false;
     if (statusFilter === "sin_publicar" && g.status === "published") return false;
-    return true;
+    return matchesSearch(search, g.title, g.categoryLabel, g.slug);
   });
 
   const inReviewCount =
@@ -76,7 +78,7 @@ export function PlanazoContenidoView({
     events.filter((e) => e.status === "in_review").length +
     guides.filter((g) => g.status === "in_review").length;
 
-  const filtersKey = `${typeFilter}|${categoryFilter}|${statusFilter}`;
+  const filtersKey = `${typeFilter}|${categoryFilter}|${statusFilter}|${search}`;
   const placesPage = useVisibleRows(filteredPlaces, filtersKey);
   const eventsPage = useVisibleRows(filteredEvents, filtersKey);
   const guidesPage = useVisibleRows(filteredGuides, filtersKey);
@@ -127,6 +129,13 @@ export function PlanazoContenidoView({
         <ReviewBanner count={inReviewCount} site="planazo" onShowInTable={() => setStatusFilter("en_revision")} />
       )}
 
+      <ContentSearch
+        value={search}
+        onChange={setSearch}
+        placeholder="Buscar lugares, eventos o guías por nombre, zona o categoría…"
+        resultCount={(showPlaces ? filteredPlaces.length : 0) + (showEvents ? filteredEvents.length : 0) + (showGuides ? filteredGuides.length : 0)}
+      />
+
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="inline-flex items-center gap-1 rounded-full border border-border bg-background p-0.5">
           <FilterChip active={typeFilter === "todos"} onClick={() => setTypeFilter("todos")}>
@@ -171,13 +180,14 @@ export function PlanazoContenidoView({
           </FilterChip>
         </div>
 
-        {(typeFilter !== "todos" || categoryFilter !== "todos" || statusFilter !== "todos") && (
+        {(typeFilter !== "todos" || categoryFilter !== "todos" || statusFilter !== "todos" || search) && (
           <button
             type="button"
             onClick={() => {
               setTypeFilter("todos");
               setCategoryFilter("todos");
               setStatusFilter("todos");
+              setSearch("");
             }}
             className="text-[12.5px] font-medium text-ink-faint hover:text-brand"
           >
@@ -216,7 +226,7 @@ export function PlanazoContenidoView({
                     planazo_backend para tener datos de prueba.
                   </>
                 ) : (
-                  "Ningún lugar coincide con estos filtros."
+                  search ? `Nada coincide con "${search}".` : "Ningún lugar coincide con estos filtros."
                 )}
               </p>
             ) : (
@@ -275,7 +285,7 @@ export function PlanazoContenidoView({
 
             {filteredEvents.length === 0 ? (
               <p className="p-8 text-center text-[13.5px] text-ink-soft">
-                {events.length === 0 ? "Todavía no hay eventos. Créalos con el botón de arriba." : "Ningún evento coincide con estos filtros."}
+                {events.length === 0 ? "Todavía no hay eventos. Créalos con el botón de arriba." : search ? `Nada coincide con "${search}".` : "Ningún evento coincide con estos filtros."}
               </p>
             ) : (
               eventsPage.visible.map((event) => (
@@ -332,7 +342,7 @@ export function PlanazoContenidoView({
 
             {filteredGuides.length === 0 ? (
               <p className="p-8 text-center text-[13.5px] text-ink-soft">
-                {guides.length === 0 ? "Todavía no hay guías. Créalas con el botón de arriba." : "Ninguna guía coincide con estos filtros."}
+                {guides.length === 0 ? "Todavía no hay guías. Créalas con el botón de arriba." : search ? `Nada coincide con "${search}".` : "Ninguna guía coincide con estos filtros."}
               </p>
             ) : (
               guidesPage.visible.map((guide) => (

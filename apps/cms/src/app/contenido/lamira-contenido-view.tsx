@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ShowMoreRow, useVisibleRows } from "@/components/cms/show-more";
+import { ContentSearch, matchesSearch } from "@/components/cms/content-search";
 import { SourceLink } from "@/components/cms/source-link";
 import { ReviewBanner } from "@/components/cms/review-banner";
 import Link from "next/link";
@@ -56,6 +57,7 @@ export function LamiraContenidoView({
   const [typeFilter, setTypeFilter] = useState<string>("todos");
   const [categoryFilter, setCategoryFilter] = useState<string>("todos");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatusFilter);
+  const [search, setSearch] = useState("");
 
   const typesPresent = useMemo(() => TYPE_ORDER.filter((t) => rows.some((r) => r.type === t)), [rows]);
   const categoriesPresent = useMemo(() => {
@@ -69,17 +71,19 @@ export function LamiraContenidoView({
     if (statusFilter === "publicado" && !r.isPublished) return false;
     if (statusFilter === "en_revision" && r.status !== "in_review") return false;
     if (statusFilter === "sin_publicar" && r.isPublished) return false;
-    return true;
+    return matchesSearch(search, r.title, r.categoryName, r.slug);
   });
 
   const inReviewCount = rows.filter((r) => r.status === "in_review").length;
-  const page = useVisibleRows(filtered, `${typeFilter}|${categoryFilter}|${statusFilter}`);
+  const page = useVisibleRows(filtered, `${typeFilter}|${categoryFilter}|${statusFilter}|${search}`);
 
   return (
     <>
       {inReviewCount > 0 && (
         <ReviewBanner count={inReviewCount} site="lamira" onShowInTable={() => setStatusFilter("en_revision")} />
       )}
+
+      <ContentSearch value={search} onChange={setSearch} placeholder="Buscar por título, categoría o slug…" resultCount={filtered.length} />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-border bg-background p-0.5">
@@ -121,13 +125,14 @@ export function LamiraContenidoView({
           </FilterChip>
         </div>
 
-        {(typeFilter !== "todos" || categoryFilter !== "todos" || statusFilter !== "todos") && (
+        {(typeFilter !== "todos" || categoryFilter !== "todos" || statusFilter !== "todos" || search) && (
           <button
             type="button"
             onClick={() => {
               setTypeFilter("todos");
               setCategoryFilter("todos");
               setStatusFilter("todos");
+              setSearch("");
             }}
             className="text-[12.5px] font-medium text-ink-faint hover:text-brand"
           >
@@ -150,7 +155,7 @@ export function LamiraContenidoView({
 
         {filtered.length === 0 ? (
           <p className="p-8 text-center text-[13.5px] text-ink-soft">
-            {rows.length === 0 ? "Todavía no hay contenido de la-mira. Créalo con el botón de arriba." : "Ningún elemento coincide con estos filtros."}
+            {rows.length === 0 ? "Todavía no hay contenido de la-mira. Créalo con el botón de arriba." : search ? `Nada coincide con "${search}" y estos filtros.` : "Ningún elemento coincide con estos filtros."}
           </p>
         ) : (
           page.visible.map((row) => (
