@@ -49,6 +49,19 @@ export type PlanazoPreviewProps =
       // Mismo cuerpo extendido opcional que "lugar" (ver arriba) — evento-planazo
       // ya modela `content` igual (ver AiDraftService.expandPlanazoEvento).
       content?: { heading?: string | null; paragraphs: string[]; image?: { url: string; credit: string } | null }[];
+    }
+  | {
+      kind: "guia";
+      name: string;
+      categoryLabel: string;
+      image: { url: string; credit: string } | null;
+      /** Encuadre de la imagen (CSS object-position); null = centrada. */
+      imagePosition?: string | null;
+      description: string;
+      intro: string;
+      readTime: string;
+      // Cada parada: el lugar/evento que narra (ya resuelto a su nombre).
+      sections: { heading: string; paragraphs: string[]; placeLabel?: string; image?: { url: string; credit: string } | null }[];
     };
 
 type ContentBlockPreview = NonNullable<Extract<PlanazoPreviewProps, { kind: "lugar" }>["content"]>;
@@ -98,7 +111,7 @@ export function PlanazoPreviewCard(props: PlanazoPreviewProps) {
           <span className="size-2 rounded-full bg-[#DE7A54]" />
           <span className="size-2 rounded-full bg-[#7AAE7C]" />
           <span className="ml-2 truncate font-mono text-[11px] text-ink-faint">
-            planazo.mx/{kind === "lugar" ? "lugares" : "eventos"}/{slugPreview(name)}
+            planazo.mx/{kind === "lugar" ? "lugares" : kind === "evento" ? "eventos" : "guias"}/{slugPreview(name)}
           </span>
         </div>
 
@@ -117,7 +130,9 @@ export function PlanazoPreviewCard(props: PlanazoPreviewProps) {
 
           <h2 className="mt-2.5 font-serif text-[22px] leading-[1.2] font-semibold text-ink text-balance @[40rem]:text-[26px]">{name || "(sin nombre todavía)"}</h2>
 
-          {kind === "lugar" ? (
+          {kind === "guia" ? (
+            <GuideBody {...props} />
+          ) : kind === "lugar" ? (
             <>
               <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-ink-soft">
                 {props.address && <span>📍 {props.address}</span>}
@@ -169,6 +184,48 @@ export function PlanazoPreviewCard(props: PlanazoPreviewProps) {
         </article>
       </div>
     </div>
+  );
+}
+
+// Guía: tiempo de lectura + paradas, descripción como bajada, intro y cada
+// parada con su lugar — mismo orden que planazo.com.mx/guias/[slug], con un
+// anuncio cada 2 paradas.
+function GuideBody(props: Extract<PlanazoPreviewProps, { kind: "guia" }>) {
+  const { description, intro, readTime, sections } = props;
+  return (
+    <>
+      <p className="mt-2 font-mono text-[11.5px] text-ink-faint">
+        {readTime || "—"} · {sections.length} {sections.length === 1 ? "parada" : "paradas"}
+      </p>
+      {description && <p className="mt-3 text-[15px] leading-[1.55] font-medium text-ink">{description}</p>}
+      {intro && <p className="mt-3 text-[14px] leading-[1.6] text-ink-soft">{intro}</p>}
+      {sections.length > 0 && (
+        <ol className="mt-5 flex flex-col gap-5 border-t border-border-soft pt-5">
+          {sections.map((section, i) => (
+            <li key={i} className="flex flex-col gap-2.5">
+              <div className="flex items-baseline gap-2.5">
+                <span className="font-serif text-[20px] leading-none font-semibold text-brand tabular-nums">{i + 1}</span>
+                <h3 className="font-serif text-[16px] font-semibold text-ink">{section.heading || "(parada sin título)"}</h3>
+              </div>
+              {section.placeLabel && <span className="text-[12px] font-medium text-ink-soft">📍 {section.placeLabel}</span>}
+              {section.image && (
+                <figure>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
+                  <img src={section.image.url} alt="" className="aspect-video w-full rounded-[10px] object-cover" />
+                  <figcaption className="mt-1.5 text-[11px] text-ink-faint">{section.image.credit}</figcaption>
+                </figure>
+              )}
+              {section.paragraphs.filter(Boolean).map((p, pi) => (
+                <p key={pi} className="text-[14px] leading-[1.6] text-ink-soft">
+                  {p}
+                </p>
+              ))}
+              {i % 2 === 1 && i < sections.length - 1 && <AdSlotPreview size="responsivo" />}
+            </li>
+          ))}
+        </ol>
+      )}
+    </>
   );
 }
 

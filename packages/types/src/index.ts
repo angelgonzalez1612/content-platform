@@ -480,6 +480,7 @@ export interface PlanazoGuide {
   imagePosition: string | null;
   placeSlugs: string[];
   excerpt: string | null;
+  seo: Seo | null;
   budget: string | null;
   duration: string | null;
   audience: string[];

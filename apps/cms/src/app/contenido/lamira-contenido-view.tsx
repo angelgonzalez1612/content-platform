@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { ShowMoreRow, useVisibleRows } from "@/components/cms/show-more";
+import { SourceLink } from "@/components/cms/source-link";
 import { ReviewBanner } from "@/components/cms/review-banner";
 import Link from "next/link";
 import type { Category } from "@planazo/types";
 import type { LamiraContentRow } from "@/lib/cms-api";
 import { LamiraStatusBadge, PublishedBadge, domainStatusLabel } from "@/components/cms/lamira-status-badge";
-import { Tooltip } from "@/components/cms/tooltip";
 
 // Solo estos 3 tienen borrador real (ContentStatus) — alerta/evento/lugar se
 // publican de inmediato al crearse, así que su columna "Estado" siempre debe
@@ -173,22 +173,7 @@ export function LamiraContenidoView({
               <span>{HAS_DRAFT_WORKFLOW.has(row.type) ? <LamiraStatusBadge status={row.status} /> : <PublishedBadge />}</span>
               <span className="text-right font-mono text-[11px] text-ink-faint">{formatDate(row.date)}</span>
               <span className="flex justify-center">
-                {row.sourceUrl ? (
-                  <Tooltip label="Ver fuente original">
-                    <a
-                      href={row.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex size-7 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-accent hover:text-brand"
-                    >
-                      <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M7 17L17 7M7 7h10v10" />
-                      </svg>
-                    </a>
-                  </Tooltip>
-                ) : (
-                  <span className="text-[11px] text-ink-faint">—</span>
-                )}
+                <SourceLink url={row.sourceUrl} />
               </span>
               <span className="flex justify-center">
                 <ViewPublishedLinks compact site="la-mira" path={`${LAMIRA_TYPE_PATH[row.type]}/${row.slug}`} available={row.isPublished} />

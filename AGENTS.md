@@ -102,6 +102,16 @@ Flujo seguro para un cambio de esquema:
 5. Aplica la migración **antes** de desplegar el código que la usa (el código
    viejo ignora columnas nuevas; el nuevo truena si faltan).
 
+### Caché de los sitios (lamira.mx / planazo.com.mx)
+Los sitios cachean cada respuesta de la API (`revalidate: 60`, etiqueta `cms`).
+Next **no guarda respuestas 404**, así que una pieza despublicada o eliminada se
+quedaba visible para siempre. Por eso cada POST/PATCH/DELETE de contenido en el
+CMS avisa al sitio (`@RevalidatesSite` → `SiteRevalidationService` → `POST
+/api/revalidate` del sitio, que hace `revalidateTag('cms', { expire: 0 })`).
+Requiere el **mismo secreto** en 3 proyectos de Vercel: `SITES_REVALIDATE_SECRET`
+(API) y `REVALIDATE_SECRET` (la-mira y planazo_fronted). Sin él, la API solo
+avisa en el log y los cambios tardan / las piezas borradas siguen visibles.
+
 ## 4. Feature: Entidades + fuente de noticias reales
 
 Pantalla `/entidades` del CMS (`apps/cms/src/components/cms/entidades/`): mapa de

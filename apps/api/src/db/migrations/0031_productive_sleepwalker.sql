@@ -1,0 +1,1 @@
+ALTER TABLE `planazo_guides` ADD `seo` text;

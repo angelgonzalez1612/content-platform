@@ -65,6 +65,7 @@ export class PlanazoGuidesService {
         imageCredit: dto.imageCredit ?? null,
         imagePosition: dto.imagePosition ?? null,
         excerpt: dto.excerpt ?? null,
+        seo: dto.seo ?? null,
         budget: dto.budget ?? null,
         duration: dto.duration ?? null,
         audience: dto.audience ?? [],

@@ -32,6 +32,15 @@ export const createGuideSchema = z.object({
   imageCredit: z.string().nullable().optional(),
   imagePosition: imagePositionSchema,
   excerpt: z.string().nullable().optional(),
+  seo: z
+      .object({
+        title: z.string().optional(),
+        description: z.string().optional(),
+        canonical: z.string().optional(),
+        ogImage: z.string().optional(),
+      })
+      .nullable()
+      .optional(),
   budget: z.string().nullable().optional(),
   duration: z.string().nullable().optional(),
   audience: z.array(z.string()).optional(),
@@ -53,6 +62,15 @@ export const updateGuideSchema = z
     imageCredit: z.string().nullable().optional(),
     imagePosition: imagePositionSchema,
     excerpt: z.string().nullable().optional(),
+    seo: z
+        .object({
+          title: z.string().optional(),
+          description: z.string().optional(),
+          canonical: z.string().optional(),
+          ogImage: z.string().optional(),
+        })
+        .nullable()
+        .optional(),
     budget: z.string().nullable().optional(),
     duration: z.string().nullable().optional(),
     audience: z.array(z.string()).optional(),

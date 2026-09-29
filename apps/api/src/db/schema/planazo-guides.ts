@@ -1,7 +1,7 @@
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { idColumn, createdAtColumn } from './columns.helpers';
 import { CONTENT_STATUS_VALUES } from './enums';
-import type { GuideSection } from '@planazo/types';
+import type { GuideSection, Seo } from '@planazo/types';
 
 // Editorial listicles/itinerarios de Planazo (ver GuideSection/PlanazoGuide en
 // @planazo/types) — curan Places/PlanazoEvents reales por slug, a diferencia
@@ -33,6 +33,9 @@ export const planazoGuides = sqliteTable('planazo_guides', {
   // object-position, ej. '50% 20%'); null = centrada.
   imagePosition: text('image_position'),
   excerpt: text('excerpt'),
+  // SEO propio (título/descripción para Google y redes), igual que el resto de
+  // tipos. null = el sitio usa título y descripción de la guía.
+  seo: text('seo', { mode: 'json' }).$type<Seo>(),
   budget: text('budget'),
   duration: text('duration'),
   audience: text('audience', { mode: 'json' })

@@ -3,7 +3,10 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
-import type { ContentStatus, PlanazoGuide } from "@planazo/types";
+import type { ContentStatus, PlanazoGuide, Seo } from "@planazo/types";
+import { PlanazoPreviewCard } from "@/components/cms/planazo/planazo-preview-card";
+import { SeoPanel } from "@/components/cms/seo-panel";
+import { ensureSeo } from "@/lib/ensure-seo";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { ImageField } from "@/components/cms/lamira/image-field";
 import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
@@ -37,6 +40,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
     duration: existing?.duration ?? "",
     status: existing?.status ?? ("draft" as ContentStatus),
   });
+  const [seo, setSeo] = useState<Seo>(existing?.seo ?? {});
   const [sections, setSections] = useState<GuideSectionValue[]>(
     existing?.sections.map((s) => {
       // planazo_fronted's <Prose> ya separa párrafos por línea en blanco
@@ -86,6 +90,11 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
     setSaving(true);
     setError("");
 
+    const finalSeo = await ensureSeo(seo, form.title, form.description);
+
+    if (finalSeo !== seo) setSeo(finalSeo);
+
+
     const payload = {
       title: form.title,
       description: form.description,
@@ -105,6 +114,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
       imagePosition: image ? imagePosition : null,
       imageCredit: image?.credit ?? null,
       excerpt: form.excerpt || null,
+      seo: finalSeo,
       budget: form.budget || null,
       duration: form.duration || null,
       audience,
@@ -150,23 +160,24 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
     save("published");
   }
 
+  const placeLabelBySlug = new Map(placeOptions.map((o) => [o.slug, o.label]));
   const preview = (
-    <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
-      {image ? (
-        // eslint-disable-next-line @next/next/no-img-element -- preview de una URL externa arbitraria, mismo criterio que el resto del CMS
-        <img src={image.url} alt="" className="h-[160px] w-full object-cover" />
-      ) : (
-        <div className="flex h-[160px] w-full items-center justify-center bg-background text-[12px] text-ink-faint">Sin imagen</div>
-      )}
-      <div className="flex flex-col gap-1.5 p-4">
-        {form.categoryLabel && <span className="text-[11px] font-semibold tracking-wide text-brand uppercase">{form.categoryLabel}</span>}
-        <span className="text-[15px] font-semibold tracking-tight text-ink">{form.title || "Título de la guía"}</span>
-        <span className="text-[12.5px] text-ink-soft">{form.description || "Descripción corta…"}</span>
-        <span className="mt-1 font-mono text-[11px] text-ink-faint">
-          {form.readTime} · {sections.length} {sections.length === 1 ? "parada" : "paradas"}
-        </span>
-      </div>
-    </div>
+    <PlanazoPreviewCard
+      kind="guia"
+      name={form.title}
+      categoryLabel={form.categoryLabel || "Guía"}
+      image={image}
+      imagePosition={imagePosition}
+      description={form.description}
+      intro={form.intro}
+      readTime={form.readTime}
+      sections={sections.map((section) => ({
+        heading: section.heading,
+        paragraphs: section.paragraphs,
+        placeLabel: section.placeSlug ? (placeLabelBySlug.get(section.placeSlug) ?? section.placeSlug) : undefined,
+        image: section.image ? { url: section.image.url, credit: section.image.credit } : null,
+      }))}
+    />
   );
 
   const left = (
@@ -317,6 +328,8 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
 
 
       {error && <p className="rounded-lg bg-[#FDECEA] px-3 py-2 text-[13px] font-medium text-[#C4453A]">{error}</p>}
+
+      <SeoPanel seo={seo} onChange={setSeo} contentTitle={form.title} contentContext={form.description} />
 
       <SaveActions
         isEdit={isEdit}

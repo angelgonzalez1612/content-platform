@@ -236,10 +236,10 @@ export async function getCmsPlanazoGuides(): Promise<PlanazoGuide[]> {
 // Filas de la tabla de Contenido de Planazo — solo lo que la tabla pinta. Los
 // objetos completos (descripciones, fotos, categoryData, SEO…) pesaban ~800 KB
 // y se serializaban enteros al navegador en cada visita.
-export type PlanazoPlaceRow = Pick<Place, "id" | "slug" | "name" | "address" | "status" | "updatedAt"> & {
+export type PlanazoPlaceRow = Pick<Place, "id" | "slug" | "name" | "address" | "status" | "updatedAt" | "sourceUrl"> & {
   categories: { id: string; name: string }[];
 };
-export type PlanazoEventRow = Pick<PlanazoEvent, "id" | "slug" | "name" | "status" | "categoryId" | "locationName" | "startDate">;
+export type PlanazoEventRow = Pick<PlanazoEvent, "id" | "slug" | "name" | "status" | "categoryId" | "locationName" | "startDate" | "sourceUrl">;
 export type PlanazoGuideRow = Pick<PlanazoGuide, "id" | "slug" | "title" | "status" | "categoryLabel" | "updatedAt"> & {
   placeSlugs: string[];
 };
@@ -254,6 +254,7 @@ export async function getCmsPlanazoContent(): Promise<{ places: PlanazoPlaceRow[
       address: p.address,
       status: p.status,
       updatedAt: p.updatedAt,
+      sourceUrl: p.sourceUrl,
       categories: p.categories.map((c) => ({ id: c.id, name: c.name })),
     })),
     events: events.map((e) => ({
@@ -264,6 +265,7 @@ export async function getCmsPlanazoContent(): Promise<{ places: PlanazoPlaceRow[
       categoryId: e.categoryId,
       locationName: e.locationName,
       startDate: e.startDate,
+      sourceUrl: e.sourceUrl,
     })),
     guides: guides.map((g) => ({
       id: g.id,
