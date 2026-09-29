@@ -98,6 +98,17 @@
   }
 }
 
+/* Barra de progreso indeterminada (Mejorar con IA): un tercio del ancho que
+   cruza la pista. Con reduced motion se muestra fija (ver el componente). */
+@keyframes pz-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
 @keyframes pz-pulse {
   0%,
   100% {
