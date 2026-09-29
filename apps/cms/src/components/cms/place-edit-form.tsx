@@ -16,6 +16,8 @@ import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
 import { PlanazoPreviewCard } from "@/components/cms/planazo/planazo-preview-card";
 import { ContentBlocksField, type ContentBlockValue } from "@/components/cms/content-blocks-field";
 import { SaveActions } from "@/components/cms/save-actions";
+import { ImprovePreview, isFieldSelected, type ImproveResult, type ImproveSelection } from "@/components/cms/lamira/improve-preview";
+import { summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
 
 interface ImproveDraft {
   description?: string;
@@ -127,16 +129,17 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
     save("published");
   }
 
-  function applyImprovement() {
+  function applyImprovement(selection?: ImproveSelection) {
     if (!improveResult) return;
     if (improveMode === "expand") {
-      const newContent = improveResult.draft.content as ContentBlockValue[] | undefined;
-      if (newContent) setContent(newContent);
+      // Actuales + nuevas, con solo los párrafos que el editor dejó marcados.
+      const blocks = selection ? selection.blocks : (improveResult.draft.content as ContentBlockValue[] | undefined);
+      if (blocks) setContent(blocks);
       setImproveResult(null);
       return;
     }
     const { description, seo: improvedSeo, ...rest } = improveResult.draft;
-    if (description) set("description", description);
+    if (description && isFieldSelected(selection, "description")) set("description", description);
     if (improvedSeo) setSeo(improvedSeo);
     setCategoryData((prev) => ({ ...prev, ...rest }));
     setImproveResult(null);
@@ -175,85 +178,26 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
       />
 
       {improveResult && (
-        <div className="flex flex-col gap-4 rounded-[14px] border border-brand bg-accent p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="font-mono text-[10px] font-medium tracking-[.1em] text-accent-fg uppercase">
-              {improveMode === "expand" ? "Contenido nuevo — revisa antes de aplicar" : "Borrador mejorado — revisa antes de aplicar"}
-            </span>
-            <span
-              className={`rounded-full px-2.5 py-1 font-mono text-[10px] font-medium ${
-                improveResult.decision === "auto-published" ? "bg-[#EAF7EF] text-[#2E9E5B]" : "bg-[#FEF6E7] text-[#9A6B12]"
-              }`}
-            >
-              {improveResult.decision === "auto-published" ? "Pasa todos los checks" : "Necesita revisión"}
-            </span>
-          </div>
-
-          {improveMode === "expand" ? (
-            <div className="flex flex-col gap-3 text-[13px]">
-              {((improveResult.draft.content as ContentBlockValue[] | undefined) ?? []).slice(content.length).map((block, i) => (
-                <div key={i} className="rounded-[10px] border border-[#FFE2CC] bg-card p-3">
-                  {block.heading && <p className="font-semibold text-ink">{block.heading}</p>}
-                  {block.paragraphs.map((p, pi) => (
-                    <p key={pi} className="mt-1.5 text-ink-soft">
-                      {p}
-                    </p>
-                  ))}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 text-[13px] sm:grid-cols-2">
-              <div>
-                <span className={labelClass}>Descripción actual</span>
-                <p className="mt-1 text-ink-soft">{form.description || "(vacía)"}</p>
-              </div>
-              <div>
-                <span className={labelClass}>Descripción mejorada</span>
-                <p className="mt-1 text-ink">{improveResult.draft.description as string}</p>
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-col gap-1.5">
-            {improveResult.checksRun.map((c) => (
-              <div key={c.name} className="flex items-start gap-2 text-[12px]">
-                <span className={c.passed ? "text-[#2E9E5B]" : c.blocking ? "text-[#C4453A]" : "text-[#9A6B12]"}>
-                  {c.passed ? "✓" : c.blocking ? "✕" : "△"}
-                </span>
-                <span className="text-ink-soft">
-                  {c.name}
-                  {c.detail && <span className="text-ink-faint"> — {c.detail}</span>}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 border-t border-[#FFE2CC] pt-4">
-            <button
-              type="button"
-              onClick={applyImprovement}
-              disabled={regenerating}
-              className="rounded-[10px] bg-brand px-4 py-2 text-[13px] font-semibold text-white hover:bg-brand-pressed disabled:cursor-default disabled:opacity-70"
-            >
-              Aplicar al formulario
-            </button>
-            <button
-              type="button"
-              onClick={() => improveRef.current?.regenerate()}
-              disabled={regenerating}
-              className="rounded-[10px] border border-border bg-card px-4 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand disabled:cursor-default disabled:opacity-70"
-            >
-              {regenerating ? "Generando…" : "Generar otra vez"}
-            </button>
-            <button type="button" onClick={() => setImproveResult(null)} disabled={regenerating} className="text-[13px] font-medium text-ink-soft hover:text-brand disabled:cursor-default disabled:opacity-70">
-              Descartar
-            </button>
-          </div>
-          <p className="text-[11.5px] text-ink-faint">
-            Aplicar solo llena el formulario de abajo — nada se guarda hasta que presiones &quot;Guardar cambios&quot;.
-          </p>
-        </div>
+        <ImprovePreview
+          result={improveResult as ImproveResult}
+          fields={
+            improveMode === "expand"
+              ? [
+                  {
+                    key: "content",
+                    label: "Contenido",
+                    current: summarizeBlocks(content),
+                    improved: summarizeBlocks((improveResult.draft.content as ContentBlockValue[] | undefined) ?? content),
+                    blocks: { current: content, improved: (improveResult.draft.content as ContentBlockValue[] | undefined) ?? content },
+                  },
+                ]
+              : [{ key: "description", label: "Descripción", current: form.description, improved: (improveResult.draft.description as string | undefined) ?? "" }]
+          }
+          onApply={applyImprovement}
+          onDiscard={() => setImproveResult(null)}
+          onRegenerate={() => improveRef.current?.regenerate()}
+          regenerating={regenerating}
+        />
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-[14px] border border-border bg-card p-6 shadow-[0_1px_2px_rgba(23,20,17,.03)]">

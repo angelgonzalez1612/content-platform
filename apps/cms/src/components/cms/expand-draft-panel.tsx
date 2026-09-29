@@ -6,6 +6,7 @@ import { Icon } from "@/components/icon";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import type { ContentBlockValue } from "@/components/cms/content-blocks-field";
 import { useOpenAiAvailable } from "@/lib/use-openai-available";
+import { BlockSelectionList, useBlockSelection } from "@/components/cms/lamira/block-selection";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
 
@@ -50,6 +51,10 @@ export function ExpandDraftPanel({
   const openaiAvailable = useOpenAiAvailable();
   const providers = PROVIDERS.filter((p) => p.id !== "openai" || openaiAvailable === true);
   const effectiveProvider = openaiAvailable === false && provider === "openai" ? "claude-cli" : provider;
+  // Solo las secciones NUEVAS (el resultado trae las actuales + las nuevas), con
+  // casillas: se agregan únicamente las marcadas, igual que en "Mejorar con IA".
+  const newBlocks = result ? result.slice(content.length) : [];
+  const selection = useBlockSelection(newBlocks, result);
 
   async function handleGenerate() {
     setLoading(true);
@@ -88,7 +93,7 @@ export function ExpandDraftPanel({
 
   function apply() {
     if (!result) return;
-    onApply(result);
+    onApply([...content, ...selection.selectedBlocks()]);
     setResult(null);
     setInstructions("");
   }
@@ -169,26 +174,19 @@ export function ExpandDraftPanel({
 
           {result && (
             <>
-              <p className="text-[12.5px] font-semibold text-ink">Contenido nuevo — revisa antes de aplicar</p>
-              <div className="flex flex-col gap-3">
-                {result.slice(content.length).map((block, i) => (
-                  <div key={i} className="rounded-[10px] border border-border-soft bg-background p-3.5">
-                    {block.heading && <p className="mb-1.5 text-[13px] font-semibold text-ink">{block.heading}</p>}
-                    {block.paragraphs.map((p, pi) => (
-                      <p key={pi} className="mb-1.5 text-[12.5px] leading-[1.6] text-ink-soft last:mb-0">
-                        {p}
-                      </p>
-                    ))}
-                  </div>
-                ))}
-              </div>
+              <BlockSelectionList
+                selection={selection}
+                title="Contenido nuevo — elige qué agregar"
+                hint="Desmarca las secciones o párrafos que no quieras; lo marcado se agrega al final del contenido."
+              />
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={apply}
-                  className="rounded-[10px] bg-brand px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_1px_2px_rgba(253,105,13,.35)] transition-colors hover:bg-brand-pressed"
+                  disabled={selection.selected === 0}
+                  className="rounded-[10px] bg-brand px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_1px_2px_rgba(253,105,13,.35)] transition-colors hover:bg-brand-pressed disabled:cursor-default disabled:opacity-60"
                 >
-                  Aplicar
+                  {selection.selected < selection.total ? "Agregar lo marcado" : "Agregar todo"}
                 </button>
                 <button type="button" onClick={() => setResult(null)} className="text-[13px] font-medium text-ink-soft hover:text-brand">
                   Descartar
