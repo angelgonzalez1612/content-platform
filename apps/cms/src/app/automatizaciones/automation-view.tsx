@@ -500,10 +500,9 @@ export function AutomationView({
               Agregar más contenido con IA si queda corto
             </label>
             <p className="ml-[26px] text-[11.5px] leading-[1.4] text-ink-faint">
-              Si el borrador no llega al mínimo de longitud recomendado, le pide a la IA 1-3 secciones más antes de crear la pieza. Solo
-              aplica a noticias y reportajes (los únicos tipos con cuerpo de texto propio) — y como ese contenido extra nunca pasó por la
-              revisión de calidad del borrador original, la pieza siempre queda como borrador para que la revises, en vez de publicarse
-              sola.
+              Si el borrador queda corto, le pide a la IA 1-3 secciones más antes de crear la pieza (ej. &quot;Qué esperar&quot;, &quot;Para
+              quién es&quot;). Aplica a noticias y reportajes de La Mira (debajo del mínimo de longitud) y a lugares y eventos de Planazo (debajo
+              de ~250 palabras). Siempre queda en revisión para que decidas qué secciones dejar.
             </p>
           </div>
 

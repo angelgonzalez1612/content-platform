@@ -24,6 +24,7 @@ import { RadarTopicsService } from './radar-topics.service';
 import { looksLikeSameStory, normalizeTitle, resolvedTopicWasHandled } from './topic-deduplication';
 import { ruleAccepts, ruleCouldMatch } from './rule-matching';
 import { decodeHtmlEntities } from './decode-html-entities';
+import { planazoNeedsExpansion } from './expand-policy';
 import { AUTOMATABLE_CONTENT_TYPES } from './dto/automation-rule.dto';
 import { type AutomationRuleRow } from '../../db/schema';
 
@@ -695,6 +696,28 @@ export class AutomationRunnerService {
     const { rule } = state;
     if (!rule.expandIfShort) return result;
 
+    // Lugares/eventos de Planazo: su descripción es corta por diseño y no traen
+    // bloques; se les agregan 1-3 secciones si no llegan al objetivo de
+    // palabras (ver expand-policy.ts).
+    const planazoDraft = result.draft as { description?: string; content?: ContentBlock[] };
+    if (planazoNeedsExpansion(result.contentType, planazoDraft.description, planazoDraft.content)) {
+      try {
+        const expanded = await this.aiDraft.expandDraft({
+          contentType: result.contentType,
+          name: topic.title,
+          description: planazoDraft.description ?? null,
+          content: planazoDraft.content ?? [],
+          categoryId: result.categoryId,
+          provider: state.provider,
+        });
+        const mergedContent = (expanded.draft as { content: ContentBlock[] }).content;
+        return { ...result, draft: { ...(result.draft as Record<string, unknown>), content: mergedContent }, decision: 'needs-review' };
+      } catch (err) {
+        if (err instanceof ProviderQuotaExceededError) throw err;
+        return result; // si la expansión falla, seguimos con el borrador tal cual
+      }
+    }
+
     const tooShort = result.checksRun.some((c) => c.name === 'calidad-longitud' && !c.passed);
     if (!tooShort) return result;
 
@@ -786,9 +809,10 @@ export class AutomationRunnerService {
 
     switch (contentType) {
       case 'place': {
-        const { description, suggestedTags, imageSearchQuery: _q, seo: _seo, ...categoryData } = draft as {
+        const { description, suggestedTags, content, imageSearchQuery: _q, seo: _seo, ...categoryData } = draft as {
           description?: string;
           suggestedTags?: string[];
+          content?: ContentBlock[];
           imageSearchQuery?: string;
           seo?: Seo;
         };
@@ -802,12 +826,14 @@ export class AutomationRunnerService {
           categoryData,
           seo,
           sourceUrl: result.sourceUrl,
+          content: content ?? [],
         });
         return { id: created.id, slug: created.slug };
       }
       case 'evento-planazo': {
-        const { description, imageSearchQuery: _q, seo: _seo, ...categoryData } = draft as {
+        const { description, content, imageSearchQuery: _q, seo: _seo, ...categoryData } = draft as {
           description?: string;
+          content?: ContentBlock[];
           imageSearchQuery?: string;
           seo?: Seo;
         };
@@ -822,6 +848,7 @@ export class AutomationRunnerService {
           categoryData,
           seo,
           sourceUrl: result.sourceUrl,
+          content: content ?? [],
         });
         return { id: created.id, slug: created.slug };
       }
