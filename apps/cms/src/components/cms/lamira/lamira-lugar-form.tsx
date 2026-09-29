@@ -233,9 +233,9 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
             disabled={saving}
             className="rounded-[10px] bg-brand px-4 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_1px_2px_rgba(253,105,13,.35)] transition-[transform,box-shadow,background-color] duration-200 hover:-translate-y-px hover:bg-brand-pressed hover:shadow-[0_10px_24px_-10px_rgba(253,105,13,.55)] disabled:translate-y-0 disabled:cursor-default disabled:opacity-60 disabled:shadow-none"
           >
-            {saving ? "Guardando…" : isEdit ? "Guardar cambios" : "Crear lugar"}
+            {saving ? "Guardando…" : isEdit ? "Actualizar publicación" : "Crear lugar"}
           </button>
-          {savedAt && <span className="font-mono text-[12px] text-positive">Guardado ✓</span>}
+          {savedAt && <span className="font-mono text-[12px] text-positive">Publicación actualizada ✓ · lamira.mx se actualiza en ~1 min</span>}
         </div>
       </form>
     </div>

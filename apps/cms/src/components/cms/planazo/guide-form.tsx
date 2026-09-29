@@ -10,6 +10,7 @@ import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
 import { GuideSectionsField, type GuideSectionValue, type PlaceOption } from "@/components/cms/planazo/guide-sections-field";
 import { ImproveWithAiPanel, type ImproveWithAiHandle } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, isFieldSelected, type ImproveResult, type ImproveSelection } from "@/components/cms/lamira/improve-preview";
+import { SaveActions } from "@/components/cms/save-actions";
 
 const STATUS_OPTIONS: Array<{ value: ContentStatus; label: string }> = [
   { value: "draft", label: "Borrador" },
@@ -57,6 +58,8 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
     existing?.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
   );
   const [saving, setSaving] = useState(false);
+  // Estado que ya tiene en la base — el selector (form.status) puede cambiar antes de guardar.
+  const [savedStatus, setSavedStatus] = useState<string | null>((isEdit ? form.status : null));
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [improving, setImproving] = useState(false);
@@ -127,6 +130,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
 
       if (isEdit) {
         setForm((f) => ({ ...f, status }));
+        setSavedStatus(status);
         setSavedAt(Date.now());
         setSaving(false);
         router.refresh();
@@ -329,26 +333,16 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
 
       {error && <p className="rounded-lg bg-[#FDECEA] px-3 py-2 text-[13px] font-medium text-[#C4453A]">{error}</p>}
 
-      <div className="flex items-center gap-3 border-t border-border-soft pt-5">
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-[10px] bg-brand px-4 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_1px_2px_rgba(253,105,13,.35)] transition-[transform,box-shadow,background-color] duration-200 hover:-translate-y-px hover:bg-brand-pressed hover:shadow-[0_10px_24px_-10px_rgba(253,105,13,.55)] disabled:translate-y-0 disabled:cursor-default disabled:opacity-60 disabled:shadow-none"
-        >
-          {saving ? "Guardando…" : isEdit ? "Guardar cambios" : "Crear guía"}
-        </button>
-        {isEdit && form.status !== "published" && (
-          <button
-            type="button"
-            onClick={handlePublish}
-            disabled={saving}
-            className="rounded-[10px] border border-[#B7E4C7] bg-[#EAF7EF] px-4 py-2.5 text-[13.5px] font-semibold text-[#2E9E5B] transition-colors hover:bg-[#DFF3E6] disabled:cursor-default disabled:opacity-60"
-          >
-            Publicar
-          </button>
-        )}
-        {savedAt && <span className="font-mono text-[12px] text-positive">Guardado ✓</span>}
-      </div>
+      <SaveActions
+        isEdit={isEdit}
+        saving={saving}
+        createLabel="Crear guía"
+        savedStatus={savedStatus}
+        selectedStatus={form.status}
+        savedAt={savedAt}
+        onPublish={handlePublish}
+        siteLabel="planazo.com.mx"
+      />
     </form>
     </div>
   );
