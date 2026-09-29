@@ -19,6 +19,7 @@ import { ReportajeForm } from "@/components/cms/lamira/reportaje-form";
 import { VersionHistory } from "@/components/cms/version-history";
 import { ViewPublishedLinks } from "@/components/cms/view-published-link";
 import { LAMIRA_TYPE_PATH } from "@/lib/lamira-paths";
+import { EditPageHeader } from "@/components/cms/edit-page-header";
 
 const TYPE_LABEL: Record<string, string> = {
   noticia: "Noticia",
@@ -108,18 +109,14 @@ export default async function EditLamiraContentPage({ params }: { params: Promis
 
   return (
     <CmsShell user={session} title={title}>
-      <div className="sticky top-0 z-10 border-b border-border-soft bg-background px-[26px] pt-[26px] pb-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className="font-mono text-[10px] font-medium tracking-[.1em] text-ink-faint uppercase">{TYPE_LABEL[type]} · La Mira</p>
-          <ViewPublishedLinks site="la-mira" path={`${LAMIRA_TYPE_PATH[type]}/${slug}`} available={isPublished} />
-        </div>
-        <h1 className="mt-3 text-[22px] font-semibold tracking-tight">{title}</h1>
-        <div className="mt-3">
-          <VersionHistory contentType={type} contentId={id} />
-        </div>
-      </div>
+      <EditPageHeader
+        kicker={`${TYPE_LABEL[type]} · La Mira`}
+        title={title}
+        actions={<ViewPublishedLinks site="la-mira" path={`${LAMIRA_TYPE_PATH[type]}/${slug}`} available={isPublished} />}
+      />
 
-      <div className="flex flex-col gap-4 p-[26px] pb-[60px]">
+      <div className="flex flex-col gap-4 p-[26px] pt-5 pb-[60px]">
+        <VersionHistory contentType={type} contentId={id} />
         {form}
       </div>
     </CmsShell>

@@ -121,13 +121,13 @@ export function EditPreviewLayout({ left, preview }: { left: ReactNode; preview:
         className="group hidden w-6 flex-none cursor-col-resize touch-none justify-center self-stretch outline-none lg:flex"
       >
         <span
-          className={`mt-[26px] h-[calc(100vh-52px)] max-h-full w-[3px] rounded-full transition-colors duration-150 group-hover:bg-brand/50 group-focus-visible:bg-brand ${
+          className={`mt-2 h-[calc(100vh-160px)] max-h-full w-[3px] rounded-full transition-colors duration-150 group-hover:bg-brand/50 group-focus-visible:bg-brand ${
             dragging ? "bg-brand" : "bg-border"
           }`}
         />
       </div>
 
-      <div className="w-full flex-none lg:sticky lg:top-[26px] lg:w-[var(--preview-width)]" style={{ "--preview-width": `${width}px` } as React.CSSProperties}>
+      <div className="w-full flex-none lg:sticky lg:top-[84px] lg:w-[var(--preview-width)]" style={{ "--preview-width": `${width}px` } as React.CSSProperties}>
         <div className="mb-2.5 hidden flex-wrap items-center justify-between gap-2 lg:flex">
           <div className="inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5">
             {PRESETS.map((p) => {
@@ -150,7 +150,7 @@ export function EditPreviewLayout({ left, preview }: { left: ReactNode; preview:
           </div>
           <span className="font-mono text-[11px] text-ink-faint tabular-nums">{Math.round(width)} px</span>
         </div>
-        <div className="@container lg:max-h-[calc(100vh-90px)] lg:overflow-y-auto">{preview}</div>
+        <div className="@container lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto">{preview}</div>
       </div>
     </div>
   );

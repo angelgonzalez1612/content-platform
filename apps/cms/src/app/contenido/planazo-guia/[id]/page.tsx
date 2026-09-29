@@ -6,6 +6,7 @@ import { CmsShell } from "@/components/cms/cms-shell";
 import { GuideForm } from "@/components/cms/planazo/guide-form";
 import { VersionHistory } from "@/components/cms/version-history";
 import { ViewPublishedLinks } from "@/components/cms/view-published-link";
+import { EditPageHeader } from "@/components/cms/edit-page-header";
 
 export default async function EditPlanazoGuidePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -17,18 +18,14 @@ export default async function EditPlanazoGuidePage({ params }: { params: Promise
 
   return (
     <CmsShell user={session} title={guide.title}>
-      <div className="sticky top-0 z-10 border-b border-border-soft bg-background px-[26px] pt-[26px] pb-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className="font-mono text-[10px] font-medium tracking-[.1em] text-ink-faint uppercase">Guía · Planazo</p>
-          <ViewPublishedLinks site="planazo" path={`guias/${guide.slug}`} available={guide.status === "published"} />
-        </div>
-        <h1 className="mt-3 text-[22px] font-semibold tracking-tight">{guide.title}</h1>
-        <div className="mt-3">
-          <VersionHistory contentType="planazo-guia" contentId={guide.id} />
-        </div>
-      </div>
+      <EditPageHeader
+        kicker="Guía · Planazo"
+        title={guide.title}
+        actions={<ViewPublishedLinks site="planazo" path={`guias/${guide.slug}`} available={guide.status === "published"} />}
+      />
 
-      <div className="flex flex-col gap-4 p-[26px] pb-[60px]">
+      <div className="flex flex-col gap-4 p-[26px] pt-5 pb-[60px]">
+        <VersionHistory contentType="planazo-guia" contentId={guide.id} />
         <GuideForm placeOptions={buildPlaceOptions(places, events)} existing={guide} />
       </div>
     </CmsShell>

@@ -1,11 +1,11 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { getCmsPlace, getCmsCategory } from "@/lib/cms-api";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { PlaceEditForm } from "@/components/cms/place-edit-form";
 import { VersionHistory } from "@/components/cms/version-history";
 import { ViewPublishedLinks } from "@/components/cms/view-published-link";
+import { EditPageHeader } from "@/components/cms/edit-page-header";
 
 export default async function EditPlacePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -24,21 +24,15 @@ export default async function EditPlacePage({ params }: { params: Promise<{ id: 
           contenedor con scroll es el `overflow-y-auto` de CmsShell, así que
           `sticky top-0` en un hijo directo (sin otro overflow entre medio)
           se pega ahí solo. */}
-      <div className="sticky top-0 z-10 border-b border-border-soft bg-background px-[26px] pt-[26px] pb-4">
-        <div className="flex items-center justify-between gap-3">
-          <Link href="/contenido" className="text-[12.5px] text-ink-soft hover:text-brand">
-            ← Contenido
-          </Link>
-          <ViewPublishedLinks site="planazo" path={`lugares/${place.slug}`} available={place.status === "published"} />
-        </div>
-        <h1 className="mt-3 mb-1 text-[22px] font-semibold tracking-tight">{place.name}</h1>
-        <p className="text-[13.5px] text-ink-soft">/{place.slug}</p>
-        <div className="mt-3">
-          <VersionHistory contentType="place" contentId={place.id} />
-        </div>
-      </div>
+      <EditPageHeader
+        kicker="Lugar · Planazo"
+        title={place.name}
+        subtitle={`/${place.slug}`}
+        actions={<ViewPublishedLinks site="planazo" path={`lugares/${place.slug}`} available={place.status === "published"} />}
+      />
 
-      <div className="flex flex-col gap-4 p-[26px] pb-[60px]">
+      <div className="flex flex-col gap-4 p-[26px] pt-5 pb-[60px]">
+        <VersionHistory contentType="place" contentId={place.id} />
         <PlaceEditForm place={place} category={category} />
       </div>
     </CmsShell>

@@ -71,14 +71,14 @@ export function ViewPublishedLinks({
   }
 
   return (
-    <span className="inline-flex flex-wrap items-center gap-1.5">
+    <span className="inline-flex items-center gap-1.5">
       {links.map((l) => (
         <Tooltip key={l.key} label={l.hint}>
           <a
             href={l.url}
             target="_blank"
             rel="noopener noreferrer"
-            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
+            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-[3px] text-[11.5px] font-medium whitespace-nowrap transition-colors ${
               l.key === "prod"
                 ? "border-brand/30 bg-accent text-accent-fg hover:border-brand"
                 : "border-border bg-card text-ink-soft hover:border-ink-faint hover:text-ink"
