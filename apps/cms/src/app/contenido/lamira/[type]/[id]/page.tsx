@@ -20,6 +20,8 @@ import { VersionHistory } from "@/components/cms/version-history";
 import { ViewPublishedLinks } from "@/components/cms/view-published-link";
 import { LAMIRA_TYPE_PATH } from "@/lib/lamira-paths";
 import { EditPageHeader } from "@/components/cms/edit-page-header";
+import { ReviewBar } from "@/components/cms/review-bar";
+import { getReviewQueue, isReviewSite } from "@/lib/review-queue";
 
 const TYPE_LABEL: Record<string, string> = {
   noticia: "Noticia",
@@ -30,11 +32,19 @@ const TYPE_LABEL: Record<string, string> = {
   reportaje: "Reportaje",
 };
 
-export default async function EditLamiraContentPage({ params }: { params: Promise<{ type: string; id: string }> }) {
+export default async function EditLamiraContentPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ type: string; id: string }>;
+  searchParams: Promise<{ revision?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/login");
 
   const { type, id } = await params;
+  const { revision } = await searchParams;
+  const reviewQueue = isReviewSite(revision) ? await getReviewQueue(revision) : null;
   const categories = await getCmsCategories("la-mira");
 
   let title: string;
@@ -113,6 +123,7 @@ export default async function EditLamiraContentPage({ params }: { params: Promis
         kicker={`${TYPE_LABEL[type]} · La Mira`}
         title={title}
         actions={<ViewPublishedLinks site="la-mira" path={`${LAMIRA_TYPE_PATH[type]}/${slug}`} available={isPublished} />}
+        review={reviewQueue && isReviewSite(revision) ? <ReviewBar site={revision} queue={reviewQueue} currentHref={`/contenido/lamira/${type}/${id}`} /> : undefined}
       />
 
       <div className="flex flex-col gap-4 p-[26px] pt-5 pb-[60px]">

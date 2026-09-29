@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ShowMoreRow, useVisibleRows } from "@/components/cms/show-more";
+import { ReviewBanner } from "@/components/cms/review-banner";
 import Link from "next/link";
 import type { Category } from "@planazo/types";
 import type { LamiraContentRow } from "@/lib/cms-api";
@@ -37,16 +38,24 @@ const TYPE_ICON: Record<string, string> = {
 };
 const TYPE_ORDER = ["noticia", "alerta", "guia", "evento", "lugar", "reportaje"] as const;
 
-type StatusFilter = "todos" | "publicado" | "en_revision" | "sin_publicar";
+export type StatusFilter = "todos" | "publicado" | "en_revision" | "sin_publicar";
 
 // Antes se apilaban los 6 tipos en una sola lista larga — para llegar a
 // "Reportaje" había que scrollear pasando noticias/alertas/guías/eventos/
 // lugares. Mismo patrón que GroupSelect en content-radar: filtrar del lado
 // del cliente sobre datos ya cargados, sin ida y vuelta al servidor.
-export function LamiraContenidoView({ rows, categories }: { rows: LamiraContentRow[]; categories: Category[] }) {
+export function LamiraContenidoView({
+  rows,
+  categories,
+  initialStatusFilter = "todos",
+}: {
+  rows: LamiraContentRow[];
+  categories: Category[];
+  initialStatusFilter?: StatusFilter;
+}) {
   const [typeFilter, setTypeFilter] = useState<string>("todos");
   const [categoryFilter, setCategoryFilter] = useState<string>("todos");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatusFilter);
 
   const typesPresent = useMemo(() => TYPE_ORDER.filter((t) => rows.some((r) => r.type === t)), [rows]);
   const categoriesPresent = useMemo(() => {
@@ -69,15 +78,7 @@ export function LamiraContenidoView({ rows, categories }: { rows: LamiraContentR
   return (
     <>
       {inReviewCount > 0 && (
-        <button
-          type="button"
-          onClick={() => setStatusFilter("en_revision")}
-          className="mb-4 flex w-full items-center gap-2 rounded-[10px] border border-[#F4DDA0] bg-[#FEF6E7] px-4 py-2.5 text-left text-[13px] font-medium text-[#9A6B12] transition-colors hover:bg-[#FCEECA]"
-        >
-          <span aria-hidden>⏳</span>
-          {inReviewCount} {inReviewCount === 1 ? "elemento" : "elementos"} en revisión — no salieron publicados solos
-          porque no pasaron algún check automático (longitud, SEO, foto, etc). Revísalos antes de publicarlos a mano.
-        </button>
+        <ReviewBanner count={inReviewCount} site="lamira" onShowInTable={() => setStatusFilter("en_revision")} />
       )}
 
       <div className="mb-4 flex flex-wrap items-center gap-2">

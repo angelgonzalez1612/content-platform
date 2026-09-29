@@ -16,14 +16,18 @@ export function EditPageHeader({
   title,
   subtitle,
   actions,
+  review,
 }: {
   kicker: string;
   title: string;
   subtitle?: string;
   actions?: ReactNode;
+  /** Barra del modo revisión (ver ReviewBar), si se entró desde la cola. */
+  review?: ReactNode;
 }) {
   return (
     <div className="sticky top-0 z-10 border-b border-border-soft bg-background/95 px-[26px] py-3 backdrop-blur-sm">
+      {review && <div className="mb-2.5">{review}</div>}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-1.5 text-[11px] text-ink-faint">

@@ -6,12 +6,22 @@ import { PlanazoEventForm } from "@/components/cms/planazo/planazo-event-form";
 import { VersionHistory } from "@/components/cms/version-history";
 import { ViewPublishedLinks } from "@/components/cms/view-published-link";
 import { EditPageHeader } from "@/components/cms/edit-page-header";
+import { ReviewBar } from "@/components/cms/review-bar";
+import { getReviewQueue, isReviewSite } from "@/lib/review-queue";
 
-export default async function EditPlanazoEventPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditPlanazoEventPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ revision?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/login");
 
   const { id } = await params;
+  const { revision } = await searchParams;
+  const reviewQueue = isReviewSite(revision) ? await getReviewQueue(revision) : null;
   const [event, categories] = await Promise.all([getCmsEvent(id), getCmsCategories("planazo")]);
   if (!event) notFound();
 
@@ -21,6 +31,7 @@ export default async function EditPlanazoEventPage({ params }: { params: Promise
         kicker="Evento · Planazo"
         title={event.name}
         actions={<ViewPublishedLinks site="planazo" path={`eventos/${event.slug}`} available={event.status === "published"} />}
+        review={reviewQueue && isReviewSite(revision) ? <ReviewBar site={revision} queue={reviewQueue} currentHref={`/contenido/planazo-evento/${id}`} /> : undefined}
       />
 
       <div className="flex flex-col gap-4 p-[26px] pt-5 pb-[60px]">

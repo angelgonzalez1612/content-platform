@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { ShowMoreRow, useVisibleRows } from "@/components/cms/show-more";
+import { ReviewBanner } from "@/components/cms/review-banner";
+import type { StatusFilter } from "./lamira-contenido-view";
 import Link from "next/link";
 import type { Category } from "@planazo/types";
 import type { PlanazoEventRow, PlanazoGuideRow, PlanazoPlaceRow } from "@/lib/cms-api";
@@ -14,7 +16,6 @@ function formatDate(iso: string | null): string {
 }
 
 type TypeFilter = "todos" | "lugares" | "eventos" | "guias";
-type StatusFilter = "todos" | "publicado" | "en_revision" | "sin_publicar";
 
 // Antes Lugares y Eventos se apilaban uno debajo del otro — con muchos
 // lugares, había que scrollear pasando todos para llegar a Eventos. El
@@ -26,15 +27,17 @@ export function PlanazoContenidoView({
   events,
   guides,
   categories,
+  initialStatusFilter = "todos",
 }: {
   places: PlanazoPlaceRow[];
   events: PlanazoEventRow[];
   guides: PlanazoGuideRow[];
   categories: Category[];
+  initialStatusFilter?: StatusFilter;
 }) {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("todos");
   const [categoryFilter, setCategoryFilter] = useState<string>("todos");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatusFilter);
 
   const categoryNameById = new Map(categories.map((c) => [c.id, c.name]));
   const categoriesPresent = useMemo(() => {
@@ -120,15 +123,7 @@ export function PlanazoContenidoView({
       </div>
 
       {inReviewCount > 0 && (
-        <button
-          type="button"
-          onClick={() => setStatusFilter("en_revision")}
-          className="mb-4 flex w-full items-center gap-2 rounded-[10px] border border-[#F4DDA0] bg-[#FEF6E7] px-4 py-2.5 text-left text-[13px] font-medium text-[#9A6B12] transition-colors hover:bg-[#FCEECA]"
-        >
-          <span aria-hidden>⏳</span>
-          {inReviewCount} {inReviewCount === 1 ? "elemento" : "elementos"} en revisión — no salieron publicados solos
-          porque no pasaron algún check automático (longitud, SEO, foto, etc). Revísalos antes de publicarlos a mano.
-        </button>
+        <ReviewBanner count={inReviewCount} site="planazo" onShowInTable={() => setStatusFilter("en_revision")} />
       )}
 
       <div className="mb-4 flex flex-wrap items-center gap-2">

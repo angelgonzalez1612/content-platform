@@ -6,12 +6,22 @@ import { PlaceEditForm } from "@/components/cms/place-edit-form";
 import { VersionHistory } from "@/components/cms/version-history";
 import { ViewPublishedLinks } from "@/components/cms/view-published-link";
 import { EditPageHeader } from "@/components/cms/edit-page-header";
+import { ReviewBar } from "@/components/cms/review-bar";
+import { getReviewQueue, isReviewSite } from "@/lib/review-queue";
 
-export default async function EditPlacePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditPlacePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ revision?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/login");
 
   const { id } = await params;
+  const { revision } = await searchParams;
+  const reviewQueue = isReviewSite(revision) ? await getReviewQueue(revision) : null;
   const place = await getCmsPlace(id);
   if (!place) notFound();
 
@@ -28,6 +38,7 @@ export default async function EditPlacePage({ params }: { params: Promise<{ id: 
         kicker="Lugar · Planazo"
         title={place.name}
         subtitle={`/${place.slug}`}
+        review={reviewQueue && isReviewSite(revision) ? <ReviewBar site={revision} queue={reviewQueue} currentHref={`/contenido/${id}`} /> : undefined}
         actions={<ViewPublishedLinks site="planazo" path={`lugares/${place.slug}`} available={place.status === "published"} />}
       />
 

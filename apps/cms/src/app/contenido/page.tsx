@@ -7,12 +7,14 @@ import { SiteTabs } from "@/components/cms/site-tabs";
 import { LamiraContenidoView } from "./lamira-contenido-view";
 import { PlanazoContenidoView } from "./planazo-contenido-view";
 
-export default async function ContenidoPage({ searchParams }: { searchParams: Promise<{ site?: string }> }) {
+export default async function ContenidoPage({ searchParams }: { searchParams: Promise<{ site?: string; estado?: string }> }) {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const { site } = await searchParams;
+  const { site, estado } = await searchParams;
   const isLamira = site === "lamira";
+  // "Ver todas en la tabla" desde la barra de revisión llega con ?estado=en_revision.
+  const initialStatusFilter = estado === "en_revision" ? "en_revision" : "todos";
 
   if (isLamira) {
     const [rows, categories] = await Promise.all([getCmsLamiraContent(), getCmsCategories("la-mira")]);
@@ -36,7 +38,7 @@ export default async function ContenidoPage({ searchParams }: { searchParams: Pr
             </Link>
           </div>
 
-          <LamiraContenidoView rows={rows} categories={categories} />
+          <LamiraContenidoView rows={rows} categories={categories} initialStatusFilter={initialStatusFilter} />
         </div>
       </CmsShell>
     );
@@ -48,7 +50,7 @@ export default async function ContenidoPage({ searchParams }: { searchParams: Pr
     <CmsShell user={session} title="Contenido">
       <div className="p-[26px] pb-[60px]">
         <SiteTabs site="planazo" basePath="/contenido" />
-        <PlanazoContenidoView places={places} events={events} guides={guides} categories={planazoCategories} />
+        <PlanazoContenidoView places={places} events={events} guides={guides} categories={planazoCategories} initialStatusFilter={initialStatusFilter} />
       </div>
     </CmsShell>
   );
