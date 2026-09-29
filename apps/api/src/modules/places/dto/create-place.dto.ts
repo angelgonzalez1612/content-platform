@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { imagePositionSchema } from '../../../common/image-position';
 
 const contentBlockSchema = z.object({
   heading: z.string().nullable().optional(),
@@ -39,6 +40,7 @@ export const createPlaceSchema = z.object({
   // Si se puede abrir la foto en el modal de galería del sitio real —
   // apagado por defecto (ver schema/places.ts).
   allowPhotoModal: z.boolean().optional(),
+  imagePosition: imagePositionSchema,
   seo: z
     .object({
       title: z.string().optional(),

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { ImageSearchPicker } from "@/components/cms/lamira/image-search-picker";
+import { ImageFocusEditor } from "@/components/cms/lamira/image-focus-editor";
 
 // Campo de imagen reusado en el flujo de generación con IA y en los 6
 // formularios de edición manual de la-mira — agregar/reemplazar/quitar, por
@@ -15,14 +16,26 @@ export function ImageField({
   searchQuery,
   articleImages,
   label = "Imagen",
+  position,
+  onPositionChange,
 }: {
   image: { url: string; credit: string } | null;
   onChange: (image: { url: string; credit: string } | null) => void;
   searchQuery?: string;
   articleImages?: { url: string; credit: string }[];
   label?: string;
+  /** Encuadre (CSS object-position, "X% Y%"); si se pasa onPositionChange, se puede ajustar. */
+  position?: string | null;
+  onPositionChange?: (position: string | null) => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [adjusting, setAdjusting] = useState(false);
+
+  // Una imagen nueva empieza centrada: el encuadre de la anterior no aplica.
+  function changeImage(next: { url: string; credit: string } | null) {
+    if (next?.url !== image?.url) onPositionChange?.(null);
+    onChange(next);
+  }
   const [mode, setMode] = useState<"search" | "url">("search");
   const [draft, setDraft] = useState({ url: "", credit: "" });
 
@@ -33,11 +46,11 @@ export function ImageField({
   }
   function saveUrl() {
     if (!draft.url.trim()) return;
-    onChange({ url: draft.url.trim(), credit: draft.credit.trim() });
+    changeImage({ url: draft.url.trim(), credit: draft.credit.trim() });
     setEditing(false);
   }
   function selectSearched(picked: { url: string; credit: string }) {
-    onChange(picked);
+    changeImage(picked);
     setEditing(false);
   }
 
@@ -114,9 +127,10 @@ export function ImageField({
           </button>
         </div>
       ) : image ? (
+        <>
         <div className="flex items-start gap-3 rounded-[10px] border border-border-soft bg-background p-3">
           {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
-          <img src={image.url} alt="" className="h-20 w-28 flex-none rounded-[8px] object-cover" />
+          <img src={image.url} alt="" className="h-20 w-28 flex-none rounded-[8px] object-cover" style={position ? { objectPosition: position } : undefined} />
           <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-0.5">
             <p className="truncate text-[12px] text-ink-soft">{image.credit || "(sin crédito)"}</p>
             <div className="flex items-center gap-3">
@@ -126,12 +140,25 @@ export function ImageField({
               <button type="button" onClick={startEdit} className="text-[12px] font-medium text-ink-soft hover:text-brand">
                 Reemplazar
               </button>
-              <button type="button" onClick={() => onChange(null)} className="text-[12px] font-medium text-ink-soft hover:text-negative">
+              {onPositionChange && (
+                <button
+                  type="button"
+                  onClick={() => setAdjusting((v) => !v)}
+                  aria-expanded={adjusting}
+                  className={`text-[12px] font-medium hover:text-brand ${adjusting ? "text-brand" : "text-ink-soft"}`}
+                >
+                  {adjusting ? "Listo" : position ? "Ajustar encuadre ·" : "Ajustar encuadre"}
+                  {!adjusting && position && <span className="ml-1 font-normal text-ink-faint">ajustado</span>}
+                </button>
+              )}
+              <button type="button" onClick={() => changeImage(null)} className="text-[12px] font-medium text-ink-soft hover:text-negative">
                 Quitar imagen
               </button>
             </div>
           </div>
         </div>
+        {adjusting && onPositionChange && <ImageFocusEditor url={image.url} position={position ?? null} onChange={onPositionChange} />}
+        </>
       ) : (
         <button
           type="button"

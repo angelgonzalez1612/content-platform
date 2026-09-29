@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { imagePositionSchema } from '../../../common/image-position';
 
 const guideImageSchema = z.object({ url: z.string(), alt: z.string(), credit: z.string() }).nullable().optional();
 
@@ -29,6 +30,7 @@ export const createGuideSchema = z.object({
   imageUrl: z.string().nullable().optional(),
   imageAlt: z.string().nullable().optional(),
   imageCredit: z.string().nullable().optional(),
+  imagePosition: imagePositionSchema,
   excerpt: z.string().nullable().optional(),
   budget: z.string().nullable().optional(),
   duration: z.string().nullable().optional(),
@@ -49,6 +51,7 @@ export const updateGuideSchema = z
     imageUrl: z.string().nullable().optional(),
     imageAlt: z.string().nullable().optional(),
     imageCredit: z.string().nullable().optional(),
+    imagePosition: imagePositionSchema,
     excerpt: z.string().nullable().optional(),
     budget: z.string().nullable().optional(),
     duration: z.string().nullable().optional(),

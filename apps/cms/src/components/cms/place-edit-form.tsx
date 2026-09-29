@@ -44,6 +44,8 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
   const [seo, setSeo] = useState<Seo>(place.seo ?? {});
   const sortedPhotos = [...place.photos].sort((a, b) => a.position - b.position);
   const cover = sortedPhotos[0];
+  // Encuadre de la imagen principal (ver ImageFocusEditor); null = centrada.
+  const [imagePosition, setImagePosition] = useState<string | null>(place.imagePosition ?? null);
   const [image, setImage] = useState<{ url: string; credit: string } | null>(cover ? { url: cover.url, credit: cover.credit ?? "" } : null);
   const [gallery, setGallery] = useState<GalleryPhoto[]>(
     sortedPhotos.slice(1).map((p) => ({ url: p.url, alt: p.alt, credit: p.credit })),
@@ -86,6 +88,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
       categoryData,
       seo,
       photo: image,
+      imagePosition: image ? imagePosition : null,
       gallery,
       content,
       allowPhotoModal: form.allowPhotoModal,
@@ -145,6 +148,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
       name={form.name}
       categoryLabel={category?.name ?? ""}
       image={image}
+      imagePosition={imagePosition}
       address={form.address}
       zone={form.zone}
       price={form.price}
@@ -307,7 +311,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
           <p className="text-[13.5px] text-ink">{category?.name ?? "Sin categoría"}</p>
         </div>
 
-        <ImageField image={image} onChange={setImage} />
+        <ImageField image={image} onChange={setImage} position={imagePosition} onPositionChange={setImagePosition} />
 
         <GalleryField photos={gallery} onChange={setGallery} searchQuery={`${form.name} ${category?.name ?? ""} CDMX`.trim()} />
 

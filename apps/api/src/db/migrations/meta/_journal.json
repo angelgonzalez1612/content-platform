@@ -211,6 +211,13 @@
       "when": 1790270638733,
       "tag": "0029_hesitant_white_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "6",
+      "when": 1790717389359,
+      "tag": "0030_slow_emma_frost",
+      "breakpoints": true
     }
   ]
 }

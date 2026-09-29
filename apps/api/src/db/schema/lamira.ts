@@ -60,6 +60,9 @@ export const noticias = sqliteTable('noticias', {
   // siendo válido crear contenido sin imagen (manual, o si el scraping falló).
   imageUrl: text('image_url'),
   imageCredit: text('image_credit'), // ej. "Foto: MILENIO"
+  // Punto de enfoque de la imagen principal dentro de su recuadro (CSS
+  // object-position, ej. '50% 20%'); null = centrada.
+  imagePosition: text('image_position'),
   featured: integer('featured', { mode: 'boolean' }).default(false).notNull(),
   tag: text('tag'), // 'CLIMA' | 'DEPORTES' — badge suelto, distinto de categoryId
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
@@ -83,6 +86,9 @@ export const alertas = sqliteTable('alertas', {
   seo: text('seo', { mode: 'json' }).$type<Seo>(),
   imageUrl: text('image_url'), // Fase 4 — ver comentario en noticias arriba.
   imageCredit: text('image_credit'),
+  // Punto de enfoque de la imagen principal dentro de su recuadro (CSS
+  // object-position, ej. '50% 20%'); null = centrada.
+  imagePosition: text('image_position'),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
   // Cuerpo extendido opcional — mismo patrón que noticias/reportajes/places
   // (ver AiDraftService, modo 'expand'), agregado por un editor después del
@@ -116,6 +122,9 @@ export const guias = sqliteTable('guias', {
   faq: text('faq', { mode: 'json' }).$type<{ question: string; answer: string }[]>().notNull().default([]),
   imageUrl: text('image_url'), // Fase 4 — ver comentario en noticias arriba.
   imageCredit: text('image_credit'),
+  // Punto de enfoque de la imagen principal dentro de su recuadro (CSS
+  // object-position, ej. '50% 20%'); null = centrada.
+  imagePosition: text('image_position'),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
   createdAt: createdAtColumn(),
 });
@@ -145,6 +154,9 @@ export const lamiraEventos = sqliteTable('lamira_eventos', {
   seo: text('seo', { mode: 'json' }).$type<Seo>(),
   imageUrl: text('image_url'), // Fase 4 — ver comentario en noticias arriba.
   imageCredit: text('image_credit'),
+  // Punto de enfoque de la imagen principal dentro de su recuadro (CSS
+  // object-position, ej. '50% 20%'); null = centrada.
+  imagePosition: text('image_position'),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
   content: text('content', { mode: 'json' }).$type<ContentBlock[]>().notNull().default([]),
   createdAt: createdAtColumn(),
@@ -169,6 +181,9 @@ export const lamiraLugares = sqliteTable('lamira_lugares', {
   seo: text('seo', { mode: 'json' }).$type<Seo>(),
   imageUrl: text('image_url'), // Fase 4 — ver comentario en noticias arriba.
   imageCredit: text('image_credit'),
+  // Punto de enfoque de la imagen principal dentro de su recuadro (CSS
+  // object-position, ej. '50% 20%'); null = centrada.
+  imagePosition: text('image_position'),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
   content: text('content', { mode: 'json' }).$type<ContentBlock[]>().notNull().default([]),
   createdAt: createdAtColumn(),
@@ -196,6 +211,9 @@ export const reportajes = sqliteTable('reportajes', {
   imageCaption: text('image_caption').notNull(),
   imageUrl: text('image_url'), // Fase 4 — ver comentario en noticias arriba.
   imageCredit: text('image_credit'),
+  // Punto de enfoque de la imagen principal dentro de su recuadro (CSS
+  // object-position, ej. '50% 20%'); null = centrada.
+  imagePosition: text('image_position'),
   toc: text('toc', { mode: 'json' }).$type<TocEntry[]>().notNull().default([]),
   content: text('content', { mode: 'json' }).$type<ContentBlock[]>().notNull().default([]),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),

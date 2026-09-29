@@ -23,6 +23,8 @@ export type PlanazoPreviewProps =
       name: string;
       categoryLabel: string;
       image: { url: string; credit: string } | null;
+      /** Encuadre de la imagen (CSS object-position); null = centrada. */
+      imagePosition?: string | null;
       address: string;
       zone: string;
       price: number | null;
@@ -39,6 +41,8 @@ export type PlanazoPreviewProps =
       name: string;
       categoryLabel: string;
       image: { url: string; credit: string } | null;
+      /** Encuadre de la imagen (CSS object-position); null = centrada. */
+      imagePosition?: string | null;
       locationName: string;
       dateLabel: string;
       description: string;
@@ -82,7 +86,7 @@ function DescriptionWithAd({ description }: { description: string }) {
 }
 
 export function PlanazoPreviewCard(props: PlanazoPreviewProps) {
-  const { kind, name, categoryLabel, image, description } = props;
+  const { kind, name, categoryLabel, image, imagePosition, description } = props;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -102,7 +106,7 @@ export function PlanazoPreviewCard(props: PlanazoPreviewProps) {
           {image && (
             <figure className="mb-4 -mt-1">
               {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
-              <img src={image.url} alt="" className="aspect-video w-full rounded-[10px] object-cover" />
+              <img src={image.url} alt="" className="aspect-video w-full rounded-[10px] object-cover" style={imagePosition ? { objectPosition: imagePosition } : undefined} />
               <figcaption className="mt-1.5 text-[11px] text-ink-faint">{image.credit}</figcaption>
             </figure>
           )}

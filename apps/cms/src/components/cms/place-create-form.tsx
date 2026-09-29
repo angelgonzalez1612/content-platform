@@ -40,6 +40,8 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
   const [tagInput, setTagInput] = useState("");
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>({});
   const [seo, setSeo] = useState<Seo>({});
+  // Encuadre de la imagen principal (ver ImageFocusEditor); null = centrada.
+  const [imagePosition, setImagePosition] = useState<string | null>(null);
   const [image, setImage] = useState<{ url: string; credit: string } | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
@@ -84,6 +86,7 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
           categoryData,
           seo: finalSeo,
           photo: image,
+          imagePosition: image ? imagePosition : null,
           allowPhotoModal: form.allowPhotoModal,
         }),
       });
@@ -108,6 +111,7 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
       name={form.name}
       categoryLabel={category?.name ?? ""}
       image={image}
+      imagePosition={imagePosition}
       address={form.address}
       zone={form.zone}
       price={form.price}
@@ -163,7 +167,7 @@ export function PlaceCreateForm({ categories }: { categories: Category[] }) {
         </select>
       </div>
 
-      <ImageField image={image} onChange={setImage} />
+      <ImageField image={image} onChange={setImage} position={imagePosition} onPositionChange={setImagePosition} />
 
       <label className="flex items-start gap-2.5 rounded-[10px] border border-border-soft bg-background p-3">
         <input

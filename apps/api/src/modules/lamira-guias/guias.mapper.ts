@@ -19,6 +19,7 @@ interface GuiaRow {
   faq: Guia['faq'];
   imageUrl: string | null;
   imageCredit: string | null;
+  imagePosition: string | null;
   categoryData: Record<string, unknown>;
   createdAt: Date | string;
 }
@@ -45,6 +46,7 @@ export function toGuia(row: GuiaRow): Guia {
     faq: row.faq,
     imageUrl: row.imageUrl,
     imageCredit: row.imageCredit,
+    imagePosition: row.imagePosition ?? null,
     categoryData: row.categoryData,
     createdAt: toIso(row.createdAt),
   };

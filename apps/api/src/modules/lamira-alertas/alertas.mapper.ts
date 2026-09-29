@@ -14,6 +14,7 @@ interface AlertaRow {
   seo: Alerta['seo'];
   imageUrl: string | null;
   imageCredit: string | null;
+  imagePosition: string | null;
   categoryData: Record<string, unknown>;
   content: Alerta['content'];
   createdAt: Date | string;
@@ -36,6 +37,7 @@ export function toAlerta(row: AlertaRow): Alerta {
     seo: row.seo ?? null,
     imageUrl: row.imageUrl,
     imageCredit: row.imageCredit,
+    imagePosition: row.imagePosition ?? null,
     categoryData: row.categoryData,
     content: row.content,
     createdAt: toIso(row.createdAt),

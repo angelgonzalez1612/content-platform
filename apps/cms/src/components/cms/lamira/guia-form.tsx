@@ -51,6 +51,8 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
   );
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(existing?.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(existing?.seo ?? {});
+  // Encuadre de la imagen principal (ver ImageFocusEditor); null = centrada.
+  const [imagePosition, setImagePosition] = useState<string | null>(existing?.imagePosition ?? null);
   const [image, setImage] = useState<{ url: string; credit: string } | null>(
     existing?.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
   );
@@ -112,6 +114,7 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
       content: withBlockIds(content),
       faq,
       imageUrl: image?.url ?? null,
+      imagePosition: image ? imagePosition : null,
       imageCredit: image?.credit ?? null,
       categoryData,
       seo: finalSeo,
@@ -162,6 +165,7 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
       name={form.title}
       categoryName={category?.name ?? null}
       image={image}
+      imagePosition={imagePosition}
       dek={form.dek}
       description=""
       content={content}
@@ -221,7 +225,7 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
           <input id="g-title" required value={form.title} onChange={(e) => set("title", e.target.value)} className={fieldClass} />
         </div>
 
-        <ImageField image={image} onChange={setImage} searchQuery={form.title} />
+        <ImageField image={image} onChange={setImage} position={imagePosition} onPositionChange={setImagePosition} searchQuery={form.title} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="g-dek" className={labelClass}>

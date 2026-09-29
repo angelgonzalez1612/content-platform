@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { imagePositionSchema } from '../../../common/image-position';
 
 const seoSchema = z
   .object({ title: z.string().optional(), description: z.string().optional(), canonical: z.string().optional(), ogImage: z.string().optional() })
@@ -27,6 +28,7 @@ export const createGuiaSchema = z.object({
   faq: z.array(z.object({ question: z.string(), answer: z.string() })).optional(),
   imageUrl: z.string().nullable().optional(),
   imageCredit: z.string().nullable().optional(),
+  imagePosition: imagePositionSchema,
   categoryData: z.record(z.string(), z.unknown()).optional(),
 });
 export type CreateGuiaDto = z.infer<typeof createGuiaSchema>;
@@ -47,6 +49,7 @@ export const updateGuiaSchema = z
     faq: z.array(z.object({ question: z.string(), answer: z.string() })).optional(),
     imageUrl: z.string().nullable().optional(),
     imageCredit: z.string().nullable().optional(),
+    imagePosition: imagePositionSchema,
     categoryData: z.record(z.string(), z.unknown()).optional(),
   })
   .strict();

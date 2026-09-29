@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { imagePositionSchema } from '../../../common/image-position';
 
 const contentBlockSchema = z.object({
   heading: z.string().nullable().optional(),
@@ -45,6 +46,7 @@ export const updatePlaceSchema = z
     categoryData: z.record(z.string(), z.unknown()).optional(),
     content: z.array(contentBlockSchema).optional(),
     allowPhotoModal: z.boolean().optional(),
+    imagePosition: imagePositionSchema,
     seo: z
       .object({
         title: z.string().optional(),

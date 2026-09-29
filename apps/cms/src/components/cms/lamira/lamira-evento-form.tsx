@@ -42,6 +42,8 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
   });
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(existing?.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(existing?.seo ?? {});
+  // Encuadre de la imagen principal (ver ImageFocusEditor); null = centrada.
+  const [imagePosition, setImagePosition] = useState<string | null>(existing?.imagePosition ?? null);
   const [image, setImage] = useState<{ url: string; credit: string } | null>(
     existing?.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
   );
@@ -91,6 +93,7 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
       organizer: form.organizer,
       officialUrl: form.officialUrl || null,
       imageUrl: image?.url ?? null,
+      imagePosition: image ? imagePosition : null,
       imageCredit: image?.credit ?? null,
       categoryData,
       seo: finalSeo,
@@ -130,6 +133,7 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
       name={form.title}
       categoryName={category?.name ?? null}
       image={image}
+      imagePosition={imagePosition}
       dek=""
       description={form.description}
       content={[]}
@@ -187,7 +191,7 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
           </div>
         </div>
 
-        <ImageField image={image} onChange={setImage} searchQuery={form.title} />
+        <ImageField image={image} onChange={setImage} position={imagePosition} onPositionChange={setImagePosition} searchQuery={form.title} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="e-description" className={labelClass}>

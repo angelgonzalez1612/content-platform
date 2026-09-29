@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { imagePositionSchema } from '../../../common/image-position';
 
 const blockImageSchema = z.object({ url: z.string(), credit: z.string() }).nullable().optional();
 const contentSchema = z.array(z.object({ heading: z.string().nullable().optional(), paragraphs: z.array(z.string()), image: blockImageSchema })).optional();
@@ -15,6 +16,7 @@ export const updateEventSchema = z
     categoryId: z.string().nullable().optional(),
     imageUrl: z.string().nullable().optional(),
     imageCredit: z.string().nullable().optional(),
+    imagePosition: imagePositionSchema,
     sourceUrl: z.string().nullable().optional(),
     status: z
       .enum(['draft', 'in_review', 'scheduled', 'published', 'archived'])

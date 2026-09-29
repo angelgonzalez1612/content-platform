@@ -50,6 +50,8 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
   const [content, setContent] = useState<ContentBlockValue[]>(
     existing.content.map((b) => ({ heading: b.heading ?? null, paragraphs: b.paragraphs })),
   );
+  // Encuadre de la imagen principal (ver ImageFocusEditor); null = centrada.
+  const [imagePosition, setImagePosition] = useState<string | null>(existing.imagePosition ?? null);
   const [image, setImage] = useState<{ url: string; credit: string } | null>(
     existing.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
   );
@@ -99,6 +101,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
       alcaldiaSlug: form.alcaldiaSlug || null,
       categoryId: form.categoryId || null,
       imageUrl: image?.url ?? null,
+      imagePosition: image ? imagePosition : null,
       imageCredit: image?.credit ?? null,
       sourceUrl: form.sourceUrl || null,
       status,
@@ -147,6 +150,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
       name={form.name}
       categoryLabel={category?.name ?? ""}
       image={image}
+      imagePosition={imagePosition}
       locationName={form.locationName}
       dateLabel={toDateLabelPreview(form.startDate)}
       description={form.description}
@@ -244,7 +248,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
           </select>
         </div>
 
-        <ImageField image={image} onChange={setImage} />
+        <ImageField image={image} onChange={setImage} position={imagePosition} onPositionChange={setImagePosition} />
 
         <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 

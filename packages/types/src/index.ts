@@ -144,6 +144,8 @@ export interface Noticia {
   imageCaption: string | null;
   imageUrl: string | null;
   imageCredit: string | null;
+  /** Punto de enfoque de la imagen (CSS object-position, ej. "50% 20%"); null = centrada. */
+  imagePosition: string | null;
   featured: boolean;
   tag: string | null;
   categoryData: Record<string, unknown>;
@@ -166,6 +168,8 @@ export interface Alerta {
   seo: Seo | null;
   imageUrl: string | null;
   imageCredit: string | null;
+  /** Punto de enfoque de la imagen (CSS object-position, ej. "50% 20%"); null = centrada. */
+  imagePosition: string | null;
   categoryData: Record<string, unknown>;
   // Cuerpo extendido opcional, igual que Place (ver comentario ahí) — agregado
   // con "Mejorar con IA" (modo "Agregar contenido"), nunca por el draft inicial.
@@ -192,6 +196,8 @@ export interface Guia {
   faq: { question: string; answer: string }[];
   imageUrl: string | null;
   imageCredit: string | null;
+  /** Punto de enfoque de la imagen (CSS object-position, ej. "50% 20%"); null = centrada. */
+  imagePosition: string | null;
   categoryData: Record<string, unknown>;
   createdAt: string;
 }
@@ -217,6 +223,8 @@ export interface LamiraEvento {
   seo: Seo | null;
   imageUrl: string | null;
   imageCredit: string | null;
+  /** Punto de enfoque de la imagen (CSS object-position, ej. "50% 20%"); null = centrada. */
+  imagePosition: string | null;
   categoryData: Record<string, unknown>;
   content: ContentBlock[];
   createdAt: string;
@@ -237,6 +245,8 @@ export interface LamiraLugar {
   seo: Seo | null;
   imageUrl: string | null;
   imageCredit: string | null;
+  /** Punto de enfoque de la imagen (CSS object-position, ej. "50% 20%"); null = centrada. */
+  imagePosition: string | null;
   categoryData: Record<string, unknown>;
   content: ContentBlock[];
   createdAt: string;
@@ -260,6 +270,8 @@ export interface Reportaje {
   imageCaption: string;
   imageUrl: string | null;
   imageCredit: string | null;
+  /** Punto de enfoque de la imagen (CSS object-position, ej. "50% 20%"); null = centrada. */
+  imagePosition: string | null;
   toc: TocEntry[];
   content: ContentBlock[];
   categoryData: Record<string, unknown>;
@@ -371,6 +383,8 @@ export interface Place {
   // Si el sitio real deja abrir el modal de galería al hacer clic en la foto
   // — apagado por defecto (ver PlacesService), el editor lo prende a mano.
   allowPhotoModal: boolean;
+  /** Punto de enfoque de la foto de portada (CSS object-position); null = centrada. */
+  imagePosition: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -411,6 +425,8 @@ export interface PlanazoEvent {
   // Imagen propia del evento — independiente de la del `place` vinculado.
   imageUrl: string | null;
   imageCredit: string | null;
+  /** Punto de enfoque de la imagen (CSS object-position, ej. "50% 20%"); null = centrada. */
+  imagePosition: string | null;
   // Mismo campo que Place.sourceUrl y Noticia/Reportaje de La Mira.
   sourceUrl: string | null;
   content: ContentBlock[];
@@ -458,6 +474,8 @@ export interface PlanazoGuide {
   imageUrl: string | null;
   imageAlt: string | null;
   imageCredit: string | null;
+  /** Punto de enfoque de la imagen (CSS object-position, ej. "50% 20%"); null = centrada. */
+  imagePosition: string | null;
   placeSlugs: string[];
   excerpt: string | null;
   budget: string | null;

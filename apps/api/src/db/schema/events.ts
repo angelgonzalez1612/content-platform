@@ -35,6 +35,9 @@ export const events = sqliteTable('events', {
   // diferencia de `places`, que modela una galería real en `photos`).
   imageUrl: text('image_url'),
   imageCredit: text('image_credit'),
+  // Punto de enfoque de la imagen principal dentro de su recuadro (CSS
+  // object-position, ej. '50% 20%'); null = centrada.
+  imagePosition: text('image_position'),
   // Mismo campo que noticia/reportaje de La Mira y places.sourceUrl — el
   // artículo/tema original del que salió este evento, cuando lo crea la
   // automatización.

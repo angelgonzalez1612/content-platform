@@ -63,6 +63,7 @@ export class PlanazoGuidesService {
         imageUrl: dto.imageUrl ?? null,
         imageAlt: dto.imageAlt ?? null,
         imageCredit: dto.imageCredit ?? null,
+        imagePosition: dto.imagePosition ?? null,
         excerpt: dto.excerpt ?? null,
         budget: dto.budget ?? null,
         duration: dto.duration ?? null,

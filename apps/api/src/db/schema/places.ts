@@ -61,6 +61,9 @@ export const places = sqliteTable('places', {
   // Apagado por defecto a propósito — antes CUALQUIER foto abría el modal de
   // galería en el sitio real, aunque fuera una imagen genérica de banco. El
   // editor lo prende cuando la foto real del lugar amerita verse en grande.
+  // Punto de enfoque de la foto de portada (photos[0]) dentro de su recuadro
+  // (CSS object-position, ej. '50% 20%'); null = centrada.
+  imagePosition: text('image_position'),
   allowPhotoModal: integer('allow_photo_modal', { mode: 'boolean' })
     .notNull()
     .default(false),

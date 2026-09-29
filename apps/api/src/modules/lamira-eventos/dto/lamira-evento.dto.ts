@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { imagePositionSchema } from '../../../common/image-position';
 
 const seoSchema = z
   .object({ title: z.string().optional(), description: z.string().optional(), canonical: z.string().optional(), ogImage: z.string().optional() })
@@ -29,6 +30,7 @@ export const createLamiraEventoSchema = z.object({
   seo: seoSchema,
   imageUrl: z.string().nullable().optional(),
   imageCredit: z.string().nullable().optional(),
+  imagePosition: imagePositionSchema,
   categoryData: z.record(z.string(), z.unknown()).optional(),
   content: contentSchema,
 });
@@ -51,6 +53,7 @@ export const updateLamiraEventoSchema = z
     seo: seoSchema,
     imageUrl: z.string().nullable().optional(),
     imageCredit: z.string().nullable().optional(),
+    imagePosition: imagePositionSchema,
     categoryData: z.record(z.string(), z.unknown()).optional(),
     content: contentSchema,
   })

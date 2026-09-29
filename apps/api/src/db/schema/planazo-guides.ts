@@ -29,6 +29,9 @@ export const planazoGuides = sqliteTable('planazo_guides', {
   imageUrl: text('image_url'),
   imageAlt: text('image_alt'),
   imageCredit: text('image_credit'),
+  // Punto de enfoque de la imagen principal dentro de su recuadro (CSS
+  // object-position, ej. '50% 20%'); null = centrada.
+  imagePosition: text('image_position'),
   excerpt: text('excerpt'),
   budget: text('budget'),
   duration: text('duration'),

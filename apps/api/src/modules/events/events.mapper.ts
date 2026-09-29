@@ -20,6 +20,7 @@ interface EventRow {
   place: PlaceRow | null;
   imageUrl: string | null;
   imageCredit: string | null;
+  imagePosition: string | null;
   sourceUrl: string | null;
   content: PlanazoEvent['content'];
   createdAt: Date | string;
@@ -48,6 +49,7 @@ export function toPlanazoEvent(row: EventRow): PlanazoEvent {
     seo: row.seo ?? null,
     imageUrl: row.imageUrl,
     imageCredit: row.imageCredit,
+    imagePosition: row.imagePosition ?? null,
     sourceUrl: row.sourceUrl,
     content: row.content,
     createdAt: toIso(row.createdAt),

@@ -83,6 +83,8 @@ export interface LamiraPreviewProps {
   name: string;
   categoryName: string | null;
   image: { url: string; credit: string } | null;
+  /** Encuadre de la imagen (CSS object-position); null = centrada. */
+  imagePosition?: string | null;
   dek: string;
   description: string;
   content: ContentBlockValue[];
@@ -107,6 +109,7 @@ export function LamiraPreviewCard({
   name,
   categoryName,
   image,
+  imagePosition,
   dek,
   description,
   content,
@@ -140,7 +143,7 @@ export function LamiraPreviewCard({
           {image && (
             <figure className="mb-4 -mt-1">
               {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
-              <img src={image.url} alt="" className="aspect-video w-full rounded-[10px] object-cover" />
+              <img src={image.url} alt="" className="aspect-video w-full rounded-[10px] object-cover" style={imagePosition ? { objectPosition: imagePosition } : undefined} />
               <figcaption className="mt-1.5 text-[11px] text-ink-faint">{image.credit}</figcaption>
             </figure>
           )}

@@ -39,6 +39,8 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
   });
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(existing?.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(existing?.seo ?? {});
+  // Encuadre de la imagen principal (ver ImageFocusEditor); null = centrada.
+  const [imagePosition, setImagePosition] = useState<string | null>(existing?.imagePosition ?? null);
   const [image, setImage] = useState<{ url: string; credit: string } | null>(
     existing?.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
   );
@@ -82,6 +84,7 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
       colonia: form.colonia || null,
       description: form.description,
       imageUrl: image?.url ?? null,
+      imagePosition: image ? imagePosition : null,
       imageCredit: image?.credit ?? null,
       categoryData,
       seo: finalSeo,
@@ -121,6 +124,7 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
       name={form.name}
       categoryName={category?.name ?? null}
       image={image}
+      imagePosition={imagePosition}
       dek=""
       description={form.description}
       content={[]}
@@ -170,7 +174,7 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
           <input id="l-name" required value={form.name} onChange={(e) => set("name", e.target.value)} className={fieldClass} />
         </div>
 
-        <ImageField image={image} onChange={setImage} searchQuery={form.name} />
+        <ImageField image={image} onChange={setImage} position={imagePosition} onPositionChange={setImagePosition} searchQuery={form.name} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="l-description" className={labelClass}>

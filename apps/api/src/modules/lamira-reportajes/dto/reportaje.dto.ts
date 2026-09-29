@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { imagePositionSchema } from '../../../common/image-position';
 
 const seoSchema = z
   .object({ title: z.string().optional(), description: z.string().optional(), canonical: z.string().optional(), ogImage: z.string().optional() })
@@ -29,6 +30,7 @@ export const createReportajeSchema = z.object({
   imageCaption: z.string().min(1),
   imageUrl: z.string().nullable().optional(),
   imageCredit: z.string().nullable().optional(),
+  imagePosition: imagePositionSchema,
   toc: tocSchema.optional(),
   content: contentSchema.optional(),
   categoryData: z.record(z.string(), z.unknown()).optional(),
@@ -51,6 +53,7 @@ export const updateReportajeSchema = z
     imageCaption: z.string().min(1).optional(),
     imageUrl: z.string().nullable().optional(),
     imageCredit: z.string().nullable().optional(),
+    imagePosition: imagePositionSchema,
     toc: tocSchema.optional(),
     content: contentSchema.optional(),
     categoryData: z.record(z.string(), z.unknown()).optional(),

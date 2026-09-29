@@ -229,6 +229,7 @@ export class PlacesService {
         categoryData: dto.categoryData ?? {},
         content: dto.content ?? [],
         allowPhotoModal: dto.allowPhotoModal ?? false,
+        imagePosition: dto.imagePosition ?? null,
         seo: dto.seo ?? null,
       })
       .returning({ id: places.id });

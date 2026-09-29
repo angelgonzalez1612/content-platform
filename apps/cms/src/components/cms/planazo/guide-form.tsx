@@ -48,6 +48,8 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
   );
   const [audience, setAudience] = useState<string[]>(existing?.audience ?? []);
   const [audienceInput, setAudienceInput] = useState("");
+  // Encuadre de la imagen principal (ver ImageFocusEditor); null = centrada.
+  const [imagePosition, setImagePosition] = useState<string | null>(existing?.imagePosition ?? null);
   const [image, setImage] = useState<{ url: string; credit: string } | null>(
     existing?.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
   );
@@ -100,6 +102,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
       categoryLabel: form.categoryLabel,
       readTime: form.readTime,
       imageUrl: image?.url ?? null,
+      imagePosition: image ? imagePosition : null,
       imageCredit: image?.credit ?? null,
       excerpt: form.excerpt || null,
       budget: form.budget || null,
@@ -202,7 +205,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
         <input id="gu-title" required value={form.title} onChange={(e) => set("title", e.target.value)} className={fieldClass} />
       </div>
 
-      <ImageField image={image} onChange={setImage} searchQuery={form.title} label="Portada" />
+      <ImageField image={image} onChange={setImage} position={imagePosition} onPositionChange={setImagePosition} searchQuery={form.title} label="Portada" />
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="gu-description" className={labelClass}>

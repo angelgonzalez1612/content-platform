@@ -70,6 +70,8 @@ export interface UpdatePlaceInput {
   gallery?: { url: string; alt?: string | null; credit?: string | null }[];
   content?: ContentBlock[];
   allowPhotoModal?: boolean;
+  // Encuadre de la portada (CSS object-position, "X% Y%"); null = centrada.
+  imagePosition?: string | null;
 }
 
 /** Sin `site`: todas las categorías. Con `site`: las de ese sitio + las compartidas. */

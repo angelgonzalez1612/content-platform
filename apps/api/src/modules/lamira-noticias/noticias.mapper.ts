@@ -28,6 +28,7 @@ interface NoticiaRow {
   imageCaption: string | null;
   imageUrl: string | null;
   imageCredit: string | null;
+  imagePosition: string | null;
   featured: boolean;
   tag: string | null;
   categoryData: Record<string, unknown>;
@@ -66,6 +67,7 @@ export function toNoticia(row: NoticiaRow): Noticia {
     imageCaption: row.imageCaption,
     imageUrl: row.imageUrl,
     imageCredit: row.imageCredit,
+    imagePosition: row.imagePosition ?? null,
     featured: row.featured,
     tag: row.tag,
     categoryData: row.categoryData,
