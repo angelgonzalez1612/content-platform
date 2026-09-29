@@ -188,8 +188,9 @@ export function PlanazoPreviewCard(props: PlanazoPreviewProps) {
 }
 
 // Guía: tiempo de lectura + paradas, descripción como bajada, intro y cada
-// parada con su lugar — mismo orden que planazo.com.mx/guias/[slug], con un
-// anuncio cada 2 paradas.
+// parada numerada (01, 02…) con su foto y link al lugar — mismo orden y
+// formato que planazo.com.mx/guias/[slug] (tipo "guia"), con un solo anuncio
+// al final como en el sitio.
 function GuideBody(props: Extract<PlanazoPreviewProps, { kind: "guia" }>) {
   const { description, intro, readTime, sections } = props;
   return (
@@ -203,11 +204,10 @@ function GuideBody(props: Extract<PlanazoPreviewProps, { kind: "guia" }>) {
         <ol className="mt-5 flex flex-col gap-5 border-t border-border-soft pt-5">
           {sections.map((section, i) => (
             <li key={i} className="flex flex-col gap-2.5">
-              <div className="flex items-baseline gap-2.5">
-                <span className="font-serif text-[20px] leading-none font-semibold text-brand tabular-nums">{i + 1}</span>
-                <h3 className="font-serif text-[16px] font-semibold text-ink">{section.heading || "(parada sin título)"}</h3>
-              </div>
-              {section.placeLabel && <span className="text-[12px] font-medium text-ink-soft">📍 {section.placeLabel}</span>}
+              <h3 className="flex items-baseline gap-2.5 font-serif text-[16px] font-semibold text-ink">
+                <span className="flex-none text-[17px] font-extrabold text-brand tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+                <span>{section.heading || "(parada sin título)"}</span>
+              </h3>
               {section.image && (
                 <figure>
                   {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
@@ -220,11 +220,15 @@ function GuideBody(props: Extract<PlanazoPreviewProps, { kind: "guia" }>) {
                   {p}
                 </p>
               ))}
-              {i % 2 === 1 && i < sections.length - 1 && <AdSlotPreview size="responsivo" />}
+              {section.placeLabel && <span className="text-[13px] font-semibold text-brand">Ver {section.placeLabel} →</span>}
             </li>
           ))}
         </ol>
       )}
+      {/* Mismo lugar que en planazo.com.mx/guias: un solo anuncio al final. */}
+      <div className="mt-5">
+        <AdSlotPreview size="728 × 90" />
+      </div>
     </>
   );
 }
