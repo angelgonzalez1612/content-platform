@@ -12,7 +12,7 @@ export const mediaAssets = sqliteTable('media_assets', {
   id: idColumn(),
   url: text('url').notNull(),
   credit: text('credit'),
-  source: text('source', { enum: ['wikimedia', 'openverse', 'bing'] }).notNull(),
+  source: text('source', { enum: ['wikimedia', 'openverse', 'bing', 'pexels', 'news'] }).notNull(),
   sourcePageUrl: text('source_page_url'),
   categoryId: text('category_id').references(() => categories.id, { onDelete: 'set null' }),
   createdAt: createdAtColumn(),

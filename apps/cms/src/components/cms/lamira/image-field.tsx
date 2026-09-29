@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
+import { labelClass } from "@/components/cms/dynamic-field";
 import { ImageSearchPicker } from "@/components/cms/lamira/image-search-picker";
 import { ImageFocusEditor } from "@/components/cms/lamira/image-focus-editor";
 
@@ -36,18 +36,9 @@ export function ImageField({
     if (next?.url !== image?.url) onPositionChange?.(null);
     onChange(next);
   }
-  const [mode, setMode] = useState<"search" | "url">("search");
-  const [draft, setDraft] = useState({ url: "", credit: "" });
-
   function startEdit() {
-    setDraft(image ?? { url: "", credit: "" });
-    setMode("search");
+    setAdjusting(false);
     setEditing(true);
-  }
-  function saveUrl() {
-    if (!draft.url.trim()) return;
-    changeImage({ url: draft.url.trim(), credit: draft.credit.trim() });
-    setEditing(false);
   }
   function selectSearched(picked: { url: string; credit: string }) {
     changeImage(picked);
@@ -59,72 +50,25 @@ export function ImageField({
       <span className={labelClass}>{label}</span>
 
       {editing ? (
-        <div className="flex flex-col gap-3 rounded-[10px] border border-border-soft bg-background p-3">
-          {/* Reemplazar no debe hacer perder la imagen que ya había — se deja
-              fija arriba, fuera de las pestañas de búsqueda, para poder
-              recuperarla con un clic aunque ya se haya elegido otra. */}
-          {image && (
-            <div className="flex items-center gap-3 rounded-[8px] border border-border-soft bg-card p-2">
-              {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
-              <img src={image.url} alt="" className="h-14 w-20 flex-none rounded-[6px] object-cover" />
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="font-mono text-[9.5px] font-semibold tracking-[.04em] text-ink-faint uppercase">Imagen actual</span>
-                <span className="truncate text-[11.5px] text-ink-soft">{image.credit || "(sin crédito)"}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => selectSearched(image)}
-                className="flex-none rounded-lg border border-border px-2.5 py-1.5 text-[11.5px] font-medium text-ink-soft hover:border-brand hover:text-brand"
-              >
-                Mantener esta
-              </button>
-            </div>
-          )}
-
-          <div className="flex gap-1">
+        <div className="flex flex-col gap-3 rounded-[10px] border border-brand/40 bg-background p-3">
+          {/* "Cancelar" conserva la imagen actual — reemplazar nunca la pierde
+              hasta que se elige otra. */}
+          <div className="flex items-center gap-2.5">
+            {image && (
+              // eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente
+              <img src={image.url} alt="" title="Imagen actual" className="h-9 w-12 flex-none rounded-[6px] object-cover" />
+            )}
+            <span className="min-w-0 flex-1 text-[12.5px] font-semibold text-ink">{image ? "Elegir otra imagen" : "Agregar imagen"}</span>
             <button
               type="button"
-              onClick={() => setMode("search")}
-              className={`rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors ${mode === "search" ? "bg-accent text-accent-fg" : "text-ink-soft hover:text-ink"}`}
+              onClick={() => setEditing(false)}
+              className="flex-none rounded-md px-2 py-1 text-[12px] font-medium text-ink-soft transition-colors hover:bg-hover hover:text-ink"
             >
-              Buscar imágenes
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("url")}
-              className={`rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors ${mode === "url" ? "bg-accent text-accent-fg" : "text-ink-soft hover:text-ink"}`}
-            >
-              Pegar URL
+              {image ? "Cancelar y mantener la actual" : "Cancelar"}
             </button>
           </div>
 
-          {mode === "search" ? (
-            <ImageSearchPicker initialQuery={searchQuery} articleImages={articleImages} onSelect={selectSearched} />
-          ) : (
-            <>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="img-field-url" className="text-[11px] font-medium text-ink-faint">
-                  URL de la imagen
-                </label>
-                <input id="img-field-url" value={draft.url} onChange={(e) => setDraft((d) => ({ ...d, url: e.target.value }))} placeholder="https://…" className={fieldClass} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="img-field-credit" className="text-[11px] font-medium text-ink-faint">
-                  Crédito
-                </label>
-                <input id="img-field-credit" value={draft.credit} onChange={(e) => setDraft((d) => ({ ...d, credit: e.target.value }))} placeholder="ej. Foto: MILENIO" className={fieldClass} />
-              </div>
-              <div className="flex items-center gap-3">
-                <button type="button" onClick={saveUrl} disabled={!draft.url.trim()} className="self-start rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-pressed disabled:opacity-50">
-                  Guardar imagen
-                </button>
-              </div>
-            </>
-          )}
-
-          <button type="button" onClick={() => setEditing(false)} className="self-start text-[12px] font-medium text-ink-soft hover:text-brand">
-            Cancelar
-          </button>
+          <ImageSearchPicker initialQuery={searchQuery} articleImages={articleImages} onSelect={selectSearched} />
         </div>
       ) : image ? (
         <div className={`overflow-hidden rounded-[10px] border bg-background transition-colors ${adjusting ? "border-brand/40" : "border-border-soft"}`}>

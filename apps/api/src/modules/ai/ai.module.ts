@@ -18,9 +18,10 @@ import { ImageUploadService } from './image-upload.service';
 import { GooglePlacesService } from './google-places.service';
 import { CategoriesModule } from '../categories/categories.module';
 import { PlacesModule } from '../places/places.module';
+import { WebSearchModule } from '../automation/web-search.module';
 
 @Module({
-  imports: [CategoriesModule, PlacesModule], // clasificación de categoría + catálogo real de lugares para planazo-guia, ambos en AiDraftService
+  imports: [CategoriesModule, PlacesModule, WebSearchModule], // WebSearchModule: "Fotos de notas" del buscador de imágenes // clasificación de categoría + catálogo real de lugares para planazo-guia, ambos en AiDraftService
   controllers: [AiController, AiSettingsController],
   providers: [
     // /cms/ai/generate-place (endpoint original) sigue OpenAI-only, sin tocar.

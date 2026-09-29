@@ -36,7 +36,9 @@ const envSchema = z.object({
   // Bing Image Search (Azure AI Services) — tercera fuente del buscador de
   // imágenes, opcional (sin ella, ImageSearchService simplemente no incluye
   // resultados de Bing, igual que ya pasa con OPENAI_API_KEY).
-  BING_API_KEY: z.string().optional(),
+  // Fotos de stock gratuitas en el buscador de imágenes (opcional). Bing Image
+  // Search se quitó: Microsoft retiró esa API en agosto de 2025.
+  PEXELS_API_KEY: z.string().optional(),
   // (Las búsquedas de ligas reales — "Qué busca la gente" y "Búsquedas
   // locales" de Entidades — ya no usan Google Custom Search JSON API: requería
   // key + engine id en un proyecto de Google Cloud y chocaba con la gobernanza

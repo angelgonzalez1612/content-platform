@@ -1,12 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { WebSearchService } from '../automation/web-search.service';
+import { ArticleScraperService } from './article-scraper.service';
 
 export interface ImageSearchResult {
   url: string;
   thumbUrl: string;
   credit: string;
   sourcePageUrl: string;
-  source: 'wikimedia' | 'openverse' | 'bing';
+  source: 'wikimedia' | 'openverse' | 'pexels' | 'news';
+  /** Titular de la nota de donde salió la foto (solo `news`). */
+  title?: string;
 }
 
 interface WikimediaImageInfo {
@@ -33,16 +37,21 @@ interface OpenverseResult {
   foreign_landing_url?: string;
 }
 
-interface BingImageResult {
-  contentUrl: string;
-  thumbnailUrl?: string;
-  hostPageUrl?: string;
-  hostPageDomainFriendlyName?: string;
-  encodingFormat?: string;
+interface PexelsPhoto {
+  url: string;
+  photographer?: string;
+  src?: { large2x?: string; large?: string; medium?: string };
 }
 
 const RESULT_LIMIT_PER_SOURCE = 9;
 const FETCH_TIMEOUT_MS = 8_000;
+// Fotos de notas: el scraper abre un Chromium por nota (Playwright), así que
+// se leen de a pocas a la vez — 8 simultáneas saturaban la máquina y todas se
+// pasaban del tiempo. Pasado NEWS_DEADLINE_MS se devuelve lo encontrado.
+const NEWS_ARTICLES = 8;
+const NEWS_CONCURRENCY = 3;
+const NEWS_ARTICLE_TIMEOUT_MS = 30_000;
+const NEWS_DEADLINE_MS = 45_000;
 
 function stripHtml(html: string): string {
   return html
@@ -51,25 +60,38 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-// Búsqueda de imágenes de uso libre para adjuntar a un borrador — no las
-// genera/inventa la IA, es el humano quien elige de una lista real de
-// resultados (mismo principio que la imagen scrapeada de Fase 4: el crédito
-// siempre viene de una fuente real, nunca inventado). Wikimedia Commons y
-// Openverse no piden API key y traen licencia+autor estructurados; Bing
-// Image Search (tercera fuente, opcional — solo si hay BING_API_KEY) es más
-// amplio pero NO da autor real por imagen, solo el sitio de origen — se
-// filtra a `license=ShareCommercially` (lo más seguro que ofrece Bing para
-// un sitio con anuncios reales) y el crédito queda como "Fuente: <dominio>",
-// honesto sobre lo que sí se sabe, sin inventar un fotógrafo.
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
+  return Promise.race([promise, new Promise<null>((resolve) => setTimeout(() => resolve(null), ms))]);
+}
+
+// Búsqueda de imágenes para adjuntar a un borrador — no las genera/inventa la
+// IA, es el humano quien elige de una lista real de resultados, y el crédito
+// siempre viene de una fuente real, nunca inventado.
+// - Wikimedia Commons y Openverse: sin API key, licencia + autor estructurados,
+//   solo licencias que permiten uso comercial.
+// - Pexels (opcional, solo si hay PEXELS_API_KEY): fotos de stock gratuitas,
+//   crédito al fotógrafo. Útil para temas genéricos (cafés, parques, comida).
+// - Fotos de notas (searchNews): la foto principal de notas reales sobre el
+//   mismo tema (Google News), con crédito al medio — mismo criterio que
+//   "Desde otra fuente" (solo la imagen, nunca el texto).
+// Bing Image Search se quitó: Microsoft retiró esa API en agosto de 2025.
 @Injectable()
 export class ImageSearchService {
   private readonly logger = new Logger(ImageSearchService.name);
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly webSearch: WebSearchService,
+    private readonly scraper: ArticleScraperService,
+  ) {}
+
+  isPexelsConfigured(): boolean {
+    return !!this.config.get<string>('PEXELS_API_KEY');
+  }
 
   async search(query: string): Promise<ImageSearchResult[]> {
-    const [wikimedia, openverse, bing] = await Promise.all([this.searchWikimedia(query), this.searchOpenverse(query), this.searchBing(query)]);
-    return [...wikimedia, ...openverse, ...bing];
+    const [wikimedia, openverse, pexels] = await Promise.all([this.searchWikimedia(query), this.searchOpenverse(query), this.searchPexels(query)]);
+    return [...wikimedia, ...openverse, ...pexels];
   }
 
   async searchWikimedia(query: string): Promise<ImageSearchResult[]> {
@@ -157,44 +179,68 @@ export class ImageSearchService {
     }
   }
 
-  async searchBing(query: string): Promise<ImageSearchResult[]> {
-    const apiKey = this.config.get<string>('BING_API_KEY');
+  async searchPexels(query: string): Promise<ImageSearchResult[]> {
+    const apiKey = this.config.get<string>('PEXELS_API_KEY');
     if (!apiKey) return [];
 
     const url =
-      'https://api.bing.microsoft.com/v7.0/images/search?' +
-      new URLSearchParams({
-        q: query,
-        count: String(RESULT_LIMIT_PER_SOURCE),
-        safeSearch: 'Strict',
-        // Lo más restrictivo que ofrece Bing sigue permitiendo uso comercial
-        // sin más filtro — necesario para un sitio con anuncios reales.
-        license: 'ShareCommercially',
-      }).toString();
+      'https://api.pexels.com/v1/search?' +
+      new URLSearchParams({ query, per_page: String(RESULT_LIMIT_PER_SOURCE), locale: 'es-ES' }).toString();
 
     try {
-      const res = await fetch(url, {
-        headers: { 'Ocp-Apim-Subscription-Key': apiKey },
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      });
+      const res = await fetch(url, { headers: { Authorization: apiKey }, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
       if (!res.ok) return [];
-      const data = (await res.json()) as { value?: BingImageResult[] };
-      return (data.value ?? [])
-        .filter((r) => r.contentUrl && r.thumbnailUrl)
-        .map((r) => ({
-          url: r.contentUrl,
-          thumbUrl: r.thumbnailUrl!,
-          // Bing no da autor/licencia estructurados por imagen como
-          // Wikimedia — el crédito honesto que sí se puede dar es el sitio
-          // de origen, nunca un autor inventado.
-          credit: `Fuente: ${r.hostPageDomainFriendlyName ?? new URL(r.hostPageUrl ?? r.contentUrl).hostname} (Bing)`,
-          sourcePageUrl: r.hostPageUrl ?? r.contentUrl,
-          source: 'bing' as const,
-        }))
-        .slice(0, RESULT_LIMIT_PER_SOURCE);
+      const data = (await res.json()) as { photos?: PexelsPhoto[] };
+      return (data.photos ?? [])
+        .filter((p) => p.src?.large && p.src?.medium)
+        .map((p) => ({
+          url: p.src!.large2x ?? p.src!.large!,
+          thumbUrl: p.src!.medium!,
+          credit: `Foto: ${p.photographer ?? 'Pexels'} (Pexels)`,
+          sourcePageUrl: p.url,
+          source: 'pexels' as const,
+        }));
     } catch (err) {
-      this.logger.warn(`Búsqueda en Bing falló para "${query}": ${(err as Error).message}`);
+      this.logger.warn(`Búsqueda en Pexels falló para "${query}": ${(err as Error).message}`);
       return [];
     }
+  }
+
+  /**
+   * Fotos reales de notas sobre el mismo tema: busca en Google News, lee cada
+   * nota en paralelo y se queda solo con su imagen principal (nunca el texto).
+   * El crédito es el medio que publicó la nota.
+   */
+  async searchNews(query: string): Promise<ImageSearchResult[]> {
+    const articles = (await this.webSearch.search(query)).slice(0, NEWS_ARTICLES);
+    const found: ImageSearchResult[] = [];
+    const seen = new Set<string>();
+    const deadline = Date.now() + NEWS_DEADLINE_MS;
+    let next = 0;
+
+    const worker = async () => {
+      while (next < articles.length && Date.now() < deadline) {
+        const article = articles[next++];
+        try {
+          const remaining = Math.min(NEWS_ARTICLE_TIMEOUT_MS, deadline - Date.now());
+          const scraped = await withTimeout(this.scraper.scrape(article.url), remaining);
+          if (!scraped?.imageUrl || seen.has(scraped.imageUrl)) continue;
+          seen.add(scraped.imageUrl);
+          const medium = article.snippet.split(' · ')[0]?.trim() || scraped.siteName;
+          found.push({
+            url: scraped.imageUrl,
+            thumbUrl: scraped.imageUrl,
+            credit: `Foto: ${medium}`,
+            sourcePageUrl: article.url,
+            source: 'news',
+            title: article.title,
+          });
+        } catch {
+          // Nota con paywall, bloqueo de bots, etc.: se salta.
+        }
+      }
+    };
+    await withTimeout(Promise.all(Array.from({ length: NEWS_CONCURRENCY }, worker)), NEWS_DEADLINE_MS + 1_000);
+    return [...found];
   }
 }

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Inject,
   Param,
   Post,
@@ -23,7 +24,7 @@ import {
   improveRequestSchema,
   draftExpandRequestSchema,
 } from './dto/draft-request.dto';
-import { searchImagesSchema } from './dto/search-images.dto';
+import { imageQueriesSchema, searchImagesSchema } from './dto/search-images.dto';
 import { fetchImageSchema } from './dto/fetch-image.dto';
 import { improveBlockSchema } from './dto/improve-block.dto';
 import { generateSeoSchema } from './dto/generate-seo.dto';
@@ -76,6 +77,29 @@ export class AiController {
   searchImages(@Body() body: unknown) {
     const dto = searchImagesSchema.parse(body);
     return this.imageSearch.search(dto.query);
+  }
+
+  // "Fotos de notas": la foto principal de notas reales sobre el tema (Google
+  // News), con crédito al medio — solo la imagen, nunca el texto. Tarda ~20 s
+  // (lee varias notas en paralelo).
+  @Post('news-images')
+  newsImages(@Body() body: unknown) {
+    const dto = searchImagesSchema.parse(body);
+    return this.imageSearch.searchNews(dto.query);
+  }
+
+  // Sugerencias de búsqueda con IA para el buscador de imágenes — la IA solo
+  // propone palabras que buscar; las imágenes siguen saliendo de fuentes reales.
+  @Post('image-queries')
+  imageQueries(@Body() body: unknown) {
+    const dto = imageQueriesSchema.parse(body);
+    return this.draftService.suggestImageQueries(dto.title, dto.context);
+  }
+
+  // Qué fuentes opcionales están activas (para que el buscador lo diga).
+  @Get('image-sources')
+  imageSources() {
+    return { pexels: this.imageSearch.isPexelsConfigured() };
   }
 
   // Imagen de OTRA URL (una nota de otra fuente sobre el mismo tema) — solo

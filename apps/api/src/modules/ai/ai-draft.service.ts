@@ -1336,9 +1336,43 @@ export class AiDraftService {
   async fetchImageFromUrl(
     url: string,
   ): Promise<{ url: string; credit: string } | null> {
+    // Link directo a una imagen (antes era la pestaña "Pegar URL"): se usa tal
+    // cual, con el dominio como crédito provisional (el editor lo puede cambiar).
+    if (await this.isDirectImage(url)) {
+      return { url, credit: `Foto: ${new URL(url).hostname.replace(/^www\./, '')}` };
+    }
     const scraped = await this.scraper.scrape(url);
     if (!scraped?.imageUrl) return null;
     return { url: scraped.imageUrl, credit: `Foto: ${scraped.siteName}` };
+  }
+
+  private async isDirectImage(url: string): Promise<boolean> {
+    if (/\.(jpe?g|png|webp|gif|avif)(\?|#|$)/i.test(new URL(url).pathname)) return true;
+    try {
+      const res = await fetch(url, { method: 'HEAD', redirect: 'follow', signal: AbortSignal.timeout(8_000) });
+      return (res.headers.get('content-type') ?? '').startsWith('image/');
+    } catch {
+      return false;
+    }
+  }
+
+  /** Buscador de imágenes: la IA propone 3-4 búsquedas cortas (en español y
+   * en inglés, porque Wikimedia/Openverse/Pexels tienen más resultados en
+   * inglés) a partir del título. Solo palabras — las imágenes siguen saliendo
+   * de las fuentes reales. Usa el proveedor predeterminado de Configuración. */
+  async suggestImageQueries(title: string, context?: string): Promise<{ queries: string[] }> {
+    const schema = z.object({
+      queries: z.array(z.string()).describe('3 o 4 búsquedas cortas (2-5 palabras) para un buscador de fotos'),
+    });
+    const output = await this.providers.generateWithFallback('default', {
+      systemPrompt:
+        'Eres editor de fotografía de un medio de la Ciudad de México. Propones qué buscar en bancos de fotos libres (Wikimedia Commons, Openverse, Pexels) para ilustrar una nota. Busca lo que se VE (lugar, objeto, escena), no conceptos abstractos. Mezcla español e inglés. Nunca nombres de personas privadas.',
+      userPrompt: `Título: ${title}${context ? `\nContexto: ${context.slice(0, 800)}` : ''}\n\nDevuelve 3 o 4 búsquedas cortas, de la más específica a la más general.`,
+      schema,
+      schemaName: 'image_queries',
+    });
+    const queries = [...new Set(output.queries.map((q) => q.trim()).filter(Boolean))].slice(0, 4);
+    return { queries };
   }
 
   // Modo "Por liga" de Centro IA: el editor pega la URL de la nota original y
