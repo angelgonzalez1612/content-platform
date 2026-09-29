@@ -312,6 +312,7 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
           savedAt={savedAt}
           onPublish={handlePublish}
           siteLabel="lamira.mx"
+          deleteConfig={existing ? { path: `/cms/lamira/reportajes/${existing.id}`, redirectTo: "/contenido?site=lamira", itemTitle: form.title || "(sin título)" } : undefined}
         />
       </form>
     </div>

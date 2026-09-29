@@ -327,6 +327,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
         savedAt={savedAt}
         onPublish={handlePublish}
         siteLabel="planazo.com.mx"
+        deleteConfig={existing ? { path: `/cms/guides/${existing.id}`, redirectTo: "/contenido", itemTitle: form.title || "(sin título)" } : undefined}
       />
     </form>
     </div>

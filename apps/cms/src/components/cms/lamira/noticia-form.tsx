@@ -415,6 +415,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
           savedAt={savedAt}
           onPublish={handlePublish}
           siteLabel="lamira.mx"
+          deleteConfig={existing ? { path: `/cms/lamira/noticias/${existing.id}`, redirectTo: "/contenido?site=lamira", itemTitle: form.title || "(sin título)" } : undefined}
         />
       </form>
     </div>

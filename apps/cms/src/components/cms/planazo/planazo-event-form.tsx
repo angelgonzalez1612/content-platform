@@ -298,6 +298,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
           savedAt={savedAt}
           onPublish={handlePublish}
           siteLabel="planazo.com.mx"
+          deleteConfig={existing ? { path: `/cms/events/${existing.id}`, redirectTo: "/contenido", itemTitle: form.name || "(sin título)" } : undefined}
         />
       </form>
     </div>

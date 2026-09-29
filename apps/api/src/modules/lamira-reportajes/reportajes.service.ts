@@ -65,6 +65,16 @@ export class ReportajesService {
     return this.findByIdForCms(inserted.id);
   }
 
+  /** Elimina la pieza. Antes guarda una copia en el historial de versiones
+   * ("Antes de eliminar") para poder recuperarla a mano si fue un error. */
+  async remove(id: string): Promise<{ id: string; slug: string }> {
+    const existing = await this.db.query.reportajes.findFirst({ where: eq(reportajes.id, id) });
+    if (!existing) throw new NotFoundException(`Reportaje "${id}" no existe`);
+    await this.versions.snapshot('reportaje', id, existing, 'Antes de eliminar');
+    await this.db.delete(reportajes).where(eq(reportajes.id, id));
+    return { id, slug: existing.slug };
+  }
+
   async update(id: string, patch: UpdateReportajeDto): Promise<Reportaje> {
     const existing = await this.db.query.reportajes.findFirst({ where: eq(reportajes.id, id) });
     if (!existing) throw new NotFoundException(`Reportaje "${id}" no existe`);

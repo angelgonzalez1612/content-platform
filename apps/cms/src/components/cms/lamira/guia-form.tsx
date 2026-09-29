@@ -328,6 +328,7 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
           savedAt={savedAt}
           onPublish={handlePublish}
           siteLabel="lamira.mx"
+          deleteConfig={existing ? { path: `/cms/lamira/guias/${existing.id}`, redirectTo: "/contenido?site=lamira", itemTitle: form.title || "(sin título)" } : undefined}
         />
       </form>
     </div>

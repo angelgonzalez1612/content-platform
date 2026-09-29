@@ -39,6 +39,12 @@ const envSchema = z.object({
   // Fotos de stock gratuitas en el buscador de imágenes (opcional). Bing Image
   // Search se quitó: Microsoft retiró esa API en agosto de 2025.
   PEXELS_API_KEY: z.string().optional(),
+  // Aviso a los sitios públicos para que borren su caché al cambiar contenido
+  // (ver SiteRevalidationService). El mismo secreto va en REVALIDATE_SECRET de
+  // la-mira y planazo_fronted. Sin él, los cambios tardan en verse.
+  SITES_REVALIDATE_SECRET: z.string().optional(),
+  LAMIRA_REVALIDATE_URL: z.string().url().optional(),
+  PLANAZO_REVALIDATE_URL: z.string().url().optional(),
   // (Las búsquedas de ligas reales — "Qué busca la gente" y "Búsquedas
   // locales" de Entidades — ya no usan Google Custom Search JSON API: requería
   // key + engine id en un proyecto de Google Cloud y chocaba con la gobernanza

@@ -138,6 +138,18 @@ export class PlacesService {
     return toPlaceDetail(row);
   }
 
+  /** Elimina la pieza. Antes guarda una copia en el historial de versiones
+   * ("Antes de eliminar") para poder recuperarla a mano si fue un error. */
+  async remove(id: string): Promise<{ id: string; slug: string }> {
+    const existing = await this.db.query.places.findFirst({ where: eq(places.id, id) });
+    if (!existing) throw new NotFoundException(`Lugar "${id}" no existe`);
+    await this.versions.snapshot('place', id, existing, 'Antes de eliminar');
+    // Fotos, categorías, etiquetas y servicios se borran en cascada (FK); los
+    // eventos que apuntaban aquí quedan sin lugar (placeId -> null).
+    await this.db.delete(places).where(eq(places.id, id));
+    return { id, slug: existing.slug };
+  }
+
   async update(id: string, patch: UpdatePlaceDto): Promise<PlaceDetail> {
     const existing = await this.db.query.places.findFirst({
       where: eq(places.id, id),

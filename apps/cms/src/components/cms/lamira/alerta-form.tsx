@@ -16,6 +16,7 @@ import { RichTextarea } from "@/components/cms/rich-textarea";
 import { ImageField } from "@/components/cms/lamira/image-field";
 import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
 import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
+import { SaveActions } from "@/components/cms/save-actions";
 
 const STATUS_OPTIONS: Array<{ value: AlertaStatus; label: string }> = [
   { value: "activa", label: "Activa" },
@@ -234,16 +235,15 @@ export function AlertaForm({ categories, existing }: { categories: Category[]; e
 
         {error && <p className="rounded-lg bg-[#FDECEA] px-3 py-2 text-[13px] font-medium text-[#C4453A]">{error}</p>}
 
-        <div className="flex items-center gap-3 border-t border-border-soft pt-5">
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-[10px] bg-brand px-4 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_1px_2px_rgba(253,105,13,.35)] transition-[transform,box-shadow,background-color] duration-200 hover:-translate-y-px hover:bg-brand-pressed hover:shadow-[0_10px_24px_-10px_rgba(253,105,13,.55)] disabled:translate-y-0 disabled:cursor-default disabled:opacity-60 disabled:shadow-none"
-          >
-            {saving ? "Guardando…" : isEdit ? "Actualizar publicación" : "Crear alerta"}
-          </button>
-          {savedAt && <span className="font-mono text-[12px] text-positive">Publicación actualizada ✓ · lamira.mx se actualiza en ~1 min</span>}
-        </div>
+        <SaveActions
+          isEdit={isEdit}
+          saving={saving}
+          createLabel="Crear alerta"
+          savedStatus={isEdit ? "published" : null}
+          savedAt={savedAt}
+          siteLabel="lamira.mx"
+          deleteConfig={existing ? { path: `/cms/lamira/alertas/${existing.id}`, redirectTo: "/contenido?site=lamira", itemTitle: form.title || "(sin título)" } : undefined}
+        />
       </form>
     </div>
   );

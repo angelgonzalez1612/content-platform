@@ -439,6 +439,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
           savedAt={savedAt}
           onPublish={handlePublish}
           siteLabel="planazo.com.mx"
+          deleteConfig={{ path: `/cms/places/${place.id}`, redirectTo: "/contenido", itemTitle: form.name || "(sin título)" }}
         />
       </form>
     </div>

@@ -59,6 +59,16 @@ export class LamiraLugaresService {
     return this.findByIdForCms(inserted.id);
   }
 
+  /** Elimina la pieza. Antes guarda una copia en el historial de versiones
+   * ("Antes de eliminar") para poder recuperarla a mano si fue un error. */
+  async remove(id: string): Promise<{ id: string; slug: string }> {
+    const existing = await this.db.query.lamiraLugares.findFirst({ where: eq(lamiraLugares.id, id) });
+    if (!existing) throw new NotFoundException(`Lugar "${id}" no existe`);
+    await this.versions.snapshot('lugar', id, existing, 'Antes de eliminar');
+    await this.db.delete(lamiraLugares).where(eq(lamiraLugares.id, id));
+    return { id, slug: existing.slug };
+  }
+
   async update(id: string, patch: UpdateLamiraLugarDto): Promise<LamiraLugar> {
     const existing = await this.db.query.lamiraLugares.findFirst({ where: eq(lamiraLugares.id, id) });
     if (!existing) throw new NotFoundException(`Lugar "${id}" no existe`);

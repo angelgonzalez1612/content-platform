@@ -59,6 +59,16 @@ export class LamiraEventosService {
     return this.findByIdForCms(inserted.id);
   }
 
+  /** Elimina la pieza. Antes guarda una copia en el historial de versiones
+   * ("Antes de eliminar") para poder recuperarla a mano si fue un error. */
+  async remove(id: string): Promise<{ id: string; slug: string }> {
+    const existing = await this.db.query.lamiraEventos.findFirst({ where: eq(lamiraEventos.id, id) });
+    if (!existing) throw new NotFoundException(`Evento "${id}" no existe`);
+    await this.versions.snapshot('evento', id, existing, 'Antes de eliminar');
+    await this.db.delete(lamiraEventos).where(eq(lamiraEventos.id, id));
+    return { id, slug: existing.slug };
+  }
+
   async update(id: string, patch: UpdateLamiraEventoDto): Promise<LamiraEvento> {
     const existing = await this.db.query.lamiraEventos.findFirst({ where: eq(lamiraEventos.id, id) });
     if (!existing) throw new NotFoundException(`Evento "${id}" no existe`);
