@@ -26,14 +26,6 @@ function toDateLabelPreview(startDate: string): string {
   return `${label.charAt(0).toUpperCase()}${label.slice(1)}`;
 }
 
-const STATUS_OPTIONS: Array<{ value: PlanazoEvent["status"]; label: string }> = [
-  { value: "draft", label: "Borrador" },
-  { value: "in_review", label: "En revisión" },
-  { value: "scheduled", label: "Programado" },
-  { value: "published", label: "Publicado" },
-  { value: "archived", label: "Archivado" },
-];
-
 // Trunca un ISO completo a lo que acepta <input type="datetime-local">
 // ("2026-08-30T18:00"), y viceversa al guardar.
 function toLocalInput(iso: string | null): string {
@@ -62,7 +54,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
     existing.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
   );
   const [saving, setSaving] = useState(false);
-  // Estado que ya tiene en la base — el selector (form.status) puede cambiar antes de guardar.
+  // Estado que ya tiene en la base (solo cambia con Publicar / Despublicar).
   const [savedStatus, setSavedStatus] = useState<string | null>(form.status);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -290,18 +282,6 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
 
         <SeoPanel seo={seo} onChange={setSeo} contentTitle={form.name} />
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="pe-status" className={labelClass}>
-            Estado
-          </label>
-          <select id="pe-status" value={form.status} onChange={(e) => set("status", e.target.value as PlanazoEvent["status"])} className={`${fieldClass} max-w-[220px]`}>
-            {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
 
         {error && <p className="rounded-lg bg-[#FDECEA] px-3 py-2 text-[13px] font-medium text-[#C4453A]">{error}</p>}
 
@@ -310,7 +290,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
           saving={saving}
           createLabel="Guardar cambios"
           savedStatus={savedStatus}
-          selectedStatus={form.status}
+          onUnpublish={() => save("draft")}
           savedAt={savedAt}
           onPublish={handlePublish}
           siteLabel="planazo.com.mx"

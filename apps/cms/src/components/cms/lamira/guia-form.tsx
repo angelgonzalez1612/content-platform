@@ -18,14 +18,6 @@ import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
 import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
 import { SaveActions } from "@/components/cms/save-actions";
 
-const STATUS_OPTIONS: Array<{ value: ContentStatus; label: string }> = [
-  { value: "draft", label: "Borrador" },
-  { value: "in_review", label: "En revisión" },
-  { value: "scheduled", label: "Programado" },
-  { value: "published", label: "Publicado" },
-  { value: "archived", label: "Archivado" },
-];
-
 // Catálogo fijo de la-mira (GuideGroup) — no tiene su propio endpoint, no vale
 // la pena construir uno solo para 8 valores que casi nunca cambian.
 const GROUP_OPTIONS = [
@@ -63,7 +55,7 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
     existing?.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
   );
   const [saving, setSaving] = useState(false);
-  // Estado que ya tiene en la base — el selector (form.status) puede cambiar antes de guardar.
+  // Estado que ya tiene en la base (solo cambia con Publicar / Despublicar).
   const [savedStatus, setSavedStatus] = useState<string | null>((isEdit ? form.status : null));
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -319,18 +311,6 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
             </label>
             <input id="g-reading" value={form.readingTime} onChange={(e) => set("readingTime", e.target.value)} className={fieldClass} />
           </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="g-status" className={labelClass}>
-              Estado
-            </label>
-            <select id="g-status" value={form.status} onChange={(e) => set("status", e.target.value as ContentStatus)} className={fieldClass}>
-              {STATUS_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
 
         {error && <p className="rounded-lg bg-[#FDECEA] px-3 py-2 text-[13px] font-medium text-[#C4453A]">{error}</p>}
@@ -340,7 +320,7 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
           saving={saving}
           createLabel="Crear guía"
           savedStatus={savedStatus}
-          selectedStatus={form.status}
+          onUnpublish={() => save("draft")}
           savedAt={savedAt}
           onPublish={handlePublish}
           siteLabel="lamira.mx"

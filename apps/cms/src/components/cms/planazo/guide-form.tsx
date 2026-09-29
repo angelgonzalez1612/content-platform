@@ -12,12 +12,6 @@ import { ImproveWithAiPanel, type ImproveWithAiHandle } from "@/components/cms/i
 import { ImprovePreview, isFieldSelected, type ImproveResult, type ImproveSelection } from "@/components/cms/lamira/improve-preview";
 import { SaveActions } from "@/components/cms/save-actions";
 
-const STATUS_OPTIONS: Array<{ value: ContentStatus; label: string }> = [
-  { value: "draft", label: "Borrador" },
-  { value: "in_review", label: "En revisión" },
-  { value: "published", label: "Publicado" },
-];
-
 const TYPE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "guia", label: "Guía / listicle" },
   { value: "lista", label: "Lista" },
@@ -58,7 +52,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
     existing?.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
   );
   const [saving, setSaving] = useState(false);
-  // Estado que ya tiene en la base — el selector (form.status) puede cambiar antes de guardar.
+  // Estado que ya tiene en la base (solo cambia con Publicar / Despublicar).
   const [savedStatus, setSavedStatus] = useState<string | null>((isEdit ? form.status : null));
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -318,18 +312,6 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
         )}
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="gu-status" className={labelClass}>
-          Estado
-        </label>
-        <select id="gu-status" value={form.status} onChange={(e) => set("status", e.target.value as ContentStatus)} className={`${fieldClass} max-w-[220px]`}>
-          {STATUS_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </div>
 
       {error && <p className="rounded-lg bg-[#FDECEA] px-3 py-2 text-[13px] font-medium text-[#C4453A]">{error}</p>}
 
@@ -338,7 +320,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
         saving={saving}
         createLabel="Crear guía"
         savedStatus={savedStatus}
-        selectedStatus={form.status}
+        onUnpublish={() => save("draft")}
         savedAt={savedAt}
         onPublish={handlePublish}
         siteLabel="planazo.com.mx"
