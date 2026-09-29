@@ -13,4 +13,16 @@ export const apiConfig = {
 export const siteConfig = {
   lamiraUrl: process.env.NEXT_PUBLIC_LAMIRA_URL ?? 'http://localhost:3000',
   planazoUrl: process.env.NEXT_PUBLIC_PLANAZO_URL ?? 'http://localhost:3003',
+  // Prod y dev a la vez, sin importar dónde corra el CMS — Contenido muestra
+  // un "Ver publicación" para cada uno (ver ViewPublishedLinks).
+  environments: {
+    'la-mira': {
+      prod: process.env.NEXT_PUBLIC_LAMIRA_PROD_URL ?? 'https://lamira.mx',
+      dev: process.env.NEXT_PUBLIC_LAMIRA_DEV_URL ?? 'http://localhost:3000',
+    },
+    planazo: {
+      prod: process.env.NEXT_PUBLIC_PLANAZO_PROD_URL ?? 'https://www.planazo.com.mx',
+      dev: process.env.NEXT_PUBLIC_PLANAZO_DEV_URL ?? 'http://localhost:3003',
+    },
+  },
 } as const;

@@ -17,9 +17,8 @@ import { LamiraEventoForm } from "@/components/cms/lamira/lamira-evento-form";
 import { LamiraLugarForm } from "@/components/cms/lamira/lamira-lugar-form";
 import { ReportajeForm } from "@/components/cms/lamira/reportaje-form";
 import { VersionHistory } from "@/components/cms/version-history";
-import { ViewPublishedLink } from "@/components/cms/view-published-link";
+import { ViewPublishedLinks } from "@/components/cms/view-published-link";
 import { LAMIRA_TYPE_PATH } from "@/lib/lamira-paths";
-import { siteConfig } from "@planazo/config";
 
 const TYPE_LABEL: Record<string, string> = {
   noticia: "Noticia",
@@ -106,14 +105,13 @@ export default async function EditLamiraContentPage({ params }: { params: Promis
       notFound();
   }
 
-  const publicUrl = `${siteConfig.lamiraUrl}/${LAMIRA_TYPE_PATH[type]}/${slug}`;
 
   return (
     <CmsShell user={session} title={title}>
       <div className="sticky top-0 z-10 border-b border-border-soft bg-background px-[26px] pt-[26px] pb-4">
         <div className="flex items-center justify-between gap-3">
           <p className="font-mono text-[10px] font-medium tracking-[.1em] text-ink-faint uppercase">{TYPE_LABEL[type]} · La Mira</p>
-          <ViewPublishedLink href={publicUrl} available={isPublished} />
+          <ViewPublishedLinks site="la-mira" path={`${LAMIRA_TYPE_PATH[type]}/${slug}`} available={isPublished} />
         </div>
         <h1 className="mt-3 text-[22px] font-semibold tracking-tight">{title}</h1>
         <div className="mt-3">

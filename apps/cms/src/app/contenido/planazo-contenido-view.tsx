@@ -6,8 +6,7 @@ import Link from "next/link";
 import type { Category } from "@planazo/types";
 import type { PlanazoEventRow, PlanazoGuideRow, PlanazoPlaceRow } from "@/lib/cms-api";
 import { StatusBadge } from "@/components/cms/status-badge";
-import { ViewPublishedLink } from "@/components/cms/view-published-link";
-import { siteConfig } from "@planazo/config";
+import { ViewPublishedLinks } from "@/components/cms/view-published-link";
 
 function formatDate(iso: string | null): string {
   if (!iso) return "Sin fecha";
@@ -204,7 +203,7 @@ export function PlanazoContenidoView({
 
           <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
             <div className="overflow-x-auto">
-            <div className="grid min-w-[600px] grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-2.5 font-mono text-[9px] tracking-[.1em] text-[#BDB6AE] uppercase">
+            <div className="grid min-w-[640px] grid-cols-[1fr_150px_130px_100px_84px] items-center gap-0 border-b border-border-soft px-4 py-2.5 font-mono text-[9px] tracking-[.1em] text-[#BDB6AE] uppercase">
               <span>Nombre</span>
               <span>Categoría</span>
               <span>Estado</span>
@@ -227,7 +226,7 @@ export function PlanazoContenidoView({
               placesPage.visible.map((place) => (
                 <div
                   key={place.id}
-                  className="grid min-w-[600px] grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-hover"
+                  className="grid min-w-[640px] grid-cols-[1fr_150px_130px_100px_84px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-hover"
                 >
                   <Link href={`/contenido/${place.id}`} className="min-w-0 py-2 pr-3">
                     <span className="block truncate text-[13.5px] font-medium tracking-tight hover:text-brand">{place.name}</span>
@@ -239,7 +238,7 @@ export function PlanazoContenidoView({
                   </span>
                   <span className="text-right font-mono text-[11px] text-ink-faint">{formatDate(place.updatedAt)}</span>
                   <span className="flex justify-center">
-                    <ViewPublishedLink compact href={`${siteConfig.planazoUrl}/lugares/${place.slug}`} available={place.status === "published"} />
+                    <ViewPublishedLinks compact site="planazo" path={`lugares/${place.slug}`} available={place.status === "published"} />
                   </span>
                 </div>
               ))
@@ -265,7 +264,7 @@ export function PlanazoContenidoView({
 
           <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
             <div className="overflow-x-auto">
-            <div className="grid min-w-[600px] grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-2.5 font-mono text-[9px] tracking-[.1em] text-[#BDB6AE] uppercase">
+            <div className="grid min-w-[640px] grid-cols-[1fr_150px_130px_100px_84px] items-center gap-0 border-b border-border-soft px-4 py-2.5 font-mono text-[9px] tracking-[.1em] text-[#BDB6AE] uppercase">
               <span>Nombre</span>
               <span>Categoría</span>
               <span>Estado</span>
@@ -281,7 +280,7 @@ export function PlanazoContenidoView({
               eventsPage.visible.map((event) => (
                 <div
                   key={event.id}
-                  className="grid min-w-[600px] grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-hover"
+                  className="grid min-w-[640px] grid-cols-[1fr_150px_130px_100px_84px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-hover"
                 >
                   <Link href={`/contenido/planazo-evento/${event.id}`} className="min-w-0 py-2 pr-3">
                     <span className="block truncate text-[13.5px] font-medium tracking-tight hover:text-brand">{event.name}</span>
@@ -293,7 +292,7 @@ export function PlanazoContenidoView({
                   </span>
                   <span className="text-right font-mono text-[11px] text-ink-faint">{formatDate(event.startDate)}</span>
                   <span className="flex justify-center">
-                    <ViewPublishedLink compact href={`${siteConfig.planazoUrl}/eventos/${event.slug}`} available={event.status === "published"} />
+                    <ViewPublishedLinks compact site="planazo" path={`eventos/${event.slug}`} available={event.status === "published"} />
                   </span>
                 </div>
               ))
@@ -319,7 +318,7 @@ export function PlanazoContenidoView({
 
           <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
             <div className="overflow-x-auto">
-            <div className="grid min-w-[600px] grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-2.5 font-mono text-[9px] tracking-[.1em] text-[#BDB6AE] uppercase">
+            <div className="grid min-w-[640px] grid-cols-[1fr_150px_130px_100px_84px] items-center gap-0 border-b border-border-soft px-4 py-2.5 font-mono text-[9px] tracking-[.1em] text-[#BDB6AE] uppercase">
               <span>Título</span>
               <span>Categoría</span>
               <span>Estado</span>
@@ -335,7 +334,7 @@ export function PlanazoContenidoView({
               guidesPage.visible.map((guide) => (
                 <div
                   key={guide.id}
-                  className="grid min-w-[600px] grid-cols-[1fr_150px_130px_100px_44px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-hover"
+                  className="grid min-w-[640px] grid-cols-[1fr_150px_130px_100px_84px] items-center gap-0 border-b border-border-soft px-4 py-1 transition-colors last:border-b-0 hover:bg-hover"
                 >
                   <Link href={`/contenido/planazo-guia/${guide.id}`} className="min-w-0 py-2 pr-3">
                     <span className="block truncate text-[13.5px] font-medium tracking-tight hover:text-brand">{guide.title}</span>
@@ -349,7 +348,7 @@ export function PlanazoContenidoView({
                   </span>
                   <span className="text-right font-mono text-[11px] text-ink-faint">{formatDate(guide.updatedAt)}</span>
                   <span className="flex justify-center">
-                    <ViewPublishedLink compact href={`${siteConfig.planazoUrl}/guias/${guide.slug}`} available={guide.status === "published"} />
+                    <ViewPublishedLinks compact site="planazo" path={`guias/${guide.slug}`} available={guide.status === "published"} />
                   </span>
                 </div>
               ))

@@ -5,8 +5,7 @@ import { getCmsPlace, getCmsCategory } from "@/lib/cms-api";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { PlaceEditForm } from "@/components/cms/place-edit-form";
 import { VersionHistory } from "@/components/cms/version-history";
-import { ViewPublishedLink } from "@/components/cms/view-published-link";
-import { siteConfig } from "@planazo/config";
+import { ViewPublishedLinks } from "@/components/cms/view-published-link";
 
 export default async function EditPlacePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -30,7 +29,7 @@ export default async function EditPlacePage({ params }: { params: Promise<{ id: 
           <Link href="/contenido" className="text-[12.5px] text-ink-soft hover:text-brand">
             ← Contenido
           </Link>
-          <ViewPublishedLink href={`${siteConfig.planazoUrl}/lugares/${place.slug}`} available={place.status === "published"} />
+          <ViewPublishedLinks site="planazo" path={`lugares/${place.slug}`} available={place.status === "published"} />
         </div>
         <h1 className="mt-3 mb-1 text-[22px] font-semibold tracking-tight">{place.name}</h1>
         <p className="text-[13.5px] text-ink-soft">/{place.slug}</p>

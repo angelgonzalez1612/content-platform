@@ -12,9 +12,8 @@ import { Tooltip } from "@/components/cms/tooltip";
 // publican de inmediato al crearse, así que su columna "Estado" siempre debe
 // decir "Publicado" (ver PublishedBadge), nunca su situación real.
 const HAS_DRAFT_WORKFLOW = new Set(["noticia", "guia", "reportaje"]);
-import { ViewPublishedLink } from "@/components/cms/view-published-link";
+import { ViewPublishedLinks } from "@/components/cms/view-published-link";
 import { LAMIRA_TYPE_PATH } from "@/lib/lamira-paths";
-import { siteConfig } from "@planazo/config";
 
 function formatDate(iso: string): string {
   return new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", year: "numeric" }).format(new Date(iso));
@@ -138,7 +137,7 @@ export function LamiraContenidoView({ rows, categories }: { rows: LamiraContentR
 
       <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(23,20,17,.03)]">
         <div className="overflow-x-auto">
-        <div className="grid min-w-[780px] grid-cols-[110px_1fr_150px_130px_100px_50px_44px] items-center gap-0 border-b border-border-soft px-4 py-2.5 font-mono text-[9px] tracking-[.1em] text-[#BDB6AE] uppercase">
+        <div className="grid min-w-[820px] grid-cols-[110px_1fr_150px_130px_100px_50px_84px] items-center gap-0 border-b border-border-soft px-4 py-2.5 font-mono text-[9px] tracking-[.1em] text-[#BDB6AE] uppercase">
           <span>Tipo</span>
           <span>Título</span>
           <span>Categoría</span>
@@ -156,7 +155,7 @@ export function LamiraContenidoView({ rows, categories }: { rows: LamiraContentR
           page.visible.map((row) => (
             <div
               key={`${row.type}-${row.id}`}
-              className="grid min-w-[780px] grid-cols-[110px_1fr_150px_130px_100px_50px_44px] items-center gap-0 border-b border-border-soft px-4 py-1.5 transition-colors last:border-b-0 hover:bg-hover"
+              className="grid min-w-[820px] grid-cols-[110px_1fr_150px_130px_100px_50px_84px] items-center gap-0 border-b border-border-soft px-4 py-1.5 transition-colors last:border-b-0 hover:bg-hover"
             >
               <span className="flex items-center gap-1.5 text-[12px] text-ink-soft">
                 <span aria-hidden="true">{TYPE_ICON[row.type]}</span>
@@ -191,7 +190,7 @@ export function LamiraContenidoView({ rows, categories }: { rows: LamiraContentR
                 )}
               </span>
               <span className="flex justify-center">
-                <ViewPublishedLink compact href={`${siteConfig.lamiraUrl}/${LAMIRA_TYPE_PATH[row.type]}/${row.slug}`} available={row.isPublished} />
+                <ViewPublishedLinks compact site="la-mira" path={`${LAMIRA_TYPE_PATH[row.type]}/${row.slug}`} available={row.isPublished} />
               </span>
             </div>
           ))
