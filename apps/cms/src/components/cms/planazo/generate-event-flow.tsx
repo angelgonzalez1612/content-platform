@@ -50,8 +50,8 @@ function toDateLabelPreview(startDate: string): string {
 }
 
 function parseEventDraft(draft: Record<string, unknown>) {
-  const { seo, description, ...rest } = draft as { seo?: Seo; description?: string; [key: string]: unknown };
-  return { seo: seo ?? {}, description: description ?? "", categoryData: rest };
+  const { seo, description, content, ...rest } = draft as { seo?: Seo; description?: string; content?: ContentBlockValue[]; [key: string]: unknown };
+  return { seo: seo ?? {}, description: description ?? "", content: content ?? [], categoryData: rest };
 }
 
 // Evento de Planazo — recomendación de plan ligada (opcionalmente) a un lugar
@@ -114,7 +114,7 @@ export function GenerateEventFlow({
   const [endDate, setEndDate] = useState("");
   const [locationName, setLocationName] = useState("");
   const [alcaldiaSlug, setAlcaldiaSlug] = useState(initialAlcaldiaSlug ?? "");
-  const [content, setContent] = useState<ContentBlockValue[]>([]);
+  const [content, setContent] = useState<ContentBlockValue[]>(initialParsed?.content ?? []);
   const [expandOpen, setExpandOpen] = useState(false);
 
   const category = categories.find((c) => c.id === categoryId) ?? null;
@@ -144,6 +144,7 @@ export function GenerateEventFlow({
       const data: DraftResponse = await res.json();
       const parsed = parseEventDraft(data.draft);
       setDescription(parsed.description);
+      setContent(parsed.content);
       setSeo(parsed.seo);
       setCategoryData(parsed.categoryData);
       setChecksRun(data.checksRun);

@@ -340,6 +340,7 @@ export class AiDraftService {
     const fullSchema = z.object({
       seo: z.object(seoShape),
       ...typeConfig.editorialShape,
+      ...(typeConfig.draftOnlyShape ?? {}),
       ...fieldSchema.shape,
     });
 

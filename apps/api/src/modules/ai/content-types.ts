@@ -24,7 +24,21 @@ export interface ContentTypeConfig {
   editorialShape: z.ZodRawShape;
   requiredEditorialFields: string[];
   systemPrompt: string;
+  /** Campos que solo se piden al GENERAR (draft), no al "Mejorar" — p.ej. las
+   * secciones de lugares/eventos de Planazo: al mejorar no deben reescribirse
+   * ni reemplazar las que el editor ya tiene. */
+  draftOnlyShape?: z.ZodRawShape;
 }
+
+// Secciones extra de Planazo (como el cuerpo de una noticia en La Mira): antes
+// un lugar/evento generado solo traía la descripción corta.
+const planazoSectionsShape = {
+  content: z
+    .array(z.object({ heading: z.string().nullable(), paragraphs: z.array(z.string()) }))
+    .describe(
+      '2 o 3 secciones que complementen la descripción, cada una con encabezado corto y 1-2 párrafos (ej. "Qué esperar", "El ambiente", "Para quién es", "Tips para ir"). Solo con lo que te dieron: nunca inventes dirección, horarios, precios ni otros datos verificables.',
+    ),
+};
 
 // Compartido por los 5 tipos "de nota" (noticia/alerta/guia/evento/reportaje)
 // — el humano manda un tema/semilla (a veces literal el titular de otro
@@ -81,6 +95,7 @@ export const CONTENT_TYPES: Record<string, ContentTypeConfig> = {
       ...imageQueryShape,
     },
     requiredEditorialFields: ['description', 'suggestedTags', 'imageSearchQuery'],
+    draftOnlyShape: planazoSectionsShape,
     systemPrompt: `Eres redactor editorial de Planazo, una guía de planes y lugares de la Ciudad de México.
 
 Reglas estrictas:
@@ -159,6 +174,7 @@ Reglas estrictas:
       ...imageQueryShape,
     },
     requiredEditorialFields: ['description', 'imageSearchQuery'],
+    draftOnlyShape: planazoSectionsShape,
     systemPrompt: `Eres redactor editorial de Planazo, una guía de planes y lugares de la Ciudad de México.
 
 Reglas estrictas:

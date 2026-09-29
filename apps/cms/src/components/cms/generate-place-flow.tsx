@@ -45,13 +45,14 @@ interface DraftResponse {
 }
 
 function parsePlaceDraft(draft: Record<string, unknown>) {
-  const { seo, description, suggestedTags, ...rest } = draft as {
+  const { seo, description, suggestedTags, content, ...rest } = draft as {
     seo?: Seo;
     description?: string;
     suggestedTags?: string[];
+    content?: ContentBlockValue[];
     [key: string]: unknown;
   };
-  return { seo: seo ?? {}, description: description ?? "", tags: suggestedTags ?? [], categoryData: rest };
+  return { seo: seo ?? {}, description: description ?? "", tags: suggestedTags ?? [], content: content ?? [], categoryData: rest };
 }
 
 export function GeneratePlaceFlow({
@@ -107,7 +108,7 @@ export function GeneratePlaceFlow({
   const [imageSearchQuery, setImageSearchQuery] = useState(initialDraft?.imageSearchQuery ?? "");
   // "Generar más contenido" (ver ExpandDraftPanel) — vacío hasta que el editor
   // lo pida a propósito; el draft inicial de 'place' nunca genera esto solo.
-  const [content, setContent] = useState<ContentBlockValue[]>([]);
+  const [content, setContent] = useState<ContentBlockValue[]>(initialParsed?.content ?? []);
   const [expandOpen, setExpandOpen] = useState(false);
 
   const category = categories.find((c) => c.id === categoryId) ?? null;
@@ -138,6 +139,7 @@ export function GeneratePlaceFlow({
       const parsed = parsePlaceDraft(data.draft);
       setDescription(parsed.description);
       setTags(parsed.tags);
+      setContent(parsed.content);
       setSeo(parsed.seo);
       setCategoryData(parsed.categoryData);
       setChecksRun(data.checksRun);
