@@ -87,6 +87,21 @@ curl -o /dev/null -w "%{http_code}" http://localhost:3002/login          # 200
 
 ---
 
+### Migraciones de base de datos (¡ojo!)
+La base de Turso **no** lleva el registro de drizzle al día: `__drizzle_migrations`
+solo tiene 3 de las 30+ migraciones del repo (el resto se aplicó a mano o con
+push). **No corras `pnpm db:migrate`**: intentaría reaplicar todas y fallaría.
+Flujo seguro para un cambio de esquema:
+1. Edita `apps/api/src/db/schema/*` y corre `pnpm db:generate` (solo crea el SQL).
+2. Revisa el `.sql` nuevo en `apps/api/src/db/migrations/` (idealmente solo `ADD`).
+3. Aplica **esas sentencias** directo contra Turso (script con `@libsql/client`
+   y `--env-file=.env`), verificando antes con `pragma_table_info` que la columna
+   no exista. Ejemplo: migración 0030 (`image_position`, 2026-09-29).
+4. Si cambias `packages/types`, recompílalo (`pnpm --filter @planazo/types build`):
+   la API lo lee desde `dist/`.
+5. Aplica la migración **antes** de desplegar el código que la usa (el código
+   viejo ignora columnas nuevas; el nuevo truena si faltan).
+
 ## 4. Feature: Entidades + fuente de noticias reales
 
 Pantalla `/entidades` del CMS (`apps/cms/src/components/cms/entidades/`): mapa de
