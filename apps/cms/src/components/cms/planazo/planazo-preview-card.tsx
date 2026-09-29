@@ -98,7 +98,7 @@ export function PlanazoPreviewCard(props: PlanazoPreviewProps) {
           </span>
         </div>
 
-        <article className="p-5 sm:p-6">
+        <article className="p-5 @[40rem]:p-6">
           {image && (
             <figure className="mb-4 -mt-1">
               {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
@@ -111,7 +111,7 @@ export function PlanazoPreviewCard(props: PlanazoPreviewProps) {
             🏷️ {categoryLabel}
           </span>
 
-          <h2 className="mt-2.5 font-serif text-[22px] leading-[1.2] font-semibold text-ink text-balance sm:text-[26px]">{name || "(sin nombre todavía)"}</h2>
+          <h2 className="mt-2.5 font-serif text-[22px] leading-[1.2] font-semibold text-ink text-balance @[40rem]:text-[26px]">{name || "(sin nombre todavía)"}</h2>
 
           {kind === "lugar" ? (
             <>

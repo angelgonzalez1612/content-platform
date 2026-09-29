@@ -136,7 +136,7 @@ export function LamiraPreviewCard({
           <span className="ml-2 truncate font-mono text-[11px] text-ink-faint">lamira.mx/{path}/{slugPreview(name)}</span>
         </div>
 
-        <article className="p-5 sm:p-7">
+        <article className="p-5 @[40rem]:p-7">
           {image && (
             <figure className="mb-4 -mt-1">
               {/* eslint-disable-next-line @next/next/no-img-element -- imagen externa, dominio variable por fuente */}
@@ -147,7 +147,7 @@ export function LamiraPreviewCard({
 
           <p className="text-[11.5px] font-bold tracking-wide text-brand uppercase">{categoryName ?? "Sin categoría"}</p>
 
-          <h2 className="mt-1.5 font-serif text-[22px] leading-[1.2] font-semibold text-ink text-balance sm:text-[26px]">{name || "(sin título todavía)"}</h2>
+          <h2 className="mt-1.5 font-serif text-[22px] leading-[1.2] font-semibold text-ink text-balance @[40rem]:text-[26px]">{name || "(sin título todavía)"}</h2>
 
           {type === "alerta" && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
