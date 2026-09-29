@@ -3,6 +3,7 @@ import { eq, and, gte, inArray, isNull, lt, or } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
 import { automationRules, automationRuns, automationState } from '../../db/schema';
 import { AutomationRuleDto, UpdateAutomationRuleDto } from './dto/automation-rule.dto';
+import { decodeHtmlEntities } from './decode-html-entities';
 
 // Mismo criterio que ContentRadarPublishedService/render.ts (normaliza antes
 // de comparar por título).
@@ -60,21 +61,25 @@ export class AutomationRulesService {
 
   // Bitácora de corridas — la pantalla de Automatizaciones la usa para mostrar
   // "qué hizo la IA" sin tener que cruzar contentAuditLog (que es por-pieza).
-  findRecentRuns(limit = 100) {
-    return this.db.query.automationRuns.findMany({
+  // `topic` se guarda crudo (llave de deduplicación, ver alreadyEvaluatedTitles);
+  // hacia el CMS sale decodificado para que se lea bien.
+  async findRecentRuns(limit = 100) {
+    const rows = await this.db.query.automationRuns.findMany({
       orderBy: (r, { desc }) => [desc(r.ranAt)],
       limit,
     });
+    return rows.map((row) => ({ ...row, topic: decodeHtmlEntities(row.topic) }));
   }
 
   /** Errores de la bitácora desde `since` — para la campanita de notificaciones. */
-  findRecentErrors(since = new Date(Date.now() - 24 * 60 * 60 * 1000)) {
-    return this.db.query.automationRuns.findMany({
+  async findRecentErrors(since = new Date(Date.now() - 24 * 60 * 60 * 1000)) {
+    const rows = await this.db.query.automationRuns.findMany({
       where: and(eq(automationRuns.outcome, 'error'), gte(automationRuns.ranAt, since)),
       columns: { ranAt: true, topic: true, detail: true },
       orderBy: (r, { desc }) => [desc(r.ranAt)],
       limit: 200,
     });
+    return rows.map((row) => ({ ...row, topic: decodeHtmlEntities(row.topic) }));
   }
 
   async logRun(entry: {

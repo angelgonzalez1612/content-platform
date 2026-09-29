@@ -23,6 +23,7 @@ import { WebSearchService } from './web-search.service';
 import { RadarTopicsService } from './radar-topics.service';
 import { looksLikeSameStory, normalizeTitle, resolvedTopicWasHandled } from './topic-deduplication';
 import { ruleAccepts, ruleCouldMatch } from './rule-matching';
+import { decodeHtmlEntities } from './decode-html-entities';
 import { AUTOMATABLE_CONTENT_TYPES } from './dto/automation-rule.dto';
 import { type AutomationRuleRow } from '../../db/schema';
 
@@ -540,7 +541,7 @@ export class AutomationRunnerService {
       }
 
       pending.push({
-        title: topic.sourceKey,
+        title: decodeHtmlEntities(topic.sourceKey),
         categoryLabel: topic.categoryLabel,
         hasCandidateRule: activeRules.some(
           (rule) => ruleCouldMatch(rule, topic) && (topic.source !== 'search-phrase' || rule.includeSearchPhrases),
@@ -724,7 +725,7 @@ export class AutomationRunnerService {
       // los checks entra a la cola editorial como `in_review`.
       const published = false;
     try {
-      const createdRow = await this.createContent(result.contentType as AutomatableType, result, category, topic.title, published);
+      const createdRow = await this.createContent(result.contentType as AutomatableType, result, category, decodeHtmlEntities(topic.title), published);
       await this.contentRadarPublished.markPublished({
         title: topic.sourceKey,
         site: result.site,
