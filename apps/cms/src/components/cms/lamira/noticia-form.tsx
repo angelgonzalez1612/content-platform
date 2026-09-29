@@ -12,7 +12,7 @@ import { TagsField } from "@/components/cms/tags-field";
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { ensureSeo } from "@/lib/ensure-seo";
 import { ImproveWithAiPanel, type ImproveWithAiHandle } from "@/components/cms/improve-with-ai-panel";
-import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
+import { ImprovePreview, isFieldSelected, type ImproveResult, type ImproveSelection } from "@/components/cms/lamira/improve-preview";
 import { buildToc, summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
 import { ImageField } from "@/components/cms/lamira/image-field";
 import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
@@ -73,7 +73,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
     setSavedAt(null);
   }
 
-  function applyImprovement() {
+  function applyImprovement(selection?: ImproveSelection) {
     if (!improveResult) return;
     const { dek, content: improvedContent, seo: improvedSeo, ...rest } = improveResult.draft as {
       dek?: string;
@@ -81,8 +81,9 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
       seo?: Seo;
       [k: string]: unknown;
     };
-    if (dek) set("dek", dek);
-    if (improvedContent) setContent(improvedContent);
+    if (dek && isFieldSelected(selection, "dek")) set("dek", dek);
+    const blocks = selection ? selection.blocks : improvedContent;
+    if (blocks) setContent(blocks);
     if (improvedSeo) setSeo(improvedSeo);
     setCategoryData((prev) => ({ ...prev, ...rest }));
     setImproveResult(null);
@@ -202,8 +203,14 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
         <ImprovePreview
           result={improveResult}
           fields={[
-            { label: "Bajada (dek)", current: form.dek, improved: (improveResult.draft.dek as string) ?? "" },
-            { label: "Cuerpo", current: summarizeBlocks(content), improved: summarizeBlocks((improveResult.draft.content as ContentBlockValue[]) ?? []) },
+            { key: "dek", label: "Bajada (dek)", current: form.dek, improved: (improveResult.draft.dek as string) ?? "" },
+            {
+              key: "content",
+              label: "Cuerpo",
+              current: summarizeBlocks(content),
+              improved: summarizeBlocks((improveResult.draft.content as ContentBlockValue[]) ?? []),
+              blocks: { current: content, improved: (improveResult.draft.content as ContentBlockValue[]) ?? [] },
+            },
           ]}
           onApply={applyImprovement}
           onDiscard={() => setImproveResult(null)}

@@ -11,7 +11,7 @@ import { PairListField } from "@/components/cms/pair-list-field";
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { ensureSeo } from "@/lib/ensure-seo";
 import { ImproveWithAiPanel, type ImproveWithAiHandle } from "@/components/cms/improve-with-ai-panel";
-import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
+import { ImprovePreview, isFieldSelected, type ImproveResult, type ImproveSelection } from "@/components/cms/lamira/improve-preview";
 import { withBlockIds, summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
 import { ImageField } from "@/components/cms/lamira/image-field";
 import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
@@ -76,7 +76,11 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
     setSavedAt(null);
   }
 
-  function applyImprovement() {
+  const improvedGuiaBlocks: ContentBlockValue[] = (
+    (improveResult?.draft.content as { heading: string; paragraphs: string[] }[] | undefined) ?? []
+  ).map((b) => ({ heading: b.heading, paragraphs: b.paragraphs }));
+
+  function applyImprovement(selection?: ImproveSelection) {
     if (!improveResult) return;
     const { dek, content: improvedContent, faq: improvedFaq, seo: improvedSeo, ...rest } = improveResult.draft as {
       dek?: string;
@@ -85,8 +89,9 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
       seo?: Seo;
       [k: string]: unknown;
     };
-    if (dek) set("dek", dek);
-    if (improvedContent) setContent(improvedContent.map((b) => ({ heading: b.heading, paragraphs: b.paragraphs })));
+    if (dek && isFieldSelected(selection, "dek")) set("dek", dek);
+    const blocks = selection ? selection.blocks : improvedContent?.map((b) => ({ heading: b.heading, paragraphs: b.paragraphs }));
+    if (blocks) setContent(blocks);
     if (improvedFaq) setFaq(improvedFaq);
     if (improvedSeo) setSeo(improvedSeo);
     setCategoryData((prev) => ({ ...prev, ...rest }));
@@ -196,8 +201,14 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
         <ImprovePreview
           result={improveResult}
           fields={[
-            { label: "Bajada (dek)", current: form.dek, improved: (improveResult.draft.dek as string) ?? "" },
-            { label: "Cuerpo", current: summarizeBlocks(content), improved: summarizeBlocks(((improveResult.draft.content as { heading: string; paragraphs: string[] }[]) ?? []).map((b) => ({ heading: b.heading, paragraphs: b.paragraphs }))) },
+            { key: "dek", label: "Bajada (dek)", current: form.dek, improved: (improveResult.draft.dek as string) ?? "" },
+            {
+              key: "content",
+              label: "Cuerpo",
+              current: summarizeBlocks(content),
+              improved: summarizeBlocks(improvedGuiaBlocks),
+              blocks: { current: content, improved: improvedGuiaBlocks },
+            },
           ]}
           onApply={applyImprovement}
           onDiscard={() => setImproveResult(null)}

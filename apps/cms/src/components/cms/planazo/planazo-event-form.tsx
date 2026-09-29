@@ -8,7 +8,7 @@ import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { CategoryFieldsSection } from "@/components/cms/category-fields-section";
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { ImproveWithAiPanel, type ImproveWithAiHandle } from "@/components/cms/improve-with-ai-panel";
-import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
+import { ImprovePreview, isFieldSelected, type ImproveResult, type ImproveSelection } from "@/components/cms/lamira/improve-preview";
 import { AlcaldiaSelect } from "@/components/cms/lamira/alcaldia-select";
 import { ImageField } from "@/components/cms/lamira/image-field";
 import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
@@ -75,7 +75,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
     setSavedAt(null);
   }
 
-  function applyImprovement() {
+  function applyImprovement(selection?: ImproveSelection) {
     if (!improveResult) return;
     const { description, content: improvedContent, seo: improvedSeo, ...rest } = improveResult.draft as {
       description?: string;
@@ -83,8 +83,9 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
       seo?: Seo;
       [k: string]: unknown;
     };
-    if (description) set("description", description);
-    if (improvedContent) setContent(improvedContent);
+    if (description && isFieldSelected(selection, "description")) set("description", description);
+    const blocks = selection ? selection.blocks : improvedContent;
+    if (blocks) setContent(blocks);
     if (improvedSeo) setSeo(improvedSeo);
     setCategoryData((prev) => ({ ...prev, ...rest }));
     setImproveResult(null);
@@ -173,8 +174,16 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
         <ImprovePreview
           result={improveResult}
           fields={[
-            { label: "Descripción", current: form.description, improved: (improveResult.draft.description as string) ?? "" },
-            { label: "Cuerpo", current: summarizeBlocks(content), improved: summarizeBlocks((improveResult.draft.content as ContentBlockValue[]) ?? content) },
+            { key: "description", label: "Descripción", current: form.description, improved: (improveResult.draft.description as string) ?? "" },
+            improveResult.draft.content
+              ? {
+                  key: "content",
+                  label: "Cuerpo",
+                  current: summarizeBlocks(content),
+                  improved: summarizeBlocks(improveResult.draft.content as ContentBlockValue[]),
+                  blocks: { current: content, improved: improveResult.draft.content as ContentBlockValue[] },
+                }
+              : { key: "content", label: "Cuerpo", current: summarizeBlocks(content), improved: "" },
           ]}
           onApply={applyImprovement}
           onDiscard={() => setImproveResult(null)}

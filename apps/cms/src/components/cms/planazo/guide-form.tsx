@@ -9,7 +9,7 @@ import { ImageField } from "@/components/cms/lamira/image-field";
 import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
 import { GuideSectionsField, type GuideSectionValue, type PlaceOption } from "@/components/cms/planazo/guide-sections-field";
 import { ImproveWithAiPanel, type ImproveWithAiHandle } from "@/components/cms/improve-with-ai-panel";
-import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
+import { ImprovePreview, isFieldSelected, type ImproveResult, type ImproveSelection } from "@/components/cms/lamira/improve-preview";
 
 const STATUS_OPTIONS: Array<{ value: ContentStatus; label: string }> = [
   { value: "draft", label: "Borrador" },
@@ -69,11 +69,11 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
     setSavedAt(null);
   }
 
-  function applyImprovement() {
+  function applyImprovement(selection?: ImproveSelection) {
     if (!improveResult) return;
     const { description, intro } = improveResult.draft as { description?: string; intro?: string };
-    if (description) set("description", description);
-    if (intro) set("intro", intro);
+    if (description && isFieldSelected(selection, "description")) set("description", description);
+    if (intro && isFieldSelected(selection, "intro")) set("intro", intro);
     setImproveResult(null);
   }
 
@@ -186,8 +186,8 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
       <ImprovePreview
         result={improveResult}
         fields={[
-          { label: "Descripción", current: form.description, improved: (improveResult.draft.description as string) ?? "" },
-          { label: "Intro", current: form.intro, improved: (improveResult.draft.intro as string) ?? "" },
+          { key: "description", label: "Descripción", current: form.description, improved: (improveResult.draft.description as string) ?? "" },
+          { key: "intro", label: "Intro", current: form.intro, improved: (improveResult.draft.intro as string) ?? "" },
         ]}
         onApply={applyImprovement}
         onDiscard={() => setImproveResult(null)}

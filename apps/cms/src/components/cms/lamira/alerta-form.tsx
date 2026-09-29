@@ -11,7 +11,7 @@ import { PairListField } from "@/components/cms/pair-list-field";
 import { SeoPanel } from "@/components/cms/seo-panel";
 import { ensureSeo } from "@/lib/ensure-seo";
 import { ImproveWithAiPanel, type ImproveWithAiHandle } from "@/components/cms/improve-with-ai-panel";
-import { ImprovePreview, type ImproveResult } from "@/components/cms/lamira/improve-preview";
+import { ImprovePreview, isFieldSelected, type ImproveResult, type ImproveSelection } from "@/components/cms/lamira/improve-preview";
 import { RichTextarea } from "@/components/cms/rich-textarea";
 import { ImageField } from "@/components/cms/lamira/image-field";
 import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
@@ -54,10 +54,10 @@ export function AlertaForm({ categories, existing }: { categories: Category[]; e
     setSavedAt(null);
   }
 
-  function applyImprovement() {
+  function applyImprovement(selection?: ImproveSelection) {
     if (!improveResult) return;
     const { description, seo: improvedSeo, ...rest } = improveResult.draft as { description?: string; seo?: Seo; [k: string]: unknown };
-    if (description) set("description", description);
+    if (description && isFieldSelected(selection, "description")) set("description", description);
     if (improvedSeo) setSeo(improvedSeo);
     setCategoryData((prev) => ({ ...prev, ...rest }));
     setImproveResult(null);
@@ -151,7 +151,7 @@ export function AlertaForm({ categories, existing }: { categories: Category[]; e
       {improveResult && (
         <ImprovePreview
           result={improveResult}
-          fields={[{ label: "Descripción", current: form.description, improved: (improveResult.draft.description as string) ?? "" }]}
+          fields={[{ key: "description", label: "Descripción", current: form.description, improved: (improveResult.draft.description as string) ?? "" }]}
           onApply={applyImprovement}
           onDiscard={() => setImproveResult(null)}
           onRegenerate={() => improveRef.current?.regenerate()}
