@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiConfig } from "@planazo/config";
+import { UnsavedChangesGuard } from "@/components/cms/unsaved-changes-guard";
 
 type Status = string;
 
@@ -225,6 +226,7 @@ export function SaveActions({
       )}
 
       {isEdit && deleteConfig && <DeleteDialog config={deleteConfig} siteLabel={siteLabel} dialogRef={dialogRef} />}
+      <UnsavedChangesGuard when={isEdit && dirty && !saving} />
     </div>
   );
 }
