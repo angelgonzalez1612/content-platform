@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { blockVideoAfterSchema } from '../../../common/youtube';
+import { blockVideoAfterSchema, blockEmbedsSchema } from '../../../common/youtube';
 import { AI_PROVIDER_IDS } from '../provider-registry.service';
 
 const blockImageSchema = z.object({ url: z.string(), credit: z.string() }).nullable().optional();
-const contentBlockSchema = z.object({ heading: z.string().nullable().optional(), paragraphs: z.array(z.string()), image: blockImageSchema, videoAfter: blockVideoAfterSchema });
+const contentBlockSchema = z.object({ heading: z.string().nullable().optional(), paragraphs: z.array(z.string()), image: blockImageSchema, videoAfter: blockVideoAfterSchema, embeds: blockEmbedsSchema });
 
 export const draftRequestSchema = z.object({
   // site/contentType opcionales: si se omiten AMBOS (flujo de Publicar desde

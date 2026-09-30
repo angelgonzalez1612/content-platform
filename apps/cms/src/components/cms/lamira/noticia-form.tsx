@@ -46,7 +46,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
   });
   const [tags, setTags] = useState<string[]>(existing?.tags ?? []);
   const [content, setContent] = useState<ContentBlockValue[]>(
-    existing?.content.map((b) => ({ heading: b.heading ?? null, paragraphs: b.paragraphs, image: b.image, videoAfter: b.videoAfter })) ?? [{ heading: null, paragraphs: [""] }],
+    existing?.content.map((b) => ({ heading: b.heading ?? null, paragraphs: b.paragraphs, image: b.image, videoAfter: b.videoAfter, embeds: b.embeds })) ?? [{ heading: null, paragraphs: [""] }],
   );
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(existing?.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(existing?.seo ?? {});
@@ -289,7 +289,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
 
         <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 
-        <ContentBlocksField blocks={content} onChange={setContent} articleTitle={form.title} youtubeId={form.youtubeId || null} />
+        <ContentBlocksField blocks={content} onChange={setContent} articleTitle={form.title} youtubeId={form.youtubeId || null} allowEmbeds />
 
         <TagsField label="Etiquetas" tags={tags} onChange={setTags} />
 

@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import type { AlertaStatus, EventoStatus, LugarKind } from "@planazo/types";
 import type { ContentBlockValue } from "@/components/cms/content-blocks-field";
-import { hasInlineVideo, videoSlot } from "@/lib/inline-video";
+import { embedSlot, hasInlineVideo, videoSlot } from "@/lib/inline-video";
+import { NETWORK_LABEL, detectNetwork } from "@/lib/social-embed";
 import { LAMIRA_TYPE_PATH } from "@/lib/lamira-paths";
 import { getLocationNameBySlug } from "@/lib/locations";
 
@@ -107,6 +108,28 @@ export interface LamiraPreviewProps {
  * el CSS real del sitio (repo aparte, sin sistema de diseño compartido), pero
  * sigue su misma anatomía (eyebrow de categoría, imagen con crédito, cuerpo)
  * para que la revisión sea sobre el contenido, no un formulario más. */
+/** Publicación de redes en la vista previa: tarjeta ligera (la real se carga con el script de cada red en la página). */
+function PreviewEmbed({ url }: { url: string }) {
+  const network = detectNetwork(url);
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="my-1 flex items-center gap-3 rounded-[10px] border border-border bg-background px-3 py-2.5 transition-colors hover:border-ink-faint"
+    >
+      <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-hover text-[11px] font-bold text-ink-soft">
+        {network === "instagram" ? "IG" : network === "facebook" ? "f" : network === "x" ? "X" : network === "tiktok" ? "TT" : "?"}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[12.5px] font-semibold text-ink">Publicación de {network ? NETWORK_LABEL[network] : "redes"}</span>
+        <span className="block truncate text-[11px] text-ink-faint">En la página se ve la publicación completa · {url.replace(/^https?:\/\/(www\.)?/, "")}</span>
+      </span>
+      <span aria-hidden className="text-[12px] text-ink-faint">↗</span>
+    </a>
+  );
+}
+
 function PreviewVideo({ videoId, title }: { videoId: string; title: string }) {
   // Mismo formato que lamira.mx (YouTubeEmbed): etiqueta "Video", el video y un pie.
   return (
@@ -241,10 +264,12 @@ export function LamiraPreviewCard({
                       </figure>
                     )}
                     {youtubeId && videoSlot(content, i) === -1 && <PreviewVideo videoId={youtubeId} title={name} />}
+                    {(block.embeds ?? []).filter((e) => embedSlot(block, e.after) === -1).map((e, ei) => <PreviewEmbed key={ei} url={e.url} />)}
                     {block.paragraphs.map((p, j) => (
                       <div key={j} className="contents">
                         <p className="text-[14px] leading-[1.65] text-ink-soft">{renderInline(p)}</p>
                         {youtubeId && videoSlot(content, i) === j && <PreviewVideo videoId={youtubeId} title={name} />}
+                        {(block.embeds ?? []).filter((e) => embedSlot(block, e.after) === j).map((e, ei) => <PreviewEmbed key={ei} url={e.url} />)}
                       </div>
                     ))}
                   </div>

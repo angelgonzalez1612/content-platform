@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import { imagePositionSchema } from '../../../common/image-position';
-import { youtubeIdSchema, blockVideoAfterSchema } from '../../../common/youtube';
+import { youtubeIdSchema, blockVideoAfterSchema, blockEmbedsSchema } from '../../../common/youtube';
 
 const blockImageSchema = z.object({ url: z.string(), credit: z.string() }).nullable().optional();
-const contentSchema = z.array(z.object({ heading: z.string().nullable().optional(), paragraphs: z.array(z.string()), image: blockImageSchema, videoAfter: blockVideoAfterSchema })).optional();
+const contentSchema = z.array(z.object({ heading: z.string().nullable().optional(), paragraphs: z.array(z.string()), image: blockImageSchema, videoAfter: blockVideoAfterSchema, embeds: blockEmbedsSchema })).optional();
 
 export const updateEventSchema = z
   .object({

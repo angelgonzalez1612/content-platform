@@ -39,3 +39,14 @@ export const youtubeIdSchema = z
  * queda en su lugar de siempre (bajo la imagen principal).
  */
 export const blockVideoAfterSchema = z.number().int().min(-1).nullable().optional();
+
+/**
+ * Publicaciones de redes (Instagram, Facebook, X, TikTok) incrustadas en un
+ * bloque del cuerpo, cada una después del párrafo `after` (-1 = antes del
+ * primero). La red se detecta de la URL al pintarla.
+ */
+export const blockEmbedsSchema = z
+  .array(z.object({ url: z.string().url(), after: z.number().int().min(-1) }))
+  .max(10)
+  .nullable()
+  .optional();

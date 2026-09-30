@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { imagePositionSchema } from '../../../common/image-position';
-import { youtubeIdSchema, blockVideoAfterSchema } from '../../../common/youtube';
+import { youtubeIdSchema, blockVideoAfterSchema, blockEmbedsSchema } from '../../../common/youtube';
 
 const seoSchema = z
   .object({ title: z.string().optional(), description: z.string().optional(), canonical: z.string().optional(), ogImage: z.string().optional() })
@@ -8,7 +8,7 @@ const seoSchema = z
   .optional();
 const tocSchema = z.array(z.object({ id: z.string(), label: z.string() }));
 const blockImageSchema = z.object({ url: z.string(), credit: z.string() }).nullable().optional();
-const contentSchema = z.array(z.object({ heading: z.string().nullable().optional(), paragraphs: z.array(z.string()), image: blockImageSchema, videoAfter: blockVideoAfterSchema }));
+const contentSchema = z.array(z.object({ heading: z.string().nullable().optional(), paragraphs: z.array(z.string()), image: blockImageSchema, videoAfter: blockVideoAfterSchema, embeds: blockEmbedsSchema }));
 
 export const queryNoticiasSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),

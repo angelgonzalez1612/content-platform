@@ -120,6 +120,9 @@ export interface ContentBlock {
   // este índice (-1 = antes del primero). Sin ningún bloque así, el video
   // queda en su lugar de siempre.
   videoAfter?: number | null;
+  // Publicaciones de redes incrustadas en este bloque, cada una después del
+  // párrafo `after` (-1 = antes del primero).
+  embeds?: { url: string; after: number }[] | null;
 }
 
 export interface Noticia {
@@ -200,7 +203,7 @@ export interface Guia {
   quickFacts: { label: string; value: string }[];
   seo: Seo | null;
   toc: TocEntry[];
-  content: { id: string; heading: string; paragraphs: string[]; image?: { url: string; credit: string } | null; videoAfter?: number | null }[];
+  content: { id: string; heading: string; paragraphs: string[]; image?: { url: string; credit: string } | null; videoAfter?: number | null; embeds?: { url: string; after: number }[] | null }[];
   faq: { question: string; answer: string }[];
   imageUrl: string | null;
   imageCredit: string | null;

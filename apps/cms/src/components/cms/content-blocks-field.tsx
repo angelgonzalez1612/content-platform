@@ -5,7 +5,8 @@ import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { RichTextarea } from "@/components/cms/rich-textarea";
 import { ImageSearchPicker } from "@/components/cms/lamira/image-search-picker";
 import { BlockImprovePanel, type BlockImprovePanelHandle } from "@/components/cms/block-improve-panel";
-import { hasInlineVideo, placeVideo, videoPositions, videoSlot } from "@/lib/inline-video";
+import { addEmbed, embedSlot, hasInlineVideo, moveEmbed, placeVideo, removeEmbed, videoPositions, videoSlot } from "@/lib/inline-video";
+import { NETWORK_LABEL, detectNetwork, type SocialNetwork } from "@/lib/social-embed";
 
 export interface ContentBlockValue {
   heading: string | null;
@@ -17,6 +18,9 @@ export interface ContentBlockValue {
   // El video de la pieza va dentro de este bloque, después de este párrafo
   // (-1 = antes del primero). Ver lib/inline-video.ts.
   videoAfter?: number | null;
+  // Publicaciones de redes incrustadas en este bloque, cada una después del
+  // párrafo `after` (-1 = antes del primero). Ver lib/inline-video.ts.
+  embeds?: { url: string; after: number }[] | null;
 }
 
 /** Editor del cuerpo de noticias/reportajes/guías — bloques de {heading?,
@@ -29,6 +33,7 @@ export function ContentBlocksField({
   articleImages,
   articleTitle,
   youtubeId,
+  allowEmbeds = false,
 }: {
   blocks: ContentBlockValue[];
   onChange: (blocks: ContentBlockValue[]) => void;
@@ -42,9 +47,22 @@ export function ContentBlocksField({
   // Video de la pieza: si se pasa, se puede colocar entre párrafos del cuerpo
   // en vez de su lugar de siempre (bajo la imagen principal).
   youtubeId?: string | null;
+  // Permite incrustar publicaciones de redes (Instagram, Facebook, X, TikTok)
+  // entre párrafos — solo donde el sitio las pinta (La Mira).
+  allowEmbeds?: boolean;
 }) {
   const [editingImageFor, setEditingImageFor] = useState<number | null>(null);
   const improvePanelRef = useRef<BlockImprovePanelHandle>(null);
+  const [addingEmbedFor, setAddingEmbedFor] = useState<number | null>(null);
+  const [embedDraft, setEmbedDraft] = useState("");
+  const draftNetwork = detectNetwork(embedDraft);
+
+  function submitEmbed(bi: number) {
+    if (!draftNetwork) return;
+    onChange(addEmbed(blocks, bi, embedDraft.trim()));
+    setAddingEmbedFor(null);
+    setEmbedDraft("");
+  }
 
   function updateBlock(i: number, patch: Partial<ContentBlockValue>) {
     onChange(blocks.map((b, bi) => (bi === i ? { ...b, ...patch } : b)));
@@ -117,6 +135,45 @@ export function ContentBlocksField({
     );
   }
 
+  function embedMarker(bi: number, ei: number, url: string, slot: number) {
+    const network = detectNetwork(url);
+    const allPositions = videoPositions(blocks);
+    const pos = allPositions.findIndex(([b, p]) => b === bi && p === slot);
+    return (
+      <div key={`embed-${ei}`} className="flex items-center gap-3 rounded-[10px] border border-border bg-card p-2">
+        <NetworkBadge network={network} />
+        <div className="min-w-0 flex-1">
+          <p className="text-[12.5px] font-semibold text-ink">Publicación de {network ? NETWORK_LABEL[network] : "redes"}</p>
+          <a href={url} target="_blank" rel="noopener noreferrer" title={url} className="block truncate text-[11px] text-ink-soft hover:text-brand">
+            {url.replace(/^https?:\/\/(www\.)?/, "")}
+          </a>
+        </div>
+        <div className="flex flex-none items-center gap-1">
+          <button type="button" onClick={() => onChange(moveEmbed(blocks, bi, ei, -1))} disabled={pos <= 0} title="Subir la publicación" className="rounded-md px-1.5 py-1 text-ink-soft hover:text-ink disabled:opacity-30">
+            ↑
+          </button>
+          <button type="button" onClick={() => onChange(moveEmbed(blocks, bi, ei, 1))} disabled={pos >= allPositions.length - 1} title="Bajar la publicación" className="rounded-md px-1.5 py-1 text-ink-soft hover:text-ink disabled:opacity-30">
+            ↓
+          </button>
+          <button type="button" onClick={() => onChange(removeEmbed(blocks, bi, ei))} title="Quitar la publicación" className="rounded-md px-1.5 py-1 text-ink-soft hover:text-negative">
+            ×
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Lo que va en el hueco `slot` del bloque `bi`: primero el video, luego las publicaciones.
+  function slotItems(bi: number, slot: number) {
+    const block = blocks[bi];
+    return (
+      <>
+        {youtubeId && videoSlot(blocks, bi) === slot && videoMarker(bi, slot)}
+        {(block.embeds ?? []).map((e, ei) => (embedSlot(block, e.after) === slot ? embedMarker(bi, ei, e.url, slot) : null))}
+      </>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <span className={labelClass}>Cuerpo</span>
@@ -159,7 +216,7 @@ export function ContentBlocksField({
             </div>
 
             <div className="flex flex-col gap-2">
-              {youtubeId && videoSlot(blocks, bi) === -1 && videoMarker(bi, -1)}
+              {slotItems(bi, -1)}
               {block.paragraphs.map((p, pi) => (
                 <div key={pi} className="contents">
                 <div className="flex items-start gap-2">
@@ -188,7 +245,7 @@ export function ContentBlocksField({
                     </button>
                   </div>
                 </div>
-                {youtubeId && videoSlot(blocks, bi) === pi && videoMarker(bi, pi)}
+                {slotItems(bi, pi)}
                 </div>
               ))}
               <button
@@ -240,6 +297,59 @@ export function ContentBlocksField({
               </button>
             )}
 
+            {allowEmbeds &&
+              (addingEmbedFor === bi ? (
+                <div className="flex flex-col gap-1.5 rounded-[10px] border border-border-soft bg-card p-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      autoFocus
+                      value={embedDraft}
+                      onChange={(e) => setEmbedDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          submitEmbed(bi);
+                        } else if (e.key === "Escape") {
+                          setAddingEmbedFor(null);
+                        }
+                      }}
+                      placeholder="Pega la liga de Instagram, Facebook, X o TikTok"
+                      aria-label="Liga de la publicación"
+                      className={`${fieldClass} flex-1 py-1.5 text-[12.5px]`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => submitEmbed(bi)}
+                      disabled={!draftNetwork}
+                      className="flex-none rounded-lg bg-brand px-3 py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-brand-pressed disabled:opacity-40"
+                    >
+                      Agregar
+                    </button>
+                    <button type="button" onClick={() => setAddingEmbedFor(null)} className="flex-none text-[12px] font-medium text-ink-soft hover:text-ink">
+                      Cancelar
+                    </button>
+                  </div>
+                  <p className={`text-[11px] ${embedDraft.trim() && !draftNetwork ? "text-negative" : "text-ink-faint"}`}>
+                    {draftNetwork
+                      ? `✓ Publicación de ${NETWORK_LABEL[draftNetwork]} — se agrega al final del bloque y la mueves con las flechas.`
+                      : embedDraft.trim()
+                        ? "Esa liga no es de Instagram, Facebook, X ni TikTok."
+                        : "Se incrusta la publicación real, como se ve en la red."}
+                  </p>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddingEmbedFor(bi);
+                    setEmbedDraft("");
+                  }}
+                  className="self-start rounded-lg border border-dashed border-border bg-card px-3 py-1.5 text-[12px] font-medium text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
+                >
+                  + Publicación de redes
+                </button>
+              ))}
+
             <button
               type="button"
               onClick={() => improvePanelRef.current?.openFor(bi, "expand")}
@@ -260,5 +370,21 @@ export function ContentBlocksField({
 
       <BlockImprovePanel ref={improvePanelRef} blocks={blocks} onChange={onChange} articleTitle={articleTitle} />
     </div>
+  );
+}
+
+const NETWORK_BADGE: Record<SocialNetwork, { letter: string; className: string }> = {
+  instagram: { letter: "IG", className: "bg-[#E1306C] text-white" },
+  facebook: { letter: "f", className: "bg-[#1877F2] text-white" },
+  x: { letter: "X", className: "bg-ink-solid text-white" },
+  tiktok: { letter: "TT", className: "bg-[#111] text-white" },
+};
+
+function NetworkBadge({ network }: { network: SocialNetwork | null }) {
+  const badge = network ? NETWORK_BADGE[network] : null;
+  return (
+    <span aria-hidden className={`flex h-10 w-10 flex-none items-center justify-center rounded-[8px] text-[13px] font-bold ${badge?.className ?? "bg-hover text-ink-faint"}`}>
+      {badge?.letter ?? "?"}
+    </span>
   );
 }

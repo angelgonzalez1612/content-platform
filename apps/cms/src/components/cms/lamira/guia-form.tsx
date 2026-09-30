@@ -48,7 +48,7 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
   const [quickFacts, setQuickFacts] = useState(existing?.quickFacts ?? []);
   const [faq, setFaq] = useState(existing?.faq ?? []);
   const [content, setContent] = useState<ContentBlockValue[]>(
-    existing?.content.map((b) => ({ heading: b.heading, paragraphs: b.paragraphs, image: b.image, videoAfter: b.videoAfter })) ?? [{ heading: "", paragraphs: [""] }],
+    existing?.content.map((b) => ({ heading: b.heading, paragraphs: b.paragraphs, image: b.image, videoAfter: b.videoAfter, embeds: b.embeds })) ?? [{ heading: "", paragraphs: [""] }],
   );
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(existing?.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(existing?.seo ?? {});
@@ -298,7 +298,7 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
           addLabel="+ Dato rápido"
         />
 
-        <ContentBlocksField blocks={content} onChange={setContent} headingRequired articleTitle={form.title} youtubeId={youtubeId} />
+        <ContentBlocksField blocks={content} onChange={setContent} headingRequired articleTitle={form.title} youtubeId={youtubeId} allowEmbeds />
 
         <PairListField
           label="Preguntas frecuentes"

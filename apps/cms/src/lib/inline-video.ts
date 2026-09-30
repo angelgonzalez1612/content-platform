@@ -34,3 +34,47 @@ export function placeVideo<T extends VideoPlaceable>(content: T[], at: [number, 
     return next;
   });
 }
+
+// ── Publicaciones de redes (ContentBlock.embeds) ─────────────────────────────
+
+interface EmbedPlaceable extends VideoPlaceable {
+  embeds?: { url: string; after: number }[] | null;
+}
+
+/** Hueco real de una publicación (un párrafo borrado la manda al último). */
+export function embedSlot(block: EmbedPlaceable, after: number): number {
+  return Math.min(after, block.paragraphs.length - 1);
+}
+
+function setEmbeds<T extends EmbedPlaceable>(block: T, embeds: { url: string; after: number }[]): T {
+  const next = { ...block };
+  if (embeds.length) next.embeds = embeds;
+  else delete next.embeds;
+  return next;
+}
+
+/** Agrega una publicación al final del bloque `bi`. */
+export function addEmbed<T extends EmbedPlaceable>(content: T[], bi: number, url: string): T[] {
+  return content.map((b, i) => (i === bi ? setEmbeds(b, [...(b.embeds ?? []), { url, after: b.paragraphs.length - 1 }]) : b));
+}
+
+export function removeEmbed<T extends EmbedPlaceable>(content: T[], bi: number, ei: number): T[] {
+  return content.map((b, i) => (i === bi ? setEmbeds(b, (b.embeds ?? []).filter((_, j) => j !== ei)) : b));
+}
+
+/** Mueve la publicación `ei` del bloque `bi` un hueco arriba/abajo, cruzando bloques si hace falta. */
+export function moveEmbed<T extends EmbedPlaceable>(content: T[], bi: number, ei: number, dir: -1 | 1): T[] {
+  const embed = content[bi]?.embeds?.[ei];
+  if (!embed) return content;
+  const positions = videoPositions(content);
+  const idx = positions.findIndex(([b, p]) => b === bi && p === embedSlot(content[bi], embed.after));
+  const target = positions[idx + dir];
+  if (!target) return content;
+  const [tb, tp] = target;
+  return content.map((b, i) => {
+    let embeds = b.embeds ?? [];
+    if (i === bi) embeds = embeds.filter((_, j) => j !== ei);
+    if (i === tb) embeds = [...embeds, { url: embed.url, after: tp }];
+    return i === bi || i === tb ? setEmbeds(b, embeds) : b;
+  });
+}
