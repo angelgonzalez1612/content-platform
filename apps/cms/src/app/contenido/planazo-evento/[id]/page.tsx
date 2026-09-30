@@ -8,6 +8,7 @@ import { ViewPublishedLinks } from "@/components/cms/view-published-link";
 import { EditPageHeader } from "@/components/cms/edit-page-header";
 import { ReviewBar } from "@/components/cms/review-bar";
 import { getReviewQueue, isReviewSite } from "@/lib/review-queue";
+import { MoveToLamiraButton } from "@/components/cms/move-to-lamira";
 
 export default async function EditPlanazoEventPage({
   params,
@@ -22,7 +23,7 @@ export default async function EditPlanazoEventPage({
   const { id } = await params;
   const { revision } = await searchParams;
   const reviewQueue = isReviewSite(revision) ? await getReviewQueue(revision) : null;
-  const [event, categories] = await Promise.all([getCmsEvent(id), getCmsCategories("planazo")]);
+  const [event, categories, lamiraCategories] = await Promise.all([getCmsEvent(id), getCmsCategories("planazo"), getCmsCategories("la-mira")]);
   if (!event) notFound();
 
   return (
@@ -30,7 +31,22 @@ export default async function EditPlanazoEventPage({
       <EditPageHeader
         kicker="Evento · Planazo"
         title={event.name}
-        actions={<ViewPublishedLinks site="planazo" path={`eventos/${event.slug}`} available={event.status === "published"} />}
+        actions={
+          <span className="flex flex-wrap items-center gap-1.5">
+            <MoveToLamiraButton
+              sourceType="evento-planazo"
+              sourceId={event.id}
+              title={event.name}
+              categories={lamiraCategories}
+              defaultCategoryId={matchLamiraCategory(
+                lamiraCategories,
+                categories.find((c) => c.id === event.categoryId)?.slug,
+                categories.find((c) => c.id === event.categoryId)?.name,
+              )}
+            />
+            <ViewPublishedLinks site="planazo" path={`eventos/${event.slug}`} available={event.status === "published"} />
+          </span>
+        }
         review={reviewQueue && isReviewSite(revision) ? <ReviewBar site={revision} queue={reviewQueue} currentHref={`/contenido/planazo-evento/${id}`} /> : undefined}
       />
 
@@ -40,4 +56,11 @@ export default async function EditPlanazoEventPage({
       </div>
     </CmsShell>
   );
+}
+
+// Categoría de La Mira equivalente (mismo slug o mismo nombre), para dejarla
+// preseleccionada en "Mover a La Mira".
+function matchLamiraCategory(lamira: { id: string; slug: string; name: string }[], slug?: string | null, name?: string | null): string | null {
+  const norm = (t?: string | null) => (t ?? "").trim().toLowerCase();
+  return lamira.find((c) => (slug && c.slug === slug) || (name && norm(c.name) === norm(name)))?.id ?? null;
 }

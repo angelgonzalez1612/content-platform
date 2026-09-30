@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { getCmsPlace, getCmsCategory } from "@/lib/cms-api";
+import { getCmsPlace, getCmsCategory, getCmsCategories } from "@/lib/cms-api";
 import { CmsShell } from "@/components/cms/cms-shell";
 import { PlaceEditForm } from "@/components/cms/place-edit-form";
 import { VersionHistory } from "@/components/cms/version-history";
@@ -8,6 +8,7 @@ import { ViewPublishedLinks } from "@/components/cms/view-published-link";
 import { EditPageHeader } from "@/components/cms/edit-page-header";
 import { ReviewBar } from "@/components/cms/review-bar";
 import { getReviewQueue, isReviewSite } from "@/lib/review-queue";
+import { MoveToLamiraButton } from "@/components/cms/move-to-lamira";
 
 export default async function EditPlacePage({
   params,
@@ -27,6 +28,7 @@ export default async function EditPlacePage({
 
   const categoryId = place.categories[0]?.id;
   const category = categoryId ? await getCmsCategory(categoryId) : null;
+  const lamiraCategories = await getCmsCategories("la-mira");
 
   return (
     <CmsShell user={session} title={place.name}>
@@ -39,7 +41,18 @@ export default async function EditPlacePage({
         title={place.name}
         subtitle={`/${place.slug}`}
         review={reviewQueue && isReviewSite(revision) ? <ReviewBar site={revision} queue={reviewQueue} currentHref={`/contenido/${id}`} /> : undefined}
-        actions={<ViewPublishedLinks site="planazo" path={`lugares/${place.slug}`} available={place.status === "published"} />}
+        actions={
+          <span className="flex flex-wrap items-center gap-1.5">
+            <MoveToLamiraButton
+              sourceType="place"
+              sourceId={place.id}
+              title={place.name}
+              categories={lamiraCategories}
+              defaultCategoryId={matchLamiraCategory(lamiraCategories, place.categories[0]?.slug, place.categories[0]?.name)}
+            />
+            <ViewPublishedLinks site="planazo" path={`lugares/${place.slug}`} available={place.status === "published"} />
+          </span>
+        }
       />
 
       <div className="flex flex-col gap-4 p-[26px] pt-5 pb-[60px]">
@@ -48,4 +61,11 @@ export default async function EditPlacePage({
       </div>
     </CmsShell>
   );
+}
+
+// Categoría de La Mira equivalente (mismo slug o mismo nombre), para dejarla
+// preseleccionada en "Mover a La Mira".
+function matchLamiraCategory(lamira: { id: string; slug: string; name: string }[], slug?: string | null, name?: string | null): string | null {
+  const norm = (t?: string | null) => (t ?? "").trim().toLowerCase();
+  return lamira.find((c) => (slug && c.slug === slug) || (name && norm(c.name) === norm(name)))?.id ?? null;
 }

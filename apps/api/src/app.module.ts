@@ -28,6 +28,7 @@ import { UsersModule } from './modules/users/users.module';
 import { EntidadesModule } from './modules/entidades/entidades.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { SiteRevalidationModule } from './modules/site-revalidation/site-revalidation.module';
+import { TransferModule } from './modules/transfer/transfer.module';
 import { HealthController } from './modules/health/health.controller';
 
 @Module({
@@ -63,6 +64,7 @@ import { HealthController } from './modules/health/health.controller';
     EntidadesModule,
     NotificationsModule,
     SiteRevalidationModule,
+    TransferModule,
   ],
   controllers: [HealthController],
 })
