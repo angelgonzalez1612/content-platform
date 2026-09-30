@@ -18,6 +18,7 @@ import { summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
 import { SaveActions } from "@/components/cms/save-actions";
 import { VideoField } from "@/components/cms/video-field";
 import { SourceUrlField } from "@/components/cms/source-url-field";
+import { useDirty } from "@/lib/use-dirty";
 
 // `startDate` es el valor crudo de un <input type="datetime-local"> ("2026-09-01T18:00") — para la vista previa.
 function toDateLabelPreview(startDate: string): string {
@@ -68,6 +69,8 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
   const [improveResult, setImproveResult] = useState<ImproveResult | null>(null);
   const improveRef = useRef<ImproveWithAiHandle>(null);
   const [regenerating, setRegenerating] = useState(false);
+  // Cambios sin guardar: sin ellos, el botón de guardar queda apagado.
+  const { isDirty, markSaved } = useDirty({ form, categoryData, seo, content, youtubeId, imagePosition, image });
 
   const category = categories.find((c) => c.id === form.categoryId) ?? null;
 
@@ -132,6 +135,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
       setForm((f) => ({ ...f, status }));
       setSavedStatus(status);
       setSavedAt(Date.now());
+      markSaved();
       setSaving(false);
       router.refresh();
     } catch {
@@ -274,6 +278,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
         {error && <p className="rounded-lg bg-[#FDECEA] px-3 py-2 text-[13px] font-medium text-[#C4453A]">{error}</p>}
 
         <SaveActions
+          dirty={isDirty}
           isEdit={true}
           saving={saving}
           createLabel="Guardar cambios"

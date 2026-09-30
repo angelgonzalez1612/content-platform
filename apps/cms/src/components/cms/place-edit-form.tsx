@@ -20,6 +20,7 @@ import { ImprovePreview, isFieldSelected, type ImproveResult, type ImproveSelect
 import { summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
 import { VideoField } from "@/components/cms/video-field";
 import { SourceUrlField } from "@/components/cms/source-url-field";
+import { useDirty } from "@/lib/use-dirty";
 
 interface ImproveDraft {
   description?: string;
@@ -68,6 +69,8 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
   const [improveMode, setImproveMode] = useState<"rewrite" | "expand">("rewrite");
   const improveRef = useRef<ImproveWithAiHandle>(null);
   const [regenerating, setRegenerating] = useState(false);
+  // Cambios sin guardar: sin ellos, el botón de guardar queda apagado.
+  const { isDirty, markSaved } = useDirty({ form, categoryData, seo, youtubeId, imagePosition, image, gallery, content });
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -117,6 +120,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
       setForm((f) => ({ ...f, status }));
       setSavedStatus(status);
       setSavedAt(Date.now());
+      markSaved();
       router.refresh();
     } catch {
       setError("No se pudo conectar con el servidor.");
@@ -359,6 +363,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
         {error && <p className="rounded-lg bg-[#FDECEA] px-3 py-2 text-[13px] font-medium text-[#C4453A]">{error}</p>}
 
         <SaveActions
+          dirty={isDirty}
           isEdit={true}
           saving={saving}
           createLabel="Guardar cambios"

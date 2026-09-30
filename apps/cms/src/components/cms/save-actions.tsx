@@ -10,12 +10,14 @@ const PRIMARY_CLASS =
   "rounded-[10px] bg-brand px-4 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_1px_2px_rgba(253,105,13,.35)] transition-[transform,box-shadow,background-color] duration-200 hover:-translate-y-px hover:bg-brand-pressed hover:shadow-[0_10px_24px_-10px_rgba(253,105,13,.55)] disabled:translate-y-0 disabled:cursor-default disabled:opacity-60 disabled:shadow-none";
 const PUBLISH_CLASS =
   "rounded-[10px] border border-positive/30 bg-positive/10 px-4 py-2.5 text-[13.5px] font-semibold text-positive transition-colors hover:bg-positive/15 disabled:cursor-default disabled:opacity-60";
+// Sin cambios: el botón principal se ve apagado (no invita a hacer clic).
+const IDLE_CLASS = "rounded-[10px] border border-border bg-background px-4 py-2.5 text-[13.5px] font-semibold text-ink-faint cursor-default";
 const QUIET_CLASS =
   "rounded-[10px] px-3 py-2.5 text-[13px] font-medium text-ink-faint transition-colors hover:bg-negative/10 hover:text-negative disabled:cursor-default disabled:opacity-60";
 
 /** Texto del botón principal: guarda sin cambiar el estado de la pieza. */
 function primaryLabel(saved: Status | null): string {
-  if (saved === "published") return "Actualizar publicación";
+  if (saved === "published") return "Guardar actualizaciones";
   if (saved === "in_review") return "Guardar (sigue en revisión)";
   if (saved === "draft") return "Guardar borrador";
   return "Guardar cambios";
@@ -134,6 +136,7 @@ export function SaveActions({
   onUnpublish,
   siteLabel,
   deleteConfig,
+  dirty = true,
 }: {
   isEdit: boolean;
   saving: boolean;
@@ -148,6 +151,8 @@ export function SaveActions({
   siteLabel: string;
   /** Si se pasa (y la pieza ya existe), aparece "Eliminar" con confirmación. */
   deleteConfig?: DeleteConfig;
+  /** ¿Hay cambios sin guardar? Sin cambios, el botón principal queda apagado (ver useDirty). */
+  dirty?: boolean;
 }) {
   // Estado antes del último guardado — para decir "Publicado" vs "Publicación actualizada".
   const [statusBeforeSave, setStatusBeforeSave] = useState<Status | null>(savedStatus);
@@ -155,11 +160,18 @@ export function SaveActions({
   const isPublished = savedStatus === "published";
   const showPublish = isEdit && !isPublished && !!onPublish;
   const showUnpublish = isEdit && isPublished && !!onUnpublish;
+  const idle = isEdit && !dirty && !saving;
 
   return (
     <div className="sticky bottom-3 z-20 mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[14px] border border-border bg-card/95 px-3 py-2.5 shadow-[0_12px_32px_-14px_rgba(23,20,17,.35)] backdrop-blur-sm">
-      <button type="submit" disabled={saving} onClick={() => setStatusBeforeSave(savedStatus)} className={PRIMARY_CLASS}>
-        {saving ? "Guardando…" : isEdit ? primaryLabel(savedStatus) : createLabel}
+      <button
+        type="submit"
+        disabled={saving || idle}
+        onClick={() => setStatusBeforeSave(savedStatus)}
+        title={idle ? "No hay cambios por guardar" : undefined}
+        className={idle ? IDLE_CLASS : PRIMARY_CLASS}
+      >
+        {saving ? "Guardando…" : idle ? "Sin cambios" : isEdit ? primaryLabel(savedStatus) : createLabel}
       </button>
       {showPublish && (
         <button
@@ -176,7 +188,12 @@ export function SaveActions({
       )}
 
       <span role="status" className="min-w-0 flex-1 truncate text-[12px]">
-        {savedAt && savedStatus ? (
+        {isEdit && dirty && !saving ? (
+          <span className="inline-flex items-center gap-1.5 font-medium text-warning">
+            <span aria-hidden className="size-1.5 rounded-full bg-warning" />
+            Cambios sin guardar{isPublished ? ` · aún no se ven en ${siteLabel}` : ""}
+          </span>
+        ) : savedAt && savedStatus ? (
           <span className="font-mono text-positive">{savedMessage(statusBeforeSave, savedStatus, siteLabel)}</span>
         ) : isEdit ? (
           <span className="text-ink-faint">{isPublished ? `Publicado en ${siteLabel}` : `Sin publicar · no se ve en ${siteLabel}`}</span>

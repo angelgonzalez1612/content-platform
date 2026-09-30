@@ -19,6 +19,7 @@ import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
 import { SaveActions } from "@/components/cms/save-actions";
 import { VideoField } from "@/components/cms/video-field";
 import { SourceUrlField } from "@/components/cms/source-url-field";
+import { useDirty } from "@/lib/use-dirty";
 
 export function ReportajeForm({ categories, existing }: { categories: Category[]; existing?: Reportaje }) {
   const router = useRouter();
@@ -56,6 +57,8 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
   const [improveResult, setImproveResult] = useState<ImproveResult | null>(null);
   const improveRef = useRef<ImproveWithAiHandle>(null);
   const [regenerating, setRegenerating] = useState(false);
+  // Cambios sin guardar: sin ellos, el botón de guardar queda apagado.
+  const { isDirty, markSaved } = useDirty({ form, tags, content, categoryData, seo, youtubeId, imagePosition, image });
 
   const category = categories.find((c) => c.id === form.categoryId) ?? null;
 
@@ -126,6 +129,7 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
         setForm((f) => ({ ...f, status }));
         setSavedStatus(status);
         setSavedAt(Date.now());
+        markSaved();
         setSaving(false);
         router.refresh();
       } else {
@@ -285,6 +289,7 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
         {error && <p className="rounded-lg bg-[#FDECEA] px-3 py-2 text-[13px] font-medium text-[#C4453A]">{error}</p>}
 
         <SaveActions
+          dirty={isDirty}
           isEdit={isEdit}
           saving={saving}
           createLabel="Crear reportaje"

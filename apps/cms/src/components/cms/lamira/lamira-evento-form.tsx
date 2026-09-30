@@ -17,6 +17,7 @@ import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
 import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
 import { SaveActions } from "@/components/cms/save-actions";
 import { VideoField } from "@/components/cms/video-field";
+import { useDirty } from "@/lib/use-dirty";
 
 const STATUS_OPTIONS: Array<{ value: EventoStatus; label: string }> = [
   { value: "proximo", label: "Próximo" },
@@ -58,6 +59,8 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
   const [improveResult, setImproveResult] = useState<ImproveResult | null>(null);
   const improveRef = useRef<ImproveWithAiHandle>(null);
   const [regenerating, setRegenerating] = useState(false);
+  // Cambios sin guardar: sin ellos, el botón de guardar queda apagado.
+  const { isDirty, markSaved } = useDirty({ form, categoryData, seo, youtubeId, imagePosition, image });
 
   const category = categories.find((c) => c.id === form.categoryId) ?? null;
 
@@ -120,6 +123,7 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
 
       if (isEdit) {
         setSavedAt(Date.now());
+        markSaved();
         setSaving(false);
         router.refresh();
       } else {
@@ -291,6 +295,7 @@ export function LamiraEventoForm({ categories, existing }: { categories: Categor
         {error && <p className="rounded-lg bg-[#FDECEA] px-3 py-2 text-[13px] font-medium text-[#C4453A]">{error}</p>}
 
         <SaveActions
+          dirty={isDirty}
           isEdit={isEdit}
           saving={saving}
           createLabel="Crear evento"

@@ -15,6 +15,7 @@ import { ImproveWithAiPanel, type ImproveWithAiHandle } from "@/components/cms/i
 import { ImprovePreview, isFieldSelected, type ImproveResult, type ImproveSelection } from "@/components/cms/lamira/improve-preview";
 import { SaveActions } from "@/components/cms/save-actions";
 import { VideoField } from "@/components/cms/video-field";
+import { useDirty } from "@/lib/use-dirty";
 
 const TYPE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "guia", label: "Guía / listicle" },
@@ -69,6 +70,8 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
   const [improveResult, setImproveResult] = useState<ImproveResult | null>(null);
   const improveRef = useRef<ImproveWithAiHandle>(null);
   const [regenerating, setRegenerating] = useState(false);
+  // Cambios sin guardar: sin ellos, el botón de guardar queda apagado.
+  const { isDirty, markSaved } = useDirty({ form, seo, sections, audience, youtubeId, imagePosition, image });
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -143,6 +146,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
         setForm((f) => ({ ...f, status }));
         setSavedStatus(status);
         setSavedAt(Date.now());
+        markSaved();
         setSaving(false);
         router.refresh();
       } else {
@@ -338,6 +342,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
       <SeoPanel seo={seo} onChange={setSeo} contentTitle={form.title} contentContext={form.description} />
 
       <SaveActions
+        dirty={isDirty}
         isEdit={isEdit}
         saving={saving}
         createLabel="Crear guía"
