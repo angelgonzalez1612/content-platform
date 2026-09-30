@@ -18,6 +18,7 @@ import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
 import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
 import { SaveActions } from "@/components/cms/save-actions";
 import { VideoField } from "@/components/cms/video-field";
+import { SourceUrlField } from "@/components/cms/source-url-field";
 
 export function ReportajeForm({ categories, existing }: { categories: Category[]; existing?: Reportaje }) {
   const router = useRouter();
@@ -216,33 +217,7 @@ export function ReportajeForm({ categories, existing }: { categories: Category[]
         {/* Arriba de todo — es lo primero que se necesita para verificar el
             tema contra el artículo real antes de revisar el resto del
             formulario, no algo que revisar hasta el final. */}
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="r-source-url" className={labelClass}>
-            URL de la fuente
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              id="r-source-url"
-              value={form.sourceUrl}
-              onChange={(e) => set("sourceUrl", e.target.value)}
-              placeholder="https://…"
-              className={`${fieldClass} flex-1`}
-            />
-            {form.sourceUrl && (
-              <a
-                href={form.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-none rounded-lg border border-border bg-card px-3 py-2.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
-              >
-                Abrir ↗
-              </a>
-            )}
-          </div>
-          <p className="text-[11.5px] leading-[1.4] text-ink-faint">
-            El artículo original del que salió el tema — cuando lo crea la automatización, se llena solo.
-          </p>
-        </div>
+        <SourceUrlField value={form.sourceUrl} onChange={(v) => set("sourceUrl", v)} />
 
         <ImageField image={image} onChange={setImage} position={imagePosition} onPositionChange={setImagePosition} searchQuery={form.title} />
         <VideoField videoId={youtubeId} onChange={setYoutubeId} sourceUrl={form.sourceUrl || null} />

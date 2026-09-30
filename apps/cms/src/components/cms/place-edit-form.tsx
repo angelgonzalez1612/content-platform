@@ -19,6 +19,7 @@ import { SaveActions } from "@/components/cms/save-actions";
 import { ImprovePreview, isFieldSelected, type ImproveResult, type ImproveSelection } from "@/components/cms/lamira/improve-preview";
 import { summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
 import { VideoField } from "@/components/cms/video-field";
+import { SourceUrlField } from "@/components/cms/source-url-field";
 
 interface ImproveDraft {
   description?: string;
@@ -217,30 +218,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
             tema contra el artículo/tema original antes de revisar el resto
             del formulario, no algo que revisar hasta el final. Se llena solo
             cuando lo crea la automatización (ver AutomationRunnerService). */}
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="place-source-url" className={labelClass}>
-            URL de la fuente
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              id="place-source-url"
-              value={form.sourceUrl}
-              onChange={(e) => set("sourceUrl", e.target.value)}
-              placeholder="https://…"
-              className={`${fieldClass} flex-1`}
-            />
-            {form.sourceUrl && (
-              <a
-                href={form.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-none rounded-lg border border-border bg-card px-3 py-2.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
-              >
-                Abrir ↗
-              </a>
-            )}
-          </div>
-        </div>
+        <SourceUrlField value={form.sourceUrl} onChange={(v) => set("sourceUrl", v)} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="description" className={labelClass}>

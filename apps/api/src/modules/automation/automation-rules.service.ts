@@ -141,10 +141,13 @@ export class AutomationRulesService {
     return acquired.length === 1;
   }
 
+  // También marca "última revisión": con Codex una corrida puede durar ~1 h, y
+  // si solo se anotaba al empezar, el aviso "la automatización no está
+  // revisando" saltaba en falso justo al terminar una corrida larga.
   async renewRunLock(owner: string, leaseMs: number): Promise<boolean> {
     const renewed = await this.db
       .update(automationState)
-      .set({ lockExpiresAt: new Date(Date.now() + leaseMs) })
+      .set({ lockExpiresAt: new Date(Date.now() + leaseMs), lastCheckedAt: new Date() })
       .where(and(eq(automationState.id, 'singleton'), eq(automationState.lockOwner, owner)))
       .returning({ id: automationState.id });
     return renewed.length === 1;
@@ -153,7 +156,7 @@ export class AutomationRulesService {
   async releaseRunLock(owner: string): Promise<void> {
     await this.db
       .update(automationState)
-      .set({ lockOwner: null, lockExpiresAt: null })
+      .set({ lockOwner: null, lockExpiresAt: null, lastCheckedAt: new Date() })
       .where(and(eq(automationState.id, 'singleton'), eq(automationState.lockOwner, owner)));
   }
 

@@ -17,6 +17,7 @@ import { ContentBlocksField, type ContentBlockValue } from "@/components/cms/con
 import { summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
 import { SaveActions } from "@/components/cms/save-actions";
 import { VideoField } from "@/components/cms/video-field";
+import { SourceUrlField } from "@/components/cms/source-url-field";
 
 // `startDate` es el valor crudo de un <input type="datetime-local"> ("2026-09-01T18:00") — para la vista previa.
 function toDateLabelPreview(startDate: string): string {
@@ -208,30 +209,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
         {/* Arriba de todo — se llena solo cuando lo crea la automatización
             (ver AutomationRunnerService), mismo patrón que noticia/reportaje
             de La Mira y Lugares de Planazo. */}
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="pe-source-url" className={labelClass}>
-            URL de la fuente
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              id="pe-source-url"
-              value={form.sourceUrl}
-              onChange={(e) => set("sourceUrl", e.target.value)}
-              placeholder="https://…"
-              className={`${fieldClass} flex-1`}
-            />
-            {form.sourceUrl && (
-              <a
-                href={form.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-none rounded-lg border border-border bg-card px-3 py-2.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand"
-              >
-                Abrir ↗
-              </a>
-            )}
-          </div>
-        </div>
+        <SourceUrlField value={form.sourceUrl} onChange={(v) => set("sourceUrl", v)} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="pe-description" className={labelClass}>
