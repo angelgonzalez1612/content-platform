@@ -11,6 +11,8 @@ import { createNoticiaSchema } from '../lamira-noticias/dto/noticia.dto';
 import { createReportajeSchema } from '../lamira-reportajes/dto/reportaje.dto';
 import { createAlertaSchema } from '../lamira-alertas/dto/alerta.dto';
 import { SiteRevalidationService } from '../site-revalidation/site-revalidation.service';
+import { ProviderRegistry } from '../ai/provider-registry.service';
+import { CategoriesService } from '../categories/categories.service';
 import { buildLamiraPayload, type TransferSource } from './build-lamira-payload';
 
 const moveToLamiraSchema = z.object({
@@ -21,6 +23,11 @@ const moveToLamiraSchema = z.object({
   // Qué pasa con la pieza de Planazo: eliminarla (sin duplicado), dejarla como
   // borrador, o conservarla publicada en los dos sitios.
   original: z.enum(['delete', 'unpublish', 'keep']),
+});
+
+const suggestSchema = z.object({
+  sourceType: z.enum(['place', 'evento-planazo']),
+  sourceId: z.string().min(1),
 });
 
 /**
@@ -39,7 +46,54 @@ export class TransferController {
     private readonly reportajes: ReportajesService,
     private readonly alertas: AlertasService,
     private readonly revalidation: SiteRevalidationService,
+    private readonly providers: ProviderRegistry,
+    private readonly categories: CategoriesService,
   ) {}
+
+  /**
+   * "Que la IA decida" en el modal: ¿esta pieza encaja más en La Mira
+   * (periódico hiperlocal) o en Planazo (directorio de planes)? y, si es La
+   * Mira, como qué tipo y en qué categoría. Solo sugiere; el editor confirma.
+   */
+  @Post('suggest')
+  async suggest(@Body() body: unknown) {
+    const dto = suggestSchema.parse(body);
+    const source = await this.loadSource(dto.sourceType, dto.sourceId);
+    const lamiraCategories = await this.categories.findAll('la-mira');
+    const slugs = lamiraCategories.map((c) => c.slug) as [string, ...string[]];
+
+    const schema = z.object({
+      belongsIn: z.enum(['la-mira', 'planazo']).describe('Dónde encaja mejor esta pieza.'),
+      targetType: z.enum(['noticia', 'reportaje', 'alerta']).describe('Si va en La Mira, como qué tipo.'),
+      categorySlug: z.enum(slugs).describe('Categoría de La Mira que mejor le queda.'),
+      reason: z.string().describe('Una oración en español explicando la decisión, para el editor.'),
+    });
+
+    const output = await this.providers.generateWithFallback('default', {
+      systemPrompt: `Eres editor de dos sitios de la Ciudad de México que comparten CMS:
+- La Mira: periódico digital hiperlocal. Noticias (hechos del día), reportajes (piezas de fondo) y alertas (avisos activos: tráfico, marchas, clima, cortes).
+- Planazo: directorio evergreen de planes y lugares recomendados (restaurantes, bares, museos, eventos a los que ir). NO publica noticias ni cobertura.
+Decide dónde encaja mejor una pieza. Una nota sobre algo que pasó, una iniciativa, un incidente o un video noticioso va en La Mira. Solo un lugar o plan recomendable para visitar encaja en Planazo. Responde en español de México.`,
+      userPrompt: `Título: ${source.title}
+Descripción: ${source.description.slice(0, 1200)}
+${source.content.length ? `Secciones: ${source.content.map((b) => b.heading).filter(Boolean).join(' · ')}` : ''}
+${source.sourceUrl ? `Fuente: ${source.sourceUrl}` : ''}
+
+Categorías de La Mira disponibles:
+${lamiraCategories.map((c) => `- ${c.slug}: ${c.name}`).join('\n')}`,
+      schema,
+      schemaName: 'site_suggestion',
+    });
+
+    const category = lamiraCategories.find((c) => c.slug === output.categorySlug) ?? null;
+    return {
+      belongsIn: output.belongsIn,
+      targetType: output.targetType,
+      categoryId: category?.id ?? null,
+      categoryName: category?.name ?? null,
+      reason: output.reason,
+    };
+  }
 
   @Post('planazo-to-lamira')
   async moveToLamira(@Req() req: RequestWithSession, @Body() body: unknown) {
