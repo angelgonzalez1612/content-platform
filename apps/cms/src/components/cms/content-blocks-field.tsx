@@ -5,6 +5,7 @@ import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { RichTextarea } from "@/components/cms/rich-textarea";
 import { ImageSearchPicker } from "@/components/cms/lamira/image-search-picker";
 import { BlockImprovePanel, type BlockImprovePanelHandle } from "@/components/cms/block-improve-panel";
+import { hasInlineVideo, placeVideo, videoPositions, videoSlot } from "@/lib/inline-video";
 
 export interface ContentBlockValue {
   heading: string | null;
@@ -13,6 +14,9 @@ export interface ContentBlockValue {
   // la imagen principal del artículo, elegida por búsqueda o URL manual,
   // NUNCA generada por la IA.
   image?: { url: string; credit: string } | null;
+  // El video de la pieza va dentro de este bloque, después de este párrafo
+  // (-1 = antes del primero). Ver lib/inline-video.ts.
+  videoAfter?: number | null;
 }
 
 /** Editor del cuerpo de noticias/reportajes/guías — bloques de {heading?,
@@ -24,6 +28,7 @@ export function ContentBlocksField({
   headingRequired = false,
   articleImages,
   articleTitle,
+  youtubeId,
 }: {
   blocks: ContentBlockValue[];
   onChange: (blocks: ContentBlockValue[]) => void;
@@ -34,6 +39,9 @@ export function ContentBlocksField({
   // Título del artículo completo — contexto opcional para BlockImprovePanel,
   // para que la IA no repita lo que ya dice el resto del contenido.
   articleTitle?: string;
+  // Video de la pieza: si se pasa, se puede colocar entre párrafos del cuerpo
+  // en vez de su lugar de siempre (bajo la imagen principal).
+  youtubeId?: string | null;
 }) {
   const [editingImageFor, setEditingImageFor] = useState<number | null>(null);
   const improvePanelRef = useRef<BlockImprovePanelHandle>(null);
@@ -72,9 +80,60 @@ export function ContentBlocksField({
     updateBlock(bi, { paragraphs: next });
   }
 
+  const positions = youtubeId ? videoPositions(blocks) : [];
+  function moveVideo(bi: number, slot: number, dir: -1 | 1) {
+    const idx = positions.findIndex(([b, p]) => b === bi && p === slot);
+    const next = positions[idx + dir];
+    if (next) onChange(placeVideo(blocks, next));
+  }
+
+  function videoMarker(bi: number, slot: number) {
+    const idx = positions.findIndex(([b, p]) => b === bi && p === slot);
+    return (
+      <div className="flex items-center gap-3 rounded-[10px] border border-brand/30 bg-accent/50 p-2">
+        {/* eslint-disable-next-line @next/next/no-img-element -- miniatura pública de YouTube */}
+        <img src={`https://i.ytimg.com/vi/${youtubeId}/mqdefault.jpg`} alt="" className="h-10 w-[72px] flex-none rounded-[6px] object-cover" />
+        <div className="min-w-0 flex-1">
+          <p className="text-[12.5px] font-semibold text-ink">▶ Video aquí</p>
+          <p className="text-[11px] text-ink-soft">Muévelo con las flechas entre párrafos y bloques.</p>
+        </div>
+        <div className="flex flex-none items-center gap-1">
+          <button type="button" onClick={() => moveVideo(bi, slot, -1)} disabled={idx <= 0} title="Subir el video" className="rounded-md px-1.5 py-1 text-ink-soft hover:text-ink disabled:opacity-30">
+            ↑
+          </button>
+          <button type="button" onClick={() => moveVideo(bi, slot, 1)} disabled={idx >= positions.length - 1} title="Bajar el video" className="rounded-md px-1.5 py-1 text-ink-soft hover:text-ink disabled:opacity-30">
+            ↓
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange(placeVideo(blocks, null))}
+            title="Regresar el video bajo la imagen principal"
+            className="rounded-md px-2 py-1 text-[11.5px] font-medium whitespace-nowrap text-ink-soft hover:text-brand"
+          >
+            Volver arriba
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <span className={labelClass}>Cuerpo</span>
+      {youtubeId && blocks.length > 0 && !hasInlineVideo(blocks) && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-[10px] border border-dashed border-border bg-card px-3 py-2">
+          <span className="text-[12px] text-ink-soft">
+            <span className="font-semibold text-ink">▶ Video</span> · va bajo la imagen principal
+          </span>
+          <button
+            type="button"
+            onClick={() => onChange(placeVideo(blocks, [0, Math.min(0, blocks[0].paragraphs.length - 1)]))}
+            className="text-[12px] font-semibold text-brand hover:text-brand-pressed"
+          >
+            Ponerlo entre párrafos
+          </button>
+        </div>
+      )}
       <div className="flex flex-col gap-4">
         {blocks.map((block, bi) => (
           <div key={bi} className="flex flex-col gap-2.5 rounded-[12px] border border-border-soft bg-background p-4">
@@ -100,8 +159,10 @@ export function ContentBlocksField({
             </div>
 
             <div className="flex flex-col gap-2">
+              {youtubeId && videoSlot(blocks, bi) === -1 && videoMarker(bi, -1)}
               {block.paragraphs.map((p, pi) => (
-                <div key={pi} className="flex items-start gap-2">
+                <div key={pi} className="contents">
+                <div className="flex items-start gap-2">
                   <div className="min-w-0 flex-1">
                     <RichTextarea value={p} onChange={(v) => updateParagraph(bi, pi, v)} rows={3} placeholder="Párrafo…" />
                   </div>
@@ -126,6 +187,8 @@ export function ContentBlocksField({
                       ×
                     </button>
                   </div>
+                </div>
+                {youtubeId && videoSlot(blocks, bi) === pi && videoMarker(bi, pi)}
                 </div>
               ))}
               <button

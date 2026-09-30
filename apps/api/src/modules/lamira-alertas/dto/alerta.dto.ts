@@ -1,13 +1,13 @@
 import { z } from 'zod';
 import { imagePositionSchema } from '../../../common/image-position';
-import { youtubeIdSchema } from '../../../common/youtube';
+import { youtubeIdSchema, blockVideoAfterSchema } from '../../../common/youtube';
 
 const seoSchema = z
   .object({ title: z.string().optional(), description: z.string().optional(), canonical: z.string().optional(), ogImage: z.string().optional() })
   .nullable()
   .optional();
 const blockImageSchema = z.object({ url: z.string(), credit: z.string() }).nullable().optional();
-const contentSchema = z.array(z.object({ heading: z.string().nullable().optional(), paragraphs: z.array(z.string()), image: blockImageSchema })).optional();
+const contentSchema = z.array(z.object({ heading: z.string().nullable().optional(), paragraphs: z.array(z.string()), image: blockImageSchema, videoAfter: blockVideoAfterSchema })).optional();
 
 export const queryAlertasSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),

@@ -31,3 +31,11 @@ export const youtubeIdSchema = z
   .regex(/^[\w-]{11}$/, 'ID de YouTube inválido')
   .nullable()
   .optional();
+
+/**
+ * Posición del video de la pieza DENTRO del cuerpo: va en el bloque que tenga
+ * este campo, después del párrafo con ese índice (-1 = antes del primer
+ * párrafo, justo bajo el encabezado). Ningún bloque con el campo = el video
+ * queda en su lugar de siempre (bajo la imagen principal).
+ */
+export const blockVideoAfterSchema = z.number().int().min(-1).nullable().optional();

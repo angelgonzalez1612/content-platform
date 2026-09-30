@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { AlertaStatus, EventoStatus, LugarKind } from "@planazo/types";
 import type { ContentBlockValue } from "@/components/cms/content-blocks-field";
+import { hasInlineVideo, videoSlot } from "@/lib/inline-video";
 import { LAMIRA_TYPE_PATH } from "@/lib/lamira-paths";
 import { getLocationNameBySlug } from "@/lib/locations";
 
@@ -178,7 +179,7 @@ export function LamiraPreviewCard({
               <figcaption className="mt-1.5 text-[11px] text-ink-faint">{image.credit}</figcaption>
             </figure>
           )}
-          {youtubeId && <PreviewVideo videoId={youtubeId} title={name} />}
+          {youtubeId && !hasInlineVideo(content) && <PreviewVideo videoId={youtubeId} title={name} />}
 
           <p className="text-[11.5px] font-bold tracking-wide text-brand uppercase">{categoryName ?? "Sin categoría"}</p>
 
@@ -239,10 +240,12 @@ export function LamiraPreviewCard({
                         <figcaption className="mt-1 text-[11px] text-ink-faint">{block.image.credit}</figcaption>
                       </figure>
                     )}
+                    {youtubeId && videoSlot(content, i) === -1 && <PreviewVideo videoId={youtubeId} title={name} />}
                     {block.paragraphs.map((p, j) => (
-                      <p key={j} className="text-[14px] leading-[1.65] text-ink-soft">
-                        {renderInline(p)}
-                      </p>
+                      <div key={j} className="contents">
+                        <p className="text-[14px] leading-[1.65] text-ink-soft">{renderInline(p)}</p>
+                        {youtubeId && videoSlot(content, i) === j && <PreviewVideo videoId={youtubeId} title={name} />}
+                      </div>
                     ))}
                   </div>
                   {/* in-feed = mismo lugar que la página real de noticia/guía: justo después del 2º bloque. Reportaje no lo tiene en el sitio real, por eso no aparece aquí. */}

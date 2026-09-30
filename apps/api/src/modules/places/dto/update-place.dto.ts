@@ -1,11 +1,12 @@
 import { z } from 'zod';
 import { imagePositionSchema } from '../../../common/image-position';
-import { youtubeIdSchema } from '../../../common/youtube';
+import { youtubeIdSchema, blockVideoAfterSchema } from '../../../common/youtube';
 
 const contentBlockSchema = z.object({
   heading: z.string().nullable().optional(),
   paragraphs: z.array(z.string()),
   image: z.object({ url: z.string(), credit: z.string() }).nullable().optional(),
+  videoAfter: blockVideoAfterSchema,
 });
 
 export const updatePlaceSchema = z

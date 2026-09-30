@@ -116,6 +116,10 @@ export interface ContentBlock {
   // Imagen embebida en este bloque (opcional) — elegida por búsqueda o URL
   // manual en el CMS, nunca generada/inventada por la IA.
   image?: { url: string; credit: string } | null;
+  // El video de la pieza va dentro de este bloque, después del párrafo con
+  // este índice (-1 = antes del primero). Sin ningún bloque así, el video
+  // queda en su lugar de siempre.
+  videoAfter?: number | null;
 }
 
 export interface Noticia {
@@ -196,7 +200,7 @@ export interface Guia {
   quickFacts: { label: string; value: string }[];
   seo: Seo | null;
   toc: TocEntry[];
-  content: { id: string; heading: string; paragraphs: string[]; image?: { url: string; credit: string } | null }[];
+  content: { id: string; heading: string; paragraphs: string[]; image?: { url: string; credit: string } | null; videoAfter?: number | null }[];
   faq: { question: string; answer: string }[];
   imageUrl: string | null;
   imageCredit: string | null;
