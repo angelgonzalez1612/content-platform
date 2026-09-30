@@ -19,6 +19,7 @@ import { PublishSuccessPanel } from "@/components/cms/publish-success-panel";
 import { ExpandDraftPanel } from "@/components/cms/expand-draft-panel";
 import { markContentRadarPublished } from "@/lib/mark-content-radar-published";
 import { useOpenAiAvailable } from "@/lib/use-openai-available";
+import { VideoField } from "@/components/cms/video-field";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
 type Step = "input" | "generating" | "review" | "creating" | "published";
@@ -58,6 +59,8 @@ const TYPE_META: Record<string, { label: string; nameLabel: string; namePlacehol
 };
 
 interface DraftResponse {
+  // Video de YouTube de la fuente (ver AiDraftService.draft): se incrusta en la pieza.
+  youtubeId?: string | null;
   draft: Record<string, unknown>;
   checksRun: CheckResult[];
   decision: AiDecision;
@@ -182,6 +185,7 @@ export function GenerateLamiraContentFlow({
   // plan), nunca la genera la IA. El humano puede quitarla, reemplazarla o
   // (si el scraping no encontró ninguna) agregar una a mano en la revisión.
   const [image, setImage] = useState<{ url: string; credit: string } | null>(initialDraft?.image ?? null);
+  const [youtubeId, setYoutubeId] = useState<string | null>(initialDraft?.youtubeId ?? null);
   const [articleImages, setArticleImages] = useState<{ url: string; credit: string }[]>(initialDraft?.articleImages ?? []);
   const [imageSearchQuery, setImageSearchQuery] = useState(initialDraft?.imageSearchQuery ?? "");
 
@@ -283,6 +287,7 @@ export function GenerateLamiraContentFlow({
       setChecksRun(data.checksRun);
       setDecision(data.decision);
       setImage(data.image);
+      setYoutubeId(data.youtubeId ?? null);
       setArticleImages(data.articleImages ?? []);
       setImageSearchQuery(data.imageSearchQuery ?? "");
       setCategoryId(data.categoryId);
@@ -305,7 +310,7 @@ export function GenerateLamiraContentFlow({
     setError("");
 
     const status = meta.hasStatus ? (decision === "auto-published" ? "published" : "draft") : undefined;
-    const imageFields = { imageUrl: image?.url ?? null, imageCredit: image?.credit ?? null };
+    const imageFields = { imageUrl: image?.url ?? null, imageCredit: image?.credit ?? null, youtubeId };
     let payload: Record<string, unknown>;
 
     switch (type) {
@@ -565,6 +570,7 @@ export function GenerateLamiraContentFlow({
                 articleImages={articleImages}
                 label={`Imagen${image ? " (de la fuente citada)" : ""}`}
               />
+              <VideoField videoId={youtubeId} onChange={setYoutubeId} />
 
               {isRichContent ? (
                 <>

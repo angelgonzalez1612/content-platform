@@ -25,6 +25,8 @@ export type PlanazoPreviewProps =
       image: { url: string; credit: string } | null;
       /** Encuadre de la imagen (CSS object-position); null = centrada. */
       imagePosition?: string | null;
+      /** Video de YouTube incrustado debajo de la imagen, como en el sitio. */
+      youtubeId?: string | null;
       address: string;
       zone: string;
       price: number | null;
@@ -43,6 +45,8 @@ export type PlanazoPreviewProps =
       image: { url: string; credit: string } | null;
       /** Encuadre de la imagen (CSS object-position); null = centrada. */
       imagePosition?: string | null;
+      /** Video de YouTube incrustado debajo de la imagen, como en el sitio. */
+      youtubeId?: string | null;
       locationName: string;
       dateLabel: string;
       description: string;
@@ -57,6 +61,8 @@ export type PlanazoPreviewProps =
       image: { url: string; credit: string } | null;
       /** Encuadre de la imagen (CSS object-position); null = centrada. */
       imagePosition?: string | null;
+      /** Video de YouTube incrustado debajo de la imagen, como en el sitio. */
+      youtubeId?: string | null;
       description: string;
       intro: string;
       readTime: string;
@@ -98,8 +104,23 @@ function DescriptionWithAd({ description }: { description: string }) {
   );
 }
 
+function PreviewVideo({ videoId, title }: { videoId: string; title: string }) {
+  return (
+    <div className="mb-4 overflow-hidden rounded-[10px] bg-ink-solid" style={{ aspectRatio: "16/9" }}>
+      <iframe
+        className="size-full"
+        src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+        title={title || "Video"}
+        loading="lazy"
+        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  );
+}
+
 export function PlanazoPreviewCard(props: PlanazoPreviewProps) {
-  const { kind, name, categoryLabel, image, imagePosition, description } = props;
+  const { kind, name, categoryLabel, image, imagePosition, youtubeId, description } = props;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -123,6 +144,7 @@ export function PlanazoPreviewCard(props: PlanazoPreviewProps) {
               <figcaption className="mt-1.5 text-[11px] text-ink-faint">{image.credit}</figcaption>
             </figure>
           )}
+          {youtubeId && <PreviewVideo videoId={youtubeId} title={name} />}
 
           <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-2.5 py-1 text-[11.5px] font-bold text-accent-fg">
             🏷️ {categoryLabel}

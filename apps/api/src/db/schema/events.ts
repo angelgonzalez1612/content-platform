@@ -38,6 +38,9 @@ export const events = sqliteTable('events', {
   // Punto de enfoque de la imagen principal dentro de su recuadro (CSS
   // object-position, ej. '50% 20%'); null = centrada.
   imagePosition: text('image_position'),
+  // Video de YouTube incrustado en la página (solo el ID); se llena solo si la
+  // fuente es un video o trae uno incrustado. Ver common/youtube.ts.
+  youtubeId: text('youtube_id'),
   // Mismo campo que noticia/reportaje de La Mira y places.sourceUrl — el
   // artículo/tema original del que salió este evento, cuando lo crea la
   // automatización.

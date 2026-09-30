@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { imagePositionSchema } from '../../../common/image-position';
+import { youtubeIdSchema } from '../../../common/youtube';
 
 const blockImageSchema = z.object({ url: z.string(), credit: z.string() }).nullable().optional();
 const contentSchema = z.array(z.object({ heading: z.string().nullable().optional(), paragraphs: z.array(z.string()), image: blockImageSchema })).optional();
@@ -17,6 +18,7 @@ export const updateEventSchema = z
     imageUrl: z.string().nullable().optional(),
     imageCredit: z.string().nullable().optional(),
     imagePosition: imagePositionSchema,
+    youtubeId: youtubeIdSchema,
     sourceUrl: z.string().nullable().optional(),
     status: z
       .enum(['draft', 'in_review', 'scheduled', 'published', 'archived'])

@@ -15,6 +15,7 @@ interface AlertaRow {
   imageUrl: string | null;
   imageCredit: string | null;
   imagePosition: string | null;
+  youtubeId: string | null;
   categoryData: Record<string, unknown>;
   content: Alerta['content'];
   createdAt: Date | string;
@@ -38,6 +39,7 @@ export function toAlerta(row: AlertaRow): Alerta {
     imageUrl: row.imageUrl,
     imageCredit: row.imageCredit,
     imagePosition: row.imagePosition ?? null,
+    youtubeId: row.youtubeId ?? null,
     categoryData: row.categoryData,
     content: row.content,
     createdAt: toIso(row.createdAt),

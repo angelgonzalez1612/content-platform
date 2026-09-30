@@ -16,6 +16,7 @@ import { PlanazoPreviewCard } from "@/components/cms/planazo/planazo-preview-car
 import { ContentBlocksField, type ContentBlockValue } from "@/components/cms/content-blocks-field";
 import { summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
 import { SaveActions } from "@/components/cms/save-actions";
+import { VideoField } from "@/components/cms/video-field";
 
 // `startDate` es el valor crudo de un <input type="datetime-local"> ("2026-09-01T18:00") — para la vista previa.
 function toDateLabelPreview(startDate: string): string {
@@ -51,6 +52,8 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
     existing.content.map((b) => ({ heading: b.heading ?? null, paragraphs: b.paragraphs })),
   );
   // Encuadre de la imagen principal (ver ImageFocusEditor); null = centrada.
+  // Video de YouTube incrustado (ver VideoField); se llena solo al generar si la fuente lo trae.
+  const [youtubeId, setYoutubeId] = useState<string | null>(existing.youtubeId ?? null);
   const [imagePosition, setImagePosition] = useState<string | null>(existing.imagePosition ?? null);
   const [image, setImage] = useState<{ url: string; credit: string } | null>(
     existing.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
@@ -102,6 +105,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
       categoryId: form.categoryId || null,
       imageUrl: image?.url ?? null,
       imagePosition: image ? imagePosition : null,
+      youtubeId,
       imageCredit: image?.credit ?? null,
       sourceUrl: form.sourceUrl || null,
       status,
@@ -151,6 +155,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
       categoryLabel={category?.name ?? ""}
       image={image}
       imagePosition={imagePosition}
+      youtubeId={youtubeId}
       locationName={form.locationName}
       dateLabel={toDateLabelPreview(form.startDate)}
       description={form.description}
@@ -249,6 +254,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
         </div>
 
         <ImageField image={image} onChange={setImage} position={imagePosition} onPositionChange={setImagePosition} />
+        <VideoField videoId={youtubeId} onChange={setYoutubeId} sourceUrl={form.sourceUrl || null} />
 
         <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 

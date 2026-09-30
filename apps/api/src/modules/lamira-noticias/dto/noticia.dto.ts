@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { imagePositionSchema } from '../../../common/image-position';
+import { youtubeIdSchema } from '../../../common/youtube';
 
 const seoSchema = z
   .object({ title: z.string().optional(), description: z.string().optional(), canonical: z.string().optional(), ogImage: z.string().optional() })
@@ -28,7 +29,7 @@ export const createNoticiaSchema = z.object({
   sourceKind: z.string().nullable().optional(),
   externalSource: z.string().nullable().optional(),
   sourceUrl: z.string().nullable().optional(),
-  youtubeId: z.string().nullable().optional(),
+  youtubeId: youtubeIdSchema,
   instagramUrl: z.string().nullable().optional(),
   twitterUrl: z.string().nullable().optional(),
   tiktokUrl: z.string().nullable().optional(),
@@ -61,7 +62,7 @@ export const updateNoticiaSchema = z
     sourceKind: z.string().nullable().optional(),
     externalSource: z.string().nullable().optional(),
     sourceUrl: z.string().nullable().optional(),
-    youtubeId: z.string().nullable().optional(),
+    youtubeId: youtubeIdSchema,
     instagramUrl: z.string().nullable().optional(),
     twitterUrl: z.string().nullable().optional(),
     tiktokUrl: z.string().nullable().optional(),

@@ -112,6 +112,14 @@ export class AiController {
     return this.draftService.fetchImageFromUrl(dto.url);
   }
 
+  // Campo "Video" del CMS: busca el video de YouTube de la URL de la fuente
+  // (la URL misma, o uno incrustado en la nota). { youtubeId: null } si no hay.
+  @Post('source-video')
+  sourceVideo(@Body() body: unknown) {
+    const dto = fetchImageSchema.parse(body);
+    return this.draftService.findSourceVideo(dto.url);
+  }
+
   // Modo "Por liga" del formulario de Centro IA — título sugerido + fuente,
   // antes de generar el borrador completo (que sigue siendo draft(), pasando
   // la misma URL dentro de `hints`). Mismo DTO que fetch-image (una sola

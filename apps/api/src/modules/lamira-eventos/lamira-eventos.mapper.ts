@@ -20,6 +20,7 @@ interface LamiraEventoRow {
   imageUrl: string | null;
   imageCredit: string | null;
   imagePosition: string | null;
+  youtubeId: string | null;
   categoryData: Record<string, unknown>;
   content: LamiraEvento['content'];
   createdAt: Date | string;
@@ -48,6 +49,7 @@ export function toLamiraEvento(row: LamiraEventoRow): LamiraEvento {
     imageUrl: row.imageUrl,
     imageCredit: row.imageCredit,
     imagePosition: row.imagePosition ?? null,
+    youtubeId: row.youtubeId ?? null,
     categoryData: row.categoryData,
     content: row.content,
     createdAt: toIso(row.createdAt),

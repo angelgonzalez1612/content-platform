@@ -172,6 +172,8 @@ export interface Alerta {
   imageCredit: string | null;
   /** Punto de enfoque de la imagen (CSS object-position, ej. "50% 20%"); null = centrada. */
   imagePosition: string | null;
+  /** Video de YouTube incrustado (solo el ID); null = sin video. */
+  youtubeId: string | null;
   categoryData: Record<string, unknown>;
   // Cuerpo extendido opcional, igual que Place (ver comentario ahí) — agregado
   // con "Mejorar con IA" (modo "Agregar contenido"), nunca por el draft inicial.
@@ -200,6 +202,8 @@ export interface Guia {
   imageCredit: string | null;
   /** Punto de enfoque de la imagen (CSS object-position, ej. "50% 20%"); null = centrada. */
   imagePosition: string | null;
+  /** Video de YouTube incrustado (solo el ID); null = sin video. */
+  youtubeId: string | null;
   categoryData: Record<string, unknown>;
   createdAt: string;
 }
@@ -227,6 +231,8 @@ export interface LamiraEvento {
   imageCredit: string | null;
   /** Punto de enfoque de la imagen (CSS object-position, ej. "50% 20%"); null = centrada. */
   imagePosition: string | null;
+  /** Video de YouTube incrustado (solo el ID); null = sin video. */
+  youtubeId: string | null;
   categoryData: Record<string, unknown>;
   content: ContentBlock[];
   createdAt: string;
@@ -249,6 +255,8 @@ export interface LamiraLugar {
   imageCredit: string | null;
   /** Punto de enfoque de la imagen (CSS object-position, ej. "50% 20%"); null = centrada. */
   imagePosition: string | null;
+  /** Video de YouTube incrustado (solo el ID); null = sin video. */
+  youtubeId: string | null;
   categoryData: Record<string, unknown>;
   content: ContentBlock[];
   createdAt: string;
@@ -274,6 +282,8 @@ export interface Reportaje {
   imageCredit: string | null;
   /** Punto de enfoque de la imagen (CSS object-position, ej. "50% 20%"); null = centrada. */
   imagePosition: string | null;
+  /** Video de YouTube incrustado (solo el ID); null = sin video. */
+  youtubeId: string | null;
   toc: TocEntry[];
   content: ContentBlock[];
   categoryData: Record<string, unknown>;
@@ -387,6 +397,8 @@ export interface Place {
   allowPhotoModal: boolean;
   /** Punto de enfoque de la foto de portada (CSS object-position); null = centrada. */
   imagePosition: string | null;
+  /** Video de YouTube incrustado (solo el ID); null = sin video. */
+  youtubeId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -429,6 +441,8 @@ export interface PlanazoEvent {
   imageCredit: string | null;
   /** Punto de enfoque de la imagen (CSS object-position, ej. "50% 20%"); null = centrada. */
   imagePosition: string | null;
+  /** Video de YouTube incrustado (solo el ID); null = sin video. */
+  youtubeId: string | null;
   // Mismo campo que Place.sourceUrl y Noticia/Reportaje de La Mira.
   sourceUrl: string | null;
   content: ContentBlock[];
@@ -478,6 +492,8 @@ export interface PlanazoGuide {
   imageCredit: string | null;
   /** Punto de enfoque de la imagen (CSS object-position, ej. "50% 20%"); null = centrada. */
   imagePosition: string | null;
+  /** Video de YouTube incrustado (solo el ID); null = sin video. */
+  youtubeId: string | null;
   placeSlugs: string[];
   excerpt: string | null;
   seo: Seo | null;

@@ -89,6 +89,9 @@ export const alertas = sqliteTable('alertas', {
   // Punto de enfoque de la imagen principal dentro de su recuadro (CSS
   // object-position, ej. '50% 20%'); null = centrada.
   imagePosition: text('image_position'),
+  // Video de YouTube incrustado en la página (solo el ID); se llena solo si la
+  // fuente es un video o trae uno incrustado. Ver common/youtube.ts.
+  youtubeId: text('youtube_id'),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
   // Cuerpo extendido opcional — mismo patrón que noticias/reportajes/places
   // (ver AiDraftService, modo 'expand'), agregado por un editor después del
@@ -125,6 +128,9 @@ export const guias = sqliteTable('guias', {
   // Punto de enfoque de la imagen principal dentro de su recuadro (CSS
   // object-position, ej. '50% 20%'); null = centrada.
   imagePosition: text('image_position'),
+  // Video de YouTube incrustado en la página (solo el ID); se llena solo si la
+  // fuente es un video o trae uno incrustado. Ver common/youtube.ts.
+  youtubeId: text('youtube_id'),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
   createdAt: createdAtColumn(),
 });
@@ -157,6 +163,9 @@ export const lamiraEventos = sqliteTable('lamira_eventos', {
   // Punto de enfoque de la imagen principal dentro de su recuadro (CSS
   // object-position, ej. '50% 20%'); null = centrada.
   imagePosition: text('image_position'),
+  // Video de YouTube incrustado en la página (solo el ID); se llena solo si la
+  // fuente es un video o trae uno incrustado. Ver common/youtube.ts.
+  youtubeId: text('youtube_id'),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
   content: text('content', { mode: 'json' }).$type<ContentBlock[]>().notNull().default([]),
   createdAt: createdAtColumn(),
@@ -184,6 +193,9 @@ export const lamiraLugares = sqliteTable('lamira_lugares', {
   // Punto de enfoque de la imagen principal dentro de su recuadro (CSS
   // object-position, ej. '50% 20%'); null = centrada.
   imagePosition: text('image_position'),
+  // Video de YouTube incrustado en la página (solo el ID); se llena solo si la
+  // fuente es un video o trae uno incrustado. Ver common/youtube.ts.
+  youtubeId: text('youtube_id'),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
   content: text('content', { mode: 'json' }).$type<ContentBlock[]>().notNull().default([]),
   createdAt: createdAtColumn(),
@@ -214,6 +226,9 @@ export const reportajes = sqliteTable('reportajes', {
   // Punto de enfoque de la imagen principal dentro de su recuadro (CSS
   // object-position, ej. '50% 20%'); null = centrada.
   imagePosition: text('image_position'),
+  // Video de YouTube incrustado en la página (solo el ID); se llena solo si la
+  // fuente es un video o trae uno incrustado. Ver common/youtube.ts.
+  youtubeId: text('youtube_id'),
   toc: text('toc', { mode: 'json' }).$type<TocEntry[]>().notNull().default([]),
   content: text('content', { mode: 'json' }).$type<ContentBlock[]>().notNull().default([]),
   categoryData: text('category_data', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),

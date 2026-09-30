@@ -20,6 +20,7 @@ interface GuiaRow {
   imageUrl: string | null;
   imageCredit: string | null;
   imagePosition: string | null;
+  youtubeId: string | null;
   categoryData: Record<string, unknown>;
   createdAt: Date | string;
 }
@@ -47,6 +48,7 @@ export function toGuia(row: GuiaRow): Guia {
     imageUrl: row.imageUrl,
     imageCredit: row.imageCredit,
     imagePosition: row.imagePosition ?? null,
+    youtubeId: row.youtubeId ?? null,
     categoryData: row.categoryData,
     createdAt: toIso(row.createdAt),
   };

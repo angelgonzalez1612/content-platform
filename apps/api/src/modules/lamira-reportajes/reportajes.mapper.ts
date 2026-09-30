@@ -19,6 +19,7 @@ interface ReportajeRow {
   imageUrl: string | null;
   imageCredit: string | null;
   imagePosition: string | null;
+  youtubeId: string | null;
   toc: Reportaje['toc'];
   content: Reportaje['content'];
   categoryData: Record<string, unknown>;
@@ -47,6 +48,7 @@ export function toReportaje(row: ReportajeRow): Reportaje {
     imageUrl: row.imageUrl,
     imageCredit: row.imageCredit,
     imagePosition: row.imagePosition ?? null,
+    youtubeId: row.youtubeId ?? null,
     toc: row.toc,
     content: row.content,
     categoryData: row.categoryData,

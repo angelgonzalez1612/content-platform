@@ -85,6 +85,8 @@ export interface LamiraPreviewProps {
   image: { url: string; credit: string } | null;
   /** Encuadre de la imagen (CSS object-position); null = centrada. */
   imagePosition?: string | null;
+  /** Video de YouTube incrustado debajo de la imagen, como en el sitio. */
+  youtubeId?: string | null;
   dek: string;
   description: string;
   content: ContentBlockValue[];
@@ -104,12 +106,28 @@ export interface LamiraPreviewProps {
  * el CSS real del sitio (repo aparte, sin sistema de diseño compartido), pero
  * sigue su misma anatomía (eyebrow de categoría, imagen con crédito, cuerpo)
  * para que la revisión sea sobre el contenido, no un formulario más. */
+function PreviewVideo({ videoId, title }: { videoId: string; title: string }) {
+  return (
+    <div className="mb-4 overflow-hidden rounded-[10px] bg-ink-solid" style={{ aspectRatio: "16/9" }}>
+      <iframe
+        className="size-full"
+        src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+        title={title || "Video"}
+        loading="lazy"
+        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  );
+}
+
 export function LamiraPreviewCard({
   type,
   name,
   categoryName,
   image,
   imagePosition,
+  youtubeId,
   dek,
   description,
   content,
@@ -147,6 +165,7 @@ export function LamiraPreviewCard({
               <figcaption className="mt-1.5 text-[11px] text-ink-faint">{image.credit}</figcaption>
             </figure>
           )}
+          {youtubeId && <PreviewVideo videoId={youtubeId} title={name} />}
 
           <p className="text-[11.5px] font-bold tracking-wide text-brand uppercase">{categoryName ?? "Sin categoría"}</p>
 

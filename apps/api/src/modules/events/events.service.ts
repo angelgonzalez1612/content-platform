@@ -88,6 +88,7 @@ export class EventsService {
         imageUrl: dto.imageUrl ?? null,
         imageCredit: dto.imageCredit ?? null,
         imagePosition: dto.imagePosition ?? null,
+        youtubeId: dto.youtubeId ?? null,
         sourceUrl: dto.sourceUrl ?? null,
         status: dto.status,
         categoryData: dto.categoryData ?? {},

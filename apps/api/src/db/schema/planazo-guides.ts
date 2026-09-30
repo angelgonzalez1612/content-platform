@@ -32,6 +32,9 @@ export const planazoGuides = sqliteTable('planazo_guides', {
   // Punto de enfoque de la imagen principal dentro de su recuadro (CSS
   // object-position, ej. '50% 20%'); null = centrada.
   imagePosition: text('image_position'),
+  // Video de YouTube incrustado en la página (solo el ID); se llena solo si la
+  // fuente es un video o trae uno incrustado. Ver common/youtube.ts.
+  youtubeId: text('youtube_id'),
   excerpt: text('excerpt'),
   // SEO propio (título/descripción para Google y redes), igual que el resto de
   // tipos. null = el sitio usa título y descripción de la guía.

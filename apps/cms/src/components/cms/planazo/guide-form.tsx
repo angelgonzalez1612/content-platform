@@ -14,6 +14,7 @@ import { GuideSectionsField, type GuideSectionValue, type PlaceOption } from "@/
 import { ImproveWithAiPanel, type ImproveWithAiHandle } from "@/components/cms/improve-with-ai-panel";
 import { ImprovePreview, isFieldSelected, type ImproveResult, type ImproveSelection } from "@/components/cms/lamira/improve-preview";
 import { SaveActions } from "@/components/cms/save-actions";
+import { VideoField } from "@/components/cms/video-field";
 
 const TYPE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "guia", label: "Guía / listicle" },
@@ -53,6 +54,8 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
   const [audience, setAudience] = useState<string[]>(existing?.audience ?? []);
   const [audienceInput, setAudienceInput] = useState("");
   // Encuadre de la imagen principal (ver ImageFocusEditor); null = centrada.
+  // Video de YouTube incrustado (ver VideoField); se llena solo al generar si la fuente lo trae.
+  const [youtubeId, setYoutubeId] = useState<string | null>(existing?.youtubeId ?? null);
   const [imagePosition, setImagePosition] = useState<string | null>(existing?.imagePosition ?? null);
   const [image, setImage] = useState<{ url: string; credit: string } | null>(
     existing?.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
@@ -112,6 +115,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
       readTime: form.readTime,
       imageUrl: image?.url ?? null,
       imagePosition: image ? imagePosition : null,
+      youtubeId,
       imageCredit: image?.credit ?? null,
       excerpt: form.excerpt || null,
       seo: finalSeo,
@@ -168,6 +172,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
       categoryLabel={form.categoryLabel || "Guía"}
       image={image}
       imagePosition={imagePosition}
+      youtubeId={youtubeId}
       description={form.description}
       intro={form.intro}
       readTime={form.readTime}
@@ -217,6 +222,7 @@ export function GuideForm({ placeOptions, existing }: { placeOptions: PlaceOptio
       </div>
 
       <ImageField image={image} onChange={setImage} position={imagePosition} onPositionChange={setImagePosition} searchQuery={form.title} label="Portada" />
+      <VideoField videoId={youtubeId} onChange={setYoutubeId} />
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="gu-description" className={labelClass}>

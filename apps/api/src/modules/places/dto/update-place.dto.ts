@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { imagePositionSchema } from '../../../common/image-position';
+import { youtubeIdSchema } from '../../../common/youtube';
 
 const contentBlockSchema = z.object({
   heading: z.string().nullable().optional(),
@@ -47,6 +48,7 @@ export const updatePlaceSchema = z
     content: z.array(contentBlockSchema).optional(),
     allowPhotoModal: z.boolean().optional(),
     imagePosition: imagePositionSchema,
+    youtubeId: youtubeIdSchema,
     seo: z
       .object({
         title: z.string().optional(),

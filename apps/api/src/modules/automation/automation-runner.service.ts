@@ -826,6 +826,7 @@ export class AutomationRunnerService {
           categoryData,
           seo,
           sourceUrl: result.sourceUrl,
+          youtubeId: result.youtubeId ?? null,
           content: content ?? [],
         });
         return { id: created.id, slug: created.slug };
@@ -844,6 +845,7 @@ export class AutomationRunnerService {
           categoryId: category.id,
           imageUrl: result.image?.url ?? null,
           imageCredit: result.image?.credit ?? null,
+          youtubeId: result.youtubeId ?? null,
           status,
           categoryData,
           seo,
@@ -873,6 +875,7 @@ export class AutomationRunnerService {
           imageUrl: result.image?.url ?? null,
           imageAlt: result.image ? ((title as string) ?? name) : null,
           imageCredit: result.image?.credit ?? null,
+          youtubeId: result.youtubeId ?? null,
           excerpt: excerpt ?? null,
           status,
         });
@@ -901,6 +904,7 @@ export class AutomationRunnerService {
           seo,
           imageUrl: result.image?.url ?? null,
           imageCredit: result.image?.credit ?? null,
+          youtubeId: result.youtubeId ?? null,
           sourceUrl: result.sourceUrl,
         });
         return { id: created.id, slug: created.slug };
@@ -922,6 +926,7 @@ export class AutomationRunnerService {
           seo,
           imageUrl: result.image?.url ?? null,
           imageCredit: result.image?.credit ?? null,
+          youtubeId: result.youtubeId ?? null,
           content: [],
         });
         return { id: created.id, slug: created.slug };
@@ -951,6 +956,7 @@ export class AutomationRunnerService {
           seo,
           imageUrl: result.image?.url ?? null,
           imageCredit: result.image?.credit ?? null,
+          youtubeId: result.youtubeId ?? null,
           sourceUrl: result.sourceUrl,
         });
         return { id: created.id, slug: created.slug };

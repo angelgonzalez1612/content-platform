@@ -242,6 +242,7 @@ export class PlacesService {
         content: dto.content ?? [],
         allowPhotoModal: dto.allowPhotoModal ?? false,
         imagePosition: dto.imagePosition ?? null,
+        youtubeId: dto.youtubeId ?? null,
         seo: dto.seo ?? null,
       })
       .returning({ id: places.id });

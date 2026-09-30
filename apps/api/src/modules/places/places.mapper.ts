@@ -35,6 +35,7 @@ interface PlaceRow {
   content: ContentBlock[];
   allowPhotoModal: boolean;
   imagePosition: string | null;
+  youtubeId: string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
   photos: Array<{
@@ -111,6 +112,7 @@ export function toPlaceSummary(row: PlaceRow): Place {
     content: row.content,
     allowPhotoModal: row.allowPhotoModal,
     imagePosition: row.imagePosition ?? null,
+    youtubeId: row.youtubeId ?? null,
     createdAt: toIso(row.createdAt),
     updatedAt: toIso(row.updatedAt),
   };

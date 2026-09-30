@@ -16,6 +16,7 @@ import { ContentBlocksField, type ContentBlockValue } from "@/components/cms/con
 import { ExpandDraftPanel } from "@/components/cms/expand-draft-panel";
 import { markContentRadarPublished } from "@/lib/mark-content-radar-published";
 import { useOpenAiAvailable } from "@/lib/use-openai-available";
+import { VideoField } from "@/components/cms/video-field";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
 
@@ -29,6 +30,8 @@ const PROVIDERS: Array<{ id: ProviderId; label: string; hint: string }> = [
 ];
 
 interface DraftResponse {
+  // Video de YouTube de la fuente (ver AiDraftService.draft): se incrusta en la pieza.
+  youtubeId?: string | null;
   draft: Record<string, unknown>;
   checksRun: CheckResult[];
   decision: AiDecision;
@@ -104,6 +107,7 @@ export function GeneratePlaceFlow({
   const [checksRun, setChecksRun] = useState<CheckResult[]>(initialDraft?.checksRun ?? []);
   const [decision, setDecision] = useState<AiDecision>(initialDraft?.decision ?? "needs-review");
   const [image, setImage] = useState<{ url: string; credit: string } | null>(initialDraft?.image ?? null);
+  const [youtubeId, setYoutubeId] = useState<string | null>(initialDraft?.youtubeId ?? null);
   const [articleImages, setArticleImages] = useState<{ url: string; credit: string }[]>(initialDraft?.articleImages ?? []);
   const [imageSearchQuery, setImageSearchQuery] = useState(initialDraft?.imageSearchQuery ?? "");
   // "Generar más contenido" (ver ExpandDraftPanel) — vacío hasta que el editor
@@ -147,6 +151,7 @@ export function GeneratePlaceFlow({
       setCategoryId(data.categoryId);
       setCategoryWasAiChosen(true);
       setImage(data.image);
+      setYoutubeId(data.youtubeId ?? null);
       setArticleImages(data.articleImages);
       setImageSearchQuery(data.imageSearchQuery);
       setStep("review");
@@ -175,6 +180,7 @@ export function GeneratePlaceFlow({
           categoryData,
           seo,
           photo: image,
+          youtubeId,
           content,
         }),
       });
@@ -366,6 +372,7 @@ export function GeneratePlaceFlow({
               </div>
 
               <ImageField image={image} onChange={setImage} searchQuery={imageSearchQuery} articleImages={articleImages} />
+              <VideoField videoId={youtubeId} onChange={setYoutubeId} />
 
               <CategoryFieldsSection category={category} data={categoryData} onChange={setCategoryData} />
 

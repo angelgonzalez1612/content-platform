@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { imagePositionSchema } from '../../../common/image-position';
+import { youtubeIdSchema } from '../../../common/youtube';
 
 const guideImageSchema = z.object({ url: z.string(), alt: z.string(), credit: z.string() }).nullable().optional();
 
@@ -31,6 +32,7 @@ export const createGuideSchema = z.object({
   imageAlt: z.string().nullable().optional(),
   imageCredit: z.string().nullable().optional(),
   imagePosition: imagePositionSchema,
+  youtubeId: youtubeIdSchema,
   excerpt: z.string().nullable().optional(),
   seo: z
       .object({
@@ -61,6 +63,7 @@ export const updateGuideSchema = z
     imageAlt: z.string().nullable().optional(),
     imageCredit: z.string().nullable().optional(),
     imagePosition: imagePositionSchema,
+    youtubeId: youtubeIdSchema,
     excerpt: z.string().nullable().optional(),
     seo: z
         .object({

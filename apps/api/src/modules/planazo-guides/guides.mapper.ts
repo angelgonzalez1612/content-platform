@@ -14,6 +14,7 @@ interface GuideRow {
   imageAlt: string | null;
   imageCredit: string | null;
   imagePosition: string | null;
+  youtubeId: string | null;
   excerpt: string | null;
   seo: PlanazoGuide['seo'];
   budget: string | null;
@@ -43,6 +44,7 @@ export function toPlanazoGuide(row: GuideRow): PlanazoGuide {
     imageAlt: row.imageAlt,
     imageCredit: row.imageCredit,
     imagePosition: row.imagePosition ?? null,
+    youtubeId: row.youtubeId ?? null,
     placeSlugs,
     excerpt: row.excerpt,
     seo: row.seo ?? null,

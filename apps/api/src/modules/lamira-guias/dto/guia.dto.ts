@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { imagePositionSchema } from '../../../common/image-position';
+import { youtubeIdSchema } from '../../../common/youtube';
 
 const seoSchema = z
   .object({ title: z.string().optional(), description: z.string().optional(), canonical: z.string().optional(), ogImage: z.string().optional() })
@@ -29,6 +30,7 @@ export const createGuiaSchema = z.object({
   imageUrl: z.string().nullable().optional(),
   imageCredit: z.string().nullable().optional(),
   imagePosition: imagePositionSchema,
+  youtubeId: youtubeIdSchema,
   categoryData: z.record(z.string(), z.unknown()).optional(),
 });
 export type CreateGuiaDto = z.infer<typeof createGuiaSchema>;
@@ -50,6 +52,7 @@ export const updateGuiaSchema = z
     imageUrl: z.string().nullable().optional(),
     imageCredit: z.string().nullable().optional(),
     imagePosition: imagePositionSchema,
+    youtubeId: youtubeIdSchema,
     categoryData: z.record(z.string(), z.unknown()).optional(),
   })
   .strict();

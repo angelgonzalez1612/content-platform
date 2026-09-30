@@ -18,6 +18,7 @@ import { ImageField } from "@/components/cms/lamira/image-field";
 import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
 import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
 import { SaveActions } from "@/components/cms/save-actions";
+import { VideoField } from "@/components/cms/video-field";
 
 export function NoticiaForm({ categories, existing }: { categories: Category[]; existing?: Noticia }) {
   const router = useRouter();
@@ -168,6 +169,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
       categoryName={category?.name ?? null}
       image={image}
       imagePosition={imagePosition}
+      youtubeId={form.youtubeId || null}
       dek={form.dek}
       description=""
       content={content}
@@ -274,6 +276,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
         </div>
 
         <ImageField image={image} onChange={setImage} position={imagePosition} onPositionChange={setImagePosition} searchQuery={form.title} />
+        <VideoField videoId={form.youtubeId || null} onChange={(id) => set("youtubeId", id ?? "")} sourceUrl={form.sourceUrl || null} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="n-dek" className={labelClass}>
@@ -336,12 +339,6 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
               Pie de foto
             </label>
             <input id="n-image-caption" value={form.imageCaption} onChange={(e) => set("imageCaption", e.target.value)} className={fieldClass} />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="n-youtube" className={labelClass}>
-              ID de YouTube (opcional)
-            </label>
-            <input id="n-youtube" value={form.youtubeId} onChange={(e) => set("youtubeId", e.target.value)} className={fieldClass} />
           </div>
         </div>
 

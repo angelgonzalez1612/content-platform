@@ -8,6 +8,7 @@ import { chromium } from 'playwright';
 // hasta el primer scrape real, sin bloquear el arranque.
 import type { JSDOM as JSDOMType } from 'jsdom';
 import type { Readability as ReadabilityType } from '@mozilla/readability';
+import { extractYoutubeId, findEmbeddedYoutubeId } from '../../common/youtube';
 
 export interface ScrapedArticle {
   text: string;
@@ -28,6 +29,9 @@ export interface ScrapedArticle {
   // Siempre presente (a diferencia de imageUrl): sirve como crédito aunque
   // el sitio no traiga imagen.
   siteName: string;
+  // Video de YouTube de la fuente: la propia URL si es un video, o el primero
+  // incrustado en la nota (iframe/og:video). Se incrusta en la pieza.
+  youtubeId?: string | null;
 }
 
 const USER_AGENT =
@@ -111,6 +115,7 @@ export class ArticleScraperService {
     );
     const siteName = this.extractSiteName(dom.window.document, url);
     return {
+      youtubeId: extractYoutubeId(url) ?? findEmbeddedYoutubeId(html),
       text: text.slice(0, MAX_ARTICLE_CHARS),
       title: article?.title?.trim() || null,
       imageUrl,

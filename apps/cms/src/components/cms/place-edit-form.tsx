@@ -18,6 +18,7 @@ import { ContentBlocksField, type ContentBlockValue } from "@/components/cms/con
 import { SaveActions } from "@/components/cms/save-actions";
 import { ImprovePreview, isFieldSelected, type ImproveResult, type ImproveSelection } from "@/components/cms/lamira/improve-preview";
 import { summarizeBlocks } from "@/components/cms/lamira/content-blocks-util";
+import { VideoField } from "@/components/cms/video-field";
 
 interface ImproveDraft {
   description?: string;
@@ -47,6 +48,8 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
   const sortedPhotos = [...place.photos].sort((a, b) => a.position - b.position);
   const cover = sortedPhotos[0];
   // Encuadre de la imagen principal (ver ImageFocusEditor); null = centrada.
+  // Video de YouTube incrustado (ver VideoField); se llena solo al generar si la fuente lo trae.
+  const [youtubeId, setYoutubeId] = useState<string | null>(place.youtubeId ?? null);
   const [imagePosition, setImagePosition] = useState<string | null>(place.imagePosition ?? null);
   const [image, setImage] = useState<{ url: string; credit: string } | null>(cover ? { url: cover.url, credit: cover.credit ?? "" } : null);
   const [gallery, setGallery] = useState<GalleryPhoto[]>(
@@ -91,6 +94,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
       seo,
       photo: image,
       imagePosition: image ? imagePosition : null,
+      youtubeId,
       gallery,
       content,
       allowPhotoModal: form.allowPhotoModal,
@@ -152,6 +156,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
       categoryLabel={category?.name ?? ""}
       image={image}
       imagePosition={imagePosition}
+      youtubeId={youtubeId}
       address={form.address}
       zone={form.zone}
       price={form.price}
@@ -256,6 +261,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
         </div>
 
         <ImageField image={image} onChange={setImage} position={imagePosition} onPositionChange={setImagePosition} />
+        <VideoField videoId={youtubeId} onChange={setYoutubeId} sourceUrl={form.sourceUrl || null} />
 
         <GalleryField photos={gallery} onChange={setGallery} searchQuery={`${form.name} ${category?.name ?? ""} CDMX`.trim()} />
 

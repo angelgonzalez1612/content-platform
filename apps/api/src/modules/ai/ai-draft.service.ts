@@ -44,6 +44,7 @@ import { ImageSearchService } from './image-search.service';
 import { CategoriesService } from '../categories/categories.service';
 import { PlacesService } from '../places/places.service';
 import type { ContentBlock } from '@planazo/types';
+import { extractYoutubeId } from '../../common/youtube';
 
 // Sin límites de longitud aquí a propósito (a diferencia de una versión
 // anterior que sí los tenía): un structured-output que no da en el clavo
@@ -106,6 +107,9 @@ export interface DraftResult {
   // hints, o hints sin URL). El CMS la usa para el campo "URL de la fuente"
   // en noticia/reportaje, editable después.
   sourceUrl: string | null;
+  // Video de YouTube de la fuente (la URL citada es un video, o la nota trae
+  // uno incrustado) — el CMS y la automatización lo guardan para incrustarlo.
+  youtubeId?: string | null;
 }
 
 // Orquesta el agente editorial: arma el schema dinámico (tipo de contenido +
@@ -177,6 +181,7 @@ export class AiDraftService {
       imageUrl: scraped.find((a) => a.imageUrl)?.imageUrl,
       additionalImageUrls: scraped.flatMap((a) => a.additionalImageUrls).slice(0, 5),
       siteName: [...new Set(scraped.map((a) => a.siteName))].join(', '),
+      youtubeId: scraped.find((a) => a.youtubeId)?.youtubeId ?? null,
     };
   }
 
@@ -467,7 +472,19 @@ export class AiDraftService {
       site,
       contentType,
       sourceUrl: this.urlFromHints(dto.hints),
+      // La fuente citada puede ser el video mismo (aunque la página de YouTube
+      // no se pueda leer como artículo) o una nota con un video incrustado.
+      youtubeId: this.urlsFromHints(dto.hints).map((u) => extractYoutubeId(u)).find(Boolean) ?? scrapedArticle?.youtubeId ?? null,
     };
+  }
+
+  /** Video de YouTube de una URL: la URL misma si es un video, o el primero
+   * incrustado en esa página. Para "Buscar video de la fuente" en el CMS. */
+  async findSourceVideo(url: string): Promise<{ youtubeId: string | null }> {
+    const direct = extractYoutubeId(url);
+    if (direct) return { youtubeId: direct };
+    const scraped = await this.scraper.scrape(url);
+    return { youtubeId: scraped?.youtubeId ?? null };
   }
 
   /** Solo implementado para 'place' por ahora — es el único tipo con carga/guardado

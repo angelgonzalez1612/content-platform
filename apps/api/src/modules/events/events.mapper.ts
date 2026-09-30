@@ -21,6 +21,7 @@ interface EventRow {
   imageUrl: string | null;
   imageCredit: string | null;
   imagePosition: string | null;
+  youtubeId: string | null;
   sourceUrl: string | null;
   content: PlanazoEvent['content'];
   createdAt: Date | string;
@@ -50,6 +51,7 @@ export function toPlanazoEvent(row: EventRow): PlanazoEvent {
     imageUrl: row.imageUrl,
     imageCredit: row.imageCredit,
     imagePosition: row.imagePosition ?? null,
+    youtubeId: row.youtubeId ?? null,
     sourceUrl: row.sourceUrl,
     content: row.content,
     createdAt: toIso(row.createdAt),

@@ -72,6 +72,8 @@ export interface UpdatePlaceInput {
   allowPhotoModal?: boolean;
   // Encuadre de la portada (CSS object-position, "X% Y%"); null = centrada.
   imagePosition?: string | null;
+  // Video de YouTube incrustado (solo el ID); null lo quita.
+  youtubeId?: string | null;
 }
 
 /** Sin `site`: todas las categorías. Con `site`: las de ese sitio + las compartidas. */

@@ -64,6 +64,9 @@ export const places = sqliteTable('places', {
   // Punto de enfoque de la foto de portada (photos[0]) dentro de su recuadro
   // (CSS object-position, ej. '50% 20%'); null = centrada.
   imagePosition: text('image_position'),
+  // Video de YouTube incrustado en la página (solo el ID); se llena solo si la
+  // fuente es un video o trae uno incrustado. Ver common/youtube.ts.
+  youtubeId: text('youtube_id'),
   allowPhotoModal: integer('allow_photo_modal', { mode: 'boolean' })
     .notNull()
     .default(false),

@@ -16,6 +16,7 @@ import { ImageField } from "@/components/cms/lamira/image-field";
 import { EditPreviewLayout } from "@/components/cms/lamira/edit-preview-layout";
 import { LamiraPreviewCard } from "@/components/cms/lamira/lamira-preview-card";
 import { SaveActions } from "@/components/cms/save-actions";
+import { VideoField } from "@/components/cms/video-field";
 
 const KIND_OPTIONS: Array<{ value: LugarKind; label: string }> = [
   { value: "parque", label: "Parque" },
@@ -41,6 +42,8 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
   const [categoryData, setCategoryData] = useState<Record<string, unknown>>(existing?.categoryData ?? {});
   const [seo, setSeo] = useState<Seo>(existing?.seo ?? {});
   // Encuadre de la imagen principal (ver ImageFocusEditor); null = centrada.
+  // Video de YouTube incrustado (ver VideoField); se llena solo al generar si la fuente lo trae.
+  const [youtubeId, setYoutubeId] = useState<string | null>(existing?.youtubeId ?? null);
   const [imagePosition, setImagePosition] = useState<string | null>(existing?.imagePosition ?? null);
   const [image, setImage] = useState<{ url: string; credit: string } | null>(
     existing?.imageUrl ? { url: existing.imageUrl, credit: existing.imageCredit ?? "" } : null,
@@ -86,6 +89,7 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
       description: form.description,
       imageUrl: image?.url ?? null,
       imagePosition: image ? imagePosition : null,
+      youtubeId,
       imageCredit: image?.credit ?? null,
       categoryData,
       seo: finalSeo,
@@ -126,6 +130,7 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
       categoryName={category?.name ?? null}
       image={image}
       imagePosition={imagePosition}
+      youtubeId={youtubeId}
       dek=""
       description={form.description}
       content={[]}
@@ -176,6 +181,7 @@ export function LamiraLugarForm({ categories, existing }: { categories: Category
         </div>
 
         <ImageField image={image} onChange={setImage} position={imagePosition} onPositionChange={setImagePosition} searchQuery={form.name} />
+        <VideoField videoId={youtubeId} onChange={setYoutubeId} />
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="l-description" className={labelClass}>
