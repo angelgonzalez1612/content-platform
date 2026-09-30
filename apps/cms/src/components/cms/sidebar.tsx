@@ -13,6 +13,7 @@ const ROUTES: Record<string, string> = {
   crear: "/crear",
   plantillas: "/plantillas",
   contenido: "/contenido",
+  revisor: "/revisor",
   "content-radar": "/content-radar",
   calendario: "/calendario",
   automatizaciones: "/automatizaciones",

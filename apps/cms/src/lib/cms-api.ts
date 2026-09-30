@@ -4,6 +4,7 @@ import type { Place, PlaceDetail, Category, Seo, Noticia, Alerta, Guia, LamiraEv
 import type { AutomationRule, AutomationRun, ProviderHealth, SearchPhrase } from "./automation-types";
 import type { CalendarItem } from "./calendar-api";
 import type { MediaItem, MediaAsset } from "./media-api";
+import type { ReviewQueueItem } from "./review-agent-types";
 
 // Cada getCmsX de este archivo pasa por aquí y trata cualquier !res.ok como
 // "vacío"/"no existe" (ver safeList/safeOne abajo) — correcto para un 404
@@ -307,4 +308,12 @@ export async function getMediaAssets(): Promise<MediaAsset[]> {
 /** Equipo con acceso al CMS — ver UsersService en la API. */
 export async function getCmsUsers(): Promise<AuthUser[]> {
   return safeList<AuthUser>("/cms/users");
+}
+
+// Revisor: cola de borradores/en revisión con su revisión automática (ver
+// apps/api/src/modules/review-agent). null = no se pudo cargar.
+export async function getReviewAgentQueue(): Promise<ReviewQueueItem[] | null> {
+  const res = await cmsFetch("/cms/review-agent/queue");
+  if (!res.ok) return null;
+  return res.json();
 }

@@ -43,6 +43,13 @@ export const NAV_GROUPS: NavGroup[] = [
         name: "Contenido",
         icon: "M5 4h9l5 5v11H5zM14 4v5h5M8 13h8M8 16.5h5",
       },
+      {
+        // Agente que revisa borradores/en revisión contra criterios medibles
+        // (imagen, longitud, idioma, encaje…) y, a pedido, con IA.
+        id: "revisor",
+        name: "Revisor",
+        icon: "M9 12l2 2 4-4M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z",
+      },
       { id: "calendario", name: "Calendario Editorial", icon: "M5 6h14v14H5zM5 10h14M9 4v4M15 4v4" },
       { id: "automatizaciones", name: "Reglas de automatización", icon: "M6 5h5v5H6zM13 14h5v5h-5zM8.5 10v6.5H13" },
       { id: "automatizaciones-frases", name: "Frases de búsqueda", icon: "M4 5h16v11H8l-4 4z" },

@@ -8,5 +8,6 @@ import { ContentVersionsModule } from '../content-versions/content-versions.modu
   imports: [ContentVersionsModule],
   controllers: [GuiasController, CmsGuiasController],
   providers: [GuiasService],
+  exports: [GuiasService], // ReviewAgentModule la publica desde el Revisor
 })
 export class GuiasModule {}

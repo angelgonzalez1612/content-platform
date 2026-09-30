@@ -35,7 +35,7 @@ const isEmpty = (value: unknown) =>
 // palabras, el check bloqueaba el 100% de las piezas sin excepción, sin
 // importar qué tan buena fuera la redacción. guia sí se deja en 300: es
 // evergreen con content[] + faq, con espacio real para llegar ahí.
-const MIN_WORDS_BY_TYPE: Record<string, number> = {
+export const MIN_WORDS_BY_TYPE: Record<string, number> = {
   noticia: 300,
   reportaje: 300,
   guia: 300,
@@ -46,7 +46,7 @@ const MIN_WORDS_BY_TYPE: Record<string, number> = {
   'evento-planazo': 40, // objetivo editorial: 1-2 párrafos
   lugar: 40, // objetivo editorial: 1-2 párrafos
 };
-const DEFAULT_MIN_WORDS = 300;
+export const DEFAULT_MIN_WORDS = 300;
 
 // Determinístico, sin llamadas a LLM — es lo único que permite confiar en la
 // auto-publicación (ver Fase 3 del plan). Corre TODOS los checks (no corta al
