@@ -7,6 +7,7 @@ import { Icon } from "@/components/icon";
 import { MexicoMap } from "./mexico-map";
 import { ZmvmMap } from "./zmvm-map";
 import { MEXICO_STATE_SHAPES } from "@/data/mexico-states-map";
+import { EntidadesPhotos } from "./entidades-photos";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
 const PIN_ICON = "M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z";
@@ -122,7 +123,7 @@ export function EntidadesExplorer() {
   // El panel derecho tiene dos caras: las notas reales (lo que genera contenido
   // = protagonista, tab por default) y las tendencias de Trends (descubrimiento).
   // Separarlas en un segmented control evita el scroll largo de apilar ambas.
-  const [panelTab, setPanelTab] = useState<"notas" | "tendencias">("notas");
+  const [panelTab, setPanelTab] = useState<"notas" | "fotos" | "tendencias">("notas");
   const phraseNotesKey = activePhrase && localPlace ? `${localPlace.code}:${activePhrase}` : "";
   const [phraseNotesState, setPhraseNotesState] = useState<LocalSearchState>({ key: "", results: null, error: null });
   const phraseNotesLoading = !!phraseNotesKey && phraseNotesState.key !== phraseNotesKey;
@@ -368,7 +369,7 @@ export function EntidadesExplorer() {
 
             {/* Segmented control: notas reales (protagonista) vs tendencias (descubrimiento) */}
             <div className="flex gap-1 rounded-full border border-border bg-background p-0.5">
-              {([["notas", "Notas reales"], ["tendencias", "Tendencias"]] as const).map(([id, label]) => (
+              {([["notas", "Notas reales"], ["fotos", "Fotos"], ["tendencias", "Tendencias"]] as const).map(([id, label]) => (
                 <button
                   key={id}
                   type="button"
@@ -382,7 +383,10 @@ export function EntidadesExplorer() {
               ))}
             </div>
 
-            {panelTab === "notas" ? (
+            {panelTab === "fotos" && localPlace ? (
+              // Misma búsqueda que las notas (frase activa o categoría del lugar), pero por sus fotos.
+              <EntidadesPhotos place={localPlace.name} term={activePhrase ?? categoryLabel.toLowerCase()} />
+            ) : panelTab === "notas" ? (
               <div className="flex flex-col gap-2">
                 {/* Fuente de las notas: categoría por default, o la frase activa (removible) */}
                 {activePhrase ? (

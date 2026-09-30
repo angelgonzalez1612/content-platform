@@ -52,6 +52,9 @@ const NEWS_ARTICLES = 8;
 const NEWS_CONCURRENCY = 3;
 const NEWS_ARTICLE_TIMEOUT_MS = 30_000;
 const NEWS_DEADLINE_MS = 45_000;
+// Leer las notas tarda; la misma búsqueda (p.ej. "Fotos" de un municipio en
+// Entidades al ir y volver entre pestañas) se sirve de memoria un rato.
+const NEWS_CACHE_TTL_MS = 30 * 60 * 1000;
 
 function stripHtml(html: string): string {
   return html
@@ -78,6 +81,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
 @Injectable()
 export class ImageSearchService {
   private readonly logger = new Logger(ImageSearchService.name);
+  private readonly newsCache = new Map<string, { data: ImageSearchResult[]; ts: number }>();
 
   constructor(
     private readonly config: ConfigService,
@@ -212,6 +216,10 @@ export class ImageSearchService {
    * El crédito es el medio que publicó la nota.
    */
   async searchNews(query: string): Promise<ImageSearchResult[]> {
+    const cacheKey = query.trim().toLowerCase();
+    const cached = this.newsCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < NEWS_CACHE_TTL_MS) return cached.data;
+
     const articles = (await this.webSearch.search(query)).slice(0, NEWS_ARTICLES);
     const found: ImageSearchResult[] = [];
     const seen = new Set<string>();
@@ -241,6 +249,9 @@ export class ImageSearchService {
       }
     };
     await withTimeout(Promise.all(Array.from({ length: NEWS_CONCURRENCY }, worker)), NEWS_DEADLINE_MS + 1_000);
-    return [...found];
+    const result = [...found];
+    // Vacío casi siempre es un tropiezo pasajero (bloqueo, timeout): no se guarda.
+    if (result.length > 0) this.newsCache.set(cacheKey, { data: result, ts: Date.now() });
+    return result;
   }
 }
