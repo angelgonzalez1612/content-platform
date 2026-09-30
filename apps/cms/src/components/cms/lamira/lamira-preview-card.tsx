@@ -107,17 +107,30 @@ export interface LamiraPreviewProps {
  * sigue su misma anatomía (eyebrow de categoría, imagen con crédito, cuerpo)
  * para que la revisión sea sobre el contenido, no un formulario más. */
 function PreviewVideo({ videoId, title }: { videoId: string; title: string }) {
+  // Mismo formato que lamira.mx (YouTubeEmbed): etiqueta "Video", el video y un pie.
   return (
-    <div className="mb-4 overflow-hidden rounded-[10px] bg-ink-solid" style={{ aspectRatio: "16/9" }}>
-      <iframe
-        className="size-full"
-        src={`https://www.youtube-nocookie.com/embed/${videoId}`}
-        title={title || "Video"}
-        loading="lazy"
-        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-      />
-    </div>
+    <figure className="mb-4 flex flex-col gap-1.5">
+      <span className="flex items-center gap-1.5 text-[10.5px] font-extrabold tracking-wide text-[#dc2626] uppercase">
+        <span className="grid size-3.5 place-items-center rounded-full bg-[#dc2626] text-white" aria-hidden>
+          <svg width="6" height="6" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+        </span>
+        Video
+      </span>
+      <div className="overflow-hidden rounded-[10px] bg-ink-solid" style={{ aspectRatio: "16/9" }}>
+        <iframe
+          className="size-full"
+          src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+          title={title || "Video"}
+          loading="lazy"
+          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+      <figcaption className="flex items-center justify-between gap-2 text-[11px] text-ink-faint">
+        <span className="min-w-0 truncate">{title}</span>
+        <span className="flex-none font-semibold text-[#dc2626]">Ver en YouTube ↗</span>
+      </figcaption>
+    </figure>
   );
 }
 

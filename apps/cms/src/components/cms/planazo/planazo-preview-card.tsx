@@ -105,17 +105,31 @@ function DescriptionWithAd({ description }: { description: string }) {
 }
 
 function PreviewVideo({ videoId, title }: { videoId: string; title: string }) {
+  // Mismo formato que planazo.com.mx (YouTubeEmbed): tarjeta como las
+  // secciones, dentro del cuerpo — no pegada a la portada.
   return (
-    <div className="mb-4 overflow-hidden rounded-[10px] bg-ink-solid" style={{ aspectRatio: "16/9" }}>
-      <iframe
-        className="size-full"
-        src={`https://www.youtube-nocookie.com/embed/${videoId}`}
-        title={title || "Video"}
-        loading="lazy"
-        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-      />
-    </div>
+    <figure className="mt-5 rounded-[12px] border border-border-soft p-3.5">
+      <p className="flex items-center gap-2 text-[11.5px] font-bold tracking-wide text-brand uppercase">
+        <span className="grid size-4 place-items-center rounded-full bg-brand text-white" aria-hidden>
+          <svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+        </span>
+        Mira el video
+      </p>
+      <div className="mt-2.5 overflow-hidden rounded-[8px] bg-ink-solid" style={{ aspectRatio: "16/9" }}>
+        <iframe
+          className="size-full"
+          src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+          title={title || "Video"}
+          loading="lazy"
+          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+      <figcaption className="mt-2 flex items-center justify-between gap-2 text-[11.5px] text-ink-faint">
+        <span className="min-w-0 truncate">Video · {title}</span>
+        <span className="flex-none font-semibold text-brand">Ver en YouTube ↗</span>
+      </figcaption>
+    </figure>
   );
 }
 
@@ -144,7 +158,6 @@ export function PlanazoPreviewCard(props: PlanazoPreviewProps) {
               <figcaption className="mt-1.5 text-[11px] text-ink-faint">{image.credit}</figcaption>
             </figure>
           )}
-          {youtubeId && <PreviewVideo videoId={youtubeId} title={name} />}
 
           <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-2.5 py-1 text-[11.5px] font-bold text-accent-fg">
             🏷️ {categoryLabel}
@@ -172,6 +185,7 @@ export function PlanazoPreviewCard(props: PlanazoPreviewProps) {
               )}
 
               <DescriptionWithAd description={description} />
+              {youtubeId && <PreviewVideo videoId={youtubeId} title={name} />}
 
               {/* Solo "lugar" tiene precio de verdad en el modelo — un
                   evento de Planazo no lo captura (ver comentario arriba). */}
@@ -190,6 +204,7 @@ export function PlanazoPreviewCard(props: PlanazoPreviewProps) {
               </p>
 
               <DescriptionWithAd description={description} />
+              {youtubeId && <PreviewVideo videoId={youtubeId} title={name} />}
 
               {/* Fijo en "Gratis" a propósito — PlanazoEvent no captura su
                   propio precio todavía (ver comentario arriba), pero la
@@ -222,6 +237,7 @@ function GuideBody(props: Extract<PlanazoPreviewProps, { kind: "guia" }>) {
       </p>
       {description && <p className="mt-3 text-[15px] leading-[1.55] font-medium text-ink">{description}</p>}
       {intro && <p className="mt-3 text-[14px] leading-[1.6] text-ink-soft">{intro}</p>}
+      {props.youtubeId && <PreviewVideo videoId={props.youtubeId} title={props.name} />}
       {sections.length > 0 && (
         <ol className="mt-5 flex flex-col gap-5 border-t border-border-soft pt-5">
           {sections.map((section, i) => (
