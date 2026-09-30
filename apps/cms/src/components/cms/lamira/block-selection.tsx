@@ -55,10 +55,11 @@ export function useBlockSelection(blocks: ContentBlockValue[], resetToken: unkno
     keysOfBlock,
     toggle,
     toggleAll: () => setExcluded(selected === total ? new Set(blocks.flatMap((_, b) => keysOfBlock(b))) : new Set()),
-    /** Bloques con solo los párrafos marcados (sin los que quedaron vacíos). */
-    selectedBlocks: (): ContentBlockValue[] =>
+    /** Bloques con solo los párrafos marcados (sin los que quedaron vacíos); `from` = a partir de qué bloque. */
+    selectedBlocks: (from = 0): ContentBlockValue[] =>
       blocks
         .map((block, b) => {
+          if (b < from) return null;
           if (block.paragraphs.length === 0) return excluded.has(paragraphKey(b, 0)) ? null : block;
           const paragraphs = block.paragraphs.filter((_, p) => !excluded.has(paragraphKey(b, p)));
           return paragraphs.length > 0 ? { ...block, paragraphs } : null;
@@ -121,6 +122,7 @@ export function BlockSelectionList({
                 />
                 <span className="min-w-0 flex-1 text-[13px] font-semibold text-ink">{block.heading?.trim() || "Sección sin título"}</span>
                 <span className={`flex-none rounded-full px-2 py-0.5 text-[10.5px] font-semibold ${status.className}`}>{status.label}</span>
+                <RemoveToggle removed={selectedInBlock === 0} onToggle={() => toggle(keys, selectedInBlock === 0)} what="sección" />
               </label>
               {block.paragraphs.length > 0 && (
                 <ul className="flex flex-col">
@@ -129,14 +131,15 @@ export function BlockSelectionList({
                     const checked = !excluded.has(key);
                     return (
                       <li key={key}>
-                        <label className="flex cursor-pointer items-start gap-2.5 px-3 py-2 transition-colors hover:bg-hover">
+                        <label className="group flex cursor-pointer items-start gap-2.5 px-3 py-2 transition-colors hover:bg-hover">
                           <input
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggle([key], !checked)}
                             className="mt-0.5 size-4 flex-none rounded border-border accent-brand"
                           />
-                          <span className={`text-[12.5px] leading-[1.55] ${checked ? "text-ink" : "text-ink-faint line-through"}`}>{paragraph}</span>
+                          <span className={`min-w-0 flex-1 text-[12.5px] leading-[1.55] ${checked ? "text-ink" : "text-ink-faint line-through"}`}>{paragraph}</span>
+                          <RemoveToggle removed={!checked} onToggle={() => toggle([key], !checked)} what="párrafo" subtle />
                         </label>
                       </li>
                     );
@@ -148,5 +151,35 @@ export function BlockSelectionList({
         })}
       </ol>
     </div>
+  );
+}
+
+/** "Quitar" / "Recuperar" explícito (mismo efecto que la casilla, pero más claro). */
+function RemoveToggle({ removed, onToggle, what, subtle = false }: { removed: boolean; onToggle: () => void; what: string; subtle?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault(); // dentro de un <label>: que no cambie también la casilla
+        onToggle();
+      }}
+      title={removed ? `Recuperar este ${what}` : `Quitar este ${what}`}
+      className={`flex flex-none items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium transition-colors ${
+        removed
+          ? "text-accent-fg hover:bg-accent"
+          : `text-ink-faint hover:bg-negative/10 hover:text-negative ${subtle ? "opacity-0 group-hover:opacity-100 focus-visible:opacity-100" : ""}`
+      }`}
+    >
+      {removed ? (
+        "↺ Recuperar"
+      ) : (
+        <>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3" />
+          </svg>
+          Quitar
+        </>
+      )}
+    </button>
   );
 }

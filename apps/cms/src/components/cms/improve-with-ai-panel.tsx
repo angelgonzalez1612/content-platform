@@ -6,6 +6,7 @@ import type { CheckResult, AiDecision } from "@planazo/types";
 import { Icon } from "@/components/icon";
 import { fieldClass, labelClass } from "@/components/cms/dynamic-field";
 import { useAiSettings } from "@/lib/use-openai-available";
+import type { ContentBlockValue } from "@/components/cms/content-blocks-field";
 
 const SPARK_ICON = "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z";
 
@@ -25,6 +26,8 @@ interface ImproveResult {
   draft: Record<string, unknown>;
   checksRun: CheckResult[];
   decision: AiDecision;
+  /** Con qué modo se generó — "Generar más" solo aplica a "Agregar contenido". */
+  mode?: "rewrite" | "expand";
 }
 
 export interface ImproveWithAiHandle {
@@ -32,6 +35,10 @@ export interface ImproveWithAiHandle {
    * la usa el botón "Generar otra vez" del preview (ImprovePreview), para no
    * obligar a volver a abrir este panel para pedir una alternativa. */
   regenerate: () => void;
+  /** "Generar más": pide secciones NUEVAS adicionales conservando `proposed`
+   * (las que la IA ya propuso y el editor dejó marcadas); el resultado trae
+   * el cuerpo actual + `proposed` + las nuevas. */
+  generateMore: (proposed: ContentBlockValue[]) => void;
 }
 
 function formatElapsed(seconds: number): string {
@@ -82,9 +89,10 @@ export const ImproveWithAiPanel = forwardRef<ImproveWithAiHandle, {
   const provider = chosenProvider ?? fallbackProvider;
   const providerName = PROVIDERS.find((p) => p.id === provider)?.name ?? provider;
 
-  useImperativeHandle(ref, () => ({ regenerate: handleImprove }));
+  useImperativeHandle(ref, () => ({ regenerate: () => handleImprove(), generateMore: (proposed) => handleImprove(proposed) }));
 
-  async function handleImprove() {
+  async function handleImprove(proposed?: ContentBlockValue[]) {
+    const sentMode = proposed ? "expand" : mode;
     if (abortRef.current) return; // ya hay una generación en curso
     const controller = new AbortController();
     abortRef.current = controller;
@@ -97,7 +105,7 @@ export const ImproveWithAiPanel = forwardRef<ImproveWithAiHandle, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, mode, instructions: instructions || undefined }),
+        body: JSON.stringify({ provider, mode: sentMode, instructions: instructions || undefined, proposed }),
         signal: controller.signal,
       });
 
@@ -107,7 +115,7 @@ export const ImproveWithAiPanel = forwardRef<ImproveWithAiHandle, {
         return;
       }
 
-      onResult(await res.json(), mode);
+      onResult({ ...(await res.json()), mode: sentMode }, sentMode);
     } catch (err) {
       if ((err as Error).name === "AbortError") setNotice("Generación cancelada. Puedes cambiar el proveedor o las instrucciones y volver a intentar.");
       else setError("No se pudo conectar con el servidor.");
@@ -239,7 +247,7 @@ export const ImproveWithAiPanel = forwardRef<ImproveWithAiHandle, {
           ) : (
             <button
               type="button"
-              onClick={handleImprove}
+              onClick={() => handleImprove()}
               className="flex items-center justify-center gap-2 self-start rounded-[10px] bg-brand px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_1px_2px_rgba(253,105,13,.35)] transition-colors hover:bg-brand-pressed"
             >
               <Icon d={SPARK_ICON} size={14} strokeWidth={1.8} />

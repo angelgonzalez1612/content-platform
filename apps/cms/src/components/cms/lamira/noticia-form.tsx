@@ -222,6 +222,7 @@ export function NoticiaForm({ categories, existing }: { categories: Category[]; 
           onApply={applyImprovement}
           onDiscard={() => setImproveResult(null)}
           onRegenerate={() => improveRef.current?.regenerate()}
+          onGenerateMore={(proposed) => improveRef.current?.generateMore(proposed)}
           regenerating={regenerating}
         />
       )}

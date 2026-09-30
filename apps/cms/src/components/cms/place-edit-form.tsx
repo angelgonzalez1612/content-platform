@@ -206,6 +206,7 @@ export function PlaceEditForm({ place, category }: { place: PlaceDetail; categor
           onApply={applyImprovement}
           onDiscard={() => setImproveResult(null)}
           onRegenerate={() => improveRef.current?.regenerate()}
+          onGenerateMore={(proposed) => improveRef.current?.generateMore(proposed)}
           regenerating={regenerating}
         />
       )}

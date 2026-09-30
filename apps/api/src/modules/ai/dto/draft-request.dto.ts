@@ -28,6 +28,10 @@ export const improveRequestSchema = z.object({
   // agregar al final del contenido existente — no toca descripción/SEO.
   // Implementado para los 8 tipos (ver AiDraftService.improveContent).
   mode: z.enum(['rewrite', 'expand']).default('rewrite'),
+  // "Generar más" (solo 'expand'): secciones que la IA ya propuso y el editor
+  // conserva sin aplicar todavía — se mantienen, no se repiten sus temas, y
+  // las nuevas se agregan después.
+  proposed: z.array(contentBlockSchema).max(12).optional(),
 });
 
 export type ImproveRequestDto = z.infer<typeof improveRequestSchema>;

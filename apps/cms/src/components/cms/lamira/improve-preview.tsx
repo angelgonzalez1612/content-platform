@@ -11,6 +11,8 @@ export interface ImproveResult {
   draft: Record<string, unknown>;
   checksRun: CheckResult[];
   decision: AiDecision;
+  /** Con qué modo se generó — "Generar más" solo aplica a "Agregar contenido". */
+  mode?: "rewrite" | "expand";
 }
 
 export interface ImproveField {
@@ -47,6 +49,7 @@ export function ImprovePreview({
   onApply,
   onDiscard,
   onRegenerate,
+  onGenerateMore,
   regenerating = false,
 }: {
   result: ImproveResult;
@@ -56,6 +59,9 @@ export function ImprovePreview({
   // Repite la generación con el mismo proveedor/modo/instrucciones, sin
   // volver a abrir el panel — para probar una alternativa antes de aplicar.
   onRegenerate?: () => void;
+  // "Generar más": pide secciones adicionales conservando las nuevas que
+  // siguen marcadas (solo en "Agregar contenido").
+  onGenerateMore?: (proposed: ContentBlockValue[]) => void;
   regenerating?: boolean;
 }) {
   const textFields = fields.filter((f) => !f.blocks);
@@ -91,6 +97,9 @@ export function ImprovePreview({
     const blocks = blockField && selectedParagraphs > 0 ? selection.selectedBlocks() : null;
     onApply({ fields: selectedFields, blocks });
   }
+
+  const currentCount = blockField?.blocks?.current.length ?? 0;
+  const canGenerateMore = !!onGenerateMore && !!blockField && result.mode === "expand";
 
   const nothingSelected = selectedFields.size === 0 && (!blockField || selectedParagraphs === 0);
 
@@ -142,7 +151,7 @@ export function ImprovePreview({
           selection={selection}
           statuses={statuses}
           title={`${blockField.label} mejorado`}
-          hint={<>Actual: {summarizeBlocks(blockField.blocks?.current ?? []) || "(vacío)"}. Desmarca lo que no quieras; lo marcado reemplaza al cuerpo actual.</>}
+          hint={<>Actual: {summarizeBlocks(blockField.blocks?.current ?? []) || "(vacío)"}. Quita lo que no quieras; lo marcado reemplaza al cuerpo actual.</>}
         />
       )}
 
@@ -167,6 +176,20 @@ export function ImprovePreview({
         >
           {blockField && selectedParagraphs < totalParagraphs && selectedParagraphs > 0 ? "Aplicar lo marcado" : "Aplicar al formulario"}
         </button>
+        {canGenerateMore && (
+          <button
+            type="button"
+            onClick={() => onGenerateMore!(selection.selectedBlocks(currentCount))}
+            disabled={regenerating}
+            title="Conserva las secciones nuevas que dejaste marcadas y agrega más"
+            className="flex items-center gap-1.5 rounded-[10px] border border-brand/40 bg-card px-4 py-2 text-[13px] font-semibold text-accent-fg transition-colors hover:border-brand disabled:cursor-default disabled:opacity-70"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={regenerating ? "animate-spin" : ""} aria-hidden>
+              <path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4z" />
+            </svg>
+            {regenerating ? "Generando…" : "Generar más secciones"}
+          </button>
+        )}
         {onRegenerate && (
           <button
             type="button"
@@ -174,7 +197,7 @@ export function ImprovePreview({
             disabled={regenerating}
             className="rounded-[10px] border border-border bg-card px-4 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-brand hover:text-brand disabled:cursor-default disabled:opacity-70"
           >
-            {regenerating ? "Generando…" : "Generar otra vez"}
+            {regenerating ? "Generando…" : canGenerateMore ? "Rehacer todo" : "Generar otra vez"}
           </button>
         )}
         <button type="button" onClick={onDiscard} disabled={regenerating} className="text-[13px] font-medium text-ink-soft hover:text-brand disabled:cursor-default disabled:opacity-70">

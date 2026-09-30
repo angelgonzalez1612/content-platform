@@ -706,6 +706,8 @@ export class AiDraftService {
     const existingHeadings = existing.content
       .map((b) => b.heading)
       .filter((h): h is string => !!h);
+    const proposed = (dto.proposed ?? []) as ContentBlock[];
+    existingHeadings.push(...proposed.map((b) => b.heading).filter((h): h is string => !!h));
 
     const { newBlocks, checksRun, decision } = await this.generateExpandSections({
       typeConfig: getContentTypeConfig('place'),
@@ -716,7 +718,7 @@ export class AiDraftService {
       instructions: dto.instructions,
       provider: dto.provider,
     });
-    const mergedContent = [...existing.content, ...newBlocks];
+    const mergedContent = [...existing.content, ...proposed, ...newBlocks];
 
     const planazoSite = await this.db.query.sites.findFirst({
       where: eq(sites.slug, 'planazo'),
@@ -769,6 +771,8 @@ export class AiDraftService {
     const existingHeadings = (existing.content as ContentBlock[])
       .map((b) => b.heading)
       .filter((h): h is string => !!h);
+    const proposed = (dto.proposed ?? []) as ContentBlock[];
+    existingHeadings.push(...proposed.map((b) => b.heading).filter((h): h is string => !!h));
 
     const { newBlocks, checksRun, decision } = await this.generateExpandSections({
       typeConfig: getContentTypeConfig('evento-planazo'),
@@ -779,7 +783,7 @@ export class AiDraftService {
       instructions: dto.instructions,
       provider: dto.provider,
     });
-    const mergedContent = [...(existing.content as ContentBlock[]), ...newBlocks];
+    const mergedContent = [...(existing.content as ContentBlock[]), ...proposed, ...newBlocks];
 
     const planazoSite = await this.db.query.sites.findFirst({
       where: eq(sites.slug, 'planazo'),
@@ -840,6 +844,8 @@ export class AiDraftService {
     const existingHeadings = existingContent
       .map((b) => b.heading)
       .filter((h): h is string => !!h);
+    const proposed = (dto.proposed ?? []) as ContentBlock[];
+    existingHeadings.push(...proposed.map((b) => b.heading).filter((h): h is string => !!h));
 
     const { newBlocks, checksRun, decision } = await this.generateExpandSections({
       typeConfig: getContentTypeConfig(type),
@@ -855,8 +861,8 @@ export class AiDraftService {
     // usa el ContentBlock genérico tal cual sale de generateExpandSections.
     const mergedContent =
       type === 'guia'
-        ? [...existingContent, ...this.withGuiaBlockIds(newBlocks, existingContent as unknown as { id: string; heading: string }[])]
-        : [...existingContent, ...newBlocks];
+        ? [...existingContent, ...this.withGuiaBlockIds([...proposed, ...newBlocks], existingContent as unknown as { id: string; heading: string }[])]
+        : [...existingContent, ...proposed, ...newBlocks];
 
     const site = await this.db.query.sites.findFirst({
       where: eq(sites.slug, 'la-mira'),

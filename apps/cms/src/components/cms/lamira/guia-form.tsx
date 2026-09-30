@@ -222,6 +222,7 @@ export function GuiaForm({ categories, existing }: { categories: Category[]; exi
           onApply={applyImprovement}
           onDiscard={() => setImproveResult(null)}
           onRegenerate={() => improveRef.current?.regenerate()}
+          onGenerateMore={(proposed) => improveRef.current?.generateMore(proposed)}
           regenerating={regenerating}
         />
       )}

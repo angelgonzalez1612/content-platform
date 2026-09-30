@@ -198,6 +198,7 @@ export function PlanazoEventForm({ categories, existing }: { categories: Categor
           onApply={applyImprovement}
           onDiscard={() => setImproveResult(null)}
           onRegenerate={() => improveRef.current?.regenerate()}
+          onGenerateMore={(proposed) => improveRef.current?.generateMore(proposed)}
           regenerating={regenerating}
         />
       )}
