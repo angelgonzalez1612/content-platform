@@ -248,7 +248,7 @@ export function PlanazoContenidoView({
                     <SourceLink url={place.sourceUrl} />
                   </span>
                   <span className="flex justify-center">
-                    <ViewPublishedLinks compact site="planazo" path={`lugares/${place.slug}`} available={place.status === "published"} />
+                    <ViewPublishedLinks compact site="planazo" path={`lugares/${place.slug}`} available={place.status === "published"} previewHref={`/contenido/${place.id}`} />
                   </span>
                 </div>
               ))
@@ -306,7 +306,7 @@ export function PlanazoContenidoView({
                     <SourceLink url={event.sourceUrl} />
                   </span>
                   <span className="flex justify-center">
-                    <ViewPublishedLinks compact site="planazo" path={`eventos/${event.slug}`} available={event.status === "published"} />
+                    <ViewPublishedLinks compact site="planazo" path={`eventos/${event.slug}`} available={event.status === "published"} previewHref={`/contenido/planazo-evento/${event.id}`} />
                   </span>
                 </div>
               ))
@@ -362,7 +362,7 @@ export function PlanazoContenidoView({
                   </span>
                   <span className="text-right font-mono text-[11px] text-ink-faint">{formatDate(guide.updatedAt)}</span>
                   <span className="flex justify-center">
-                    <ViewPublishedLinks compact site="planazo" path={`guias/${guide.slug}`} available={guide.status === "published"} />
+                    <ViewPublishedLinks compact site="planazo" path={`guias/${guide.slug}`} available={guide.status === "published"} previewHref={`/contenido/planazo-guia/${guide.id}`} />
                   </span>
                 </div>
               ))

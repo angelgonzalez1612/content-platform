@@ -1,12 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
+import { OPEN_FULL_PREVIEW_EVENT } from "@/components/cms/open-preview-button";
 
 // Anchos de referencia para ver cómo queda la pieza en cada tipo de pantalla.
 const PRESETS = [
   { label: "Celular", width: 375 },
   { label: "Tablet", width: 768 },
   { label: "Escritorio", width: 1024 },
+] as const;
+
+// Pantalla completa: mismos tres tipos de pantalla, el de escritorio a ancho real.
+const FULL_PRESETS = [
+  { label: "Celular", width: 390 },
+  { label: "Tablet", width: 768 },
+  { label: "Escritorio", width: 1200 },
 ] as const;
 
 const DEFAULT_WIDTH = 420;
@@ -58,6 +67,30 @@ export function EditPreviewLayout({ left, preview }: { left: ReactNode; preview:
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef<{ x: number; width: number } | null>(null);
+  // "Vista previa" del encabezado (evento) o ?preview=1 desde la tabla de Contenido.
+  const searchParams = useSearchParams();
+  const [fullOpen, setFullOpen] = useState(() => searchParams.get("preview") === "1");
+  const [fullWidth, setFullWidth] = useState<number>(FULL_PRESETS[2].width);
+
+  useEffect(() => {
+    const open = () => setFullOpen(true);
+    window.addEventListener(OPEN_FULL_PREVIEW_EVENT, open);
+    return () => window.removeEventListener(OPEN_FULL_PREVIEW_EVENT, open);
+  }, []);
+
+  useEffect(() => {
+    if (!fullOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setFullOpen(false);
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [fullOpen]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -148,10 +181,59 @@ export function EditPreviewLayout({ left, preview }: { left: ReactNode; preview:
               );
             })}
           </div>
-          <span className="font-mono text-[11px] text-ink-faint tabular-nums">{Math.round(width)} px</span>
+          <span className="flex items-center gap-2">
+            <span className="font-mono text-[11px] text-ink-faint tabular-nums">{Math.round(width)} px</span>
+            <button
+              type="button"
+              onClick={() => setFullOpen(true)}
+              title="Ver a pantalla completa"
+              className="rounded-md border border-border px-1.5 py-0.5 text-[11px] font-semibold text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
+            >
+              ⛶ Completa
+            </button>
+          </span>
         </div>
         <div className="@container lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto">{preview}</div>
       </div>
+
+      {fullOpen && (
+        <div role="dialog" aria-modal="true" aria-label="Vista previa a pantalla completa" className="fixed inset-0 z-50 flex flex-col bg-background">
+          <div className="flex flex-wrap items-center gap-3 border-b border-border bg-card px-4 py-2.5">
+            <div className="min-w-0">
+              <p className="text-[13.5px] font-semibold tracking-tight">Vista previa</p>
+              <p className="text-[11.5px] text-ink-faint">Así quedaría en el sitio, con lo que hay en el formulario (aunque no esté guardado).</p>
+            </div>
+            <div className="flex-1" />
+            <div className="inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5">
+              {FULL_PRESETS.map((p) => (
+                <button
+                  key={p.label}
+                  type="button"
+                  onClick={() => setFullWidth(p.width)}
+                  className={`rounded-full px-3 py-1 text-[12px] font-semibold transition-colors ${
+                    fullWidth === p.width ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              autoFocus
+              onClick={() => setFullOpen(false)}
+              className="rounded-[10px] border border-border bg-card px-3 py-1.5 text-[12.5px] font-semibold text-ink transition-colors hover:border-ink-faint"
+            >
+              Cerrar <span className="font-mono text-[10.5px] text-ink-faint">Esc</span>
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto bg-hover/60 px-4 py-6">
+            <div className="@container mx-auto transition-[max-width] duration-300 ease-out motion-reduce:transition-none" style={{ maxWidth: fullWidth }}>
+              {preview}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

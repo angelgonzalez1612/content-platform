@@ -181,7 +181,7 @@ export function LamiraContenidoView({
                 <SourceLink url={row.sourceUrl} />
               </span>
               <span className="flex justify-center">
-                <ViewPublishedLinks compact site="la-mira" path={`${LAMIRA_TYPE_PATH[row.type]}/${row.slug}`} available={row.isPublished} />
+                <ViewPublishedLinks compact site="la-mira" path={`${LAMIRA_TYPE_PATH[row.type]}/${row.slug}`} available={row.isPublished} previewHref={`/contenido/lamira/${row.type}/${row.id}`} />
               </span>
             </div>
           ))

@@ -1,5 +1,7 @@
 import { siteConfig } from "@planazo/config";
+import Link from "next/link";
 import { Tooltip } from "@/components/cms/tooltip";
+import { OpenPreviewButton } from "@/components/cms/open-preview-button";
 
 const ARROW_PATH = "M7 17L17 7M7 7h10v10";
 
@@ -8,89 +10,86 @@ function hostOf(url: string): string {
 }
 
 /**
- * "Ver publicación" en producción y en desarrollo a la vez — en Contenido,
- * para comparar lo que ve el público contra el sitio que corre en esta
- * máquina. `path` es la ruta dentro del sitio (p.ej. "noticias/mi-slug").
- * Dev solo abre si el sitio local está corriendo (localhost).
+ * "Ver en prod" (el sitio público, solo si ya está publicada) + "Vista
+ * previa" (cómo quedaría, armada dentro del CMS — no necesita los sitios
+ * corriendo en local). `path` es la ruta dentro del sitio (p.ej.
+ * "noticias/mi-slug"). En el encabezado de la pieza la vista previa se abre
+ * ahí mismo; en la tabla de Contenido (`compact`), `previewHref` lleva a la
+ * pieza con la vista previa ya abierta.
  */
 export function ViewPublishedLinks({
   site,
   path,
   available,
   compact = false,
+  previewHref,
 }: {
   site: "la-mira" | "planazo";
   path: string;
   available: boolean;
   compact?: boolean;
+  /** Solo en `compact`: ruta de edición de la pieza (se le agrega ?preview=1). */
+  previewHref?: string;
 }) {
   const env = siteConfig.environments[site];
-  const links = [
-    { key: "prod", label: "Prod", long: "Ver en prod", url: `${env.prod}/${path}`, hint: `Sitio público · ${hostOf(env.prod)}` },
-    { key: "dev", label: "Dev", long: "Ver en dev", url: `${env.dev}/${path}`, hint: `Tu servidor local · ${hostOf(env.dev)}` },
-  ];
-
-  if (!available) {
-    return compact ? (
-      <Tooltip label="Se podrá ver en el sitio una vez publicado">
-        <span className="inline-flex gap-1">
-          {links.map((l) => (
-            <span key={l.key} className="rounded-md border border-border-soft px-1.5 py-0.5 text-[10.5px] font-semibold text-ink-faint/60">
-              {l.label}
-            </span>
-          ))}
-        </span>
-      </Tooltip>
-    ) : (
-      <span className="text-[11.5px] text-ink-faint">Se podrá ver en el sitio una vez publicado</span>
-    );
-  }
+  const prodUrl = `${env.prod}/${path}`;
+  const prodHint = `Sitio público · ${hostOf(env.prod)}`;
 
   if (compact) {
     return (
       <span className="inline-flex gap-1">
-        {links.map((l) => (
-          <Tooltip key={l.key} label={l.hint}>
+        {available ? (
+          <Tooltip label={prodHint}>
             <a
-              href={l.url}
+              href={prodUrl}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`${l.long}: ${l.hint}`}
-              className={`rounded-md border px-1.5 py-0.5 text-[10.5px] font-semibold transition-colors ${
-                l.key === "prod"
-                  ? "border-brand/30 text-accent-fg hover:border-brand hover:bg-accent"
-                  : "border-border text-ink-soft hover:border-ink-faint hover:text-ink"
-              }`}
+              aria-label={`Ver en prod: ${prodHint}`}
+              className="rounded-md border border-brand/30 px-1.5 py-0.5 text-[10.5px] font-semibold text-accent-fg transition-colors hover:border-brand hover:bg-accent"
             >
-              {l.label}
+              Prod
             </a>
           </Tooltip>
-        ))}
+        ) : (
+          <Tooltip label="Se podrá ver en el sitio una vez publicado">
+            <span className="rounded-md border border-border-soft px-1.5 py-0.5 text-[10.5px] font-semibold text-ink-faint/60">Prod</span>
+          </Tooltip>
+        )}
+        {previewHref && (
+          <Tooltip label="Vista previa: cómo quedaría en el sitio">
+            <Link
+              href={`${previewHref}?preview=1`}
+              aria-label="Vista previa: cómo quedaría en el sitio"
+              className="rounded-md border border-border px-1.5 py-0.5 text-[10.5px] font-semibold text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
+            >
+              Vista
+            </Link>
+          </Tooltip>
+        )}
       </span>
     );
   }
 
   return (
     <span className="inline-flex items-center gap-1.5">
-      {links.map((l) => (
-        <Tooltip key={l.key} label={l.hint}>
+      {available ? (
+        <Tooltip label={prodHint}>
           <a
-            href={l.url}
+            href={prodUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-[3px] text-[11.5px] font-medium whitespace-nowrap transition-colors ${
-              l.key === "prod"
-                ? "border-brand/30 bg-accent text-accent-fg hover:border-brand"
-                : "border-border bg-card text-ink-soft hover:border-ink-faint hover:text-ink"
-            }`}
+            className="inline-flex items-center gap-1 rounded-full border border-brand/30 bg-accent px-2.5 py-[3px] text-[11.5px] font-medium whitespace-nowrap text-accent-fg transition-colors hover:border-brand"
           >
-            {l.long}
+            Ver en prod
             <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d={ARROW_PATH} />
             </svg>
           </a>
         </Tooltip>
-      ))}
+      ) : (
+        <span className="text-[11.5px] text-ink-faint">Aún no se ve en el sitio</span>
+      )}
+      <OpenPreviewButton />
     </span>
   );
 }
