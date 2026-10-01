@@ -5,7 +5,7 @@ import { z } from 'zod';
 import type { ContentBlock, GuideSection, Seo } from '@planazo/types';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
 import { noticias, reportajes, guias, places, events, planazoGuides, contentAuditLog, sites } from '../../db/schema';
-import { ProviderRegistry } from '../ai/provider-registry.service';
+import { ProviderRegistry, type AiProviderChoice } from '../ai/provider-registry.service';
 import { SeoGenerateService } from '../ai/seo-generate.service';
 import { ArticleScraperService } from '../ai/article-scraper.service';
 import { ImageSearchService } from '../ai/image-search.service';
@@ -136,12 +136,12 @@ export class ReviewAgentService {
    * pieza (que sigue en revisión; el cambio queda en el historial de
    * versiones). Devuelve la pieza ya reevaluada y qué se hizo.
    */
-  async fix(type: ReviewableType, id: string, check: FixableCheck, actorId?: string): Promise<{ item: ReviewQueueItem; message: string }> {
+  async fix(type: ReviewableType, id: string, check: FixableCheck, actorId?: string, choice: AiProviderChoice = 'default'): Promise<{ item: ReviewQueueItem; message: string }> {
     const found = (await this.loadPieces({ type, id }))[0];
     if (!found) throw new NotFoundException('La pieza no existe o ya no está pendiente.');
     if (!fixFor(check, type)) throw new BadRequestException('Este criterio no se puede arreglar solo en este tipo de pieza.');
     const { piece } = found;
-    const provider = await this.providers.resolveProvider('default');
+    const provider = await this.providers.resolveProvider(choice);
     let message: string;
 
     switch (check) {
@@ -184,7 +184,7 @@ Texto:
 ${piece.paragraphs.join('\n').slice(0, 4000) || piece.summary}`,
           schema: z.object({ text: z.string().describe(`El ${field} nuevo, sin comillas.`) }),
           schemaName: `review_fix_${check}`,
-        })) as { text: string };
+        }, { fallback: choice === 'default' })) as { text: string };
         const text = output.text.trim().replace(/^["«]|["»]$/g, '');
         await this.save(piece, check === 'titulo' ? { title: text } : { summary: text });
         message = `${check === 'titulo' ? 'Título' : 'Bajada'} nuevo: «${text}».`;
@@ -259,7 +259,7 @@ ${piece.paragraphs.join('\n').slice(0, 4000) || piece.summary}`,
   }
 
   /** Segunda opinión con IA: ¿encaja en el sitio, es coherente, inventa, sirve al lector? */
-  async analyze(type: ReviewableType, id: string, actorId?: string): Promise<AiReview & { checks: ReviewEvaluation['checks']; reviewedAt: string }> {
+  async analyze(type: ReviewableType, id: string, actorId?: string, choice: AiProviderChoice = 'default'): Promise<AiReview & { checks: ReviewEvaluation['checks']; reviewedAt: string }> {
     const found = (await this.loadPieces({ type, id }))[0];
     if (!found) throw new NotFoundException('La pieza no existe o ya no está pendiente.');
     const { piece } = found;
@@ -273,7 +273,8 @@ ${piece.paragraphs.join('\n').slice(0, 4000) || piece.summary}`,
     });
 
     const failed = evaluation.checks.filter((c) => !c.passed).map((c) => `- ${c.label}${c.detail ? `: ${c.detail}` : ''}`);
-    const output = (await this.providers.generateWithFallback('default', {
+    const provider = await this.providers.resolveProvider(choice);
+    const output = (await this.providers.generateWithFallback(provider, {
       systemPrompt: `Eres el editor en jefe de dos sitios de la Ciudad de México que comparten CMS:
 - La Mira: periódico digital hiperlocal de CDMX y zona metropolitana (noticias del día, reportajes, guías de servicio).
 - Planazo: directorio de planes, lugares y eventos recomendables para visitar en CDMX. No publica noticias.
@@ -292,7 +293,7 @@ Revisión automática — lo que ya falló:
 ${failed.length ? failed.join('\n') : '(nada)'}`,
       schema,
       schemaName: 'review_agent',
-    })) as AiReview;
+    }, { fallback: choice === 'default' })) as AiReview;
 
     const reviewedAt = new Date();
     const site = await this.db.query.sites.findFirst({ where: eq(sites.slug, piece.site) });
@@ -303,7 +304,7 @@ ${failed.length ? failed.join('\n') : '(nada)'}`,
         contentId: piece.id,
         mode: REVIEW_MODE,
         sourceContext: { contentHash: contentHash(piece) },
-        aiModel: await this.providers.resolveProvider('default'),
+        aiModel: provider,
         aiOutput: output as unknown as Record<string, unknown>,
         checksRun: evaluation.checks.map((c) => ({ name: c.id, passed: c.passed, blocking: c.blocking, detail: c.detail })),
         decision: 'needs-review',

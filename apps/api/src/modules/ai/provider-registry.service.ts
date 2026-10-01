@@ -86,11 +86,15 @@ export class ProviderRegistry {
   async generateWithFallback<Schema extends z.ZodTypeAny>(
     choice: AiProviderChoice,
     input: StructuredGenerateInput<Schema>,
+    // `fallback: false`: el editor eligió ese proveedor a propósito — si
+    // falla, se reporta el error en vez de pasar en silencio al de respaldo.
+    opts: { fallback?: boolean } = {},
   ): Promise<z.infer<Schema>> {
     const id = await this.resolveProvider(choice);
     try {
       return await this.generateTracked(id, input);
     } catch (err) {
+      if (opts.fallback === false) throw err;
       const { preferredProvider, fallbackProvider } = await this.aiSettings.getProviderPreference();
       if (id !== preferredProvider || !fallbackProvider || fallbackProvider === id) throw err;
 

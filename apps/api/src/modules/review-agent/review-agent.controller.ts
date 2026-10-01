@@ -2,9 +2,12 @@ import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { z } from 'zod';
 import { JwtAuthGuard, type RequestWithSession } from '../auth/jwt-auth.guard';
 import { ReviewAgentService } from './review-agent.service';
+import { AI_PROVIDER_IDS } from '../ai/provider-registry.service';
 
 const TYPES = ['noticia', 'reportaje', 'guia', 'place', 'evento-planazo', 'planazo-guia'] as const;
 const itemSchema = z.object({ type: z.enum(TYPES), id: z.string().min(1) });
+// Proveedor elegido en el Revisor; 'default' = el de Configuración (con su respaldo).
+const providerSchema = z.enum([...AI_PROVIDER_IDS, 'default']).default('default');
 
 @UseGuards(JwtAuthGuard)
 @Controller('cms/review-agent')
@@ -20,15 +23,15 @@ export class ReviewAgentController {
   /** Segunda opinión con IA de una pieza. */
   @Post('analyze')
   analyze(@Req() req: RequestWithSession, @Body() body: unknown) {
-    const dto = itemSchema.parse(body);
-    return this.reviewAgent.analyze(dto.type, dto.id, req.session?.sub);
+    const dto = itemSchema.extend({ provider: providerSchema }).parse(body);
+    return this.reviewAgent.analyze(dto.type, dto.id, req.session?.sub, dto.provider);
   }
 
   /** "Arreglar" un criterio que falló (SEO, imagen, largo, secciones, título, bajada). */
   @Post('fix')
   fix(@Req() req: RequestWithSession, @Body() body: unknown) {
-    const dto = itemSchema.extend({ check: z.enum(['seo', 'imagen', 'longitud', 'estructura', 'titulo', 'bajada']) }).parse(body);
-    return this.reviewAgent.fix(dto.type, dto.id, dto.check, req.session?.sub);
+    const dto = itemSchema.extend({ check: z.enum(['seo', 'imagen', 'longitud', 'estructura', 'titulo', 'bajada']), provider: providerSchema }).parse(body);
+    return this.reviewAgent.fix(dto.type, dto.id, dto.check, req.session?.sub, dto.provider);
   }
 
   /** Publica las piezas elegidas (se saltan las que no cumplen lo bloqueante). */

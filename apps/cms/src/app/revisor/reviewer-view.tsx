@@ -4,6 +4,10 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { apiConfig } from "@planazo/config";
 import type { AiReview, Readiness, ReviewQueueItem, ReviewableType } from "@/lib/review-agent-types";
+import { useAiSettings } from "@/lib/use-openai-available";
+
+type ProviderId = "codex-cli" | "claude-cli" | "openai";
+const PROVIDER_LABEL: Record<ProviderId, string> = { "codex-cli": "Codex", "claude-cli": "Claude", openai: "OpenAI" };
 
 const TYPE_LABEL: Record<ReviewableType, string> = {
   noticia: "Noticia",
@@ -61,13 +65,13 @@ function formatDate(iso: string | null): string {
   }
 }
 
-async function analyzeOne(item: ReviewQueueItem): Promise<AiState> {
+async function analyzeOne(item: ReviewQueueItem, provider: ProviderId): Promise<AiState> {
   try {
     const res = await fetch(`${apiConfig.clientBaseUrl}/cms/review-agent/analyze`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: item.type, id: item.id }),
+      body: JSON.stringify({ type: item.type, id: item.id, provider }),
     });
     if (!res.ok) {
       const body = (await res.json().catch(() => null)) as { message?: string } | null;
@@ -87,6 +91,12 @@ async function analyzeOne(item: ReviewQueueItem): Promise<AiState> {
  */
 export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[] | null }) {
   const [queue, setQueue] = useState<ReviewQueueItem[]>(initialQueue ?? []);
+  // Proveedor de IA del Revisor: el predeterminado de Configuración hasta que el
+  // editor elija otro. Elegido a mano = solo ese, sin pasar al de respaldo.
+  const settings = useAiSettings();
+  const [chosenProvider, setChosenProvider] = useState<ProviderId | null>(null);
+  const providers: ProviderId[] = (["codex-cli", "claude-cli", "openai"] as const).filter((p) => p !== "openai" || settings?.openaiAvailable === true);
+  const provider: ProviderId = chosenProvider ?? settings?.defaultProvider ?? "codex-cli";
   const [site, setSite] = useState<SiteFilter>("all");
   const [readiness, setReadiness] = useState<Readiness | "all">("lista");
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
@@ -148,7 +158,7 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
       delete next[k];
       return next;
     });
-    const result = await analyzeOne(item);
+    const result = await analyzeOne(item, provider);
     setAiLoading((prev) => {
       const next = { ...prev };
       delete next[k];
@@ -180,7 +190,7 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: item.type, id: item.id, check: checkId }),
+        body: JSON.stringify({ type: item.type, id: item.id, check: checkId, provider }),
       });
       const body = (await res.json().catch(() => null)) as { item?: ReviewQueueItem; message?: string } | null;
       if (!res.ok || !body?.item) {
@@ -326,9 +336,29 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
           Seleccionar las {selectableVisible.length} publicables de esta vista
         </label>
         <div className="flex-1" />
+        <div className="flex items-center gap-1.5" role="group" aria-label="Proveedor de IA">
+          <span className="text-[11.5px] font-medium text-ink-faint">IA:</span>
+          <div className="inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5">
+            {providers.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setChosenProvider(p)}
+                disabled={!!batch}
+                aria-pressed={provider === p}
+                title={settings?.defaultProvider === p ? "Predeterminado en Configuración" : undefined}
+                className={`rounded-full px-2.5 py-0.5 text-[12px] font-semibold transition-colors disabled:opacity-60 ${
+                  provider === p ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+                }`}
+              >
+                {PROVIDER_LABEL[p]}
+              </button>
+            ))}
+          </div>
+        </div>
         {batch ? (
           <span className="flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-[12px] font-semibold text-accent-fg">
-            La IA está revisando {batch.done}/{batch.total}…
+            {PROVIDER_LABEL[provider]} está revisando {batch.done}/{batch.total}…
             <button type="button" onClick={() => (cancelBatch.current = true)} className="rounded px-1.5 text-[11.5px] font-medium text-ink-soft hover:text-ink">
               Detener
             </button>
