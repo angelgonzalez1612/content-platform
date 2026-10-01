@@ -7,6 +7,7 @@ import { VersionHistory } from "@/components/cms/version-history";
 import { ViewPublishedLinks } from "@/components/cms/view-published-link";
 import { EditPageHeader } from "@/components/cms/edit-page-header";
 import { ReviewBar } from "@/components/cms/review-bar";
+import { RevisorNavBar } from "@/components/cms/revisor-nav-bar";
 import { getReviewQueue, isReviewSite } from "@/lib/review-queue";
 import { MoveToLamiraButton } from "@/components/cms/move-to-lamira";
 
@@ -15,13 +16,13 @@ export default async function EditPlacePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ revision?: string }>;
+  searchParams: Promise<{ revision?: string; desde?: string }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
 
   const { id } = await params;
-  const { revision } = await searchParams;
+  const { revision, desde } = await searchParams;
   const reviewQueue = isReviewSite(revision) ? await getReviewQueue(revision) : null;
   const place = await getCmsPlace(id);
   if (!place) notFound();
@@ -40,7 +41,13 @@ export default async function EditPlacePage({
         kicker="Lugar · Planazo"
         title={place.name}
         subtitle={`/${place.slug}`}
-        review={reviewQueue && isReviewSite(revision) ? <ReviewBar site={revision} queue={reviewQueue} currentHref={`/contenido/${id}`} /> : undefined}
+        review={
+          reviewQueue && isReviewSite(revision) ? (
+            <ReviewBar site={revision} queue={reviewQueue} currentHref={`/contenido/${id}`} />
+          ) : desde === "revisor" ? (
+            <RevisorNavBar currentHref={`/contenido/${id}`} />
+          ) : undefined
+        }
         actions={
           <span className="flex flex-wrap items-center gap-1.5">
             <MoveToLamiraButton

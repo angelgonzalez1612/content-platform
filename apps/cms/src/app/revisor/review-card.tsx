@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { siteConfig } from "@planazo/config";
+import { withFromRevisor } from "@/components/cms/revisor-nav-bar";
 import type { AiReview, Readiness, ReviewQueueItem, ReviewableType } from "@/lib/review-agent-types";
 
 export const TYPE_LABEL: Record<ReviewableType, string> = {
@@ -131,6 +132,8 @@ export interface CardActions {
   onMove: (suggestion: MoveSuggestion) => void;
   /** Publicar solo esta pieza (aparece cuando está al 100). */
   onPublish: () => void;
+  /** Al abrir la pieza: guarda la lista actual para anterior/siguiente en la ficha. */
+  onOpen: () => void;
 }
 
 /**
@@ -221,7 +224,7 @@ export function ReviewCard({
             <span>· {item.status === "draft" ? "Borrador" : "En revisión"}</span>
             {item.createdAt && <span>· {formatDate(item.createdAt)}</span>}
           </div>
-          <Link href={item.editHref} className="mt-1 line-clamp-2 block text-[15px] leading-snug font-semibold tracking-tight text-ink hover:text-brand">
+          <Link href={withFromRevisor(item.editHref)} onClick={actions.onOpen} className="mt-1 line-clamp-2 block text-[15px] leading-snug font-semibold tracking-tight text-ink hover:text-brand">
             {item.title}
           </Link>
           <p className="mt-1 flex min-w-0 items-center gap-1 text-[11.5px] text-ink-faint">
@@ -505,7 +508,7 @@ export function ReviewCard({
                 ⇄ Pasar a {SITE_META[moveTarget].label}
               </button>
             )}
-            <Link href={item.editHref} className="text-[12px] font-semibold text-ink hover:text-brand">
+            <Link href={withFromRevisor(item.editHref)} onClick={actions.onOpen} className="text-[12px] font-semibold text-ink hover:text-brand">
               Abrir y editar →
             </Link>
             {canPublishNow && (

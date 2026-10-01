@@ -5,8 +5,9 @@ import Link from "next/link";
 import { apiConfig } from "@planazo/config";
 import type { AiReview, Readiness, ReviewQueueItem } from "@/lib/review-agent-types";
 import { useAiSettings } from "@/lib/use-openai-available";
+import { saveRevisorNav } from "@/components/cms/revisor-nav-bar";
 import { CorrectionsPanel } from "./corrections-panel";
-import { READINESS, ReviewCard, SITE_META, publicUrl, type MoveSuggestion, type SavedAi } from "./review-card";
+import { READINESS, ReviewCard, SITE_META, TYPE_LABEL, publicUrl, type MoveSuggestion, type SavedAi } from "./review-card";
 
 type ProviderId = "codex-cli" | "claude-cli" | "openai";
 const PROVIDER_LABEL: Record<ProviderId, string> = { "codex-cli": "Codex", "claude-cli": "Claude", openai: "OpenAI" };
@@ -292,6 +293,21 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
     setNotice({ tone: "ok", text: `«${item.title}» ya está publicada en ${SITE_META[item.site].label} ✓`, link: { href: publicUrl(item).href, label: "Verla ↗" } });
   }
 
+  /** Guarda la lista que se está viendo (filtros y orden) para anterior/siguiente en la ficha. */
+  function rememberList() {
+    const filter = [
+      site === "all" ? null : SITE_META[site].label,
+      readiness === "all" ? null : readiness === "lista" ? "Listas para publicar" : readiness === "casi" ? "Casi listas" : "Les falta algo",
+      aiFilter === "all" ? null : AI_FILTERS.find((f) => f.id === aiFilter)?.label,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    saveRevisorNav({
+      filter: filter || "Todas las pendientes",
+      items: visible.map((i) => ({ href: i.editHref, title: i.title, label: `${SITE_META[i.site].label} · ${TYPE_LABEL[i.type]}` })),
+    });
+  }
+
   async function analyzeBatch() {
     const items = pendingAi;
     if (!items.length) return;
@@ -560,6 +576,7 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
                   onSuggestMove: () => suggestMove(item),
                   onMove: (suggestion) => movePiece(item, suggestion),
                   onPublish: () => publishOne(item),
+                  onOpen: rememberList,
                 }}
                 correctionsSlot={
                   correctingFor === k && (
