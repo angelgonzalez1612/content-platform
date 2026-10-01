@@ -202,6 +202,10 @@
   border-top-color: #fff;
   animation: cms-spin 0.7s linear infinite;
 }
+.cms-spinner-dark {
+  border-color: color-mix(in oklab, var(--color-brand) 25%, transparent);
+  border-top-color: var(--color-brand);
+}
 @keyframes cms-spin {
   to { transform: rotate(360deg); }
 }

@@ -6,6 +6,7 @@ import { apiConfig } from "@planazo/config";
 import type { AiReview, Readiness, ReviewQueueItem } from "@/lib/review-agent-types";
 import { useAiSettings } from "@/lib/use-openai-available";
 import { saveRevisorNav } from "@/components/cms/revisor-nav-bar";
+import { TASK_LABEL_HEADER } from "@/components/cms/global-activity";
 import { CorrectionsPanel } from "./corrections-panel";
 import { READINESS, ReviewCard, SITE_META, TYPE_LABEL, publicUrl, type MoveSuggestion, type SavedAi } from "./review-card";
 
@@ -33,12 +34,13 @@ const keyOf = (item: { type: string; id: string }) => `${item.type}:${item.id}`;
 const isAiReview = (s: AiState | undefined): s is SavedAi => !!s && typeof s === "object" && "review" in s;
 const publishable = (item: ReviewQueueItem) => item.checks.every((c) => !c.blocking || c.passed);
 
-async function postJson<T>(path: string, body: unknown): Promise<{ ok: boolean; status: number; data: T | null }> {
+/** `label`: nombre de la tarea en la cola global de actividad (no se manda al API). */
+async function postJson<T>(path: string, body: unknown, label?: string): Promise<{ ok: boolean; status: number; data: T | null }> {
   try {
     const res = await fetch(`${apiConfig.clientBaseUrl}${path}`, {
       method: "POST",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(label && { [TASK_LABEL_HEADER]: label }) },
       body: JSON.stringify(body),
     });
     return { ok: res.ok, status: res.status, data: (await res.json().catch(() => null)) as T | null };
@@ -48,7 +50,7 @@ async function postJson<T>(path: string, body: unknown): Promise<{ ok: boolean; 
 }
 
 async function analyzeOne(item: ReviewQueueItem, provider: ProviderId): Promise<AiState> {
-  const res = await postJson<AiReview & { reviewedAt: string; message?: string }>("/cms/review-agent/analyze", { type: item.type, id: item.id, provider });
+  const res = await postJson<AiReview & { reviewedAt: string; message?: string }>("/cms/review-agent/analyze", { type: item.type, id: item.id, provider }, `Revisar con IA · ${item.title}`);
   if (!res.ok || !res.data) return { error: res.status === 0 ? "Sin conexión con el servidor." : (res.data?.message ?? "La IA no pudo revisarla.") };
   return { review: res.data, reviewedAt: res.data.reviewedAt, stale: false };
 }
@@ -212,7 +214,11 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
     const k = keyOf(item);
     setFixing((prev) => ({ ...prev, [k]: checkId }));
     setFixNotes((prev) => removeKey(prev, k));
-    const res = await postJson<{ item?: ReviewQueueItem; message?: string }>("/cms/review-agent/fix", { type: item.type, id: item.id, check: checkId, provider });
+    const res = await postJson<{ item?: ReviewQueueItem; message?: string }>(
+      "/cms/review-agent/fix",
+      { type: item.type, id: item.id, check: checkId, provider },
+      `${item.checks.find((c) => c.id === checkId)?.fix ?? "Arreglar"} · ${item.title}`,
+    );
     if (res.ok && res.data?.item) {
       replaceItem(k, res.data.item);
       setFixNotes((prev) => ({ ...prev, [k]: { tone: "ok", text: `✓ ${res.data!.message ?? "Arreglado."}` } }));
@@ -226,7 +232,7 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
   async function discard(item: ReviewQueueItem) {
     const k = keyOf(item);
     setActing((prev) => ({ ...prev, [k]: true }));
-    const res = await postJson<{ message?: string }>("/cms/review-agent/discard", { type: item.type, id: item.id });
+    const res = await postJson<{ message?: string }>("/cms/review-agent/discard", { type: item.type, id: item.id }, `Archivar · ${item.title}`);
     setActing((prev) => removeKey(prev, k));
     if (!res.ok) {
       setFixNotes((prev) => ({ ...prev, [k]: { tone: "error", text: res.data?.message ?? "No se pudo archivar." } }));
@@ -245,11 +251,11 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
       ? await postJson<{ belongsIn?: string; targetType?: string; categoryId?: string | null; categoryName?: string | null; reason?: string; message?: string }>("/cms/transfer/suggest", {
           sourceType: item.type,
           sourceId: item.id,
-        })
+        }, `Sugerir sitio con IA · ${item.title}`)
       : await postJson<{ fits?: boolean; targetType?: string; categoryId?: string; categoryName?: string; reason?: string; message?: string }>("/cms/transfer/suggest-planazo", {
           sourceType: item.type,
           sourceId: item.id,
-        });
+        }, `Sugerir sitio con IA · ${item.title}`);
     if (!res.ok || !res.data?.targetType) return { error: res.status === 0 ? "Sin conexión con el servidor." : (res.data?.message ?? "La IA no pudo sugerir cómo pasarla.") };
     const d = res.data as { belongsIn?: string; fits?: boolean; targetType: string; categoryId?: string | null; categoryName?: string | null; reason?: string };
     return {
@@ -273,7 +279,7 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
       targetType: s.targetType,
       categoryId: s.categoryId,
       original: "delete",
-    });
+    }, `Cambiar de sitio · ${item.title}`);
     setActing((prev) => removeKey(prev, k));
     if (!res.ok || !res.data?.editPath) {
       setFixNotes((prev) => ({
@@ -295,7 +301,7 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
     setActing((prev) => ({ ...prev, [k]: true }));
     const res = await postJson<{ published: { type: string; id: string }[]; skipped: { reason: string }[] }>("/cms/review-agent/publish", {
       items: [{ type: item.type, id: item.id }],
-    });
+    }, `Publicar · ${item.title}`);
     setActing((prev) => removeKey(prev, k));
     if (!res.ok || !res.data) {
       setFixNotes((prev) => ({ ...prev, [k]: { tone: "error", text: res.status === 403 ? "No tienes permiso para publicar." : "No se pudo publicar. Intenta de nuevo." } }));

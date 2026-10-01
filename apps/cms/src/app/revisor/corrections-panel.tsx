@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { apiConfig } from "@planazo/config";
+import { TASK_LABEL_HEADER } from "@/components/cms/global-activity";
 import type { ReviewQueueItem } from "@/lib/review-agent-types";
 import { BlockSelectionList, blockStatus, useBlockSelection } from "@/components/cms/lamira/block-selection";
 import type { ContentBlockValue } from "@/components/cms/content-blocks-field";
@@ -47,7 +48,7 @@ export function CorrectionsPanel({
       const res = await fetch(`${apiConfig.clientBaseUrl}/cms/review-agent/corrections`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", [TASK_LABEL_HEADER]: `Proponer correcciones · ${item.title}` },
         body: JSON.stringify({ type: item.type, id: item.id, provider }),
       });
       const body = (await res.json().catch(() => null)) as (Proposal & { message?: string }) | null;
@@ -76,7 +77,7 @@ export function CorrectionsPanel({
       const res = await fetch(`${apiConfig.clientBaseUrl}/cms/review-agent/corrections/apply`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", [TASK_LABEL_HEADER]: `Guardar correcciones · ${item.title}` },
         body: JSON.stringify({
           type: item.type,
           id: item.id,
