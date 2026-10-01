@@ -43,6 +43,20 @@ export interface ReviewEvaluation {
   score: number;
 }
 
+/**
+ * Huella del contenido revisable (FNV-1a): si cambia, una revisión con IA
+ * guardada ya no corresponde a lo que hay ahora.
+ */
+export function contentHash(piece: ReviewPiece): string {
+  const text = [piece.title, piece.summary, ...piece.headings, ...piece.paragraphs, piece.imageUrl ?? '', piece.categoryName ?? ''].join('\u0001');
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, '0');
+}
+
 const countWords = (text: string) => (text.match(/[\p{L}\p{N}]+/gu) ?? []).length;
 
 // Frases de relleno típicas de la IA cuando no tiene datos: dicen que no se

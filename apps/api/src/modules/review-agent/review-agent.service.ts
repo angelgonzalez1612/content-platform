@@ -1,9 +1,9 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { inArray, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import type { ContentBlock, GuideSection, Seo } from '@planazo/types';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
-import { noticias, reportajes, guias, places, events, planazoGuides } from '../../db/schema';
+import { noticias, reportajes, guias, places, events, planazoGuides, contentAuditLog, sites } from '../../db/schema';
 import { ProviderRegistry } from '../ai/provider-registry.service';
 import { NoticiasService } from '../lamira-noticias/noticias.service';
 import { ReportajesService } from '../lamira-reportajes/reportajes.service';
@@ -12,7 +12,7 @@ import { PlacesService } from '../places/places.service';
 import { EventsService } from '../events/events.service';
 import { PlanazoGuidesService } from '../planazo-guides/guides.service';
 import { SiteRevalidationService } from '../site-revalidation/site-revalidation.service';
-import { evaluatePiece, type ReviewEvaluation, type ReviewPiece, type ReviewableType } from './evaluate-piece';
+import { contentHash, evaluatePiece, type ReviewEvaluation, type ReviewPiece, type ReviewableType } from './evaluate-piece';
 
 const PENDING = ['in_review', 'draft'] as const;
 
@@ -35,7 +35,13 @@ export interface ReviewQueueItem extends ReviewEvaluation {
   categoryName: string | null;
   createdAt: string | null;
   editHref: string;
+  /** Última revisión con IA guardada; `stale` = la pieza cambió después. */
+  ai: { review: AiReview; reviewedAt: string; stale: boolean } | null;
 }
+
+// Las revisiones con IA se guardan en content_audit_log con este modo (no
+// necesita tabla propia): así sobreviven a recargar la página y las ve todo el equipo.
+const REVIEW_MODE = 'review';
 
 export interface AiReview {
   veredicto: 'publicar' | 'corregir' | 'descartar';
@@ -72,6 +78,7 @@ export class ReviewAgentService {
 
   async queue(): Promise<ReviewQueueItem[]> {
     const pieces = await this.loadPieces();
+    const saved = await this.savedReviews(pieces.map(({ piece }) => piece.id));
     return pieces
       .map(({ piece, createdAt }) => ({
         ...evaluatePiece(piece),
@@ -84,12 +91,16 @@ export class ReviewAgentService {
         categoryName: piece.categoryName,
         createdAt,
         editHref: EDIT_HREF[piece.type](piece.id),
+        ai: (() => {
+          const row = saved.get(`${piece.type}:${piece.id}`);
+          return row ? { review: row.review, reviewedAt: row.reviewedAt, stale: row.hash !== contentHash(piece) } : null;
+        })(),
       }))
       .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
   }
 
   /** Segunda opinión con IA: ¿encaja en el sitio, es coherente, inventa, sirve al lector? */
-  async analyze(type: ReviewableType, id: string): Promise<AiReview & { checks: ReviewEvaluation['checks'] }> {
+  async analyze(type: ReviewableType, id: string, actorId?: string): Promise<AiReview & { checks: ReviewEvaluation['checks']; reviewedAt: string }> {
     const found = (await this.loadPieces({ type, id }))[0];
     if (!found) throw new NotFoundException('La pieza no existe o ya no está pendiente.');
     const { piece } = found;
@@ -124,7 +135,54 @@ ${failed.length ? failed.join('\n') : '(nada)'}`,
       schemaName: 'review_agent',
     })) as AiReview;
 
-    return { ...output, checks: evaluation.checks };
+    const reviewedAt = new Date();
+    const site = await this.db.query.sites.findFirst({ where: eq(sites.slug, piece.site) });
+    if (site) {
+      await this.db.insert(contentAuditLog).values({
+        siteId: site.id,
+        contentType: piece.type,
+        contentId: piece.id,
+        mode: REVIEW_MODE,
+        sourceContext: { contentHash: contentHash(piece) },
+        aiModel: await this.providers.resolveProvider('default'),
+        aiOutput: output as unknown as Record<string, unknown>,
+        checksRun: evaluation.checks.map((c) => ({ name: c.id, passed: c.passed, blocking: c.blocking, detail: c.detail })),
+        decision: 'needs-review',
+        statusBefore: piece.status as never,
+        statusAfter: piece.status as never,
+        actorId: actorId ?? null,
+        createdAt: reviewedAt,
+      });
+    }
+
+    return { ...output, checks: evaluation.checks, reviewedAt: reviewedAt.toISOString() };
+  }
+
+  /** Última revisión con IA de cada pieza (clave `tipo:id`). */
+  private async savedReviews(ids: string[]): Promise<Map<string, { review: AiReview; reviewedAt: string; hash: string | null }>> {
+    const out = new Map<string, { review: AiReview; reviewedAt: string; hash: string | null }>();
+    if (!ids.length) return out;
+    const rows = await this.db
+      .select({
+        contentType: contentAuditLog.contentType,
+        contentId: contentAuditLog.contentId,
+        aiOutput: contentAuditLog.aiOutput,
+        sourceContext: contentAuditLog.sourceContext,
+        createdAt: contentAuditLog.createdAt,
+      })
+      .from(contentAuditLog)
+      .where(and(eq(contentAuditLog.mode, REVIEW_MODE), inArray(contentAuditLog.contentId, ids)))
+      .orderBy(desc(contentAuditLog.createdAt));
+    for (const r of rows) {
+      const key = `${r.contentType}:${r.contentId}`;
+      if (out.has(key)) continue; // ya tenemos la más reciente
+      out.set(key, {
+        review: r.aiOutput as unknown as AiReview,
+        reviewedAt: r.createdAt.toISOString(),
+        hash: (r.sourceContext?.contentHash as string | undefined) ?? null,
+      });
+    }
+    return out;
   }
 
   /**

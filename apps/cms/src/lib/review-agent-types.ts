@@ -25,6 +25,8 @@ export interface ReviewQueueItem {
   readiness: Readiness;
   words: number;
   score: number;
+  /** Última revisión con IA guardada; `stale` = la pieza cambió después de revisarla. */
+  ai: { review: AiReview; reviewedAt: string; stale: boolean } | null;
 }
 
 export interface AiReview {

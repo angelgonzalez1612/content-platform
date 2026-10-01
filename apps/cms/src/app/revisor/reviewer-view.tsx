@@ -29,12 +29,28 @@ const VERDICT: Record<AiReview["veredicto"], { label: string; className: string 
 // Tope del análisis en lote: con Codex/Claude cada pieza tarda ~10-30 s.
 const BATCH_LIMIT = 25;
 
-type AiState = AiReview | "loading" | { error: string };
+interface SavedAi {
+  review: AiReview;
+  reviewedAt: string;
+  /** La pieza cambió después de esta revisión. */
+  stale: boolean;
+}
+type AiState = SavedAi | "loading" | { error: string };
 type SiteFilter = "all" | "la-mira" | "planazo";
 
 const keyOf = (item: { type: string; id: string }) => `${item.type}:${item.id}`;
-const isAiReview = (s: AiState | undefined): s is AiReview => !!s && typeof s === "object" && "veredicto" in s;
+const isAiReview = (s: AiState | undefined): s is SavedAi => !!s && typeof s === "object" && "review" in s;
 const publishable = (item: ReviewQueueItem) => item.checks.every((c) => !c.blocking || c.passed);
+
+function timeAgo(iso: string): string {
+  const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (minutes < 1) return "hace un momento";
+  if (minutes < 60) return `hace ${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `hace ${hours} h`;
+  const days = Math.round(hours / 24);
+  return days === 1 ? "ayer" : `hace ${days} días`;
+}
 
 function formatDate(iso: string | null): string {
   if (!iso) return "";
@@ -57,7 +73,8 @@ async function analyzeOne(item: ReviewQueueItem): Promise<AiState> {
       const body = (await res.json().catch(() => null)) as { message?: string } | null;
       return { error: body?.message ?? "La IA no pudo revisarla." };
     }
-    return (await res.json()) as AiReview;
+    const data = (await res.json()) as AiReview & { reviewedAt: string };
+    return { review: data, reviewedAt: data.reviewedAt, stale: false };
   } catch {
     return { error: "Sin conexión con el servidor." };
   }
@@ -74,7 +91,10 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
   const [readiness, setReadiness] = useState<Readiness | "all">("lista");
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [ai, setAi] = useState<Record<string, AiState>>({});
+  // Arranca con las revisiones guardadas en el servidor: no se pierden al salir de la página.
+  const [ai, setAi] = useState<Record<string, AiState>>(() =>
+    Object.fromEntries((initialQueue ?? []).filter((i) => i.ai).map((i) => [keyOf(i), { ...i.ai! }])),
+  );
   const [batch, setBatch] = useState<{ done: number; total: number } | null>(null);
   const cancelBatch = useRef(false);
   const [publishing, setPublishing] = useState(false);
@@ -86,7 +106,13 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
   bySite.forEach((i) => counts[i.readiness]++);
   const visible = bySite.filter((i) => readiness === "all" || i.readiness === readiness);
   const selectedItems = queue.filter((i) => selected.has(keyOf(i)));
-  const pendingAi = visible.filter((i) => !isAiReview(ai[keyOf(i)])).slice(0, BATCH_LIMIT);
+  // Pendientes de IA: sin revisión, o con una revisión de antes de que la pieza cambiara.
+  const pendingAi = visible
+    .filter((i) => {
+      const state = ai[keyOf(i)];
+      return !isAiReview(state) || state.stale;
+    })
+    .slice(0, BATCH_LIMIT);
   const selectableVisible = visible.filter(publishable);
   const allVisibleSelected = selectableVisible.length > 0 && selectableVisible.every((i) => selected.has(keyOf(i)));
 
@@ -114,7 +140,7 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
     const result = await analyzeOne(item);
     setAi((prev) => ({ ...prev, [k]: result }));
     // Si la IA la descarta, se desmarca para no publicarla por inercia.
-    if (isAiReview(result) && result.veredicto === "descartar") {
+    if (isAiReview(result) && result.review.veredicto === "descartar") {
       setSelected((prev) => {
         const next = new Set(prev);
         next.delete(k);
@@ -336,16 +362,26 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
                       </div>
                     )}
                     {isAiReview(aiState) && (
-                      <div className={`mt-2 rounded-[8px] border px-2.5 py-2 text-[12px] ${VERDICT[aiState.veredicto].className}`}>
-                        <p className="font-semibold">
-                          {VERDICT[aiState.veredicto].label}
-                          {aiState.encaja !== (item.site === "la-mira" ? "la-mira" : "planazo") &&
-                            ` · encaja mejor en ${aiState.encaja === "ninguno" ? "ninguno de los dos" : aiState.encaja === "la-mira" ? "La Mira" : "Planazo"}`}
+                      <div
+                        className={`mt-2 rounded-[8px] border px-2.5 py-2 text-[12px] ${VERDICT[aiState.review.veredicto].className} ${aiState.stale ? "opacity-70" : ""}`}
+                      >
+                        <p className="flex flex-wrap items-baseline gap-x-2 font-semibold">
+                          <span>
+                            {VERDICT[aiState.review.veredicto].label}
+                            {aiState.review.encaja !== (item.site === "la-mira" ? "la-mira" : "planazo") &&
+                              ` · encaja mejor en ${aiState.review.encaja === "ninguno" ? "ninguno de los dos" : aiState.review.encaja === "la-mira" ? "La Mira" : "Planazo"}`}
+                          </span>
+                          <span className="text-[11px] font-normal text-ink-faint" suppressHydrationWarning>Revisada {timeAgo(aiState.reviewedAt)}</span>
                         </p>
-                        <p className="mt-0.5 text-ink-soft">{aiState.resumen}</p>
-                        {aiState.problemas.length > 0 && (
+                        {aiState.stale && (
+                          <p className="mt-1 rounded bg-card/70 px-1.5 py-0.5 text-[11.5px] font-medium text-ink">
+                            △ La pieza cambió después de esta revisión — vuelve a revisarla con la IA.
+                          </p>
+                        )}
+                        <p className="mt-0.5 text-ink-soft">{aiState.review.resumen}</p>
+                        {aiState.review.problemas.length > 0 && (
                           <ul className="mt-1 list-disc pl-4 text-ink-soft">
-                            {aiState.problemas.map((p) => (
+                            {aiState.review.problemas.map((p) => (
                               <li key={p}>{p}</li>
                             ))}
                           </ul>
@@ -385,7 +421,7 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
                         disabled={aiState === "loading" || !!batch}
                         className="rounded-md px-1.5 py-1 text-[11.5px] font-medium text-accent-fg hover:bg-accent disabled:opacity-50"
                       >
-                        {aiState === "loading" ? "Revisando…" : isAiReview(aiState) ? "Otra vez" : "✨ IA"}
+                        {aiState === "loading" ? "Revisando…" : isAiReview(aiState) ? (aiState.stale ? "✨ Revisar de nuevo" : "Otra vez") : "✨ IA"}
                       </button>
                       <Link href={item.editHref} className="rounded-md px-1.5 py-1 text-[11.5px] font-medium text-ink-soft hover:bg-hover hover:text-ink">
                         Abrir →
@@ -432,7 +468,10 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
           <p className="text-[12.5px] leading-[1.5] text-ink-soft">
             Se publican ya en su sitio; las noticias y reportajes salen con la fecha de hoy. Antes de publicar se vuelven a revisar: las que no cumplan algo bloqueante se saltan.
           </p>
-          {selectedItems.some((i) => isAiReview(ai[keyOf(i)]) && (ai[keyOf(i)] as AiReview).veredicto !== "publicar") && (
+          {selectedItems.some((i) => {
+            const state = ai[keyOf(i)];
+            return isAiReview(state) && state.review.veredicto !== "publicar";
+          }) && (
             <p className="rounded-lg bg-warning/10 px-3 py-2 text-[12px] text-ink">△ La IA sugirió corregir o descartar alguna de las seleccionadas.</p>
           )}
           <ul className="flex flex-col gap-1 text-[12.5px] text-ink">

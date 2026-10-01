@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { z } from 'zod';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard, type RequestWithSession } from '../auth/jwt-auth.guard';
 import { ReviewAgentService } from './review-agent.service';
 
 const TYPES = ['noticia', 'reportaje', 'guia', 'place', 'evento-planazo', 'planazo-guia'] as const;
@@ -19,9 +19,9 @@ export class ReviewAgentController {
 
   /** Segunda opinión con IA de una pieza. */
   @Post('analyze')
-  analyze(@Body() body: unknown) {
+  analyze(@Req() req: RequestWithSession, @Body() body: unknown) {
     const dto = itemSchema.parse(body);
-    return this.reviewAgent.analyze(dto.type, dto.id);
+    return this.reviewAgent.analyze(dto.type, dto.id, req.session?.sub);
   }
 
   /** Publica las piezas elegidas (se saltan las que no cumplen lo bloqueante). */
