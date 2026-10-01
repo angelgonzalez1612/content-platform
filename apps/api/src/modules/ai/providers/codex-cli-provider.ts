@@ -13,6 +13,7 @@ import {
   type StructuredGenerateInput,
 } from '../content-provider.interface';
 import { killProcessTree } from './process-tree-kill';
+import { windowsExitHint } from './cli-exit';
 
 const PLACE_SYSTEM_PROMPT = `Eres redactor editorial de Planazo, una guía de planes y lugares de la Ciudad de México.
 
@@ -193,7 +194,7 @@ function runCodexCommand(
       else
         reject(
           new Error(
-            `Codex CLI terminó con código ${code}: ${(stderr || stdout).trim()}`,
+            windowsExitHint(code) ?? `Codex CLI terminó con código ${code}: ${(stderr || stdout).trim()}`,
           ),
         );
     });

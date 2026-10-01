@@ -13,6 +13,7 @@ import {
   type StructuredGenerateInput,
 } from '../content-provider.interface';
 import { killProcessTree } from './process-tree-kill';
+import { windowsExitHint } from './cli-exit';
 
 const CLAUDE_TIMEOUT_MS = 60_000;
 
@@ -64,6 +65,8 @@ function describeCliFailure(err: ExecFileException, stdout: string, stderr: stri
   } catch {
     // stdout no era la envoltura JSON — se cae a stderr/stdout crudos.
   }
+  const hint = windowsExitHint(err.code);
+  if (hint) return hint;
   const detail = (stderr || stdout).trim().slice(-1000);
   return `El CLI terminó con código ${String(err.code ?? '?')}${detail ? `: ${detail}` : ' sin más detalle.'}`;
 }

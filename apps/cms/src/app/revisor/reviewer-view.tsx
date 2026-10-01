@@ -35,7 +35,7 @@ interface SavedAi {
   /** La pieza cambió después de esta revisión. */
   stale: boolean;
 }
-type AiState = SavedAi | "loading" | { error: string };
+type AiState = SavedAi | { error: string };
 type SiteFilter = "all" | "la-mira" | "planazo";
 
 const keyOf = (item: { type: string; id: string }) => `${item.type}:${item.id}`;
@@ -95,6 +95,9 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
   const [ai, setAi] = useState<Record<string, AiState>>(() =>
     Object.fromEntries((initialQueue ?? []).filter((i) => i.ai).map((i) => [keyOf(i), { ...i.ai! }])),
   );
+  // Cargando / error van aparte: si un reintento falla, la revisión anterior se conserva.
+  const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({});
+  const [aiErrors, setAiErrors] = useState<Record<string, string>>({});
   const [batch, setBatch] = useState<{ done: number; total: number } | null>(null);
   const cancelBatch = useRef(false);
   const [publishing, setPublishing] = useState(false);
@@ -137,11 +140,22 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
     });
   }
 
-  async function analyze(item: ReviewQueueItem) {
+  async function analyze(item: ReviewQueueItem): Promise<boolean> {
     const k = keyOf(item);
-    setAi((prev) => ({ ...prev, [k]: "loading" }));
+    setAiLoading((prev) => ({ ...prev, [k]: true }));
+    setAiErrors((prev) => {
+      const next = { ...prev };
+      delete next[k];
+      return next;
+    });
     const result = await analyzeOne(item);
-    setAi((prev) => ({ ...prev, [k]: result }));
+    setAiLoading((prev) => {
+      const next = { ...prev };
+      delete next[k];
+      return next;
+    });
+    if (isAiReview(result)) setAi((prev) => ({ ...prev, [k]: result }));
+    else setAiErrors((prev) => ({ ...prev, [k]: result.error }));
     // Si la IA la descarta, se desmarca para no publicarla por inercia.
     if (isAiReview(result) && result.review.veredicto === "descartar") {
       setSelected((prev) => {
@@ -150,6 +164,7 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
         return next;
       });
     }
+    return isAiReview(result);
   }
 
   async function fix(item: ReviewQueueItem, checkId: string) {
@@ -193,10 +208,16 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
     if (!items.length) return;
     cancelBatch.current = false;
     setBatch({ done: 0, total: items.length });
+    let failuresInARow = 0;
     for (let i = 0; i < items.length; i++) {
       if (cancelBatch.current) break;
-      await analyze(items[i]);
+      failuresInARow = (await analyze(items[i])) ? 0 : failuresInARow + 1;
       setBatch({ done: i + 1, total: items.length });
+      // Si la IA falla dos veces seguidas (sin tokens, CLI caído, poca memoria), no tiene caso seguir.
+      if (failuresInARow >= 2) {
+        setNotice({ tone: "error", text: "Se detuvo la revisión en lote: la IA falló dos veces seguidas. Mira el error en la pieza y vuelve a intentar cuando se resuelva." });
+        break;
+      }
     }
     setBatch(null);
   }
@@ -455,7 +476,12 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
                         )}
                       </div>
                     )}
-                    {aiState && typeof aiState === "object" && "error" in aiState && <p className="mt-1.5 text-[11.5px] text-negative">{aiState.error}</p>}
+                    {aiErrors[k] && (
+                      <p className="mt-1.5 text-[11.5px] text-negative">
+                        {isAiReview(aiState) ? "No se pudo volver a revisar (se conserva la revisión anterior): " : ""}
+                        {aiErrors[k]}
+                      </p>
+                    )}
                     {isOpen && (
                       <ul className="mt-2 flex flex-col gap-1 border-t border-border-soft pt-2">
                         {item.checks.map((c) => (
@@ -490,10 +516,10 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
                       <button
                         type="button"
                         onClick={() => analyze(item)}
-                        disabled={aiState === "loading" || !!batch}
+                        disabled={!!aiLoading[k] || !!batch}
                         className="rounded-md px-1.5 py-1 text-[11.5px] font-medium text-accent-fg hover:bg-accent disabled:opacity-50"
                       >
-                        {aiState === "loading" ? "Revisando…" : isAiReview(aiState) ? (aiState.stale ? "✨ Revisar de nuevo" : "Otra vez") : "✨ IA"}
+                        {aiLoading[k] ? "Revisando…" : isAiReview(aiState) ? (aiState.stale ? "✨ Revisar de nuevo" : "Otra vez") : "✨ IA"}
                       </button>
                       <Link href={item.editHref} className="rounded-md px-1.5 py-1 text-[11.5px] font-medium text-ink-soft hover:bg-hover hover:text-ink">
                         Abrir →
