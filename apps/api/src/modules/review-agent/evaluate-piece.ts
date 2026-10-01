@@ -1,5 +1,8 @@
 import type { ContentBlock } from '@planazo/types';
-import { MIN_WORDS_BY_TYPE, DEFAULT_MIN_WORDS } from '../ai/checks.service';
+// Mismo estándar para La Mira y Planazo: una pieza publicable trae al menos
+// esto (los mínimos de checks.service son más bajos para lugares/eventos porque
+// rigen la automatización, no la revisión editorial).
+const REVIEW_MIN_WORDS = 300;
 
 /** Tipos con flujo de revisión (los demás de La Mira siempre están publicados). */
 export type ReviewableType = 'noticia' | 'reportaje' | 'guia' | 'place' | 'evento-planazo' | 'planazo-guia';
@@ -118,9 +121,10 @@ export function detectLanguage(text: string): 'es' | 'pt' | 'en' | 'desconocido'
   return 'es';
 }
 
-// Piezas largas con bajada y secciones; lugares y eventos son notas cortas
-// donde la descripción ES el texto principal.
-const LONG_FORM: ReviewableType[] = ['noticia', 'reportaje', 'guia', 'planazo-guia'];
+// Todas las piezas piden secciones (también lugares y eventos de Planazo, con el
+// mismo estándar que La Mira). La bajada solo existe en los tipos de La Mira:
+// en lugares/eventos la descripción ES el texto principal.
+const LONG_FORM: ReviewableType[] = ['noticia', 'reportaje', 'guia', 'place', 'evento-planazo', 'planazo-guia'];
 const WITH_DEK: ReviewableType[] = ['noticia', 'reportaje', 'guia'];
 
 /**
@@ -131,7 +135,7 @@ const WITH_DEK: ReviewableType[] = ['noticia', 'reportaje', 'guia'];
 export function evaluatePiece(piece: ReviewPiece): ReviewEvaluation {
   const body = piece.paragraphs.join('\n');
   const words = countWords(`${piece.summary}\n${body}`);
-  const minWords = MIN_WORDS_BY_TYPE[piece.type] ?? DEFAULT_MIN_WORDS;
+  const minWords = REVIEW_MIN_WORDS;
   const bodyLanguage = detectLanguage(`${piece.title}. ${piece.summary}\n${body}`);
   // El título se revisa aparte: a veces el cuerpo quedó en español pero el título no.
   const titleEnglishWords = (piece.title.match(new RegExp(EN_TITLE.source, 'gi')) ?? []).length;

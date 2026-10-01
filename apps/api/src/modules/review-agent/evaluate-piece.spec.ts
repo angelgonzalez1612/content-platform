@@ -52,6 +52,15 @@ describe('evaluatePiece', () => {
     expect(r.checks.find((c) => c.id === 'completo')?.passed).toBe(false);
   });
 
+  it('Planazo con el mismo estándar que La Mira: 300 palabras y secciones', () => {
+    const corto = evaluatePiece({ ...base, type: 'place', site: 'planazo', paragraphs: ['Un café en la Roma con buen ambiente.'], headings: [] });
+    expect(corto.checks.find((c) => c.id === 'longitud')?.passed).toBe(false);
+    expect(corto.checks.find((c) => c.id === 'estructura')?.passed).toBe(false);
+    const evento = evaluatePiece({ ...base, type: 'evento-planazo', site: 'planazo' });
+    expect(evento.checks.find((c) => c.id === 'longitud')?.passed).toBe(true);
+    expect(evento.checks.some((c) => c.id === 'estructura')).toBe(true);
+  });
+
   it('solo pide fuente en La Mira', () => {
     const planazo = evaluatePiece({ ...base, type: 'place', site: 'planazo', sourceUrl: null });
     expect(planazo.checks.some((c) => c.id === 'fuente')).toBe(false);
