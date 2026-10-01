@@ -83,12 +83,67 @@ function unwrap(field: z.ZodTypeAny): z.ZodTypeAny {
 // les pida no hacerlo — se limpia antes de intentar JSON.parse.
 function extractJsonText(text: string): string {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  return (fenced ? fenced[1] : text).trim();
+  const candidate = (fenced ? fenced[1] : text).trim();
+  // A veces el modelo agrega una frase antes o después del objeto ("Aquí
+  // está…") sin bloque de código: si no parsea tal cual, se toma de la
+  // primera "{" a la última "}".
+  try {
+    JSON.parse(candidate);
+    return candidate;
+  } catch {
+    return repairJsonObject(candidate) ?? candidate;
+  }
+}
+
+/**
+ * Rescata el primer objeto JSON de una respuesta casi válida: ignora lo que
+ * venga antes de la primera "{" y después de que ese objeto cierra, y escapa
+ * las comillas rectas que el modelo dejó DENTRO de un texto (una comilla que
+ * no va seguida de , } ] o : no puede estar cerrando el string). null si no
+ * hay objeto que rescatar.
+ */
+export function repairJsonObject(text: string): string | null {
+  const start = text.indexOf('{');
+  if (start < 0) return null;
+  let out = '';
+  let depth = 0;
+  let inString = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (ch === '\\') {
+        out += ch + (text[i + 1] ?? '');
+        i++;
+        continue;
+      }
+      if (ch === '"') {
+        const next = text.slice(i + 1).match(/^\s*(.)/)?.[1];
+        if (next === undefined || ',}]:'.includes(next)) inString = false;
+        else {
+          out += '\\"';
+          continue;
+        }
+      } else if (ch === '\n') {
+        out += '\\n';
+        continue;
+      }
+      out += ch;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === '{' || ch === '[') depth++;
+    else if (ch === '}' || ch === ']') depth--;
+    out += ch;
+    if (depth === 0) return out;
+  }
+  return null;
 }
 
 interface ClaudeCliResultEnvelope {
   is_error: boolean;
   result: string;
+  /** Con --json-schema: el objeto ya validado contra el schema (vía la herramienta StructuredOutput). */
+  structured_output?: unknown;
   subtype?: string;
 }
 
@@ -124,10 +179,35 @@ export class ClaudeCliProvider implements ContentProvider {
     const jsonInstruction = [
       '',
       'Responde ÚNICAMENTE con un objeto JSON válido — sin markdown, sin ```, sin texto antes ni después — con exactamente estas claves:',
+      // Comillas rectas dentro de un texto (títulos de canciones, citas) rompían el JSON a la mitad.
+      'Dentro de los textos usa comillas tipográficas (“ ” o « »), nunca comillas rectas ("), para que el JSON sea válido.',
       describeZodShape(input.schema),
     ].join('\n');
 
-    const raw = await this.runOnce(input.systemPrompt, `${input.userPrompt}\n${jsonInstruction}`);
+    // Salida estructurada del CLI (--json-schema): Claude devuelve el objeto
+    // ya validado y bien escapado — sin esto, textos largos con comillas
+    // rectas ("I Ran") rompían el JSON. Si el schema no se puede convertir,
+    // se sigue con el JSON en texto de siempre.
+    let jsonSchema: unknown;
+    try {
+      // Sin "$schema": el validador del CLI no reconoce el draft 2020-12 que pone Zod.
+      const { $schema: _draft, ...rest } = z.toJSONSchema(input.schema, { unrepresentable: 'any' }) as Record<string, unknown>;
+      jsonSchema = rest;
+    } catch {
+      jsonSchema = undefined;
+    }
+
+    let raw: unknown;
+    try {
+      raw = await this.runOnce(input.systemPrompt, `${input.userPrompt}\n${jsonInstruction}`, jsonSchema);
+    } catch (err) {
+      // JSON mal formado (o cortado): se reintenta una vez, igual que si no cumpliera el schema.
+      if (attempt === 0 && (err as Error).message.includes('JSON parseable')) {
+        const retryPrompt = `${input.userPrompt}\n${jsonInstruction}\n\nTu respuesta anterior no era un JSON válido. Responde de nuevo, SOLO el JSON completo, con comillas tipográficas dentro de los textos.`;
+        return this.generateStructured({ ...input, userPrompt: retryPrompt }, attempt + 1);
+      }
+      throw err;
+    }
     const parsed = input.schema.safeParse(raw);
 
     if (parsed.success) return parsed.data;
@@ -205,14 +285,17 @@ export class ClaudeCliProvider implements ContentProvider {
     }
   }
 
-  private async runOnce(systemPrompt: string, userPrompt: string): Promise<unknown> {
+  private async runOnce(systemPrompt: string, userPrompt: string, jsonSchema?: unknown): Promise<unknown> {
     // cwd aislado a propósito: sin --bare (para conservar la sesión OAuth ya
     // autenticada), pero corriendo fuera del repo para que no se auto-descubra
     // ningún CLAUDE.md/skill de este proyecto durante una generación de contenido.
     const tmpDir = await mkdtemp(path.join(tmpdir(), 'content-platform-claude-'));
     try {
+      // Con schema: solo se habilita StructuredOutput (la herramienta con la que el CLI entrega el
+      // objeto); sin schema, ninguna herramienta, como siempre.
+      const toolArgs = jsonSchema ? ['--tools', 'StructuredOutput', '--json-schema', JSON.stringify(jsonSchema)] : ['--disallowedTools', '*'];
       const stdout = await this.runClaudeCommand(
-        ['-p', userPrompt, '--output-format', 'json', '--system-prompt', systemPrompt, '--disallowedTools', '*'],
+        ['-p', userPrompt, '--output-format', 'json', '--system-prompt', systemPrompt, ...toolArgs],
         tmpDir,
       );
 
@@ -225,11 +308,14 @@ export class ClaudeCliProvider implements ContentProvider {
       if (envelope.is_error) {
         throw new InternalServerErrorException(`Claude CLI reportó un error: ${envelope.result ?? 'desconocido'}`);
       }
+      if (envelope.structured_output !== undefined && envelope.structured_output !== null) return envelope.structured_output;
 
       const jsonText = extractJsonText(envelope.result);
       try {
         return JSON.parse(jsonText);
-      } catch {
+      } catch (parseErr) {
+        // eslint-disable-next-line no-console -- sin esto la falla no deja rastro de qué respondió el modelo
+        console.warn(`[ClaudeCliProvider] respuesta no parseable (${(parseErr as Error).message}): ${envelope.result.slice(0, 300)} … ${envelope.result.slice(-300)}`);
         throw new InternalServerErrorException('Claude CLI no devolvió JSON parseable dentro de su respuesta.');
       }
     } catch (err) {

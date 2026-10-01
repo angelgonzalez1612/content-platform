@@ -1,3 +1,4 @@
+import type { ContentBlock } from '@planazo/types';
 import { MIN_WORDS_BY_TYPE, DEFAULT_MIN_WORDS } from '../ai/checks.service';
 
 /** Tipos con flujo de revisión (los demás de La Mira siempre están publicados). */
@@ -14,6 +15,8 @@ export interface ReviewPiece {
   /** Párrafos del cuerpo (incluye la descripción larga en tipos sin bloques). */
   paragraphs: string[];
   headings: string[];
+  /** Bloques del cuerpo tal como se guardan (para "Aplicar correcciones"); vacío en guías de Planazo. */
+  blocks?: ContentBlock[];
   imageUrl: string | null;
   categoryName: string | null;
   sourceUrl: string | null;

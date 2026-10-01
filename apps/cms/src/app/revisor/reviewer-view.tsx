@@ -5,6 +5,7 @@ import Link from "next/link";
 import { apiConfig } from "@planazo/config";
 import type { AiReview, Readiness, ReviewQueueItem, ReviewableType } from "@/lib/review-agent-types";
 import { useAiSettings } from "@/lib/use-openai-available";
+import { CorrectionsPanel } from "./corrections-panel";
 
 type ProviderId = "codex-cli" | "claude-cli" | "openai";
 const PROVIDER_LABEL: Record<ProviderId, string> = { "codex-cli": "Codex", "claude-cli": "Claude", openai: "OpenAI" };
@@ -116,6 +117,8 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
   // "Arreglar": qué criterio se está arreglando en cada pieza, y qué se hizo.
   const [fixing, setFixing] = useState<Record<string, string>>({});
   const [fixNotes, setFixNotes] = useState<Record<string, { tone: "ok" | "error"; text: string }>>({});
+  // Pieza con el panel "Aplicar correcciones" abierto.
+  const [correctingFor, setCorrectingFor] = useState<string | null>(null);
 
   const bySite = queue.filter((i) => site === "all" || i.site === site);
   const counts = { lista: 0, casi: 0, falta: 0 } as Record<Readiness, number>;
@@ -524,7 +527,31 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
                             ))}
                           </ul>
                         )}
+                        {aiState.review.veredicto !== "publicar" && aiState.review.problemas.length > 0 && correctingFor !== k && (
+                          <button
+                            type="button"
+                            onClick={() => setCorrectingFor(k)}
+                            title="La IA reescribe la pieza siguiendo esta lista; tú eliges qué guardar"
+                            className="mt-2 rounded-[8px] border border-brand/40 bg-card px-2.5 py-1 text-[11.5px] font-semibold text-accent-fg transition-colors hover:border-brand"
+                          >
+                            ✨ Aplicar correcciones{aiState.stale ? " (revisión de antes de tus cambios)" : ""}
+                          </button>
+                        )}
                       </div>
+                    )}
+                    {correctingFor === k && (
+                      <CorrectionsPanel
+                        item={item}
+                        provider={provider}
+                        providerLabel={PROVIDER_LABEL[provider]}
+                        onClose={() => setCorrectingFor(null)}
+                        onApplied={(updated, message) => {
+                          setQueue((prev) => prev.map((i) => (keyOf(i) === k ? updated : i)));
+                          if (updated.ai) setAi((prev) => ({ ...prev, [k]: { ...updated.ai! } }));
+                          setFixNotes((prev) => ({ ...prev, [k]: { tone: "ok", text: `✓ ${message}` } }));
+                          setCorrectingFor(null);
+                        }}
+                      />
                     )}
                     {aiErrors[k] && (
                       <p className="mt-1.5 text-[11.5px] text-negative">

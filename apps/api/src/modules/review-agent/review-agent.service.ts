@@ -77,7 +77,18 @@ export interface AiReview {
 const blockText = (blocks: ContentBlock[] | null | undefined) => ({
   paragraphs: (blocks ?? []).flatMap((b) => b.paragraphs ?? []),
   headings: (blocks ?? []).map((b) => b.heading ?? '').filter(Boolean),
+  blocks: blocks ?? [],
 });
+
+/** Propuesta de "Aplicar correcciones": lo actual y lo corregido, campo por campo. */
+export interface CorrectionProposal {
+  problems: string[];
+  current: { title: string; summary: string; content: { heading: string | null; paragraphs: string[] }[] };
+  proposed: { title: string; summary: string; content: { heading: string | null; paragraphs: string[] }[] };
+  /** Guías de Planazo: el cuerpo son lugares reales, solo se corrigen título y descripción. */
+  bodyEditable: boolean;
+  note: string;
+}
 
 const iso = (d: Date | null | undefined) => (d instanceof Date && !Number.isNaN(d.getTime()) ? d.toISOString() : null);
 
@@ -196,6 +207,106 @@ ${piece.paragraphs.join('\n').slice(0, 4000) || piece.summary}`,
     if (!refreshed) throw new NotFoundException('La pieza ya no está pendiente.');
     const saved = await this.savedReviews([id]);
     return { item: this.toItem(refreshed.piece, refreshed.createdAt, saved), message };
+  }
+
+  /**
+   * "Aplicar correcciones": la IA reescribe la pieza siguiendo los problemas
+   * de su última revisión. Solo PROPONE — no guarda nada; el editor elige qué
+   * aceptar y lo guarda con applyCorrections().
+   */
+  async proposeCorrections(type: ReviewableType, id: string, choice: AiProviderChoice = 'default'): Promise<CorrectionProposal> {
+    const found = (await this.loadPieces({ type, id }))[0];
+    if (!found) throw new NotFoundException('La pieza no existe o ya no está pendiente.');
+    const { piece } = found;
+    const review = (await this.savedReviews([id])).get(`${type}:${id}`)?.review;
+    if (!review) throw new BadRequestException('Primero revisa la pieza con IA: las correcciones salen de esa revisión.');
+    const failedChecks = evaluatePiece(piece).checks.filter((c) => !c.passed && !c.blocking).map((c) => `${c.label}${c.detail ? `: ${c.detail}` : ''}`);
+    const problems = [...review.problemas, ...(review.problemas.length ? [] : [review.resumen])];
+
+    const bodyEditable = type !== 'planazo-guia';
+    const current = {
+      title: piece.title,
+      summary: piece.summary,
+      content: bodyEditable ? (piece.blocks ?? []).map((b) => ({ heading: b.heading ?? null, paragraphs: b.paragraphs ?? [] })) : [],
+    };
+    const schema = z.object({
+      title: z.string().describe('Título corregido (o el mismo si no hay que cambiarlo).'),
+      summary: z.string().describe('Bajada/descripción corregida (o la misma).'),
+      content: z
+        .array(z.object({ heading: z.string().nullable(), paragraphs: z.array(z.string()) }))
+        .describe('Las MISMAS secciones, en el mismo orden, con sus párrafos corregidos. Puedes quitar párrafos de relleno, no agregues secciones.'),
+      note: z.string().describe('Una o dos oraciones para el editor: qué corregiste y qué quedó pendiente de verificar a mano.'),
+    });
+    const provider = await this.providers.resolveProvider(choice);
+    const output = (await this.providers.generateWithFallback(
+      provider,
+      {
+        systemPrompt: `Eres editor de La Mira (periódico hiperlocal de CDMX) y Planazo (planes y lugares en CDMX). Corriges un borrador siguiendo una lista de problemas que encontró la revisión.
+Reglas:
+- Corrige SOLO lo que dice la lista; deja igual lo que está bien.
+- NUNCA agregues datos que no estén ya en el texto (nombres, cifras, fechas, precios, direcciones, horarios, invitados) — tampoco los que mencione la propia lista de problemas, porque nadie los ha verificado. Si un problema pide o sugiere un dato nuevo, quita o suaviza la afirmación dudosa ("según la fuente", "por confirmar") y deja ese dato en la nota como pendiente de verificar.
+- Quita relleno y frases genéricas cuando la lista lo pida.
+- Español de México ("futbol" sin tilde está bien). Sin hashtags ni emojis.
+- Mantén las mismas secciones y su orden${bodyEditable ? '' : ' (en este tipo el cuerpo no se toca: devuelve content vacío)'}.
+- Incluye SIEMPRE "note": qué corregiste y qué datos quedan pendientes de verificar a mano.`,
+        userPrompt: `Problemas a corregir:
+${problems.map((p) => `- ${p}`).join('\n')}
+${failedChecks.length ? `\nAdemás, la revisión automática marcó:\n${failedChecks.map((c) => `- ${c}`).join('\n')}\n` : ''}
+Título: ${current.title}
+Bajada/descripción: ${current.summary}
+
+Cuerpo (JSON):
+${JSON.stringify(current.content).slice(0, 12000)}`,
+        schema,
+        schemaName: 'review_corrections',
+      },
+      { fallback: choice === 'default' },
+    )) as { title: string; summary: string; content: { heading: string | null; paragraphs: string[] }[]; note: string };
+
+    return {
+      problems,
+      current,
+      proposed: {
+        title: output.title.trim() || current.title,
+        summary: output.summary.trim() || current.summary,
+        content: bodyEditable ? output.content : [],
+      },
+      bodyEditable,
+      note: output.note,
+    };
+  }
+
+  /** Guarda lo que el editor aceptó de "Aplicar correcciones" (queda en el historial de versiones). */
+  async applyCorrections(
+    type: ReviewableType,
+    id: string,
+    patch: { title?: string; summary?: string; content?: { heading: string | null; paragraphs: string[] }[] },
+  ): Promise<{ item: ReviewQueueItem; message: string }> {
+    const found = (await this.loadPieces({ type, id }))[0];
+    if (!found) throw new NotFoundException('La pieza no existe o ya no está pendiente.');
+    const { piece } = found;
+
+    let content: ContentBlock[] | undefined;
+    if (patch.content && type !== 'planazo-guia') {
+      // Se conserva lo que la IA no ve de cada sección (imagen, video, publicaciones, id de guía) por posición.
+      const original = piece.blocks ?? [];
+      content = patch.content.map((b, i) => {
+        const base = (original[i] ?? {}) as ContentBlock & { id?: string };
+        const merged = { ...base, heading: b.heading, paragraphs: b.paragraphs.filter((p) => p.trim()) } as ContentBlock & { id?: string };
+        if (type === 'guia') merged.id = base.id ?? (slugify(b.heading ?? '') || `seccion-${i + 1}`);
+        return merged;
+      });
+    }
+    await this.save(piece, {
+      ...(patch.title?.trim() && { title: patch.title.trim() }),
+      ...(patch.summary?.trim() && { summary: patch.summary.trim() }),
+      ...(content && { content }),
+    });
+
+    const refreshed = (await this.loadPieces({ type, id }))[0];
+    if (!refreshed) throw new NotFoundException('La pieza ya no está pendiente.');
+    const changed = [patch.title && 'título', patch.summary && 'bajada', content && 'cuerpo'].filter(Boolean).join(', ');
+    return { item: this.toItem(refreshed.piece, refreshed.createdAt, await this.savedReviews([id])), message: `Correcciones guardadas (${changed || 'nada'}). La pieza sigue en revisión.` };
   }
 
   /** Imagen real para la pieza: la de su nota fuente, o la de una nota sobre el mismo tema. */

@@ -34,6 +34,23 @@ export class ReviewAgentController {
     return this.reviewAgent.fix(dto.type, dto.id, dto.check, req.session?.sub, dto.provider);
   }
 
+  /** "Aplicar correcciones": la IA propone la pieza corregida según su revisión (no guarda). */
+  @Post('corrections')
+  corrections(@Body() body: unknown) {
+    const dto = itemSchema.extend({ provider: providerSchema }).parse(body);
+    return this.reviewAgent.proposeCorrections(dto.type, dto.id, dto.provider);
+  }
+
+  /** Guarda las correcciones que el editor aceptó. */
+  @Post('corrections/apply')
+  applyCorrections(@Body() body: unknown) {
+    const block = z.object({ heading: z.string().nullable(), paragraphs: z.array(z.string()) });
+    const dto = itemSchema
+      .extend({ title: z.string().optional(), summary: z.string().optional(), content: z.array(block).max(40).optional() })
+      .parse(body);
+    return this.reviewAgent.applyCorrections(dto.type, dto.id, dto);
+  }
+
   /** Publica las piezas elegidas (se saltan las que no cumplen lo bloqueante). */
   @Post('publish')
   publish(@Body() body: unknown) {
