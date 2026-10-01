@@ -107,6 +107,8 @@ export interface CardActions {
   onOpenCorrections: () => void;
   onDiscard: () => void;
   onMoveToLamira: () => void;
+  /** Publicar solo esta pieza (aparece cuando está al 100). */
+  onPublish: () => void;
 }
 
 /**
@@ -124,6 +126,7 @@ export function ReviewCard({
   fixingCheck,
   fixNote,
   busy,
+  publishing,
   providerLabel,
   correctionsSlot,
   actions,
@@ -137,12 +140,15 @@ export function ReviewCard({
   fixNote: { tone: "ok" | "error"; text: string } | undefined;
   /** Hay un lote corriendo o una acción de esta pieza en curso. */
   busy: boolean;
+  /** Se está publicando esta pieza. */
+  publishing: boolean;
   providerLabel: string;
   correctionsSlot: React.ReactNode;
   actions: CardActions;
 }) {
   const [showChecks, setShowChecks] = useState(false);
   const [showProblems, setShowProblems] = useState(false);
+  const [confirmPublish, setConfirmPublish] = useState(false);
   const failed = item.checks.filter((c) => !c.passed);
   const passedCount = item.checks.length - failed.length;
   const canPublish = item.checks.every((c) => !c.blocking || c.passed);
@@ -151,6 +157,8 @@ export function ReviewCard({
   const verdict = review ? VERDICT[review.veredicto] : null;
   const ownSite = item.site === "la-mira" ? "la-mira" : "planazo";
   const fitsElsewhere = review && review.encaja !== ownSite;
+  // Publicar directo: al 100 y sin que la IA la haya descartado (si su revisión sigue vigente).
+  const canPublishNow = item.score === 100 && canPublish && !(review?.veredicto === "descartar" && !aiState?.stale);
   // "Corregida": hubo un arreglo/corrección después de la última revisión con IA (o sin revisión).
   const correctedAfterReview = !!item.lastFix && (!aiState || new Date(item.lastFix.at) > new Date(aiState.reviewedAt));
 
@@ -381,13 +389,49 @@ export function ReviewCard({
         {correctionsSlot}
       </div>
 
-      <div className="flex items-center justify-end gap-3 border-t border-border-soft px-4 py-2">
-        <a href={url.href} target="_blank" rel="noopener noreferrer" className="text-[11.5px] font-medium text-ink-faint hover:text-ink" title="Solo funciona una vez publicada">
-          Ver en el sitio ↗
-        </a>
-        <Link href={item.editHref} className="text-[12px] font-semibold text-ink hover:text-brand">
-          Abrir y editar →
-        </Link>
+      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-border-soft px-4 py-2">
+        {canPublishNow && !confirmPublish && (
+          <span className="mr-auto text-[11.5px] font-medium text-positive">✓ Cumple todo: lista para publicar</span>
+        )}
+        {confirmPublish ? (
+          <span className="mr-auto flex flex-wrap items-center gap-2 text-[12px]" role="group" aria-label="Confirmar publicación">
+            <span className="text-ink">
+              ¿Publicar ya en <span className="font-mono text-[11px]">{url.label.split("/")[0]}</span>?
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmPublish(false);
+                actions.onPublish();
+              }}
+              className="rounded-[10px] bg-brand px-3 py-1 text-[12px] font-semibold text-white transition-colors hover:bg-brand-pressed"
+            >
+              Sí, publicar
+            </button>
+            <button type="button" onClick={() => setConfirmPublish(false)} className="text-[12px] font-medium text-ink-soft hover:text-ink">
+              Cancelar
+            </button>
+          </span>
+        ) : (
+          <>
+            <a href={url.href} target="_blank" rel="noopener noreferrer" className="text-[11.5px] font-medium text-ink-faint hover:text-ink" title="Solo funciona una vez publicada">
+              Ver en el sitio ↗
+            </a>
+            <Link href={item.editHref} className="text-[12px] font-semibold text-ink hover:text-brand">
+              Abrir y editar →
+            </Link>
+            {canPublishNow && (
+              <button
+                type="button"
+                onClick={() => setConfirmPublish(true)}
+                disabled={busy || publishing}
+                className="rounded-[10px] bg-brand px-3.5 py-1.5 text-[12.5px] font-semibold text-white transition-colors hover:bg-brand-pressed disabled:opacity-60"
+              >
+                {publishing ? "Publicando…" : `Publicar en ${SITE_META[item.site].label}`}
+              </button>
+            )}
+          </>
+        )}
       </div>
     </li>
   );

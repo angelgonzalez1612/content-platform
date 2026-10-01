@@ -6,7 +6,7 @@ import { apiConfig } from "@planazo/config";
 import type { AiReview, Readiness, ReviewQueueItem } from "@/lib/review-agent-types";
 import { useAiSettings } from "@/lib/use-openai-available";
 import { CorrectionsPanel } from "./corrections-panel";
-import { READINESS, ReviewCard, SITE_META, type SavedAi } from "./review-card";
+import { READINESS, ReviewCard, SITE_META, publicUrl, type SavedAi } from "./review-card";
 
 type ProviderId = "codex-cli" | "claude-cli" | "openai";
 const PROVIDER_LABEL: Record<ProviderId, string> = { "codex-cli": "Codex", "claude-cli": "Claude", openai: "OpenAI" };
@@ -245,6 +245,26 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
     }
     dropItem(k);
     setNotice({ tone: "ok", text: `«${item.title}» ahora es una pieza de La Mira (en revisión).`, link: { href: move.data.editPath, label: "Abrirla →" } });
+  }
+
+  /** Publicar una sola pieza desde su tarjeta (el API vuelve a revisar lo bloqueante). */
+  async function publishOne(item: ReviewQueueItem) {
+    const k = keyOf(item);
+    setActing((prev) => ({ ...prev, [k]: true }));
+    const res = await postJson<{ published: { type: string; id: string }[]; skipped: { reason: string }[] }>("/cms/review-agent/publish", {
+      items: [{ type: item.type, id: item.id }],
+    });
+    setActing((prev) => removeKey(prev, k));
+    if (!res.ok || !res.data) {
+      setFixNotes((prev) => ({ ...prev, [k]: { tone: "error", text: res.status === 403 ? "No tienes permiso para publicar." : "No se pudo publicar. Intenta de nuevo." } }));
+      return;
+    }
+    if (!res.data.published.length) {
+      setFixNotes((prev) => ({ ...prev, [k]: { tone: "error", text: `No se publicó: ${res.data!.skipped[0]?.reason ?? "no cumple lo bloqueante"}.` } }));
+      return;
+    }
+    dropItem(k);
+    setNotice({ tone: "ok", text: `«${item.title}» ya está publicada en ${SITE_META[item.site].label} ✓`, link: { href: publicUrl(item).href, label: "Verla ↗" } });
   }
 
   async function analyzeBatch() {
@@ -504,6 +524,7 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
                 fixingCheck={fixing[k]}
                 fixNote={fixNotes[k]}
                 busy={!!batch || !!acting[k]}
+                publishing={!!acting[k]}
                 providerLabel={PROVIDER_LABEL[provider]}
                 actions={{
                   onToggleSelect: () => toggle(item),
@@ -512,6 +533,7 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
                   onOpenCorrections: () => setCorrectingFor(k),
                   onDiscard: () => discard(item),
                   onMoveToLamira: () => moveToLamira(item),
+                  onPublish: () => publishOne(item),
                 }}
                 correctionsSlot={
                   correctingFor === k && (
