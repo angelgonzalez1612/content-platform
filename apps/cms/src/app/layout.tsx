@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Instrument_Sans, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
+import { Suspense } from "react";
+import { GlobalActivity } from "@/components/cms/global-activity";
 import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
@@ -57,6 +59,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {"try{if(localStorage.getItem('planazo-cms-theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}"}
         </Script>
         {children}
+        {/* Barra de carga y "Procesando…" de todo el CMS (usa useSearchParams: va en Suspense). */}
+        <Suspense fallback={null}>
+          <GlobalActivity />
+        </Suspense>
         <PwaRegister />
       </body>
     </html>

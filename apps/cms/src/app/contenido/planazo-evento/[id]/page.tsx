@@ -18,13 +18,15 @@ export default async function EditPlanazoEventPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ revision?: string; desde?: string }>;
 }) {
-  const session = await getSession();
-  if (!session) redirect("/login");
-
   const { id } = await params;
   const { revision, desde } = await searchParams;
-  const reviewQueue = isReviewSite(revision) ? await getReviewQueue(revision) : null;
-  const [event, categories, lamiraCategories] = await Promise.all([getCmsEvent(id), getCmsCategories("planazo"), getCmsCategories("la-mira")]);
+  // Sesión, cola y datos en paralelo (antes la sesión y la cola iban primero, en serie).
+  const [session, reviewQueue, event, categories, lamiraCategories] = await Promise.all([
+    getSession(),
+    isReviewSite(revision) ? getReviewQueue(revision) : Promise.resolve(null),
+    getCmsEvent(id), getCmsCategories("planazo"), getCmsCategories("la-mira"),
+  ]);
+  if (!session) redirect("/login");
   if (!event) notFound();
 
   return (

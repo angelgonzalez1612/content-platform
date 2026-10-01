@@ -18,18 +18,20 @@ export default async function EditPlacePage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ revision?: string; desde?: string }>;
 }) {
-  const session = await getSession();
-  if (!session) redirect("/login");
-
   const { id } = await params;
   const { revision, desde } = await searchParams;
-  const reviewQueue = isReviewSite(revision) ? await getReviewQueue(revision) : null;
-  const place = await getCmsPlace(id);
+  // En paralelo: antes iba sesión → cola → lugar → categoría → categorías, uno tras otro.
+  const [session, reviewQueue, place, lamiraCategories] = await Promise.all([
+    getSession(),
+    isReviewSite(revision) ? getReviewQueue(revision) : Promise.resolve(null),
+    getCmsPlace(id),
+    getCmsCategories("la-mira"),
+  ]);
+  if (!session) redirect("/login");
   if (!place) notFound();
 
   const categoryId = place.categories[0]?.id;
   const category = categoryId ? await getCmsCategory(categoryId) : null;
-  const lamiraCategories = await getCmsCategories("la-mira");
 
   return (
     <CmsShell user={session} title={place.name}>

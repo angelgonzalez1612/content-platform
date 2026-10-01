@@ -33,6 +33,15 @@ const TYPE_LABEL: Record<string, string> = {
   reportaje: "Reportaje",
 };
 
+const ITEM_LOADERS: Record<string, (id: string) => Promise<unknown>> = {
+  noticia: getCmsNoticia,
+  alerta: getCmsAlerta,
+  guia: getCmsGuia,
+  evento: getCmsLamiraEvento,
+  lugar: getCmsLamiraLugar,
+  reportaje: getCmsReportaje,
+};
+
 export default async function EditLamiraContentPage({
   params,
   searchParams,
@@ -40,13 +49,17 @@ export default async function EditLamiraContentPage({
   params: Promise<{ type: string; id: string }>;
   searchParams: Promise<{ revision?: string; desde?: string }>;
 }) {
-  const session = await getSession();
-  if (!session) redirect("/login");
-
   const { type, id } = await params;
   const { revision, desde } = await searchParams;
-  const reviewQueue = isReviewSite(revision) ? await getReviewQueue(revision) : null;
-  const categories = await getCmsCategories("la-mira");
+  // Todo en paralelo (antes iba uno tras otro: sesión → cola → categorías →
+  // pieza, ~0.6 s). La pieza se pide aquí y cada caso del switch la espera.
+  const itemPromise = ITEM_LOADERS[type]?.(id);
+  const [session, reviewQueue, categories] = await Promise.all([
+    getSession(),
+    isReviewSite(revision) ? getReviewQueue(revision) : Promise.resolve(null),
+    getCmsCategories("la-mira"),
+  ]);
+  if (!session) redirect("/login");
 
   let title: string;
   let form: React.ReactNode;
@@ -60,7 +73,7 @@ export default async function EditLamiraContentPage({
 
   switch (type) {
     case "noticia": {
-      const item = await getCmsNoticia(id);
+      const item = (await itemPromise) as Awaited<ReturnType<typeof getCmsNoticia>>;
       if (!item) notFound();
       title = item.title;
       slug = item.slug;
@@ -69,7 +82,7 @@ export default async function EditLamiraContentPage({
       break;
     }
     case "alerta": {
-      const item = await getCmsAlerta(id);
+      const item = (await itemPromise) as Awaited<ReturnType<typeof getCmsAlerta>>;
       if (!item) notFound();
       title = item.title;
       slug = item.slug;
@@ -78,7 +91,7 @@ export default async function EditLamiraContentPage({
       break;
     }
     case "guia": {
-      const item = await getCmsGuia(id);
+      const item = (await itemPromise) as Awaited<ReturnType<typeof getCmsGuia>>;
       if (!item) notFound();
       title = item.title;
       slug = item.slug;
@@ -87,7 +100,7 @@ export default async function EditLamiraContentPage({
       break;
     }
     case "evento": {
-      const item = await getCmsLamiraEvento(id);
+      const item = (await itemPromise) as Awaited<ReturnType<typeof getCmsLamiraEvento>>;
       if (!item) notFound();
       title = item.title;
       slug = item.slug;
@@ -96,7 +109,7 @@ export default async function EditLamiraContentPage({
       break;
     }
     case "lugar": {
-      const item = await getCmsLamiraLugar(id);
+      const item = (await itemPromise) as Awaited<ReturnType<typeof getCmsLamiraLugar>>;
       if (!item) notFound();
       title = item.name;
       slug = item.slug;
@@ -105,7 +118,7 @@ export default async function EditLamiraContentPage({
       break;
     }
     case "reportaje": {
-      const item = await getCmsReportaje(id);
+      const item = (await itemPromise) as Awaited<ReturnType<typeof getCmsReportaje>>;
       if (!item) notFound();
       title = item.title;
       slug = item.slug;

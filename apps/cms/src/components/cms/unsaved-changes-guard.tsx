@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { NAV_CANCEL_EVENT, NAV_START_EVENT } from "@/components/cms/global-activity";
 
 /**
  * Avisa antes de perder cambios sin guardar:
@@ -37,6 +38,8 @@ export function UnsavedChangesGuard({ when }: { when: boolean }) {
       e.stopPropagation();
       setPendingHref(url.pathname + url.search + url.hash);
       dialogRef.current?.showModal();
+      // La barra de carga global ya arrancó con este clic: se apaga mientras decide.
+      window.dispatchEvent(new Event(NAV_CANCEL_EVENT));
     }
 
     window.addEventListener("beforeunload", onBeforeUnload);
@@ -50,7 +53,10 @@ export function UnsavedChangesGuard({ when }: { when: boolean }) {
   function leave() {
     const href = pendingHref;
     dialogRef.current?.close();
-    if (href) router.push(href);
+    if (href) {
+      window.dispatchEvent(new Event(NAV_START_EVENT));
+      router.push(href);
+    }
   }
 
   return (
