@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { apiConfig } from "@planazo/config";
 import type { AiReview, Readiness, ReviewQueueItem } from "@/lib/review-agent-types";
@@ -65,7 +65,23 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
   const settings = useAiSettings();
   const [chosenProvider, setChosenProvider] = useState<ProviderId | null>(null);
   const providers: ProviderId[] = (["codex-cli", "claude-cli", "openai"] as const).filter((p) => p !== "openai" || settings?.openaiAvailable === true);
-  const provider: ProviderId = chosenProvider ?? settings?.defaultProvider ?? "codex-cli";
+  // Estado de cada proveedor (sin tokens, fallando…): si el predeterminado no tiene uso, se arranca con otro.
+  const [health, setHealth] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${apiConfig.clientBaseUrl}/cms/automation/status`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { providerHealth?: { provider: string; state: string }[] } | null) => {
+        if (!cancelled && data?.providerHealth) setHealth(Object.fromEntries(data.providerHealth.map((h) => [h.provider, h.state])));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const noQuota = (p: ProviderId) => health[p] === "sin-tokens";
+  const defaultProvider: ProviderId = settings?.defaultProvider ?? "codex-cli";
+  const provider: ProviderId = chosenProvider ?? (noQuota(defaultProvider) ? (providers.find((p) => !noQuota(p)) ?? defaultProvider) : defaultProvider);
   const [site, setSite] = useState<SiteFilter>("all");
   const [readiness, setReadiness] = useState<Readiness | "all">("all");
   const [aiFilter, setAiFilter] = useState<AiFilter>("all");
@@ -361,21 +377,26 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
 
   const total = bySite.length || 1;
 
+  const filterButton = (active: boolean) =>
+    `flex w-full items-center gap-2 rounded-[10px] px-2.5 py-1.5 text-left text-[12.5px] transition-colors ${
+      active ? "bg-ink-solid font-semibold text-white" : "text-ink-soft hover:bg-hover hover:text-ink"
+    }`;
+
   return (
-    <div className="mx-auto max-w-[1100px] p-[26px] pb-[120px]">
-      {/* Encabezado */}
-      <header className="mb-5 flex flex-wrap items-end gap-4">
-        <div className="max-w-[62ch]">
-          <h1 className="mb-1 text-[25px] font-semibold tracking-tight">Revisor</h1>
-          <p className="text-[13.5px] leading-[1.55] text-ink-soft">
-            Antes de publicar: revisa que cada pieza tenga imagen, largo suficiente, esté en español, encaje en su sitio y cite fuente. La IA da una segunda opinión cuando se la pides. Nada se publica solo.
+    <div className="mx-auto max-w-[1440px] p-[26px] pb-[120px] lg:grid lg:grid-cols-[290px_minmax(0,1fr)] lg:items-start lg:gap-6">
+      {/* Panel fijo a la izquierda: qué estoy viendo y qué hacer con la cola */}
+      <aside className="mb-4 flex flex-col gap-3 lg:sticky lg:top-4 lg:mb-0 lg:max-h-[calc(100vh-96px)] lg:overflow-y-auto lg:pr-1">
+        <div>
+          <h1 className="text-[22px] font-semibold tracking-tight">Revisor</h1>
+          <p className="mt-1 text-[12.5px] leading-[1.5] text-ink-soft">
+            Revisa antes de publicar: imagen, largo, idioma, si encaja en su sitio y si cita fuente. La IA opina cuando se lo pides. Nada se publica solo.
           </p>
         </div>
-        <div className="flex-1" />
-        <div className="inline-flex items-center gap-1 rounded-full border border-border bg-background p-0.5" role="group" aria-label="Sitio">
+
+        <div className="grid grid-cols-3 gap-0.5 rounded-[12px] border border-border bg-background p-0.5" role="group" aria-label="Sitio">
           {(
             [
-              ["all", "Los dos sitios", null],
+              ["all", "Ambos", null],
               ["la-mira", "La Mira", SITE_META["la-mira"].color],
               ["planazo", "Planazo", SITE_META.planazo.color],
             ] as const
@@ -385,7 +406,7 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
               type="button"
               onClick={() => setSite(id)}
               aria-pressed={site === id}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[12.5px] font-semibold whitespace-nowrap transition-colors ${
+              className={`flex items-center justify-center gap-1.5 rounded-[10px] px-2 py-1.5 text-[12px] font-semibold whitespace-nowrap transition-colors ${
                 site === id ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
               }`}
             >
@@ -394,73 +415,113 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
             </button>
           ))}
         </div>
-      </header>
 
-      {/* Resumen: distribución de la cola + filtro por estado */}
-      <section className="mb-4 rounded-[16px] border border-border bg-card p-4" aria-label="Resumen de la cola">
-        <div className="mb-3 flex items-baseline justify-between gap-2">
-          <p className="text-[13px] font-semibold text-ink">
-            {bySite.length} {bySite.length === 1 ? "pieza pendiente" : "piezas pendientes"}
-            <span className="font-normal text-ink-faint"> · {site === "all" ? "La Mira y Planazo" : SITE_META[site].label}</span>
-          </p>
-          {readiness !== "all" && (
-            <button type="button" onClick={() => setReadiness("all")} className="text-[12px] font-medium text-ink-faint hover:text-ink">
-              Ver todas
+        <section className="rounded-[14px] border border-border bg-card p-3" aria-label="Estado de la cola">
+          <div className="mb-2 flex items-baseline justify-between">
+            <p className="text-[12.5px] font-semibold text-ink">
+              {bySite.length} pendientes
+            </p>
+            {readiness !== "all" && (
+              <button type="button" onClick={() => setReadiness("all")} className="text-[11.5px] font-medium text-ink-faint hover:text-ink">
+                Ver todas
+              </button>
+            )}
+          </div>
+          <div className="mb-2.5 flex h-1.5 overflow-hidden rounded-full bg-hover" aria-hidden>
+            {(["lista", "casi", "falta"] as const).map((r) => (
+              <span key={r} className={`${READINESS[r].bar} transition-[width] duration-500 ease-out`} style={{ width: `${(counts[r] / total) * 100}%` }} />
+            ))}
+          </div>
+          <div className="flex flex-col gap-1">
+            {(["lista", "casi", "falta"] as const).map((r) => {
+              const active = readiness === r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setReadiness(active ? "all" : r)}
+                  aria-pressed={active}
+                  title={READINESS[r].hint}
+                  className={`flex items-center gap-2.5 rounded-[10px] border px-2.5 py-2 text-left transition-colors ${
+                    active ? "border-ink-faint bg-background" : "border-transparent hover:bg-background"
+                  }`}
+                >
+                  <span className={`size-2 flex-none rounded-full ${READINESS[r].bar}`} aria-hidden />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[12.5px] font-semibold text-ink">{r === "lista" ? "Listas para publicar" : r === "casi" ? "Casi listas" : "Les falta algo"}</span>
+                    <span className="block text-[11px] text-ink-faint">{READINESS[r].hint}</span>
+                  </span>
+                  <span className="text-[18px] font-semibold tracking-tight text-ink tabular-nums">{counts[r]}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-2 rounded-[14px] border border-border bg-card p-3" aria-label="Revisión con IA">
+          <div className="flex items-center justify-between gap-2" role="group" aria-label="Proveedor de IA">
+            <span className="text-[12.5px] font-semibold text-ink">Revisar con</span>
+            <div className="inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5">
+              {providers.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setChosenProvider(p)}
+                  disabled={!!batch}
+                  aria-pressed={provider === p}
+                  title={noQuota(p) ? `${PROVIDER_LABEL[p]} se quedó sin uso disponible` : settings?.defaultProvider === p ? "Predeterminado en Configuración" : undefined}
+                  className={`rounded-full px-2.5 py-0.5 text-[12px] font-semibold transition-colors disabled:opacity-60 ${
+                    provider === p ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
+                  } ${noQuota(p) ? "line-through decoration-negative/60" : ""}`}
+                >
+                  {PROVIDER_LABEL[p]}
+                </button>
+              ))}
+            </div>
+          </div>
+          {batch ? (
+            <div className="rounded-[10px] bg-accent px-3 py-2 text-[12px] font-semibold text-accent-fg">
+              <div className="flex items-center justify-between gap-2">
+                <span>
+                  {PROVIDER_LABEL[provider]} revisando {batch.done}/{batch.total}…
+                </span>
+                <button type="button" onClick={() => (cancelBatch.current = true)} className="text-[11.5px] font-medium text-ink-soft hover:text-ink">
+                  Detener
+                </button>
+              </div>
+              <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-card">
+                <span className="block h-full bg-brand transition-[width] duration-300" style={{ width: `${(batch.done / batch.total) * 100}%` }} />
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={analyzeBatch}
+              disabled={!pendingAi.length}
+              title={`Una segunda opinión de la IA para cada pieza de esta vista (hasta ${BATCH_LIMIT} a la vez)`}
+              className="rounded-[10px] border border-brand/40 bg-card px-3 py-2 text-[12.5px] font-semibold text-accent-fg transition-colors hover:border-brand disabled:cursor-default disabled:opacity-50"
+            >
+              {pendingAi.length ? `✨ Revisar ${pendingAi.length} de esta vista` : "Todo revisado por la IA"}
             </button>
           )}
-        </div>
-        <div className="mb-3 flex h-2 overflow-hidden rounded-full bg-hover" aria-hidden>
-          {(["lista", "casi", "falta"] as const).map((r) => (
-            <span key={r} className={`${READINESS[r].bar} transition-[width] duration-500 ease-out`} style={{ width: `${(counts[r] / total) * 100}%` }} />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          {(["lista", "casi", "falta"] as const).map((r) => {
-            const active = readiness === r;
-            return (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setReadiness(active ? "all" : r)}
-                aria-pressed={active}
-                className={`flex items-center gap-3 rounded-[12px] border px-3.5 py-3 text-left transition-colors ${
-                  active ? "border-ink-faint bg-background" : "border-border-soft hover:border-border hover:bg-background"
-                }`}
-              >
-                <span className="text-[26px] leading-none font-semibold tracking-tight text-ink tabular-nums">{counts[r]}</span>
-                <span className="min-w-0">
-                  <span className="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
-                    <span className={`size-2 rounded-full ${READINESS[r].bar}`} aria-hidden />
-                    {r === "lista" ? "Listas para publicar" : r === "casi" ? "Casi listas" : "Les falta algo"}
-                  </span>
-                  <span className="block text-[11.5px] text-ink-faint">{READINESS[r].hint}</span>
-                </span>
+        </section>
+        <section className="rounded-[14px] border border-border bg-card p-3" aria-label="Opinión de la IA">
+          <p className="mb-1.5 text-[12.5px] font-semibold text-ink">Opinión de la IA</p>
+          <div className="flex flex-col gap-0.5">
+            {AI_FILTERS.map((f) => (
+              <button key={f.id} type="button" onClick={() => setAiFilter(f.id)} aria-pressed={aiFilter === f.id} className={filterButton(aiFilter === f.id)}>
+                <span className="flex-1">{f.label}</span>
+                <span className="tabular-nums opacity-70">{aiCounts[f.id]}</span>
               </button>
-            );
-          })}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
 
-      {/* Filtro por la opinión de la IA */}
-      <div className="mb-4 flex flex-wrap items-center gap-1.5" role="group" aria-label="Opinión de la IA">
-        <span className="mr-1 text-[11.5px] font-medium text-ink-faint">Opinión de la IA:</span>
-        {AI_FILTERS.map((f) => (
-          <button
-            key={f.id}
-            type="button"
-            onClick={() => setAiFilter(f.id)}
-            aria-pressed={aiFilter === f.id}
-            className={`rounded-full border px-2.5 py-1 text-[12px] font-medium transition-colors ${
-              aiFilter === f.id ? "border-ink bg-ink-solid text-white" : "border-border bg-card text-ink-soft hover:border-ink-faint hover:text-ink"
-            }`}
-          >
-            {f.label} <span className="tabular-nums opacity-70">{aiCounts[f.id]}</span>
-          </button>
-        ))}
-      </div>
+      </aside>
 
-      {/* Herramientas: selección, IA y lote */}
-      <div className="sticky top-[60px] z-10 mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[12px] border border-border bg-card/95 px-3 py-2 backdrop-blur-sm">
+      <div className="min-w-0">
+      {/* Barra de selección, pegada arriba de la lista */}
+      <div className="sticky top-0 z-10 -mx-1 mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border-soft bg-background/95 px-1 py-2.5 backdrop-blur-sm">
         <label className="flex items-center gap-2 text-[12.5px] text-ink-soft">
           <input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} disabled={!selectableVisible.length} className="size-4 rounded border-border accent-brand" />
           Las {selectableVisible.length} publicables
@@ -475,44 +536,9 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
           ✓ Solo las de 100 ({perfectVisible.length})
         </button>
         <span className="flex-1" />
-        <div className="flex items-center gap-1.5" role="group" aria-label="Proveedor de IA">
-          <span className="text-[11.5px] font-medium text-ink-faint">IA:</span>
-          <div className="inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5">
-            {providers.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setChosenProvider(p)}
-                disabled={!!batch}
-                aria-pressed={provider === p}
-                title={settings?.defaultProvider === p ? "Predeterminado en Configuración" : undefined}
-                className={`rounded-full px-2.5 py-0.5 text-[12px] font-semibold transition-colors disabled:opacity-60 ${
-                  provider === p ? "bg-card text-ink shadow-[0_1px_2px_rgba(23,20,17,.08)]" : "text-ink-faint hover:text-ink"
-                }`}
-              >
-                {PROVIDER_LABEL[p]}
-              </button>
-            ))}
-          </div>
-        </div>
-        {batch ? (
-          <span className="flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-[12px] font-semibold text-accent-fg">
-            {PROVIDER_LABEL[provider]} está revisando {batch.done}/{batch.total}…
-            <button type="button" onClick={() => (cancelBatch.current = true)} className="rounded px-1.5 text-[11.5px] font-medium text-ink-soft hover:text-ink">
-              Detener
-            </button>
-          </span>
-        ) : (
-          <button
-            type="button"
-            onClick={analyzeBatch}
-            disabled={!pendingAi.length}
-            title={`Una segunda opinión de la IA para cada pieza de esta vista (hasta ${BATCH_LIMIT} a la vez)`}
-            className="rounded-[10px] border border-brand/40 bg-card px-3 py-1.5 text-[12.5px] font-semibold text-accent-fg transition-colors hover:border-brand disabled:cursor-default disabled:opacity-50"
-          >
-            {pendingAi.length ? `✨ Revisar con IA (${pendingAi.length})` : "Todo revisado por la IA"}
-          </button>
-        )}
+        <span className="text-[12px] text-ink-faint">
+          Mostrando <span className="font-semibold text-ink tabular-nums">{visible.length}</span> de {bySite.length}
+        </span>
       </div>
 
       {notice && (
@@ -626,6 +652,8 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
           </button>
         </div>
       )}
+
+      </div>
 
       <dialog
         ref={confirmRef}
