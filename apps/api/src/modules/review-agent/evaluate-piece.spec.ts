@@ -6,6 +6,7 @@ const base: ReviewPiece = {
   type: 'noticia',
   site: 'la-mira',
   id: '1',
+  slug: 'queretaro-sorprende-a-chivas',
   title: 'Querétaro sorprende a Chivas y se impone 2-0 en la Liga MX',
   summary: 'El Guadalajara perdió ante Querétaro en la Jornada 10 del Apertura 2026, en un partido disputado el 26 de septiembre.',
   paragraphs: [`El equipo de la ciudad jugó en casa y la afición llenó el estadio para ver el partido. ${long(320)}.`],

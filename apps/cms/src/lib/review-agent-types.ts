@@ -27,8 +27,11 @@ export interface ReviewQueueItem {
   readiness: Readiness;
   words: number;
   score: number;
+  slug: string;
   /** Última revisión con IA guardada; `stale` = la pieza cambió después de revisarla. */
   ai: { review: AiReview; reviewedAt: string; stale: boolean } | null;
+  /** Último arreglo/corrección hecho desde el Revisor (indicador "Corregida"). */
+  lastFix: { at: string; message: string } | null;
 }
 
 export interface AiReview {

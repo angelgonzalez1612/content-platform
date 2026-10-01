@@ -43,12 +43,19 @@ export class ReviewAgentController {
 
   /** Guarda las correcciones que el editor aceptó. */
   @Post('corrections/apply')
-  applyCorrections(@Body() body: unknown) {
+  applyCorrections(@Req() req: RequestWithSession, @Body() body: unknown) {
     const block = z.object({ heading: z.string().nullable(), paragraphs: z.array(z.string()) });
     const dto = itemSchema
       .extend({ title: z.string().optional(), summary: z.string().optional(), content: z.array(block).max(40).optional() })
       .parse(body);
-    return this.reviewAgent.applyCorrections(dto.type, dto.id, dto);
+    return this.reviewAgent.applyCorrections(dto.type, dto.id, dto, req.session?.sub);
+  }
+
+  /** Archivar (no publicar) una pieza: sale de la cola, no se borra. */
+  @Post('discard')
+  discard(@Req() req: RequestWithSession, @Body() body: unknown) {
+    const dto = itemSchema.parse(body);
+    return this.reviewAgent.discard(dto.type, dto.id, req.session?.sub);
   }
 
   /** Publica las piezas elegidas (se saltan las que no cumplen lo bloqueante). */

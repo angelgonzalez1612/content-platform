@@ -59,9 +59,17 @@ export interface ReviewQueueItem extends ReviewEvaluation {
   categoryName: string | null;
   createdAt: string | null;
   editHref: string;
+  slug: string;
   /** Última revisión con IA guardada; `stale` = la pieza cambió después. */
   ai: { review: AiReview; reviewedAt: string; stale: boolean } | null;
+  /** Último arreglo/corrección hecho desde el Revisor (para el indicador "Corregida"). */
+  lastFix: { at: string; message: string } | null;
 }
+
+// Arreglos y correcciones hechos desde el Revisor, y piezas archivadas: también
+// en content_audit_log, para el indicador "Corregida" y para auditar.
+const FIX_MODE = 'review-fix';
+const DISCARD_MODE = 'review-discard';
 
 // Las revisiones con IA se guardan en content_audit_log con este modo (no
 // necesita tabla propia): así sobreviven a recargar la página y las ve todo el equipo.
@@ -117,13 +125,21 @@ export class ReviewAgentService {
 
   async queue(): Promise<ReviewQueueItem[]> {
     const pieces = await this.loadPieces();
-    const saved = await this.savedReviews(pieces.map(({ piece }) => piece.id));
-    return pieces.map(({ piece, createdAt }) => this.toItem(piece, createdAt, saved)).sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+    const ids = pieces.map(({ piece }) => piece.id);
+    const [saved, fixes] = await Promise.all([this.savedReviews(ids), this.savedFixes(ids)]);
+    return pieces.map(({ piece, createdAt }) => this.toItem(piece, createdAt, saved, fixes)).sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
   }
 
-  private toItem(piece: ReviewPiece, createdAt: string | null, saved: Map<string, { review: AiReview; reviewedAt: string; hash: string | null }>): ReviewQueueItem {
+  private toItem(
+    piece: ReviewPiece,
+    createdAt: string | null,
+    saved: Map<string, { review: AiReview; reviewedAt: string; hash: string | null }>,
+    fixes: Map<string, { at: string; message: string }> = new Map(),
+  ): ReviewQueueItem {
     const evaluation = evaluatePiece(piece);
     return {
+        slug: piece.slug,
+        lastFix: fixes.get(`${piece.type}:${piece.id}`) ?? null,
         ...evaluation,
         checks: evaluation.checks.map((c) => (c.passed ? c : { ...c, fix: fixFor(c.id, piece.type) })),
         type: piece.type,
@@ -203,10 +219,78 @@ ${piece.paragraphs.join('\n').slice(0, 4000) || piece.summary}`,
       }
     }
 
+    await this.logAction(piece, FIX_MODE, { message }, actorId);
     const refreshed = (await this.loadPieces({ type, id }))[0];
     if (!refreshed) throw new NotFoundException('La pieza ya no está pendiente.');
-    const saved = await this.savedReviews([id]);
-    return { item: this.toItem(refreshed.piece, refreshed.createdAt, saved), message };
+    const [saved, fixes] = await Promise.all([this.savedReviews([id]), this.savedFixes([id])]);
+    return { item: this.toItem(refreshed.piece, refreshed.createdAt, saved, fixes), message };
+  }
+
+  /**
+   * "Archivar" desde el Revisor (p.ej. la IA dice "descartar"): sale de la
+   * cola y no se publica, pero no se borra — queda como archivada en
+   * Contenido y en el historial de versiones, por si se quiere recuperar.
+   */
+  async discard(type: ReviewableType, id: string, actorId?: string): Promise<{ ok: true }> {
+    const found = (await this.loadPieces({ type, id }))[0];
+    if (!found) throw new NotFoundException('La pieza no existe o ya no está pendiente.');
+    const archived = { status: 'archived' as const };
+    switch (type) {
+      case 'noticia':
+        await this.noticiasService.update(id, archived);
+        break;
+      case 'reportaje':
+        await this.reportajesService.update(id, archived);
+        break;
+      case 'guia':
+        await this.guiasService.update(id, archived);
+        break;
+      case 'place':
+        await this.placesService.update(id, archived);
+        break;
+      case 'evento-planazo':
+        await this.eventsService.update(id, archived);
+        break;
+      case 'planazo-guia':
+        await this.planazoGuidesService.update(id, archived);
+        break;
+    }
+    await this.logAction(found.piece, DISCARD_MODE, { message: 'Archivada desde el Revisor' }, actorId, 'archived');
+    return { ok: true };
+  }
+
+  /** Último arreglo/corrección de cada pieza (clave `tipo:id`). */
+  private async savedFixes(ids: string[]): Promise<Map<string, { at: string; message: string }>> {
+    const out = new Map<string, { at: string; message: string }>();
+    if (!ids.length) return out;
+    const rows = await this.db
+      .select({ contentType: contentAuditLog.contentType, contentId: contentAuditLog.contentId, aiOutput: contentAuditLog.aiOutput, createdAt: contentAuditLog.createdAt })
+      .from(contentAuditLog)
+      .where(and(eq(contentAuditLog.mode, FIX_MODE), inArray(contentAuditLog.contentId, ids)))
+      .orderBy(desc(contentAuditLog.createdAt));
+    for (const r of rows) {
+      const key = `${r.contentType}:${r.contentId}`;
+      if (!out.has(key)) out.set(key, { at: r.createdAt.toISOString(), message: String((r.aiOutput as { message?: string }).message ?? '') });
+    }
+    return out;
+  }
+
+  private async logAction(piece: ReviewPiece, mode: string, output: Record<string, unknown>, actorId?: string, statusAfter?: string): Promise<void> {
+    const site = await this.db.query.sites.findFirst({ where: eq(sites.slug, piece.site) });
+    if (!site) return;
+    await this.db.insert(contentAuditLog).values({
+      siteId: site.id,
+      contentType: piece.type,
+      contentId: piece.id,
+      mode,
+      aiModel: 'revisor',
+      aiOutput: output,
+      checksRun: [],
+      decision: mode === DISCARD_MODE ? 'discarded' : 'needs-review',
+      statusBefore: piece.status as never,
+      statusAfter: (statusAfter ?? piece.status) as never,
+      actorId: actorId ?? null,
+    });
   }
 
   /**
@@ -281,6 +365,7 @@ ${JSON.stringify(current.content).slice(0, 12000)}`,
     type: ReviewableType,
     id: string,
     patch: { title?: string; summary?: string; content?: { heading: string | null; paragraphs: string[] }[] },
+    actorId?: string,
   ): Promise<{ item: ReviewQueueItem; message: string }> {
     const found = (await this.loadPieces({ type, id }))[0];
     if (!found) throw new NotFoundException('La pieza no existe o ya no está pendiente.');
@@ -303,10 +388,13 @@ ${JSON.stringify(current.content).slice(0, 12000)}`,
       ...(content && { content }),
     });
 
+    const changed = [patch.title && 'título', patch.summary && 'bajada', content && 'cuerpo'].filter(Boolean).join(', ');
+    const message = `Correcciones de la IA aplicadas (${changed || 'nada'}).`;
+    await this.logAction(piece, FIX_MODE, { message }, actorId);
     const refreshed = (await this.loadPieces({ type, id }))[0];
     if (!refreshed) throw new NotFoundException('La pieza ya no está pendiente.');
-    const changed = [patch.title && 'título', patch.summary && 'bajada', content && 'cuerpo'].filter(Boolean).join(', ');
-    return { item: this.toItem(refreshed.piece, refreshed.createdAt, await this.savedReviews([id])), message: `Correcciones guardadas (${changed || 'nada'}). La pieza sigue en revisión.` };
+    const [saved, fixes] = await Promise.all([this.savedReviews([id]), this.savedFixes([id])]);
+    return { item: this.toItem(refreshed.piece, refreshed.createdAt, saved, fixes), message: `${message} La pieza sigue en revisión.` };
   }
 
   /** Imagen real para la pieza: la de su nota fuente, o la de una nota sobre el mismo tema. */
@@ -523,7 +611,7 @@ ${failed.length ? failed.join('\n') : '(nada)'}`,
         out.push({
           createdAt: iso(r.createdAt),
           piece: {
-            type: 'noticia', site: 'la-mira', id: r.id, title: r.title, summary: r.dek, ...blockText(r.content),
+            type: 'noticia', site: 'la-mira', id: r.id, slug: r.slug, title: r.title, summary: r.dek, ...blockText(r.content),
             imageUrl: r.imageUrl ?? null, categoryName: r.category?.name ?? null, sourceUrl: r.sourceUrl ?? null,
             externalSource: r.externalSource ?? null, seo: (r.seo as Seo | null) ?? null, status: r.status, updatedAt: iso(r.updatedAt),
           },
@@ -541,7 +629,7 @@ ${failed.length ? failed.join('\n') : '(nada)'}`,
         out.push({
           createdAt: iso(r.createdAt),
           piece: {
-            type: 'reportaje', site: 'la-mira', id: r.id, title: r.title, summary: r.dek, ...blockText(r.content),
+            type: 'reportaje', site: 'la-mira', id: r.id, slug: r.slug, title: r.title, summary: r.dek, ...blockText(r.content),
             imageUrl: r.imageUrl ?? null, categoryName: r.category?.name ?? null, sourceUrl: r.sourceUrl ?? null,
             externalSource: null, seo: (r.seo as Seo | null) ?? null, status: r.status, updatedAt: null,
           },
@@ -559,7 +647,7 @@ ${failed.length ? failed.join('\n') : '(nada)'}`,
         out.push({
           createdAt: iso(r.createdAt),
           piece: {
-            type: 'guia', site: 'la-mira', id: r.id, title: r.title, summary: r.dek, ...blockText(r.content as ContentBlock[]),
+            type: 'guia', site: 'la-mira', id: r.id, slug: r.slug, title: r.title, summary: r.dek, ...blockText(r.content as ContentBlock[]),
             imageUrl: r.imageUrl ?? null, categoryName: r.category?.name ?? null, sourceUrl: r.officialSource?.url ?? null,
             externalSource: r.officialSource?.label ?? null, seo: (r.seo as Seo | null) ?? null, status: r.status, updatedAt: iso(r.updatedAt),
           },
@@ -578,7 +666,7 @@ ${failed.length ? failed.join('\n') : '(nada)'}`,
         out.push({
           createdAt: iso(r.createdAt),
           piece: {
-            type: 'place', site: 'planazo', id: r.id, title: r.name, summary: r.description ?? '', ...blockText(r.content as ContentBlock[]),
+            type: 'place', site: 'planazo', id: r.id, slug: r.slug, title: r.name, summary: r.description ?? '', ...blockText(r.content as ContentBlock[]),
             imageUrl: cover?.url ?? null, categoryName: r.placeCategories[0]?.category?.name ?? null, sourceUrl: r.sourceUrl ?? null,
             externalSource: null, seo: (r.seo as Seo | null) ?? null, status: r.status, updatedAt: iso(r.updatedAt),
           },
@@ -596,7 +684,7 @@ ${failed.length ? failed.join('\n') : '(nada)'}`,
         out.push({
           createdAt: iso(r.createdAt),
           piece: {
-            type: 'evento-planazo', site: 'planazo', id: r.id, title: r.name, summary: r.description ?? '', ...blockText(r.content),
+            type: 'evento-planazo', site: 'planazo', id: r.id, slug: r.slug, title: r.name, summary: r.description ?? '', ...blockText(r.content),
             imageUrl: r.imageUrl ?? null, categoryName: r.category?.name ?? null, sourceUrl: r.sourceUrl ?? null,
             externalSource: null, seo: (r.seo as Seo | null) ?? null, status: r.status, updatedAt: null,
           },
@@ -614,7 +702,7 @@ ${failed.length ? failed.join('\n') : '(nada)'}`,
         out.push({
           createdAt: iso(r.createdAt),
           piece: {
-            type: 'planazo-guia', site: 'planazo', id: r.id, title: r.title, summary: r.description,
+            type: 'planazo-guia', site: 'planazo', id: r.id, slug: r.slug, title: r.title, summary: r.description,
             paragraphs: [r.intro ?? '', ...sections.map((s) => s.body)].filter(Boolean),
             headings: sections.map((s) => s.heading).filter(Boolean),
             imageUrl: r.imageUrl ?? null, categoryName: r.categoryLabel || null, sourceUrl: null,

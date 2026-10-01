@@ -9,6 +9,8 @@ export interface ReviewPiece {
   type: ReviewableType;
   site: 'la-mira' | 'planazo';
   id: string;
+  /** Para armar la dirección donde se publicará. */
+  slug: string;
   title: string;
   /** Bajada (dek) o descripción corta. */
   summary: string;
