@@ -24,6 +24,13 @@ export class ReviewAgentController {
     return this.reviewAgent.analyze(dto.type, dto.id, req.session?.sub);
   }
 
+  /** "Arreglar" un criterio que falló (SEO, imagen, largo, secciones, título, bajada). */
+  @Post('fix')
+  fix(@Req() req: RequestWithSession, @Body() body: unknown) {
+    const dto = itemSchema.extend({ check: z.enum(['seo', 'imagen', 'longitud', 'estructura', 'titulo', 'bajada']) }).parse(body);
+    return this.reviewAgent.fix(dto.type, dto.id, dto.check, req.session?.sub);
+  }
+
   /** Publica las piezas elegidas (se saltan las que no cumplen lo bloqueante). */
   @Post('publish')
   publish(@Body() body: unknown) {

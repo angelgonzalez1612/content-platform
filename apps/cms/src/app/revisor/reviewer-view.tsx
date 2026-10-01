@@ -100,6 +100,9 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
   const [publishing, setPublishing] = useState(false);
   const [notice, setNotice] = useState<{ tone: "ok" | "warn" | "error"; text: string; details?: string[] } | null>(null);
   const confirmRef = useRef<HTMLDialogElement>(null);
+  // "Arreglar": qué criterio se está arreglando en cada pieza, y qué se hizo.
+  const [fixing, setFixing] = useState<Record<string, string>>({});
+  const [fixNotes, setFixNotes] = useState<Record<string, { tone: "ok" | "error"; text: string }>>({});
 
   const bySite = queue.filter((i) => site === "all" || i.site === site);
   const counts = { lista: 0, casi: 0, falta: 0 } as Record<Readiness, number>;
@@ -144,6 +147,42 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
       setSelected((prev) => {
         const next = new Set(prev);
         next.delete(k);
+        return next;
+      });
+    }
+  }
+
+  async function fix(item: ReviewQueueItem, checkId: string) {
+    const k = keyOf(item);
+    setFixing((prev) => ({ ...prev, [k]: checkId }));
+    setFixNotes((prev) => {
+      const next = { ...prev };
+      delete next[k];
+      return next;
+    });
+    try {
+      const res = await fetch(`${apiConfig.clientBaseUrl}/cms/review-agent/fix`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: item.type, id: item.id, check: checkId }),
+      });
+      const body = (await res.json().catch(() => null)) as { item?: ReviewQueueItem; message?: string } | null;
+      if (!res.ok || !body?.item) {
+        setFixNotes((prev) => ({ ...prev, [k]: { tone: "error", text: body?.message ?? "No se pudo arreglar." } }));
+        return;
+      }
+      const updated = body.item;
+      setQueue((prev) => prev.map((i) => (keyOf(i) === k ? updated : i)));
+      // La revisión de IA guardada queda marcada como de antes del cambio.
+      if (updated.ai) setAi((prev) => ({ ...prev, [k]: { ...updated.ai! } }));
+      setFixNotes((prev) => ({ ...prev, [k]: { tone: "ok", text: `✓ ${body.message ?? "Arreglado."}` } }));
+    } catch {
+      setFixNotes((prev) => ({ ...prev, [k]: { tone: "error", text: "Sin conexión con el servidor." } }));
+    } finally {
+      setFixing((prev) => {
+        const next = { ...prev };
+        delete next[k];
         return next;
       });
     }
@@ -350,16 +389,44 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
                     </p>
                     {failed.length > 0 && (
                       <div className="mt-1.5 flex flex-wrap gap-1">
-                        {failed.map((c) => (
-                          <span
-                            key={c.id}
-                            title={c.detail}
-                            className={`rounded-full px-2 py-0.5 text-[10.5px] font-semibold ${c.blocking ? "bg-negative/10 text-negative" : "bg-warning/14 text-warning"}`}
-                          >
-                            {c.blocking ? "✕" : "△"} {c.label}
-                          </span>
-                        ))}
+                        {failed.map((c) => {
+                          const busy = fixing[k] === c.id;
+                          return (
+                            <span
+                              key={c.id}
+                              title={c.detail}
+                              className={`inline-flex items-center gap-1 rounded-full py-0.5 pr-0.5 pl-2 text-[10.5px] font-semibold ${
+                                c.blocking ? "bg-negative/10 text-negative" : "bg-warning/14 text-warning"
+                              } ${c.fix || c.id === "encaje" ? "" : "pr-2"}`}
+                            >
+                              {c.blocking ? "✕" : "△"} {c.label}
+                              {c.fix && (
+                                <button
+                                  type="button"
+                                  onClick={() => fix(item, c.id)}
+                                  disabled={!!fixing[k] || !!batch}
+                                  title={`Arreglar: ${c.fix}. Se guarda en la pieza (sigue en revisión) y queda en su historial.`}
+                                  className="rounded-full bg-card px-2 py-0.5 text-[10.5px] font-semibold text-ink shadow-[0_1px_1px_rgba(23,20,17,.08)] transition-colors hover:text-brand disabled:opacity-50"
+                                >
+                                  {busy ? "Arreglando…" : `🔧 ${c.fix}`}
+                                </button>
+                              )}
+                              {c.id === "encaje" && (
+                                <Link
+                                  href={item.editHref}
+                                  title="Abre la pieza: arriba está «Mover a La Mira» (con «Que la IA decida»)"
+                                  className="rounded-full bg-card px-2 py-0.5 text-[10.5px] font-semibold text-ink shadow-[0_1px_1px_rgba(23,20,17,.08)] transition-colors hover:text-brand"
+                                >
+                                  Mover a La Mira →
+                                </Link>
+                              )}
+                            </span>
+                          );
+                        })}
                       </div>
+                    )}
+                    {fixNotes[k] && (
+                      <p className={`mt-1.5 text-[11.5px] ${fixNotes[k].tone === "ok" ? "text-positive" : "text-negative"}`}>{fixNotes[k].text}</p>
                     )}
                     {isAiReview(aiState) && (
                       <div
@@ -397,6 +464,11 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
                             <span className="text-ink-soft">
                               {c.label}
                               {c.detail && <span className="text-ink-faint"> — {c.detail}</span>}
+                              {!c.passed && !c.fix && c.id !== "encaje" && (
+                                <Link href={item.editHref} className="ml-1.5 font-medium text-accent-fg hover:underline">
+                                  Corregir en la pieza →
+                                </Link>
+                              )}
                             </span>
                           </li>
                         ))}

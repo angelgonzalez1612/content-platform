@@ -43,6 +43,7 @@ import { WebSearchModule } from '../automation/web-search.module';
   ],
   // AutomationModule usa AiDraftService para generar el borrador, ProviderRegistry
   // para resolver el proveedor "default" y ProviderHealthService para el aviso de tokens.
-  exports: [AiDraftService, ProviderRegistry, ProviderHealthService],
+  // ReviewAgentModule usa SEO, scraper e imágenes para los 'Arreglar' del Revisor.
+  exports: [AiDraftService, ProviderRegistry, ProviderHealthService, SeoGenerateService, ArticleScraperService, ImageSearchService],
 })
 export class AiModule {}

@@ -1,10 +1,15 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { slugify } from '@planazo/shared';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import type { ContentBlock, GuideSection, Seo } from '@planazo/types';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
 import { noticias, reportajes, guias, places, events, planazoGuides, contentAuditLog, sites } from '../../db/schema';
 import { ProviderRegistry } from '../ai/provider-registry.service';
+import { SeoGenerateService } from '../ai/seo-generate.service';
+import { ArticleScraperService } from '../ai/article-scraper.service';
+import { ImageSearchService } from '../ai/image-search.service';
+import { AiDraftService } from '../ai/ai-draft.service';
 import { NoticiasService } from '../lamira-noticias/noticias.service';
 import { ReportajesService } from '../lamira-reportajes/reportajes.service';
 import { GuiasService } from '../lamira-guias/guias.service';
@@ -24,6 +29,25 @@ const EDIT_HREF: Record<ReviewableType, (id: string) => string> = {
   'evento-planazo': (id) => `/contenido/planazo-evento/${id}`,
   'planazo-guia': (id) => `/contenido/planazo-guia/${id}`,
 };
+
+/** Criterios que el Revisor sabe arreglar solo, con la etiqueta de su botón. */
+export type FixableCheck = 'seo' | 'imagen' | 'longitud' | 'estructura' | 'titulo' | 'bajada';
+
+const FIX_LABEL: Record<FixableCheck, string> = {
+  seo: 'Generar SEO',
+  imagen: 'Buscar imagen',
+  longitud: 'Alargar con IA',
+  estructura: 'Agregar secciones con IA',
+  titulo: 'Reescribir título',
+  bajada: 'Escribir bajada',
+};
+
+function fixFor(checkId: string, type: ReviewableType): string | undefined {
+  if (!(checkId in FIX_LABEL)) return undefined;
+  // "Agregar contenido" con IA no existe para las guías de Planazo (secciones = lugares reales).
+  if ((checkId === 'longitud' || checkId === 'estructura') && type === 'planazo-guia') return undefined;
+  return FIX_LABEL[checkId as FixableCheck];
+}
 
 export interface ReviewQueueItem extends ReviewEvaluation {
   type: ReviewableType;
@@ -67,6 +91,10 @@ export class ReviewAgentService {
   constructor(
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
     private readonly providers: ProviderRegistry,
+    private readonly seoService: SeoGenerateService,
+    private readonly scraper: ArticleScraperService,
+    private readonly imageSearch: ImageSearchService,
+    private readonly aiDraft: AiDraftService,
     private readonly noticiasService: NoticiasService,
     private readonly reportajesService: ReportajesService,
     private readonly guiasService: GuiasService,
@@ -79,9 +107,14 @@ export class ReviewAgentService {
   async queue(): Promise<ReviewQueueItem[]> {
     const pieces = await this.loadPieces();
     const saved = await this.savedReviews(pieces.map(({ piece }) => piece.id));
-    return pieces
-      .map(({ piece, createdAt }) => ({
-        ...evaluatePiece(piece),
+    return pieces.map(({ piece, createdAt }) => this.toItem(piece, createdAt, saved)).sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+  }
+
+  private toItem(piece: ReviewPiece, createdAt: string | null, saved: Map<string, { review: AiReview; reviewedAt: string; hash: string | null }>): ReviewQueueItem {
+    const evaluation = evaluatePiece(piece);
+    return {
+        ...evaluation,
+        checks: evaluation.checks.map((c) => (c.passed ? c : { ...c, fix: fixFor(c.id, piece.type) })),
         type: piece.type,
         site: piece.site,
         id: piece.id,
@@ -95,8 +128,134 @@ export class ReviewAgentService {
           const row = saved.get(`${piece.type}:${piece.id}`);
           return row ? { review: row.review, reviewedAt: row.reviewedAt, stale: row.hash !== contentHash(piece) } : null;
         })(),
-      }))
-      .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+    };
+  }
+
+  /**
+   * "Arreglar" un criterio que falló: genera lo que falta y lo guarda en la
+   * pieza (que sigue en revisión; el cambio queda en el historial de
+   * versiones). Devuelve la pieza ya reevaluada y qué se hizo.
+   */
+  async fix(type: ReviewableType, id: string, check: FixableCheck, actorId?: string): Promise<{ item: ReviewQueueItem; message: string }> {
+    const found = (await this.loadPieces({ type, id }))[0];
+    if (!found) throw new NotFoundException('La pieza no existe o ya no está pendiente.');
+    if (!fixFor(check, type)) throw new BadRequestException('Este criterio no se puede arreglar solo en este tipo de pieza.');
+    const { piece } = found;
+    const provider = await this.providers.resolveProvider('default');
+    let message: string;
+
+    switch (check) {
+      case 'seo': {
+        const seo = await this.seoService.generateSeo({
+          provider,
+          contentTitle: piece.title,
+          contentContext: [piece.summary, ...piece.paragraphs].join('\n').slice(0, 3000),
+        });
+        await this.save(piece, { seo: { ...(piece.seo ?? {}), title: seo.title, description: seo.description } });
+        message = `SEO generado: «${seo.title}».`;
+        break;
+      }
+      case 'imagen': {
+        const image = await this.findImage(piece);
+        if (!image) throw new BadRequestException('No encontré una imagen real para esta pieza. Búscala a mano en la pieza.');
+        await this.save(piece, { image });
+        message = `Imagen agregada (${image.credit}).`;
+        break;
+      }
+      case 'longitud':
+      case 'estructura': {
+        const result = await this.aiDraft.improveContent(type, id, { mode: 'expand', provider }, actorId);
+        const content = (result.draft as { content?: ContentBlock[] }).content ?? [];
+        const added = content.filter((b) => b.heading?.trim()).length - piece.headings.length;
+        await this.save(piece, { content });
+        message = `Se ${added === 1 ? 'agregó 1 sección nueva' : `agregaron ${Math.max(added, 1)} secciones nuevas`} con IA. Revísalas en la pieza.`;
+        break;
+      }
+      case 'titulo':
+      case 'bajada': {
+        const field = check === 'titulo' ? 'título' : 'bajada';
+        const output = (await this.providers.generateWithFallback(provider, {
+          systemPrompt:
+            'Eres editor de un medio digital de la Ciudad de México. Reescribes un título o una bajada para publicarla: en español de México, claro y atractivo, sin hashtags ni emojis, sin clickbait, y sin agregar datos que no estén en el texto (nombres, cifras, fechas).',
+          userPrompt: `Escribe ${check === 'titulo' ? 'un TÍTULO de 40 a 90 caracteres' : 'una BAJADA de 120 a 220 caracteres que resuma la pieza'}.
+Título actual: ${piece.title}
+Bajada actual: ${piece.summary || '(vacía)'}
+Texto:
+${piece.paragraphs.join('\n').slice(0, 4000) || piece.summary}`,
+          schema: z.object({ text: z.string().describe(`El ${field} nuevo, sin comillas.`) }),
+          schemaName: `review_fix_${check}`,
+        })) as { text: string };
+        const text = output.text.trim().replace(/^["«]|["»]$/g, '');
+        await this.save(piece, check === 'titulo' ? { title: text } : { summary: text });
+        message = `${check === 'titulo' ? 'Título' : 'Bajada'} nuevo: «${text}».`;
+        break;
+      }
+    }
+
+    const refreshed = (await this.loadPieces({ type, id }))[0];
+    if (!refreshed) throw new NotFoundException('La pieza ya no está pendiente.');
+    const saved = await this.savedReviews([id]);
+    return { item: this.toItem(refreshed.piece, refreshed.createdAt, saved), message };
+  }
+
+  /** Imagen real para la pieza: la de su nota fuente, o la de una nota sobre el mismo tema. */
+  private async findImage(piece: ReviewPiece): Promise<{ url: string; credit: string } | null> {
+    if (piece.sourceUrl && !/youtube\.com|youtu\.be/.test(piece.sourceUrl)) {
+      const scraped = await this.scraper.scrape(piece.sourceUrl).catch(() => null);
+      if (scraped?.imageUrl) return { url: scraped.imageUrl, credit: `Foto: ${scraped.siteName || new URL(piece.sourceUrl).hostname.replace(/^www\./, '')}` };
+    }
+    const news = await this.imageSearch.searchNews(piece.title).catch(() => []);
+    if (news[0]) return { url: news[0].url, credit: news[0].credit };
+    const free = await this.imageSearch.search(piece.title).catch(() => []);
+    return free[0] ? { url: free[0].url, credit: free[0].credit } : null;
+  }
+
+  /** Guarda un arreglo con el servicio de cada tipo (que deja copia en el historial de versiones). */
+  private async save(
+    piece: ReviewPiece,
+    patch: { seo?: Seo; image?: { url: string; credit: string }; content?: ContentBlock[]; title?: string; summary?: string },
+  ): Promise<void> {
+    const toc = patch.content
+      ? patch.content.filter((b) => b.heading?.trim()).map((b) => ({ id: slugify(b.heading!.trim()), label: b.heading!.trim() }))
+      : undefined;
+    const lamira = {
+      ...(patch.seo && { seo: patch.seo }),
+      ...(patch.image && { imageUrl: patch.image.url, imageCredit: patch.image.credit }),
+      ...(patch.content && { content: patch.content, toc }),
+      ...(patch.title && { title: patch.title }),
+      ...(patch.summary && { dek: patch.summary }),
+    };
+    const planazo = {
+      ...(patch.seo && { seo: patch.seo }),
+      ...(patch.content && { content: patch.content }),
+      ...(patch.title && { name: patch.title }),
+      ...(patch.summary && { description: patch.summary }),
+    };
+    switch (piece.type) {
+      case 'noticia':
+        await this.noticiasService.update(piece.id, lamira);
+        break;
+      case 'reportaje':
+        await this.reportajesService.update(piece.id, lamira);
+        break;
+      case 'guia':
+        await this.guiasService.update(piece.id, lamira as never);
+        break;
+      case 'place':
+        await this.placesService.update(piece.id, { ...planazo, ...(patch.image && { photo: { url: patch.image.url, credit: patch.image.credit } }) });
+        break;
+      case 'evento-planazo':
+        await this.eventsService.update(piece.id, { ...planazo, ...(patch.image && { imageUrl: patch.image.url, imageCredit: patch.image.credit }) });
+        break;
+      case 'planazo-guia':
+        await this.planazoGuidesService.update(piece.id, {
+          ...(patch.seo && { seo: patch.seo }),
+          ...(patch.image && { imageUrl: patch.image.url, imageCredit: patch.image.credit }),
+          ...(patch.title && { title: patch.title }),
+          ...(patch.summary && { description: patch.summary }),
+        });
+        break;
+    }
   }
 
   /** Segunda opinión con IA: ¿encaja en el sitio, es coherente, inventa, sirve al lector? */

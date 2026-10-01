@@ -31,6 +31,8 @@ export interface ReviewCheck {
   /** Bloqueante: sin esto no debería publicarse. */
   blocking: boolean;
   detail?: string;
+  /** Si el Revisor sabe arreglarlo solo: etiqueta del botón "Arreglar". */
+  fix?: string;
 }
 
 export type Readiness = 'lista' | 'casi' | 'falta';

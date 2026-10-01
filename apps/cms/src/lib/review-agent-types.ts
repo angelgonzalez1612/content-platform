@@ -9,6 +9,8 @@ export interface ReviewCheck {
   passed: boolean;
   blocking: boolean;
   detail?: string;
+  /** Si el Revisor sabe arreglarlo solo: etiqueta del botón "Arreglar". */
+  fix?: string;
 }
 
 export interface ReviewQueueItem {
