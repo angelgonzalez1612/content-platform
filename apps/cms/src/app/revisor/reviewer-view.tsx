@@ -142,6 +142,17 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
     });
   }
 
+  // "Solo las de 100": cumplen TODOS los criterios (también los opcionales) y
+  // la IA no las descartó (si ya las revisó y la revisión sigue vigente).
+  const perfectVisible = selectableVisible.filter((i) => {
+    const state = ai[keyOf(i)];
+    return i.score === 100 && !(isAiReview(state) && !state.stale && state.review.veredicto === "descartar");
+  });
+
+  function selectOnlyPerfect() {
+    setSelected(new Set(perfectVisible.map(keyOf)));
+  }
+
   function toggleAllVisible() {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -335,6 +346,15 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
           <input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} disabled={!selectableVisible.length} className="size-4 rounded border-border accent-brand" />
           Seleccionar las {selectableVisible.length} publicables de esta vista
         </label>
+        <button
+          type="button"
+          onClick={selectOnlyPerfect}
+          disabled={!perfectVisible.length}
+          title="Marca solo las que cumplen todos los criterios (100/100) y que la IA no haya descartado; desmarca las demás"
+          className="rounded-full border border-positive/30 bg-positive/10 px-3 py-1 text-[12px] font-semibold text-positive transition-colors hover:border-positive/60 disabled:cursor-default disabled:opacity-40"
+        >
+          ✓ Solo las de 100 ({perfectVisible.length})
+        </button>
         <div className="flex-1" />
         <div className="flex items-center gap-1.5" role="group" aria-label="Proveedor de IA">
           <span className="text-[11.5px] font-medium text-ink-faint">IA:</span>
