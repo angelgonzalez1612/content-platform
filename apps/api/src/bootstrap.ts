@@ -3,6 +3,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import { ZodExceptionFilter } from './common/zod-exception.filter';
+import { ProviderQuotaFilter } from './common/provider-quota.filter';
 
 // Configuración compartida entre `main.ts` (dev local, `nest start`) y
 // `api/index.ts` (función serverless de Vercel) — para no tener dos copias
@@ -14,7 +15,8 @@ export function configureApp(app: NestExpressApplication): void {
   app.use(cookieParser());
   // Sin esto, un DTO inválido (ej. campo requerido vacío al crear/editar)
   // tiraba un 500 genérico sin decir qué campo — ver ZodExceptionFilter.
-  app.useGlobalFilters(new ZodExceptionFilter());
+  // Proveedor de IA sin tokens → 429 con mensaje claro (ver ProviderQuotaFilter).
+  app.useGlobalFilters(new ZodExceptionFilter(), new ProviderQuotaFilter());
   // Imágenes subidas a mano (ver ImagesController) — servidas tal cual, sin
   // pasar por el prefijo /api, para que la URL sea corta y estable. En
   // Vercel esto solo sirve lo que venga empaquetado en el deploy — un
