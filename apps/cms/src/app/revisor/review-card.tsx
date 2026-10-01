@@ -100,13 +100,35 @@ function ScoreRing({ score, readiness }: { score: number; readiness: Readiness }
   );
 }
 
+/** Cómo quedaría la pieza en el otro sitio (sugerido por la IA). */
+export interface MoveSuggestion {
+  site: ReviewQueueItem["site"];
+  label: string;
+  reason: string;
+  /** false = la IA cree que no encaja allá (se avisa, pero se puede mover igual). */
+  fits: boolean;
+  targetType: string;
+  categoryId: string | null;
+}
+
+/** Tipos que se pueden pasar al otro sitio. */
+export const MOVABLE: Partial<Record<ReviewableType, ReviewQueueItem["site"]>> = {
+  place: "la-mira",
+  "evento-planazo": "la-mira",
+  noticia: "planazo",
+  reportaje: "planazo",
+};
+
 export interface CardActions {
   onToggleSelect: () => void;
   onFix: (checkId: string) => void;
   onAnalyze: () => void;
   onOpenCorrections: () => void;
   onDiscard: () => void;
-  onMoveToLamira: () => void;
+  /** Pide a la IA cómo quedaría en el otro sitio. */
+  onSuggestMove: () => Promise<MoveSuggestion | { error: string }>;
+  /** Hace el cambio de sitio con la sugerencia confirmada. */
+  onMove: (suggestion: MoveSuggestion) => void;
   /** Publicar solo esta pieza (aparece cuando está al 100). */
   onPublish: () => void;
 }
@@ -149,6 +171,14 @@ export function ReviewCard({
   const [showChecks, setShowChecks] = useState(false);
   const [showProblems, setShowProblems] = useState(false);
   const [confirmPublish, setConfirmPublish] = useState(false);
+  const [move, setMove] = useState<{ step: "suggesting" } | { step: "confirm"; suggestion: MoveSuggestion } | { step: "error"; message: string } | null>(null);
+  const moveTarget = MOVABLE[item.type];
+
+  async function startMove() {
+    setMove({ step: "suggesting" });
+    const result = await actions.onSuggestMove();
+    setMove("error" in result ? { step: "error", message: result.error } : { step: "confirm", suggestion: result });
+  }
   const failed = item.checks.filter((c) => !c.passed);
   const passedCount = item.checks.length - failed.length;
   const canPublish = item.checks.every((c) => !c.blocking || c.passed);
@@ -252,7 +282,7 @@ export function ReviewCard({
                     {fixingCheck === c.id ? "Arreglando…" : `🔧 ${c.fix}`}
                   </button>
                 ) : c.id === "encaje" ? (
-                  <button type="button" onClick={actions.onMoveToLamira} disabled={busy} className="flex-none rounded-full border border-border bg-background px-2.5 py-0.5 text-[11.5px] font-semibold text-ink hover:border-brand hover:text-brand disabled:opacity-50">
+                  <button type="button" onClick={startMove} disabled={busy} className="flex-none rounded-full border border-border bg-background px-2.5 py-0.5 text-[11.5px] font-semibold text-ink hover:border-brand hover:text-brand disabled:opacity-50">
                     Mover a La Mira
                   </button>
                 ) : (
@@ -341,9 +371,9 @@ export function ReviewCard({
               {review.veredicto === "descartar" ? (
                 <>
                   <span className="text-[12px] font-medium text-ink">¿Qué hacer con ella?</span>
-                  {item.site === "planazo" && review.encaja === "la-mira" && (
-                    <ActionButton onClick={actions.onMoveToLamira} disabled={busy} primary>
-                      Mover a La Mira
+                  {moveTarget && review.encaja === moveTarget && (
+                    <ActionButton onClick={startMove} disabled={busy || !!move} primary>
+                      ⇄ Pasar a {SITE_META[moveTarget].label}
                     </ActionButton>
                   )}
                   <ActionButton onClick={actions.onDiscard} disabled={busy} danger>
@@ -362,9 +392,9 @@ export function ReviewCard({
                       ✨ Aplicar correcciones
                     </ActionButton>
                   )}
-                  {item.site === "planazo" && review.encaja === "la-mira" && (
-                    <ActionButton onClick={actions.onMoveToLamira} disabled={busy}>
-                      Mover a La Mira
+                  {moveTarget && review.encaja === moveTarget && (
+                    <ActionButton onClick={startMove} disabled={busy || !!move}>
+                      ⇄ Pasar a {SITE_META[moveTarget].label}
                     </ActionButton>
                   )}
                 </>
@@ -388,6 +418,53 @@ export function ReviewCard({
         )}
         {correctionsSlot}
       </div>
+
+      {move && moveTarget && (
+        <div className="mx-4 mb-3 rounded-[12px] border border-border bg-background p-3 text-[12.5px]" role="group" aria-label={`Pasar a ${SITE_META[moveTarget].label}`}>
+          {move.step === "suggesting" && <p className="text-ink-soft">La IA está viendo cómo quedaría en {SITE_META[moveTarget].label}…</p>}
+          {move.step === "error" && (
+            <p className="text-negative">
+              {move.message}{" "}
+              <button type="button" onClick={() => setMove(null)} className="ml-1 font-medium text-ink-soft underline">
+                Cerrar
+              </button>
+            </p>
+          )}
+          {move.step === "confirm" && (
+            <>
+              <p className="flex flex-wrap items-center gap-1.5 text-ink">
+                <span className="font-semibold">Pasará a</span>
+                <SiteBadge site={move.suggestion.site} />
+                <span className="font-semibold">{move.suggestion.label}</span>
+              </p>
+              <p className={`mt-1 ${move.suggestion.fits ? "text-ink-soft" : "font-medium text-warning"}`}>
+                {move.suggestion.fits ? "" : "△ La IA cree que no encaja bien allá. "}
+                {move.suggestion.reason}
+              </p>
+              <p className="mt-1 text-[11.5px] text-ink-faint">
+                Se copia con su texto, foto, video, fuente y SEO, y queda en revisión allá. La de {SITE_META[item.site].label} se elimina (queda en el historial).
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const suggestion = move.suggestion;
+                    setMove(null);
+                    actions.onMove(suggestion);
+                  }}
+                  disabled={busy}
+                  className="rounded-[10px] bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-pressed disabled:opacity-60"
+                >
+                  Sí, pasar a {SITE_META[move.suggestion.site].label}
+                </button>
+                <button type="button" onClick={() => setMove(null)} className="rounded-[10px] border border-border bg-card px-3 py-1.5 text-[12px] font-medium text-ink">
+                  Cancelar
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center justify-end gap-3 border-t border-border-soft px-4 py-2">
         {canPublishNow && !confirmPublish && (
@@ -417,6 +494,17 @@ export function ReviewCard({
             <a href={url.href} target="_blank" rel="noopener noreferrer" className="text-[11.5px] font-medium text-ink-faint hover:text-ink" title="Solo funciona una vez publicada">
               Ver en el sitio ↗
             </a>
+            {moveTarget && !move && (
+              <button
+                type="button"
+                onClick={startMove}
+                disabled={busy}
+                title={`Convertirla en una pieza de ${SITE_META[moveTarget].label}`}
+                className="text-[12px] font-semibold text-ink-soft hover:text-ink disabled:opacity-50"
+              >
+                ⇄ Pasar a {SITE_META[moveTarget].label}
+              </button>
+            )}
             <Link href={item.editHref} className="text-[12px] font-semibold text-ink hover:text-brand">
               Abrir y editar →
             </Link>

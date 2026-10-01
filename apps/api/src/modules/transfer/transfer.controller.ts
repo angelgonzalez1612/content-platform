@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { z } from 'zod';
 import { JwtAuthGuard, type RequestWithSession } from '../auth/jwt-auth.guard';
 import { assertAdmin } from '../auth/assert-admin';
@@ -14,6 +14,9 @@ import { SiteRevalidationService } from '../site-revalidation/site-revalidation.
 import { ProviderRegistry } from '../ai/provider-registry.service';
 import { CategoriesService } from '../categories/categories.service';
 import { buildLamiraPayload, type TransferSource } from './build-lamira-payload';
+import { buildPlanazoPayload, type LamiraTransferSource } from './build-planazo-payload';
+import { createPlaceSchema } from '../places/dto/create-place.dto';
+import { createEventSchema } from '../events/dto/create-event.dto';
 
 const moveToLamiraSchema = z.object({
   sourceType: z.enum(['place', 'evento-planazo']),
@@ -28,6 +31,17 @@ const moveToLamiraSchema = z.object({
 const suggestSchema = z.object({
   sourceType: z.enum(['place', 'evento-planazo']),
   sourceId: z.string().min(1),
+});
+
+// La Mira → Planazo: una noticia/reportaje que en realidad es un plan o lugar.
+const lamiraSourceSchema = z.object({
+  sourceType: z.enum(['noticia', 'reportaje']),
+  sourceId: z.string().min(1),
+});
+const moveToPlanazoSchema = lamiraSourceSchema.extend({
+  targetType: z.enum(['place', 'evento-planazo']),
+  categoryId: z.string().min(1),
+  original: z.enum(['delete', 'unpublish', 'keep']),
 });
 
 /**
@@ -92,6 +106,80 @@ ${lamiraCategories.map((c) => `- ${c.slug}: ${c.name}`).join('\n')}`,
       categoryId: category?.id ?? null,
       categoryName: category?.name ?? null,
       reason: output.reason,
+    };
+  }
+
+  /** La Mira → Planazo, "que la IA decida": ¿lugar o evento?, ¿en qué categoría de Planazo? */
+  @Post('suggest-planazo')
+  async suggestPlanazo(@Body() body: unknown) {
+    const dto = lamiraSourceSchema.parse(body);
+    const source = await this.loadLamiraSource(dto.sourceType, dto.sourceId);
+    const planazoCategories = await this.categories.findAll('planazo');
+    const slugs = planazoCategories.map((c) => c.slug) as [string, ...string[]];
+    const schema = z.object({
+      fits: z.boolean().describe('true si de verdad es un plan, lugar o evento que alguien puede ir a visitar; false si es una noticia.'),
+      targetType: z.enum(['place', 'evento-planazo']).describe('place = un lugar fijo para visitar; evento-planazo = algo con fecha (concierto, función, feria).'),
+      categorySlug: z.enum(slugs).describe('Categoría de Planazo que mejor le queda.'),
+      reason: z.string().describe('Una oración en español para el editor.'),
+    });
+    const output = await this.providers.generateWithFallback('default', {
+      systemPrompt:
+        'Eres editor de Planazo, un directorio de planes, lugares y eventos recomendables en la Ciudad de México. Decides cómo publicar en Planazo una pieza que venía de un periódico. Responde en español de México.',
+      userPrompt: `Título: ${source.title}
+Bajada: ${source.dek}
+${source.content.length ? `Secciones: ${source.content.map((b) => b.heading).filter(Boolean).join(' · ')}` : ''}
+
+Categorías de Planazo disponibles:
+${planazoCategories.map((c) => `- ${c.slug}: ${c.name}`).join('\n')}`,
+      schema,
+      schemaName: 'planazo_suggestion',
+    });
+    const category = planazoCategories.find((c) => c.slug === output.categorySlug) ?? planazoCategories[0];
+    return { fits: output.fits, targetType: output.targetType, categoryId: category.id, categoryName: category.name, reason: output.reason };
+  }
+
+  /** La Mira → Planazo: copia la noticia/reportaje como lugar o evento (en revisión) y decide qué pasa con el original. */
+  @Post('lamira-to-planazo')
+  async moveToPlanazo(@Req() req: RequestWithSession, @Body() body: unknown) {
+    const dto = moveToPlanazoSchema.parse(body);
+    if (dto.original === 'delete') assertAdmin(req);
+
+    const source = await this.loadLamiraSource(dto.sourceType, dto.sourceId);
+    const category = (await this.categories.findAll('planazo')).find((c) => c.id === dto.categoryId);
+    if (!category) throw new BadRequestException('Esa categoría no es de Planazo.');
+    const payload = buildPlanazoPayload(source, dto.targetType, category);
+
+    const created =
+      dto.targetType === 'place'
+        ? await this.places.create(createPlaceSchema.parse(payload))
+        : await this.events.create(createEventSchema.parse(payload));
+
+    if (dto.original === 'delete') {
+      if (dto.sourceType === 'noticia') await this.noticias.remove(dto.sourceId);
+      else await this.reportajes.remove(dto.sourceId);
+    } else if (dto.original === 'unpublish') {
+      if (dto.sourceType === 'noticia') await this.noticias.update(dto.sourceId, { status: 'draft' });
+      else await this.reportajes.update(dto.sourceId, { status: 'draft' });
+    }
+
+    this.revalidation.trigger('la-mira');
+    this.revalidation.trigger('planazo');
+    const editPath = dto.targetType === 'place' ? `/contenido/${created.id}` : `/contenido/planazo-evento/${created.id}`;
+    return { targetType: dto.targetType, id: created.id, editPath };
+  }
+
+  private async loadLamiraSource(type: 'noticia' | 'reportaje', id: string): Promise<LamiraTransferSource> {
+    const piece = type === 'noticia' ? await this.noticias.findByIdForCms(id) : await this.reportajes.findByIdForCms(id);
+    return {
+      title: piece.title,
+      dek: piece.dek ?? '',
+      content: piece.content ?? [],
+      imageUrl: piece.imageUrl ?? null,
+      imageCredit: piece.imageCredit ?? null,
+      imagePosition: piece.imagePosition ?? null,
+      youtubeId: piece.youtubeId ?? null,
+      sourceUrl: piece.sourceUrl ?? null,
+      seo: piece.seo ?? null,
     };
   }
 

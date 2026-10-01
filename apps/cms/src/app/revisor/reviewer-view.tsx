@@ -6,7 +6,7 @@ import { apiConfig } from "@planazo/config";
 import type { AiReview, Readiness, ReviewQueueItem } from "@/lib/review-agent-types";
 import { useAiSettings } from "@/lib/use-openai-available";
 import { CorrectionsPanel } from "./corrections-panel";
-import { READINESS, ReviewCard, SITE_META, publicUrl, type SavedAi } from "./review-card";
+import { READINESS, ReviewCard, SITE_META, publicUrl, type MoveSuggestion, type SavedAi } from "./review-card";
 
 type ProviderId = "codex-cli" | "claude-cli" | "openai";
 const PROVIDER_LABEL: Record<ProviderId, string> = { "codex-cli": "Codex", "claude-cli": "Claude", openai: "OpenAI" };
@@ -219,32 +219,57 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
     setNotice({ tone: "ok", text: `«${item.title}» se archivó: no se publica. Sigue en Contenido como archivada por si la quieres recuperar.` });
   }
 
-  /** Planazo → La Mira, con el tipo y categoría que sugiere la IA (mismo flujo que "Mover a La Mira" de la pieza). */
-  async function moveToLamira(item: ReviewQueueItem) {
-    if (item.type !== "place" && item.type !== "evento-planazo") {
-      setFixNotes((prev) => ({ ...prev, [keyOf(item)]: { tone: "error", text: "Solo lugares y eventos de Planazo se pueden mover a La Mira." } }));
-      return;
-    }
+  const TYPE_NAME: Record<string, string> = { noticia: "Noticia", reportaje: "Reportaje", alerta: "Alerta", place: "Lugar", "evento-planazo": "Evento" };
+
+  /** Cómo quedaría en el otro sitio: tipo y categoría que sugiere la IA. */
+  async function suggestMove(item: ReviewQueueItem): Promise<MoveSuggestion | { error: string }> {
+    const toLamira = item.site === "planazo";
+    const res = toLamira
+      ? await postJson<{ belongsIn?: string; targetType?: string; categoryId?: string | null; categoryName?: string | null; reason?: string; message?: string }>("/cms/transfer/suggest", {
+          sourceType: item.type,
+          sourceId: item.id,
+        })
+      : await postJson<{ fits?: boolean; targetType?: string; categoryId?: string; categoryName?: string; reason?: string; message?: string }>("/cms/transfer/suggest-planazo", {
+          sourceType: item.type,
+          sourceId: item.id,
+        });
+    if (!res.ok || !res.data?.targetType) return { error: res.status === 0 ? "Sin conexión con el servidor." : (res.data?.message ?? "La IA no pudo sugerir cómo pasarla.") };
+    const d = res.data as { belongsIn?: string; fits?: boolean; targetType: string; categoryId?: string | null; categoryName?: string | null; reason?: string };
+    return {
+      site: toLamira ? "la-mira" : "planazo",
+      label: [TYPE_NAME[d.targetType] ?? d.targetType, d.categoryName].filter(Boolean).join(" · "),
+      reason: d.reason ?? "",
+      fits: toLamira ? d.belongsIn !== "planazo" : d.fits !== false,
+      targetType: d.targetType,
+      categoryId: d.categoryId ?? null,
+    };
+  }
+
+  /** Cambia la pieza de sitio (La Mira ↔ Planazo); el original se elimina (solo admin). */
+  async function movePiece(item: ReviewQueueItem, s: MoveSuggestion) {
     const k = keyOf(item);
     setActing((prev) => ({ ...prev, [k]: true }));
-    const source = { sourceType: item.type, sourceId: item.id };
-    const suggestion = await postJson<{ targetType?: string; categoryId?: string | null }>("/cms/transfer/suggest", source);
-    const move = await postJson<{ editPath?: string; message?: string }>("/cms/transfer/planazo-to-lamira", {
-      ...source,
-      targetType: suggestion.data?.targetType ?? "noticia",
-      categoryId: suggestion.data?.categoryId ?? null,
+    const path = s.site === "la-mira" ? "/cms/transfer/planazo-to-lamira" : "/cms/transfer/lamira-to-planazo";
+    const res = await postJson<{ editPath?: string; message?: string }>(path, {
+      sourceType: item.type,
+      sourceId: item.id,
+      targetType: s.targetType,
+      categoryId: s.categoryId,
       original: "delete",
     });
     setActing((prev) => removeKey(prev, k));
-    if (!move.ok || !move.data?.editPath) {
+    if (!res.ok || !res.data?.editPath) {
       setFixNotes((prev) => ({
         ...prev,
-        [k]: { tone: "error", text: move.status === 403 ? "Solo un administrador puede mover y eliminar el original. Ábrela y usa «Mover a La Mira» para dejarla como borrador." : (move.data?.message ?? "No se pudo mover.") },
+        [k]: {
+          tone: "error",
+          text: res.status === 403 ? "Solo un administrador puede cambiar de sitio (se elimina el original)." : (res.data?.message ?? "No se pudo cambiar de sitio."),
+        },
       }));
       return;
     }
     dropItem(k);
-    setNotice({ tone: "ok", text: `«${item.title}» ahora es una pieza de La Mira (en revisión).`, link: { href: move.data.editPath, label: "Abrirla →" } });
+    setNotice({ tone: "ok", text: `«${item.title}» ahora es ${s.label} de ${SITE_META[s.site].label} (en revisión).`, link: { href: res.data.editPath, label: "Abrirla →" } });
   }
 
   /** Publicar una sola pieza desde su tarjeta (el API vuelve a revisar lo bloqueante). */
@@ -532,7 +557,8 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
                   onAnalyze: () => analyze(item),
                   onOpenCorrections: () => setCorrectingFor(k),
                   onDiscard: () => discard(item),
-                  onMoveToLamira: () => moveToLamira(item),
+                  onSuggestMove: () => suggestMove(item),
+                  onMove: (suggestion) => movePiece(item, suggestion),
                   onPublish: () => publishOne(item),
                 }}
                 correctionsSlot={
