@@ -241,18 +241,6 @@ export function ReviewCard({
         </div>
       </div>
 
-      {correctedAfterReview && (
-        <div className="mx-4 mb-3 flex flex-wrap items-center gap-2 rounded-[10px] border border-positive/25 bg-positive/[.07] px-3 py-2 text-[12px]">
-          <span className="font-semibold text-positive" suppressHydrationWarning>✓ Corregida {timeAgo(item.lastFix!.at)}</span>
-          <span className="min-w-0 flex-1 truncate text-ink-soft" title={item.lastFix!.message}>
-            {item.lastFix!.message}
-          </span>
-          <button type="button" onClick={actions.onAnalyze} disabled={busy || aiLoading} className="flex-none text-[12px] font-semibold text-accent-fg hover:underline disabled:opacity-50">
-            {aiLoading ? "Revisando…" : `Que ${providerLabel} la vuelva a revisar →`}
-          </button>
-        </div>
-      )}
-
       {/* 2 · Criterios automáticos */}
       <div className="border-t border-border-soft px-4 py-3">
         <div className="flex items-center justify-between gap-2">
@@ -310,12 +298,24 @@ export function ReviewCard({
             ))}
           </ul>
         )}
-        {fixNote && <p className={`mt-2 text-[12px] font-medium ${fixNote.tone === "ok" ? "text-positive" : "text-negative"}`}>{fixNote.text}</p>}
+        {fixNote && (fixNote.tone === "error" || !correctedAfterReview) && (
+          <p className={`mt-2 text-[12px] font-medium ${fixNote.tone === "ok" ? "text-positive" : "text-negative"}`}>{fixNote.text}</p>
+        )}
       </div>
 
       {/* 3 · Opinión de la IA y qué hacer */}
       <div className="border-t border-border-soft px-4 py-3">
-        {!review ? (
+        {correctedAfterReview ? (
+          <CorrectedBlock
+            fix={item.lastFix!}
+            review={review}
+            reviewedAt={aiState?.reviewedAt}
+            loading={aiLoading}
+            disabled={busy || aiLoading}
+            providerLabel={providerLabel}
+            onAnalyze={actions.onAnalyze}
+          />
+        ) : !review ? (
           <div className="flex flex-wrap items-center gap-2">
             <p className="flex-1 text-[12px] text-ink-faint">La IA todavía no la revisa: tema, coherencia, datos dudosos y si encaja en su sitio.</p>
             <button
@@ -556,5 +556,80 @@ function ActionButton({
     >
       {children}
     </button>
+  );
+}
+
+/**
+ * Pieza ya corregida después de su última revisión con IA: se dice claro que
+ * está atendida y cuál es el siguiente paso (que la IA la confirme); la
+ * revisión vieja queda plegada, en gris, solo como referencia.
+ */
+function CorrectedBlock({
+  fix,
+  review,
+  reviewedAt,
+  loading,
+  disabled,
+  providerLabel,
+  onAnalyze,
+}: {
+  fix: { at: string; message: string };
+  review: AiReview | undefined;
+  reviewedAt: string | undefined;
+  loading: boolean;
+  disabled: boolean;
+  providerLabel: string;
+  onAnalyze: () => void;
+}) {
+  const [showOld, setShowOld] = useState(false);
+  return (
+    <div className="rounded-[12px] border border-positive/25 bg-positive/[.06] p-3">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="grid size-5 place-items-center rounded-full bg-positive text-[11px] font-bold text-white" aria-hidden>
+          ✓
+        </span>
+        <span className="text-[13px] font-semibold text-positive" suppressHydrationWarning>
+          Corregida {timeAgo(fix.at)}
+        </span>
+      </div>
+      <p className="mt-1 text-[12.5px] text-ink">{fix.message}</p>
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+        <span className="text-[12px] text-ink-soft">Para confirmar que ya quedó:</span>
+        <button
+          type="button"
+          onClick={onAnalyze}
+          disabled={disabled}
+          className="rounded-[10px] bg-brand px-3 py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-brand-pressed disabled:opacity-60"
+        >
+          {loading ? `${providerLabel} está revisando…` : `✨ Que ${providerLabel} la revise de nuevo`}
+        </button>
+      </div>
+      {review && (
+        <div className="mt-2.5 border-t border-positive/15 pt-2">
+          <button type="button" onClick={() => setShowOld((v) => !v)} aria-expanded={showOld} className="text-[11.5px] font-medium text-ink-faint hover:text-ink">
+            {showOld ? "▾" : "▸"} Ver la revisión de antes de tu corrección
+            {review.problemas.length ? ` (${review.problemas.length} ${review.problemas.length === 1 ? "punto" : "puntos"})` : ""}
+          </button>
+          {showOld && (
+            <div className="mt-1.5 text-[12px] text-ink-faint">
+              <p>
+                IA: {VERDICT[review.veredicto].title}
+                {reviewedAt && (
+                  <span suppressHydrationWarning> · {timeAgo(reviewedAt)}</span>
+                )}
+              </p>
+              <p className="mt-1">{review.resumen}</p>
+              {review.problemas.length > 0 && (
+                <ol className="mt-1 flex list-decimal flex-col gap-0.5 pl-5">
+                  {review.problemas.map((p) => (
+                    <li key={p}>{p}</li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
