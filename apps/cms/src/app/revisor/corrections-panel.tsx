@@ -60,7 +60,7 @@ export function CorrectionsPanel({
       setUseTitle(body.proposed.title !== body.current.title);
       setUseSummary(body.proposed.summary !== body.current.summary);
     } catch {
-      setError("Sin conexión con el servidor.");
+      setError("Se cortó la conexión con el API (¿se recargó la página o se reinició el API?). Recarga la página y vuelve a intentar.");
     } finally {
       setLoading(false);
     }
@@ -93,7 +93,7 @@ export function CorrectionsPanel({
       }
       onApplied(body.item, body.message ?? "Correcciones guardadas.");
     } catch {
-      setError("Sin conexión con el servidor.");
+      setError("Se cortó la conexión con el API (¿se recargó la página o se reinició el API?). Recarga la página y vuelve a intentar.");
     } finally {
       setSaving(false);
     }

@@ -51,7 +51,7 @@ async function postJson<T>(path: string, body: unknown, label?: string): Promise
 
 async function analyzeOne(item: ReviewQueueItem, provider: ProviderId): Promise<AiState> {
   const res = await postJson<AiReview & { reviewedAt: string; message?: string }>("/cms/review-agent/analyze", { type: item.type, id: item.id, provider }, `Revisar con IA · ${item.title}`);
-  if (!res.ok || !res.data) return { error: res.status === 0 ? "Sin conexión con el servidor." : (res.data?.message ?? "La IA no pudo revisarla.") };
+  if (!res.ok || !res.data) return { error: res.status === 0 ? "Se cortó la conexión con el API (¿se recargó la página o se reinició el API?). Recarga la página y vuelve a intentar." : (res.data?.message ?? "La IA no pudo revisarla.") };
   return { review: res.data, reviewedAt: res.data.reviewedAt, stale: false };
 }
 
@@ -223,7 +223,7 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
       replaceItem(k, res.data.item);
       setFixNotes((prev) => ({ ...prev, [k]: { tone: "ok", text: `✓ ${res.data!.message ?? "Arreglado."}` } }));
     } else {
-      setFixNotes((prev) => ({ ...prev, [k]: { tone: "error", text: res.status === 0 ? "Sin conexión con el servidor." : (res.data?.message ?? "No se pudo arreglar.") } }));
+      setFixNotes((prev) => ({ ...prev, [k]: { tone: "error", text: res.status === 0 ? "Se cortó la conexión con el API (¿se recargó la página o se reinició el API?). Recarga la página y vuelve a intentar." : (res.data?.message ?? "No se pudo arreglar.") } }));
     }
     setFixing((prev) => removeKey(prev, k));
   }
@@ -256,7 +256,7 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
           sourceType: item.type,
           sourceId: item.id,
         }, `Sugerir sitio con IA · ${item.title}`);
-    if (!res.ok || !res.data?.targetType) return { error: res.status === 0 ? "Sin conexión con el servidor." : (res.data?.message ?? "La IA no pudo sugerir cómo pasarla.") };
+    if (!res.ok || !res.data?.targetType) return { error: res.status === 0 ? "Se cortó la conexión con el API (¿se recargó la página o se reinició el API?). Recarga la página y vuelve a intentar." : (res.data?.message ?? "La IA no pudo sugerir cómo pasarla.") };
     const d = res.data as { belongsIn?: string; fits?: boolean; targetType: string; categoryId?: string | null; categoryName?: string | null; reason?: string };
     return {
       site: toLamira ? "la-mira" : "planazo",
@@ -358,7 +358,7 @@ export function ReviewerView({ initialQueue }: { initialQueue: ReviewQueueItem[]
     });
     setPublishing(false);
     if (!res.ok || !res.data) {
-      setNotice({ tone: "error", text: res.status === 403 ? "No tienes permiso para publicar." : res.status === 0 ? "Sin conexión con el servidor." : "No se pudo publicar. Intenta de nuevo." });
+      setNotice({ tone: "error", text: res.status === 403 ? "No tienes permiso para publicar." : res.status === 0 ? "Se cortó la conexión con el API (¿se recargó la página o se reinició el API?). Recarga la página y vuelve a intentar." : "No se pudo publicar. Intenta de nuevo." });
       return;
     }
     const data = res.data;
