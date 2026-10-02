@@ -33,8 +33,13 @@ const nextConfig: NextConfig = {
   // seguido — cualquier generación de más de 30s tronaba aquí sin importar
   // que el backend sí hubiera funcionado. 90s le da margen a los 60s de esos
   // dos proveedores sin dejarlo indefinido.
+  // 2026-10: subido a 5 min — "Alargar con IA", "Aplicar correcciones" o un
+  // proveedor que falla y pasa al de respaldo (60 s + otros 60 s) se pasaban
+  // de 90 s: el backend terminaba y guardaba, pero el navegador recibía
+  // ECONNRESET ("error de servidor"/"se cortó la conexión"). 300 s es el
+  // mismo tope que tienen las funciones del API en Vercel.
   experimental: {
-    proxyTimeout: 90_000,
+    proxyTimeout: 300_000,
   },
 };
 
