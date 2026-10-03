@@ -79,6 +79,9 @@ describe('encaje y título', () => {
   it('hashtags en el título = casi; título en portugués = falta', () => {
     expect(evaluatePiece({ ...base, title: '📍 Eurostars Zona Rosa Suites la mejor recomendación #viajes #cdmx' }).readiness).toBe('casi');
     expect(evaluatePiece({ ...base, title: 'Pedro Morisco será titular da seleção brasileira contra a India' }).readiness).toBe('falta');
+    expect(evaluatePiece({ ...base, title: 'Sabalenka reveals the worst part of being a tennis player' }).readiness).toBe('falta');
+    expect(evaluatePiece({ ...base, title: 'Queens of the Stone Age e Interpol en México: lanzan mapa y precios en el Estadio' }).checks.find((c) => c.id === 'idioma')?.passed).toBe(true);
+    expect(evaluatePiece({ ...base, title: 'Del mole a los zombies: la agenda de octubre que adelanta el Día de Muertos' }).checks.find((c) => c.id === 'idioma')?.passed).toBe(true);
   });
 });
 

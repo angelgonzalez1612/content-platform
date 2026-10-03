@@ -103,7 +103,7 @@ const NEWS_TITLE = new RegExp(
 );
 const HASHTAG_OR_EMOJI = /#\w|\p{Extended_Pictographic}|\p{Regional_Indicator}/u;
 const PT_TITLE = /[ãõç]|\b(não|você|notícias|seleção|também|incendeia|em vídeo)\b/i;
-const EN_TITLE = /\b(how to|watch|the|and|with|set to|new|first|over|says)\b/i;
+const EN_TITLE = /\b(how to|watch|the|and|with|set to|new|first|over|says|of|is|are|to|for|from|his|her|their|what|gives|reveals|battles|match|verdict|worst|best|part)\b/i;
 // "corea del sur - ecuador", "finlandia vs": un tema suelto (en minúsculas o
 // un marcador "A - B" / "A v B"), no un título escrito.
 const TOPIC_NOT_TITLE = /^[^A-ZÁÉÍÓÚÑ]*$|^[\p{L} .]+ (-|v|vs\.?) [\p{L} .]+$/u;
@@ -139,8 +139,11 @@ export function evaluatePiece(piece: ReviewPiece): ReviewEvaluation {
   const bodyLanguage = detectLanguage(`${piece.title}. ${piece.summary}\n${body}`);
   // El título se revisa aparte: a veces el cuerpo quedó en español pero el título no.
   const titleEnglishWords = (piece.title.match(new RegExp(EN_TITLE.source, 'gi')) ?? []).length;
+  // Un nombre propio en inglés ("Queens of the Stone Age en México") no hace inglés al título.
+  const titleSpanishWords = (` ${piece.title} `.match(ES_WORDS) ?? []).length;
+  const titleInEnglish = titleEnglishWords >= 2 && titleEnglishWords > titleSpanishWords;
   const language =
-    bodyLanguage === 'es' && PT_TITLE.test(piece.title) ? 'pt' : bodyLanguage === 'es' && titleEnglishWords >= 2 ? 'en' : bodyLanguage;
+    bodyLanguage === 'es' && PT_TITLE.test(piece.title) ? 'pt' : bodyLanguage === 'es' && titleInEnglish ? 'en' : bodyLanguage;
   const topicNotTitle = TOPIC_NOT_TITLE.test(piece.title.trim());
   const cleanTitle = !HASHTAG_OR_EMOJI.test(piece.title);
   // Texto que termina a media frase (la IA se cortó o se pegó incompleto).
