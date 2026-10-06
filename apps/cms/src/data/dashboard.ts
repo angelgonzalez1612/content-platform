@@ -60,7 +60,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { id: "entidades", name: "Entidades", icon: "M12 3l7 4v10l-7 4-7-4V7zM12 3v18M5 7l7 4 7-4" },
       { id: "keywords", name: "Keywords", icon: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM16.5 16.5L21 21", badge: "14" },
-      { id: "seo", name: "SEO", icon: "M4 17a8 8 0 1 1 16 0M12 13l4-3" },
+      { id: "seo", name: "Search Console", icon: "M4 17a8 8 0 1 1 16 0M12 13l4-3" },
       { id: "multimedia", name: "Biblioteca Multimedia", icon: "M4 5h16v14H4zM4 15l4-4 4 4 3-3 5 5" },
     ],
   },

@@ -72,6 +72,11 @@ const envSchema = z.object({
   // como búsquedas reales. Opcional: sin ella, ese modo falla con un mensaje
   // claro en vez de tronar el arranque del server.
   GOOGLE_MAPS_API_KEY: z.string().optional(),
+  // Cuenta de servicio de Google para leer Search Console (pantalla "Search
+  // Console" del CMS). El JSON de la llave tal cual o en base64; la cuenta
+  // se agrega como usuario de cada propiedad. Opcional: sin ella la pantalla
+  // explica qué falta en vez de tronar el arranque.
+  GOOGLE_SERVICE_ACCOUNT_JSON: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -19,6 +19,7 @@ const ROUTES: Record<string, string> = {
   automatizaciones: "/automatizaciones",
   "automatizaciones-frases": "/automatizaciones/frases",
   entidades: "/entidades",
+  seo: "/search-console",
   multimedia: "/multimedia",
   usuarios: "/usuarios",
   config: "/configuracion",
