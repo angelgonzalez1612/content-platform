@@ -124,7 +124,9 @@ export class SearchConsoleService {
     if (this.propertiesCache && Date.now() - this.propertiesCache.at < SUMMARY_TTL) return this.propertiesCache.list;
     const data = await this.google<{ siteEntry?: { siteUrl: string; permissionLevel: string }[] }>(`${WEBMASTERS}/sites`);
     const list = (data.siteEntry ?? []).filter((s) => s.permissionLevel !== 'siteUnverifiedUser');
-    this.propertiesCache = { at: Date.now(), list };
+    // Una lista vacía no se guarda: casi siempre es porque todavía no se
+    // agrega la cuenta como usuario, y debe verse en cuanto se agregue.
+    this.propertiesCache = list.length ? { at: Date.now(), list } : null;
     return list;
   }
 
