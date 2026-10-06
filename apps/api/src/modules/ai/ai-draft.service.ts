@@ -30,6 +30,8 @@ import {
 } from './checks.service';
 import { buildFieldSchemaZod, factKeys } from './field-schema-builder';
 import { CONTENT_TYPES, getContentTypeConfig } from './content-types';
+import { WRITING_RULES, countWords, proseText } from './writing-rules';
+import { ProviderQuotaExceededError } from './provider-health';
 import {
   DraftRequestDto,
   ImproveRequestDto,
@@ -418,6 +420,14 @@ export class AiDraftService {
       }
     }
 
+    await this.ensureMinimumLength({
+      draft: output as Record<string, unknown>,
+      typeConfig,
+      subjectLine: `${typeConfig.label}: ${dto.name}`,
+      categoryName: category.name,
+      provider: dto.provider,
+    });
+
     const { checksRun, decision } = this.checks.run({
       mode: 'draft',
       contentType,
@@ -430,7 +440,8 @@ export class AiDraftService {
       seo: (output as { seo?: { title?: string; description?: string } }).seo,
       hasImageWithAlt: undefined, // no hay imagen todavía en un borrador nuevo — no bloquea el preview
       slugAvailable: undefined, // se resuelve al guardar, no en el preview
-      bodyText: JSON.stringify(output),
+      // Solo el texto que lee la persona (no el JSON con SEO y campos de categoría).
+      bodyText: proseText(output as Record<string, unknown>),
     });
 
     // Fase 4 del plan: imagen de la fuente citada, con crédito — determinística
@@ -665,6 +676,67 @@ export class AiDraftService {
     const decision: AiDecision = 'needs-review'; // siempre requiere revisión humana antes de aplicar
 
     return { newBlocks, checksRun, decision };
+  }
+
+  /**
+   * Reglas de redacción (writing-rules.ts): si el borrador recién generado
+   * quedó debajo del mínimo de palabras, se le piden secciones nuevas a la IA
+   * (hasta maxExpandRounds rondas) y se agregan donde cada tipo guarda su
+   * cuerpo. Muta `draft`. Si aun así no llega, se devuelve tal cual: el check
+   * 'calidad-longitud' lo marca y la automatización no lo crea.
+   */
+  private async ensureMinimumLength(params: {
+    draft: Record<string, unknown>;
+    typeConfig: (typeof CONTENT_TYPES)[keyof typeof CONTENT_TYPES];
+    subjectLine: string;
+    categoryName: string | null;
+    provider: ImproveRequestDto['provider'];
+  }): Promise<void> {
+    const { draft, typeConfig } = params;
+    for (let round = 0; round < WRITING_RULES.maxExpandRounds; round++) {
+      const words = countWords(proseText(draft));
+      if (words >= WRITING_RULES.minWords) return;
+
+      const sections = draft.sections as { heading: string; body: string; placeSlug?: string | null }[] | undefined;
+      const content = draft.content as ContentBlock[] | undefined;
+      const existingHeadings = [
+        ...(content ?? []).map((b) => b.heading),
+        ...(sections ?? []).map((s) => s.heading),
+      ].filter((h): h is string => !!h);
+
+      let newBlocks: ContentBlock[];
+      try {
+        ({ newBlocks } = await this.generateExpandSections({
+          typeConfig,
+          subjectLine: params.subjectLine,
+          categoryName: params.categoryName,
+          currentSummary: proseText(draft).slice(0, 4000),
+          existingHeadings,
+          instructions: `La pieza tiene ${words} palabras y necesita al menos ${WRITING_RULES.minWords}: agrega secciones con sustancia (unas ${WRITING_RULES.minWords - words + 80} palabras más).`,
+          provider: params.provider,
+        }));
+      } catch (err) {
+        if (err instanceof ProviderQuotaExceededError) throw err;
+        return; // si la ampliación falla, el check de longitud lo reporta
+      }
+      if (!newBlocks.length) return;
+
+      if (Array.isArray(sections)) {
+        // planazo-guia: el cuerpo vive en sections (sin lugar citado).
+        sections.push(...newBlocks.map((b) => ({ heading: b.heading ?? '', body: b.paragraphs.join('\n\n'), placeSlug: null })));
+      } else if (Array.isArray(content)) {
+        draft.content =
+          typeConfig.contentType === 'guia'
+            ? [...content, ...this.withGuiaBlockIds(newBlocks, content as unknown as { id: string; heading: string }[])]
+            : [...content, ...newBlocks];
+      } else if (typeof draft.description === 'string') {
+        // alerta / evento / lugar (la-mira): solo tienen descripción.
+        draft.description = [draft.description, ...newBlocks.flatMap((b) => b.paragraphs)].join('\n\n');
+      } else {
+        // place / evento-planazo cuando la IA no mandó secciones.
+        draft.content = newBlocks;
+      }
+    }
   }
 
   /** Agrega un `id` (slug del heading, deduplicado) a cada bloque nuevo —

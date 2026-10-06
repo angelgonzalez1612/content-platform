@@ -8,7 +8,7 @@ describe('planazoNeedsExpansion', () => {
   });
 
   it('cuenta también las secciones extra', () => {
-    expect(planazoNeedsExpansion('evento-planazo', words(100), [{ heading: 'Ambiente', paragraphs: [words(160)] }])).toBe(false);
+    expect(planazoNeedsExpansion('evento-planazo', words(100), [{ heading: 'Ambiente', paragraphs: [words(220)] }])).toBe(false);
   });
 
   it('no aplica a tipos de La Mira (usan su propio check de longitud)', () => {

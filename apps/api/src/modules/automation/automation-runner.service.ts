@@ -25,6 +25,7 @@ import { looksLikeSameStory, normalizeTitle, resolvedTopicWasHandled } from './t
 import { ruleAccepts, ruleCouldMatch } from './rule-matching';
 import { decodeHtmlEntities } from './decode-html-entities';
 import { planazoNeedsExpansion } from './expand-policy';
+import { assessDraftQuality } from '../ai/writing-rules';
 import { AUTOMATABLE_CONTENT_TYPES } from './dto/automation-rule.dto';
 import { type AutomationRuleRow } from '../../db/schema';
 
@@ -617,6 +618,26 @@ export class AutomationRunnerService {
       if (!ruleAccepts(rule, entry.result, entry.category)) continue;
 
       const finalResult = await this.maybeExpandContent(state, entry.result, topic);
+
+      // Reglas de redacción (writing-rules.ts): un borrador corto o con relleno
+      // no entra a la cola — termina igual de delgado en el sitio. No se
+      // reintenta: el tema queda evaluado.
+      const quality = assessDraftQuality(finalResult.draft);
+      if (!quality.ok) {
+        await this.rules.logRun({
+          ruleId: rule.id,
+          ruleName: rule.name,
+          topic: topic.sourceKey,
+          categoryLabel: topic.categoryLabel,
+          site: finalResult.site,
+          contentType: finalResult.contentType,
+          outcome: 'skipped_quality',
+          detail: quality.reason,
+          source: topic.source,
+        });
+        return false;
+      }
+
       return this.finalizeCreate(state, topic, finalResult, entry.category);
     }
 

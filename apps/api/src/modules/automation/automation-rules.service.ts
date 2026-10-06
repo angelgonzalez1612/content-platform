@@ -89,7 +89,7 @@ export class AutomationRulesService {
     categoryLabel?: string;
     site?: string | null;
     contentType?: string | null;
-    outcome: 'published' | 'draft' | 'skipped_duplicate' | 'skipped_no_match' | 'skipped_capped' | 'error';
+    outcome: 'published' | 'draft' | 'skipped_duplicate' | 'skipped_no_match' | 'skipped_capped' | 'skipped_quality' | 'error';
     contentId?: string | null;
     contentSlug?: string | null;
     detail?: string | null;
@@ -197,7 +197,7 @@ export class AutomationRulesService {
    * repetir la búsqueda cada 15 minutos. */
   async alreadyEvaluatedTitles(): Promise<Set<string>> {
     const rows = await this.db.query.automationRuns.findMany({
-      where: inArray(automationRuns.outcome, ['published', 'draft', 'skipped_no_match', 'skipped_duplicate', 'skipped_capped', 'error']),
+      where: inArray(automationRuns.outcome, ['published', 'draft', 'skipped_no_match', 'skipped_duplicate', 'skipped_capped', 'skipped_quality', 'error']),
       columns: { topic: true, outcome: true, ranAt: true },
     });
     const startOfDay = new Date();

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { Seo, CheckResult, AiDecision } from '@planazo/types';
+import { WRITING_RULES, fillerCount } from './writing-rules';
 
 export type { CheckResult, AiDecision };
 
@@ -35,18 +36,23 @@ const isEmpty = (value: unknown) =>
 // palabras, el check bloqueaba el 100% de las piezas sin excepción, sin
 // importar qué tan buena fuera la redacción. guia sí se deja en 300: es
 // evergreen con content[] + faq, con espacio real para llegar ahí.
+//
+// 2026-10-06: los tipos cortos (place/alerta/evento*/lugar) también pasan a
+// 300 — sus prompts ya piden ese mínimo (writing-rules.ts). Con 40-60, Planazo
+// acumuló 160 fichas de ~110 palabras y AdSense volvió a rechazar por
+// "contenido de poco valor".
+export const DEFAULT_MIN_WORDS = WRITING_RULES.minWords;
 export const MIN_WORDS_BY_TYPE: Record<string, number> = {
-  noticia: 300,
-  reportaje: 300,
-  guia: 300,
-  'planazo-guia': 300, // evergreen, con sections[] — mismo criterio que guia (la-mira)
-  place: 60, // objetivo editorial: 80-120 palabras (content-types.ts)
-  alerta: 50, // objetivo editorial: 1-3 párrafos
-  evento: 40, // objetivo editorial: 1-2 párrafos
-  'evento-planazo': 40, // objetivo editorial: 1-2 párrafos
-  lugar: 40, // objetivo editorial: 1-2 párrafos
+  noticia: DEFAULT_MIN_WORDS,
+  reportaje: DEFAULT_MIN_WORDS,
+  guia: DEFAULT_MIN_WORDS,
+  'planazo-guia': DEFAULT_MIN_WORDS,
+  place: DEFAULT_MIN_WORDS,
+  alerta: DEFAULT_MIN_WORDS,
+  evento: DEFAULT_MIN_WORDS,
+  'evento-planazo': DEFAULT_MIN_WORDS,
+  lugar: DEFAULT_MIN_WORDS,
 };
-export const DEFAULT_MIN_WORDS = 300;
 
 // Determinístico, sin llamadas a LLM — es lo único que permite confiar en la
 // auto-publicación (ver Fase 3 del plan). Corre TODOS los checks (no corta al
@@ -135,6 +141,16 @@ export class ChecksService {
       name: 'calidad-longitud',
       passed: wordCount >= minWords,
       detail: `${wordCount} palabras (mínimo: ${minWords})`,
+      blocking: true,
+    });
+
+    // Frases que dicen que falta información o dejan ver el proceso de
+    // redacción ("no se proporcionaron…", "el editor…") — ver writing-rules.ts.
+    const fillers = input.bodyText ? fillerCount(input.bodyText) : 0;
+    checksRun.push({
+      name: 'sin-relleno',
+      passed: fillers === 0,
+      detail: fillers ? `${fillers} frase(s) de relleno tipo "no se proporcionó…"` : undefined,
       blocking: true,
     });
 

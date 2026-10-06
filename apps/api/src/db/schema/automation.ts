@@ -69,8 +69,10 @@ export const automationRuns = sqliteTable('automation_runs', {
   // 'error': algo falló generando el borrador o creando la pieza.
   // 'skipped_capped': no encajó con las reglas que tenían cupo, pero otras ya
   //          estaban en su tope del día — se reintenta al día siguiente.
+  // 'skipped_quality': el borrador no cumplió las reglas de redacción (mínimo
+  //          de palabras, sin relleno — ver writing-rules.ts); no se creó nada.
   outcome: text('outcome', {
-    enum: ['published', 'draft', 'skipped_duplicate', 'skipped_no_match', 'skipped_capped', 'error'],
+    enum: ['published', 'draft', 'skipped_duplicate', 'skipped_no_match', 'skipped_capped', 'skipped_quality', 'error'],
   }).notNull(),
   // 'report': tema con artículo/fuente real de Content Radar (comportamiento
   // de siempre). 'search-phrase': vino de "Qué busca la gente (frases)" — una

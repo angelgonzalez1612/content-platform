@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { WRITING_RULES, WRITING_RULES_PROMPT } from './writing-rules';
 
 // Registro de tipos de contenido que el agente editorial sabe redactar.
 // Cada entrada define SOLO los campos editoriales propios de ese tipo (no
@@ -36,7 +37,7 @@ const planazoSectionsShape = {
   content: z
     .array(z.object({ heading: z.string().nullable(), paragraphs: z.array(z.string()) }))
     .describe(
-      '2 o 3 secciones que complementen la descripción, cada una con encabezado corto y 1-2 párrafos (ej. "Qué esperar", "El ambiente", "Para quién es", "Tips para ir"). Solo con lo que te dieron: nunca inventes dirección, horarios, precios ni otros datos verificables.',
+      '3 o 4 secciones que complementen la descripción, cada una con encabezado corto y 2-3 párrafos (ej. "Qué esperar", "El ambiente", "Para quién es", "Tips para ir"). Solo con lo que te dieron: nunca inventes dirección, horarios, precios ni otros datos verificables.',
     ),
 };
 
@@ -90,7 +91,7 @@ export const CONTENT_TYPES: Record<string, ContentTypeConfig> = {
     editorialShape: {
       description: z
         .string()
-        .describe('80-120 palabras, editorial, en español de México, para una guía de planes de CDMX.'),
+        .describe('120-180 palabras, editorial, en español de México, para una guía de planes de CDMX: la presentación del lugar. El resto del texto va en las secciones.'),
       suggestedTags: z.array(z.string()).min(1).max(5),
       ...imageQueryShape,
     },
@@ -114,7 +115,7 @@ Reglas estrictas:
       content: z
         .array(z.object({ heading: z.string().nullable(), paragraphs: z.array(z.string()) }))
         .min(1)
-        .describe('Cuerpo de la nota en bloques; heading es opcional (null si no aplica).'),
+        .describe(`Cuerpo de la nota en 3-6 bloques; al menos ${WRITING_RULES.minSections} con heading (null en el bloque de apertura si no aplica).`),
       ...imageQueryShape,
     },
     requiredEditorialFields: ['title', 'dek', 'content', 'imageSearchQuery'],
@@ -127,7 +128,7 @@ Reglas estrictas:
     classifyHint: 'Disrupción activa EN CURSO ahora mismo (bloqueo, cierre, riesgo de seguridad, clima severo) que amerita urgencia — no un hecho ya cerrado.',
     editorialShape: {
       ...titleShape,
-      description: z.string().describe('1-3 párrafos, explica la situación con lo que se sabe hasta ahora.'),
+      description: z.string().describe(`Al menos ${WRITING_RULES.minWords} palabras en 4-6 párrafos: qué pasa, dónde, a quién afecta, alternativas y qué sigue, con lo que se sabe hasta ahora.`),
       ...imageQueryShape,
     },
     requiredEditorialFields: ['title', 'description', 'imageSearchQuery'],
@@ -158,7 +159,7 @@ Reglas estrictas:
     classifyHint: 'Evento noticioso de una sola vez o de agenda pública (marcha, festival grande, anuncio oficial) — angle de periodismo/cobertura, no una recomendación evergreen de plan. Si el evento está ligado a un negocio/lugar recurrente (bar, foro, restaurante) y el angle es "qué hacer", usa evento-planazo en vez de este.',
     editorialShape: {
       ...titleShape,
-      description: z.string().describe('1-2 párrafos que inviten a asistir, sin inventar fecha/hora/lugar/precio — esos ya están capturados aparte.'),
+      description: z.string().describe(`Al menos ${WRITING_RULES.minWords} palabras en 4-6 párrafos que inviten a asistir y den contexto (qué es, para quién, qué esperar), sin inventar fecha/hora/lugar/precio — esos ya están capturados aparte.`),
       ...imageQueryShape,
     },
     requiredEditorialFields: ['title', 'description', 'imageSearchQuery'],
@@ -170,7 +171,7 @@ Reglas estrictas:
     site: 'planazo',
     classifyHint: 'Evento como recomendación de plan (angle "qué hacer"), típicamente ligado a un lugar/negocio recurrente — para la guía evergreen de Planazo, no para cobertura noticiosa. Si el evento es más bien noticia de agenda pública/cobertura, usa evento (la-mira) en vez de este.',
     editorialShape: {
-      description: z.string().describe('1-2 párrafos que inviten a asistir, tono de recomendación de plan — sin inventar fecha/hora/lugar/precio, esos ya están capturados aparte.'),
+      description: z.string().describe('120-180 palabras que inviten a asistir, tono de recomendación de plan — sin inventar fecha/hora/lugar/precio, esos ya están capturados aparte. El resto del texto va en las secciones.'),
       ...imageQueryShape,
     },
     requiredEditorialFields: ['description', 'imageSearchQuery'],
@@ -188,7 +189,7 @@ Reglas estrictas:
     site: 'la-mira',
     classifyHint: 'Reseña/cobertura de un lugar con angle noticioso (apertura, cierre, hecho reciente) — no una ficha de directorio evergreen (para eso existe "place" en Planazo).',
     editorialShape: {
-      description: z.string().describe('1-2 párrafos que describan el lugar para alguien que nunca ha ido.'),
+      description: z.string().describe(`Al menos ${WRITING_RULES.minWords} palabras en 4-6 párrafos que describan el lugar para alguien que nunca ha ido: qué es, qué lo hace distinto, para quién es y qué tomar en cuenta.`),
       ...imageQueryShape,
     },
     requiredEditorialFields: ['description', 'imageSearchQuery'],
@@ -205,7 +206,7 @@ Reglas estrictas:
       content: z
         .array(z.object({ heading: z.string().nullable(), paragraphs: z.array(z.string()) }))
         .min(1)
-        .describe('Cuerpo del reportaje en bloques; heading es opcional (null si no aplica).'),
+        .describe(`Cuerpo del reportaje en 4-8 bloques; al menos ${WRITING_RULES.minSections} con heading (null en el bloque de apertura si no aplica).`),
       ...imageQueryShape,
     },
     requiredEditorialFields: ['title', 'dek', 'content', 'imageSearchQuery'],
@@ -251,6 +252,13 @@ Reglas estrictas:
 - Responde siempre en español de México.`,
   },
 };
+
+// Las reglas de redacción (mínimo de palabras, secciones, sin relleno) van al
+// final de TODOS los prompts — también los de "Mejorar" y "Agregar secciones",
+// que parten de typeConfig.systemPrompt. Ver writing-rules.ts.
+for (const config of Object.values(CONTENT_TYPES)) {
+  config.systemPrompt = `${config.systemPrompt}\n\n${WRITING_RULES_PROMPT}`;
+}
 
 export function getContentTypeConfig(contentType: string): ContentTypeConfig {
   const config = CONTENT_TYPES[contentType];

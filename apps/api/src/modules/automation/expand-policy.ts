@@ -1,4 +1,5 @@
 import type { ContentBlock } from '@planazo/types';
+import { WRITING_RULES } from '../ai/writing-rules';
 
 // Lugares y eventos de Planazo: el prompt editorial pide una descripción corta
 // (80-120 palabras) y el mínimo de calidad-longitud es 60, así que la
@@ -7,8 +8,8 @@ import type { ContentBlock } from '@planazo/types';
 // descripción + secciones extra. Con "Agregar más contenido" activo en la
 // regla, debajo de esto se piden 1-3 secciones nuevas.
 export const PLANAZO_EXPAND_TARGET_WORDS: Record<string, number> = {
-  place: 250,
-  'evento-planazo': 250,
+  place: WRITING_RULES.minWords,
+  'evento-planazo': WRITING_RULES.minWords,
 };
 
 export function countWords(text: string): number {

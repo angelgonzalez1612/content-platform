@@ -1,8 +1,8 @@
 import type { ContentBlock } from '@planazo/types';
-// Mismo estándar para La Mira y Planazo: una pieza publicable trae al menos
-// esto (los mínimos de checks.service son más bajos para lugares/eventos porque
-// rigen la automatización, no la revisión editorial).
-const REVIEW_MIN_WORDS = 300;
+import { FILLER_PATTERNS, WRITING_RULES, countWords } from '../ai/writing-rules';
+// Mismo estándar para La Mira y Planazo, y el mismo que se le exige a la IA al
+// redactar (writing-rules.ts).
+const REVIEW_MIN_WORDS = WRITING_RULES.minWords;
 
 /** Tipos con flujo de revisión (los demás de La Mira siempre están publicados). */
 export type ReviewableType = 'noticia' | 'reportaje' | 'guia' | 'place' | 'evento-planazo' | 'planazo-guia';
@@ -67,20 +67,6 @@ export function contentHash(piece: ReviewPiece): string {
   return h.toString(16).padStart(8, '0');
 }
 
-const countWords = (text: string) => (text.match(/[\p{L}\p{N}]+/gu) ?? []).length;
-
-// Frases de relleno típicas de la IA cuando no tiene datos: dicen que no se
-// sabe algo en vez de informar. Una puede ser honesta; varias son una nota vacía.
-const FILLER_PATTERNS = [
-  /la informaci[oó]n disponible no (precisa|detalla|incluye|permite)/i,
-  /no es posible (establecer|confirmar|determinar|precisar)/i,
-  /debe(n)? tomarse con cautela/i,
-  /no se cuenta con (detalles|informaci[oó]n)/i,
-  /sin (informaci[oó]n|detalles) adicional(es)?/i,
-  /no (se )?(ha(n)? )?(detallado|precisado|confirmado) (qui[eé]n|cu[aá]ndo|d[oó]nde|c[oó]mo)/i,
-  /conviene (esperar|consultar) (los )?(reportes|informaci[oó]n|publicaciones)/i,
-  /sin atribuir causas que no est[aá]n confirmadas/i,
-];
 
 const ES_WORDS = /\b(el|la|los|las|del|que|en|y|por|para|con|una|es|se|su|al|como|más)\b/gi;
 const PT_WORDS = /\b(não|você|são|também|uma|com|do|da|dos|das|em|no|na|ao|pelo|pela|mais|muito|está|foi|isso)\b/gi;
@@ -208,8 +194,10 @@ export function evaluatePiece(piece: ReviewPiece): ReviewEvaluation {
     {
       id: 'relleno',
       label: 'Sin texto de relleno',
-      passed: fillers < 2,
-      blocking: false,
+      // Bloqueante desde 2026-10-06: frases como "no se proporcionaron horarios"
+      // publicadas fueron parte del rechazo de AdSense por poco valor.
+      passed: fillers === 0,
+      blocking: true,
       detail: fillers ? `${fillers} frase(s) tipo "la información disponible no precisa…".` : undefined,
     },
     {

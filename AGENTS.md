@@ -196,6 +196,13 @@ la aprobación humana. No hay trigger/schedule por regla — el "cuándo" es glo
   deduplicar antes de llamar a la IA.
 - `AiDraftService.draft()` clasifica sitio/tipo/categoría y redacta; si la regla
   acepta la clasificación, crea la pieza con status `in_review` para aprobación humana.
+- **Reglas de redacción** (`modules/ai/writing-rules.ts`, desde 2026-10-06): mínimo
+  **300 palabras** de texto (bajada/descripción + cuerpo), 2+ secciones y **cero
+  frases de relleno** ("no se proporcionaron…", "el editor…") en TODOS los tipos.
+  Van al final de todos los prompts; `draft()` amplía con secciones hasta 2 rondas
+  si queda corto; la automatización **no crea** lo que aún no cumple (outcome
+  `skipped_quality` en la bitácora) y el Revisor usa el mismo mínimo y patrones.
+  Para cambiar el mínimo, cambia `WRITING_RULES` — no lo dupliques en otro lado.
 - **Sin tokens / dejó de generar:** `ProviderHealthService` (`modules/ai/provider-health.ts`)
   registra cada generación real. Un error de cuota ("usage limit", "insufficient_quota"…) marca
   al proveedor `sin-tokens` y lanza `ProviderQuotaExceededError`: el runner **corta la corrida**
