@@ -120,8 +120,8 @@ export class SearchConsoleService {
     return body;
   }
 
-  private async listProperties() {
-    if (this.propertiesCache && Date.now() - this.propertiesCache.at < SUMMARY_TTL) return this.propertiesCache.list;
+  private async listProperties(force = false) {
+    if (!force && this.propertiesCache && Date.now() - this.propertiesCache.at < SUMMARY_TTL) return this.propertiesCache.list;
     const data = await this.google<{ siteEntry?: { siteUrl: string; permissionLevel: string }[] }>(`${WEBMASTERS}/sites`);
     const list = (data.siteEntry ?? []).filter((s) => s.permissionLevel !== 'siteUnverifiedUser');
     // Una lista vacía no se guarda: casi siempre es porque todavía no se
@@ -133,12 +133,13 @@ export class SearchConsoleService {
   /** Propiedad del sitio: la de dominio si existe, si no la de prefijo con https y www o sin www. */
   private async propertyFor(site: ScSite): Promise<{ siteUrl: string; permissionLevel: string } | null> {
     const domain = SITE_DOMAINS[site];
-    const list = await this.listProperties();
-    return (
+    const find = (list: { siteUrl: string; permissionLevel: string }[]) =>
       list.find((p) => p.siteUrl === `sc-domain:${domain}`) ??
       list.find((p) => /^https?:\/\//.test(p.siteUrl) && new URL(p.siteUrl).hostname.replace(/^www\./, '') === domain) ??
-      null
-    );
+      null;
+    // Si no está en la lista guardada, se vuelve a pedir: la cuenta pudo
+    // agregarse a esa propiedad después de la última consulta.
+    return find(await this.listProperties()) ?? find(await this.listProperties(true));
   }
 
   private async requireProperty(site: ScSite): Promise<string> {
