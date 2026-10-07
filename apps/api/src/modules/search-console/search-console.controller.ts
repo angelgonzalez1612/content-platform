@@ -25,6 +25,13 @@ export class SearchConsoleController {
     return this.searchConsole.summary(dto.site, dto.days);
   }
 
+  /** Parte de salud en Google de cada sitio (tarjeta del Dashboard); se recalcula a lo más una vez al día. */
+  @Get('health')
+  health(@Query() query: unknown) {
+    const dto = z.object({ refresh: z.enum(['1', 'true']).optional() }).parse(query);
+    return this.searchConsole.health(!!dto.refresh);
+  }
+
   /** Estado de indexación de una URL (usa cuota: 2,000 al día por propiedad). */
   @Post('inspect')
   inspect(@Body() body: unknown) {

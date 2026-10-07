@@ -1,5 +1,8 @@
-import { BadGatewayException, BadRequestException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Inject, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { eq } from 'drizzle-orm';
+import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
+import { searchConsoleHealth } from '../../db/schema';
 import { GoogleTokenProvider, parseServiceAccount } from './google-service-account';
 
 export type ScSite = 'la-mira' | 'planazo';
@@ -65,8 +68,33 @@ export interface ScInspection {
   inspectedAt: string;
 }
 
+export interface ScHealth {
+  site: ScSite;
+  siteUrl: string;
+  checkedAt: string;
+  sitemap: { path: string; lastDownloaded: string | null; submitted: number; errors: number; warnings: number } | null;
+  week: { clicks: number; impressions: number; prevClicks: number; prevImpressions: number };
+  sample: {
+    checked: number;
+    indexed: number;
+    notKnown: number;
+    other: number;
+    items: { url: string; verdict: string | null; coverageState: string | null }[];
+  };
+  issues: string[];
+}
+
 const SUMMARY_TTL = 30 * 60_000;
 const INSPECTION_TTL = 6 * 60 * 60_000;
+// El parte de salud se recalcula a lo más una vez al día (gasta cuota de inspección).
+const HEALTH_TTL = 20 * 60 * 60_000;
+const HEALTH_SAMPLE = 8;
+
+// Sitemap público de cada sitio y qué secciones son contenido (no listados).
+const HEALTH_SOURCES: Record<ScSite, { sitemap: string; sections: RegExp }> = {
+  'la-mira': { sitemap: 'https://lamira.mx/sitemap.xml', sections: /\/(noticias|guias|reportajes)\/[^/]+$/ },
+  planazo: { sitemap: 'https://www.planazo.com.mx/sitemap.xml', sections: /\/(lugares|guias)\/[^/]+$/ },
+};
 
 /**
  * Search Console de los dos sitios, de solo lectura, con una cuenta de
@@ -84,7 +112,12 @@ export class SearchConsoleService {
   private readonly summaryCache = new Map<string, { at: number; value: ScSummary }>();
   private readonly inspectionCache = new Map<string, ScInspection>();
 
-  constructor(config: ConfigService) {
+  private readonly healthInFlight = new Map<ScSite, Promise<ScHealth>>();
+
+  constructor(
+    config: ConfigService,
+    @Inject(DRIZZLE) private readonly db: DrizzleDb,
+  ) {
     let tokens: GoogleTokenProvider | null = null;
     try {
       const account = parseServiceAccount(config.get<string>('GOOGLE_SERVICE_ACCOUNT_JSON'));
@@ -263,6 +296,130 @@ export class SearchConsoleService {
       inspectedAt: new Date().toISOString(),
     };
     this.inspectionCache.set(url, value);
+    return value;
+  }
+
+  /**
+   * Parte de salud de los sitios con propiedad visible (tarjeta del Dashboard).
+   * Se lee de la base y solo se recalcula si tiene más de HEALTH_TTL o si se
+   * pide `refresh`, para no gastar cuota de inspección en cada visita.
+   */
+  async health(refresh = false): Promise<ScHealth[]> {
+    this.requireTokens();
+    const results: ScHealth[] = [];
+    for (const site of Object.keys(SITE_DOMAINS) as ScSite[]) {
+      const stored = await this.db.query.searchConsoleHealth.findFirst({ where: eq(searchConsoleHealth.site, site) });
+      const fresh = stored && Date.now() - stored.checkedAt.getTime() < HEALTH_TTL;
+      if (stored && fresh && !refresh) {
+        results.push(stored.data as ScHealth);
+        continue;
+      }
+      if (!(await this.propertyFor(site))) continue;
+      // Si ya hay un cálculo en curso para este sitio, se reutiliza.
+      let pending = this.healthInFlight.get(site);
+      if (!pending) {
+        pending = this.computeHealth(site).finally(() => this.healthInFlight.delete(site));
+        this.healthInFlight.set(site, pending);
+      }
+      try {
+        results.push(await pending);
+      } catch (err) {
+        this.logger.warn(`No se pudo calcular la salud de ${site}: ${err instanceof Error ? err.message : String(err)}`);
+        if (stored) results.push(stored.data as ScHealth);
+      }
+    }
+    return results;
+  }
+
+  private async searchTotals(siteUrl: string, start: Date, end: Date) {
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    const data = await this.google<{ rows?: Row[] }>(`${WEBMASTERS}/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query`, {
+      method: 'POST',
+      body: JSON.stringify({ startDate: iso(start), endDate: iso(end), dataState: 'all' }),
+    });
+    return { clicks: data.rows?.[0]?.clicks ?? 0, impressions: data.rows?.[0]?.impressions ?? 0 };
+  }
+
+  /** Las páginas de contenido más recientes del sitemap público. */
+  private async recentUrls(site: ScSite): Promise<string[]> {
+    const { sitemap, sections } = HEALTH_SOURCES[site];
+    const res = await fetch(sitemap, { headers: { 'user-agent': 'PlanazoCMS/1.0 (salud en Google)' } });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const entries = [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)].map((m) => ({
+      loc: m[1].match(/<loc>([^<]+)<\/loc>/)?.[1] ?? '',
+      lastmod: m[1].match(/<lastmod>([^<]+)<\/lastmod>/)?.[1] ?? '',
+    }));
+    const content = entries.filter((e) => sections.test(e.loc));
+    // Con fecha, las más recientes primero; sin fecha se respeta el orden del sitemap.
+    content.sort((a, b) => (b.lastmod || '').localeCompare(a.lastmod || ''));
+    return content.slice(0, HEALTH_SAMPLE).map((e) => e.loc);
+  }
+
+  private async computeHealth(site: ScSite): Promise<ScHealth> {
+    const siteUrl = await this.requireProperty(site);
+    const day = 86_400_000;
+    const end = new Date(Date.now() - 2 * day);
+    const [current, previous, sitemaps, urls] = await Promise.all([
+      this.searchTotals(siteUrl, new Date(end.getTime() - 6 * day), end),
+      this.searchTotals(siteUrl, new Date(end.getTime() - 13 * day), new Date(end.getTime() - 7 * day)),
+      this.google<{ sitemap?: { path: string; lastDownloaded?: string; errors?: string; warnings?: string; contents?: { submitted?: string }[] }[] }>(
+        `${WEBMASTERS}/sites/${encodeURIComponent(siteUrl)}/sitemaps`,
+      ),
+      this.recentUrls(site),
+    ]);
+
+    // Una por una, para no golpear el límite por minuto de la API de inspección.
+    const items: ScHealth['sample']['items'] = [];
+    for (const url of urls) {
+      try {
+        const r = await this.inspect(site, url);
+        items.push({ url, verdict: r.verdict, coverageState: r.coverageState });
+      } catch (err) {
+        items.push({ url, verdict: null, coverageState: err instanceof Error ? err.message : 'Error al inspeccionar' });
+      }
+    }
+    const indexed = items.filter((i) => i.verdict === 'PASS').length;
+    const notKnown = items.filter((i) => /no reconoce|unknown/i.test(i.coverageState ?? '')).length;
+
+    const main = sitemaps.sitemap?.[0];
+    const sitemap = main
+      ? {
+          path: main.path,
+          lastDownloaded: main.lastDownloaded ?? null,
+          submitted: (main.contents ?? []).reduce((a, c) => a + Number(c.submitted ?? 0), 0),
+          errors: Number(main.errors ?? 0),
+          warnings: Number(main.warnings ?? 0),
+        }
+      : null;
+
+    const issues: string[] = [];
+    if (!sitemap) issues.push('No hay sitemap enviado en Search Console.');
+    else {
+      const daysSinceRead = sitemap.lastDownloaded ? (Date.now() - new Date(sitemap.lastDownloaded).getTime()) / day : Infinity;
+      if (daysSinceRead > 7) issues.push(`Google no ha leído el sitemap en ${Number.isFinite(daysSinceRead) ? `${Math.floor(daysSinceRead)} días` : 'mucho tiempo'}.`);
+      if (sitemap.errors) issues.push(`El sitemap tiene ${sitemap.errors} error(es).`);
+    }
+    if (items.length && notKnown / items.length > 0.5) {
+      issues.push(`Google todavía no conoce ${notKnown} de las ${items.length} páginas más recientes.`);
+    }
+    if (previous.clicks >= 10 && current.clicks < previous.clicks * 0.7) {
+      issues.push(`Los clics bajaron ${Math.round((1 - current.clicks / previous.clicks) * 100)}% contra la semana anterior.`);
+    }
+
+    const value: ScHealth = {
+      site,
+      siteUrl,
+      checkedAt: new Date().toISOString(),
+      sitemap,
+      week: { clicks: current.clicks, impressions: current.impressions, prevClicks: previous.clicks, prevImpressions: previous.impressions },
+      sample: { checked: items.length, indexed, notKnown, other: items.length - indexed - notKnown, items },
+      issues,
+    };
+    await this.db
+      .insert(searchConsoleHealth)
+      .values({ site, data: value, checkedAt: new Date() })
+      .onConflictDoUpdate({ target: searchConsoleHealth.site, set: { data: value, checkedAt: new Date() } });
     return value;
   }
 }

@@ -6,6 +6,7 @@ import type { AuthUser } from "@planazo/types";
 import { apiConfig } from "@planazo/config";
 import { Icon } from "@/components/icon";
 import { AutomationActivityCard } from "@/components/cms/automation-activity-card";
+import { GoogleHealthCard } from "@/components/cms/google-health-card";
 import type { DashboardStats, LastDeploy } from "@/lib/dashboard-api";
 import {
   contentEditHref,
@@ -416,6 +417,8 @@ export function DashboardContent({ user }: { user: AuthUser }) {
               </div>
             </div>
           </div>
+
+          <GoogleHealthCard />
 
           <div className="rounded-[14px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(23,20,17,.03)]">
             <span className="mb-3 block text-[13.5px] font-semibold tracking-tight">

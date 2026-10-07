@@ -51,3 +51,19 @@ export interface ScInspection {
 }
 
 export const SC_SITE_LABEL: Record<ScSite, string> = { "la-mira": "La Mira", planazo: "Planazo" };
+
+export interface ScHealth {
+  site: ScSite;
+  siteUrl: string;
+  checkedAt: string;
+  sitemap: { path: string; lastDownloaded: string | null; submitted: number; errors: number; warnings: number } | null;
+  week: { clicks: number; impressions: number; prevClicks: number; prevImpressions: number };
+  sample: {
+    checked: number;
+    indexed: number;
+    notKnown: number;
+    other: number;
+    items: { url: string; verdict: string | null; coverageState: string | null }[];
+  };
+  issues: string[];
+}
