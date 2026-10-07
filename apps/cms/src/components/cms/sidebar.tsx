@@ -20,6 +20,7 @@ const ROUTES: Record<string, string> = {
   "automatizaciones-frases": "/automatizaciones/frases",
   entidades: "/entidades",
   seo: "/search-console",
+  publicidad: "/camino-adsense",
   multimedia: "/multimedia",
   usuarios: "/usuarios",
   config: "/configuracion",

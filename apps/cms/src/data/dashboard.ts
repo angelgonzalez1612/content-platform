@@ -68,7 +68,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Negocio",
     items: [
       { id: "analytics", name: "Analytics", icon: "M5 19V9M10 19V5M15 19v-6M20 19v-9" },
-      { id: "publicidad", name: "Publicidad", icon: "M4 9h4l7-4v14l-7-4H4zM19 9v6" },
+      { id: "publicidad", name: "Camino a AdSense", icon: "M4 9h4l7-4v14l-7-4H4zM19 9v6" },
       { id: "negocios", name: "Negocios", icon: "M4 9h16v11H4zM4 9l2-5h12l2 5M10 20v-6h4v6" },
     ],
   },

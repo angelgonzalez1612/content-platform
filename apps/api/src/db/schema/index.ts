@@ -18,3 +18,4 @@ export * from './users';
 export * from './auth-login-attempts';
 export * from './media-assets';
 export * from './search-console';
+export * from './adsense-plan';
