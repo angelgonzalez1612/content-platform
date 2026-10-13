@@ -43,6 +43,14 @@ const CHECK_INTERVAL_MS = 15 * 60 * 1000;
 // aprueba desde el CMS.
 const RUN_LOCK_LEASE_MS = 30 * 60 * 1000;
 
+// Pausa tras un aviso de "sin cuota" o 3 errores seguidos del proveedor: los
+// límites de sesión de Claude se renuevan cada pocas horas, el semanal a los
+// días, y un CLI que no arranca (poca memoria, proceso muerto) tampoco se
+// arregla solo en 15 min — reintentar cada tick solo gasta intentos (en la
+// bitácora, ~48% de las filas eran errores así). Pasado el tiempo se deja pasar
+// una corrida de prueba.
+const PAUSE_COOLDOWN_MS = 60 * 60 * 1000;
+
 // La cola del Dashboard (getQueueStatus) se pide en cada visita — extraer el
 // reporte lanza un subproceso tsx (2-7 s). Con este mínimo entre extracciones
 // la cola sale de la DB casi siempre; run() sigue extrayendo en cada tick.
@@ -63,6 +71,13 @@ interface RuleState {
   // una sola vez por corrida.
   provider: AiProviderId;
   createdCount: number;
+}
+
+// Resultado de clasificar un tema (sin redactar): ver AiDraftService.classify.
+interface Classified {
+  site: 'la-mira' | 'planazo';
+  contentType: string;
+  category: Category;
 }
 
 interface ExtractedTopic {
@@ -295,7 +310,17 @@ export class AutomationRunnerService {
     const resolvedRules = await Promise.all(
       activeRules.map(async (rule) => ({ rule, provider: await this.providers.resolveProvider(rule.provider) })),
     );
-    const runnableRules = IS_SERVERLESS ? resolvedRules.filter((r) => !CLI_PROVIDERS.has(r.provider)) : resolvedRules;
+    const environmentRules = IS_SERVERLESS ? resolvedRules.filter((r) => !CLI_PROVIDERS.has(r.provider)) : resolvedRules;
+    // Proveedor sin cuota hace poco: no se vuelve a intentar cada 15 min
+    // contra un límite que sigue agotado (cada intento era una sesión de
+    // `claude` quemada para recibir el mismo "hit your limit").
+    const runnableRules = environmentRules.filter((r) => !this.providers.isPaused(r.provider, PAUSE_COOLDOWN_MS));
+    if (runnableRules.length === 0 && environmentRules.length > 0) {
+      this.logger.warn(
+        `run() se omitió: proveedor sin cuota o fallando; se reintenta pasados ${PAUSE_COOLDOWN_MS / 60000} min del último fallo.`,
+      );
+      return { evaluated: 0, created: 0 };
+    }
     if (runnableRules.length === 0) {
       if (activeRules.length > 0) {
         this.logger.warn('run() se omitió: las reglas activas usan proveedores CLI, que solo corren en el servidor local.');
@@ -443,6 +468,13 @@ export class AutomationRunnerService {
           // el tema queda pendiente para cuando vuelvan los tokens.
           if (!(err instanceof ProviderQuotaExceededError)) throw err;
           this.logger.warn(`Corrida detenida: ${err.message.slice(0, 300)}`);
+          break;
+        }
+        // 3 errores seguidos (sin ser de cuota): el proveedor quedó 'fallando'.
+        // Seguir tema por tema solo repetiría el mismo error — se corta aquí y
+        // el cooldown evita reintentar en los próximos ticks.
+        if (candidates.every((state) => this.providers.isPaused(state.provider, PAUSE_COOLDOWN_MS))) {
+          this.logger.warn('Corrida detenida: el proveedor quedó fallando (3 errores seguidos).');
           break;
         }
       }
@@ -593,20 +625,26 @@ export class AutomationRunnerService {
   // sitio+tipo+proveedor forzado, así no se multiplica el gasto de IA por
   // cada regla candidata (la clasificación no cambia entre ellas).
   private async assignTopic(candidates: RuleState[], topic: Topic, someRuleCapped = false): Promise<boolean> {
-    const drafts = new Map<string, { result: DraftResult; category: Category } | { error: string }>();
-    let lastClassified: { result: DraftResult; category: Category } | null = null;
+    // Primero se CLASIFICA (barato) y solo se REDACTA (caro) con la regla que
+    // acepta el tema — antes se redactaba un borrador completo por cada
+    // combinación sitio+tipo de las reglas candidatas y se tiraba el que
+    // ninguna aceptaba (visto: ~85% de las evaluaciones no producían nota).
+    const classifications = new Map<string, Classified | { error: string }>();
+    let lastClassified: Classified | null = null;
     let lastError: string | null = null;
 
     for (const state of candidates) {
       const { rule } = state;
       const forcedType = rule.contentTypes.length === 1 ? (rule.contentTypes[0] as AutomatableType) : undefined;
       const forcedSite = forcedType ? getContentTypeConfig(forcedType).site : undefined;
-      const cacheKey = `${forcedSite ?? '*'}|${forcedType ?? '*'}|${state.provider}`;
+      // La categoría depende solo del sitio, no del tipo: con tipo forzado se
+      // comparte entre todas las reglas del mismo sitio (una sola llamada).
+      const cacheKey = `${forcedSite ?? '*'}|${forcedType ? 'fixed' : 'free'}|${state.provider}`;
 
-      let entry = drafts.get(cacheKey);
+      let entry = classifications.get(cacheKey);
       if (!entry) {
         entry = await this.classifyTopic(forcedSite, forcedType, state.provider, topic);
-        drafts.set(cacheKey, entry);
+        classifications.set(cacheKey, entry);
       }
 
       if ('error' in entry) {
@@ -614,10 +652,27 @@ export class AutomationRunnerService {
         continue;
       }
 
-      lastClassified = entry;
-      if (!ruleAccepts(rule, entry.result, entry.category)) continue;
+      const classified: Classified = forcedType ? { ...entry, contentType: forcedType } : entry;
+      lastClassified = classified;
+      if (!ruleAccepts(rule, classified, classified.category)) continue;
 
-      const finalResult = await this.maybeExpandContent(state, entry.result, topic);
+      let drafted: DraftResult;
+      try {
+        drafted = await this.aiDraft.draft({
+          site: classified.site,
+          contentType: classified.contentType,
+          categoryId: classified.category.id,
+          name: topic.title,
+          hints: topic.hints || undefined,
+          provider: state.provider,
+        });
+      } catch (err) {
+        if (err instanceof ProviderQuotaExceededError) throw err; // lo maneja run()
+        lastError = err instanceof Error ? err.message.slice(0, 2000) : 'Error desconocido generando el borrador.';
+        continue;
+      }
+
+      const finalResult = await this.maybeExpandContent(state, drafted, topic);
 
       // Reglas de redacción (writing-rules.ts): un borrador corto o con relleno
       // no entra a la cola — termina igual de delgado en el sitio. No se
@@ -638,7 +693,7 @@ export class AutomationRunnerService {
         return false;
       }
 
-      return this.finalizeCreate(state, topic, finalResult, entry.category);
+      return this.finalizeCreate(state, topic, finalResult, classified.category);
     }
 
     // Ninguna regla candidata aceptó el tema — una sola fila resumen, sin
@@ -650,12 +705,12 @@ export class AutomationRunnerService {
         ruleName: null,
         topic: topic.sourceKey,
         categoryLabel: topic.categoryLabel,
-        site: lastClassified.result.site,
-        contentType: lastClassified.result.contentType,
+        site: lastClassified.site,
+        contentType: lastClassified.contentType,
         outcome: someRuleCapped ? 'skipped_capped' : 'skipped_no_match',
         detail: someRuleCapped
-          ? `La IA lo clasificó como "${lastClassified.category.name}" (${lastClassified.result.contentType}) y ninguna regla con cupo lo acepta; otras reglas ya llegaron a su tope de hoy. Se reintenta mañana.`
-          : `La IA lo clasificó como "${lastClassified.category.name}" (${lastClassified.result.contentType}) — ninguna de las ${candidates.length} regla(s) candidata(s) para este tema acepta esa categoría o tipo.`,
+          ? `La IA lo clasificó como "${lastClassified.category.name}" (${lastClassified.contentType}) y ninguna regla con cupo lo acepta; otras reglas ya llegaron a su tope de hoy. Se reintenta mañana.`
+          : `La IA lo clasificó como "${lastClassified.category.name}" (${lastClassified.contentType}) — ninguna de las ${candidates.length} regla(s) candidata(s) para este tema acepta esa categoría o tipo.`,
         source: topic.source,
       });
     } else {
@@ -680,9 +735,9 @@ export class AutomationRunnerService {
     forcedType: AutomatableType | undefined,
     provider: AiProviderId,
     topic: Topic,
-  ): Promise<{ result: DraftResult; category: Category } | { error: string }> {
+  ): Promise<Classified | { error: string }> {
     try {
-      const result = await this.aiDraft.draft({
+      const result = await this.aiDraft.classify({
         site: forcedSite,
         contentType: forcedType,
         name: topic.title,
@@ -690,7 +745,7 @@ export class AutomationRunnerService {
         provider,
       });
       const category = await this.categories.findOne(result.categoryId);
-      return { result, category };
+      return { site: result.site, contentType: result.contentType, category };
     } catch (err) {
       if (err instanceof ProviderQuotaExceededError) throw err; // lo maneja run()
       // 2000 y no 300: un límite corto ya escondió la causa real de un lote

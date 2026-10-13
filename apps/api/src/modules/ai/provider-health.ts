@@ -12,7 +12,13 @@ export const FAILING_AFTER_CONSECUTIVE_ERRORS = 3;
 // OpenAI API ("insufficient_quota", "exceeded your current quota", 429).
 const QUOTA_PATTERNS = [
   /usage limit/i,
-  /hit your (usage )?limit/i,
+  // "You've hit your session limit · resets 3:20pm" / "...weekly limit..." /
+  // "...Opus limit..." — el CLI de Claude nombra el tipo de límite en medio,
+  // y el patrón anterior (solo "usage") dejaba pasar los dos más comunes: la
+  // corrida seguía y cada tema quedaba como 'error' (cientos de intentos
+  // quemados contra una cuota ya agotada).
+  /hit your (\w+ )?limit/i,
+  /(session|weekly|daily|monthly) limit/i,
   /limit (reached|exceeded)/i,
   /rate[ _-]?limit/i,
   /insufficient_quota/i,
@@ -81,6 +87,22 @@ export class ProviderQuotaExceededError extends Error {
 export class ProviderHealthService {
   private readonly health = new Map<AiProviderId, ProviderHealth>();
   private readonly events: ProviderHealthEvent[] = [];
+  // Último fallo que dejó al proveedor en 'sin-tokens' o 'fallando' (epoch ms).
+  // A diferencia de `since` (que no se renueva mientras siga en ese estado),
+  // este sí se actualiza en cada fallo, para poder pausar reintentos un rato
+  // desde el último.
+  private readonly pausedAt = new Map<AiProviderId, number>();
+
+  /** true si el proveedor se quedó sin cuota o está fallando (3 errores
+   * seguidos: CLI que no arranca, proceso muerto, poca memoria…) hace menos de
+   * `cooldownMs` — el runner lo usa para no volver a intentar cada 15 min
+   * contra algo que sigue roto. Pasado el cooldown deja pasar UNA corrida de
+   * prueba: si falla otra vez, el cooldown se reinicia; si funciona,
+   * recordSuccess lo limpia. */
+  isPaused(provider: AiProviderId, cooldownMs: number): boolean {
+    const at = this.pausedAt.get(provider);
+    return at !== undefined && Date.now() - at < cooldownMs;
+  }
 
   private pushEvent(provider: AiProviderId, from: ProviderHealthState, to: ProviderHealthState, detail: string | null) {
     if (from === to) return;
@@ -91,6 +113,7 @@ export class ProviderHealthService {
   recordSuccess(provider: AiProviderId): void {
     const now = new Date().toISOString();
     const prev = this.health.get(provider);
+    this.pausedAt.delete(provider);
     if (prev) this.pushEvent(provider, prev.state, 'ok', null);
     this.health.set(provider, {
       provider,
@@ -107,8 +130,14 @@ export class ProviderHealthService {
     const prev = this.health.get(provider);
     const consecutiveFailures = (prev?.consecutiveFailures ?? 0) + 1;
     let state: ProviderHealthState;
-    if (isQuotaError(message)) state = 'sin-tokens';
-    else if (consecutiveFailures >= FAILING_AFTER_CONSECUTIVE_ERRORS) state = 'fallando';
+    if (isQuotaError(message)) {
+      state = 'sin-tokens';
+      this.pausedAt.set(provider, Date.now());
+    }
+    else if (consecutiveFailures >= FAILING_AFTER_CONSECUTIVE_ERRORS) {
+      state = 'fallando';
+      this.pausedAt.set(provider, Date.now());
+    }
     // Un fallo suelto no quita un "sin tokens" ya detectado — solo un éxito lo limpia.
     else state = prev?.state ?? 'ok';
     this.pushEvent(provider, prev?.state ?? 'ok', state, message.slice(0, 500));

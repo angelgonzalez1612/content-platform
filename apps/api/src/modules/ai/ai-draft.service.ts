@@ -316,6 +316,26 @@ export class AiDraftService {
     return { site: fixedSite ?? getContentTypeConfig(contentType).site, contentType };
   }
 
+  /**
+   * Solo clasifica (sitio/tipo/categoría), sin redactar. Lo usa la automatización
+   * para decidir qué regla acepta un tema ANTES de gastar la redacción completa
+   * (la llamada cara): clasificar cuesta una fracción, y un borrador que ninguna
+   * regla acepta se tiraba entero. El resultado se pasa luego a draft() vía
+   * site/contentType/categoryId, que entonces se salta su propia clasificación.
+   */
+  async classify(
+    dto: DraftRequestDto,
+  ): Promise<{ site: 'la-mira' | 'planazo'; contentType: string; categoryId: string }> {
+    const scrapedArticle = await this.scrapeSourceFromHints(dto.hints);
+    let site = dto.site;
+    let contentType = dto.contentType;
+    if (!site || !contentType) {
+      ({ site, contentType } = await this.classifyContentType(dto, scrapedArticle, site));
+    }
+    const categoryId = dto.categoryId ?? (await this.classifyCategory(site, dto, scrapedArticle));
+    return { site, contentType, categoryId };
+  }
+
   async draft(dto: DraftRequestDto): Promise<DraftResult> {
     // Fase 2 del plan de rediseño del pipeline (content-radar → Centro IA):
     // en vez de que la IA solo vea el titular citado en `hints`, se lee el

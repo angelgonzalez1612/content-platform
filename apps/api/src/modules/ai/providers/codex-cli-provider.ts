@@ -12,7 +12,7 @@ import {
   type PlaceDraftOutput,
   type StructuredGenerateInput,
 } from '../content-provider.interface';
-import { killProcessTree } from './process-tree-kill';
+import { killProcessTree, trackChildProcess } from './process-tree-kill';
 import { windowsExitHint } from './cli-exit';
 
 const PLACE_SYSTEM_PROMPT = `Eres redactor editorial de Planazo, una guía de planes y lugares de la Ciudad de México.
@@ -161,10 +161,15 @@ function runCodexCommand(
     let stdout = '';
     let stderr = '';
     let settled = false;
+    // Si la API se apaga con este `codex` en vuelo, se mata su árbol (ver trackChildProcess).
+    const untrack = trackChildProcess(child.pid);
+    child.on('close', untrack);
+    child.on('error', untrack);
 
     const timer = setTimeout(() => {
       if (settled) return;
       settled = true;
+      untrack();
       // child.kill() aquí solo mataría cmd.exe (spawn con shell:true) — el
       // codex.cmd/node reales que cmd.exe lanzó seguirían vivos. Mismo bug
       // que ya se vio con claude-cli-provider.ts, ver su comentario en runClaudeCommand.

@@ -49,6 +49,11 @@ export class ProviderRegistry {
     return this.openAiProvider;
   }
 
+  /** Ver ProviderHealthService.isPaused. */
+  isPaused(id: AiProviderId, cooldownMs: number): boolean {
+    return this.health.isPaused(id, cooldownMs);
+  }
+
   /** "default" → el predeterminado de Configuración (o Codex si no hay). */
   async resolveProvider(choice: AiProviderChoice): Promise<AiProviderId> {
     if (choice !== DEFAULT_PROVIDER_CHOICE) return choice;

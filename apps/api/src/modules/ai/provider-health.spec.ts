@@ -4,6 +4,8 @@ describe('isQuotaError', () => {
   it.each([
     'El CLI terminó con error: Claude AI usage limit reached|1790000000',
     "El CLI terminó con error: You've hit your limit · resets 7pm",
+    "No se pudo invocar el CLI de Claude: El CLI terminó con error: You've hit your session limit · resets 3:20pm (America/Mexico_City)",
+    "El CLI terminó con error: You've hit your weekly limit · resets Oct 11, 6pm",
     "Codex CLI terminó con código 1: ERROR: You've hit your usage limit. Try again later.",
     'Error: 429 You exceeded your current quota, please check your plan and billing details.',
     'insufficient_quota',
@@ -27,6 +29,28 @@ describe('isQuotaError', () => {
 });
 
 describe('ProviderHealthService', () => {
+  it('pausa reintentos tras un fallo de cuota y los reanuda con un éxito', () => {
+    const health = new ProviderHealthService();
+    expect(health.isPaused('claude-cli', 60_000)).toBe(false);
+    health.recordFailure('claude-cli', "You've hit your session limit · resets 3pm");
+    expect(health.isPaused('claude-cli', 60_000)).toBe(true);
+    expect(health.isPaused('claude-cli', 0)).toBe(false); // cooldown vencido
+    health.recordSuccess('claude-cli');
+    expect(health.isPaused('claude-cli', 60_000)).toBe(false);
+  });
+
+  it('pausa reintentos tras 3 errores seguidos que no son de cuota, no antes', () => {
+    const health = new ProviderHealthService();
+    const crash = 'El CLI terminó con código 3221225794 sin más detalle.';
+    health.recordFailure('claude-cli', crash);
+    health.recordFailure('claude-cli', crash);
+    expect(health.isPaused('claude-cli', 60_000)).toBe(false); // 2 errores sueltos aún se reintentan
+    expect(health.recordFailure('claude-cli', crash)).toBe('fallando');
+    expect(health.isPaused('claude-cli', 60_000)).toBe(true);
+    health.recordSuccess('claude-cli');
+    expect(health.isPaused('claude-cli', 60_000)).toBe(false);
+  });
+
   it('marca sin tokens al primer error de cuota y lo limpia con un éxito', () => {
     const health = new ProviderHealthService();
     expect(health.recordFailure('codex-cli', "You've hit your usage limit")).toBe('sin-tokens');

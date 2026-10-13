@@ -12,10 +12,24 @@ import {
   type PlaceDraftOutput,
   type StructuredGenerateInput,
 } from '../content-provider.interface';
-import { killProcessTree } from './process-tree-kill';
+import { killProcessTree, trackChildProcess } from './process-tree-kill';
 import { windowsExitHint } from './cli-exit';
 
 const CLAUDE_TIMEOUT_MS = 60_000;
+
+// Modelo y arranque liviano para cada llamada (cientos al día): Haiku, sin
+// cargar settings de usuario (plugins/hooks/skills del ~/.claude, que
+// inflaban cada sesión con decenas de miles de tokens de contexto), sin MCP
+// y sin guardar la sesión en disco. La auth OAuth no depende de los settings.
+// Medido: ~USD 0.026 → ~0.0006 por llamada. Se puede cambiar con CLAUDE_CLI_MODEL.
+const CLAUDE_MODEL = process.env.CLAUDE_CLI_MODEL?.trim() || 'haiku';
+const LEAN_ARGS = [
+  '--model', CLAUDE_MODEL,
+  '--setting-sources', '',
+  '--disable-slash-commands',
+  '--strict-mcp-config',
+  '--no-session-persistence',
+];
 
 const PLACE_SYSTEM_PROMPT = `Eres redactor editorial de Planazo, una guía de planes y lugares de la Ciudad de México.
 
@@ -238,6 +252,7 @@ export class ClaudeCliProvider implements ContentProvider {
         args,
         { cwd, maxBuffer: 10 * 1024 * 1024 },
         (err, stdout, stderr) => {
+          untrack();
           if (settled) return;
           settled = true;
           clearTimeout(timer);
@@ -245,9 +260,12 @@ export class ClaudeCliProvider implements ContentProvider {
           else resolve(stdout);
         },
       );
+      // Si la API se apaga con este `claude` en vuelo, se mata su árbol (ver trackChildProcess).
+      const untrack = trackChildProcess(child.pid);
       const timer = setTimeout(() => {
         if (settled) return;
         settled = true;
+        untrack();
         if (child.pid) killProcessTree(child.pid);
         reject(new Error(`Claude CLI superó el tiempo límite de ${timeoutMs}ms.`));
       }, timeoutMs);
@@ -262,7 +280,7 @@ export class ClaudeCliProvider implements ContentProvider {
     const tmpDir = await mkdtemp(path.join(tmpdir(), 'content-platform-claude-check-'));
     try {
       const stdout = await this.runClaudeCommand(
-        ['-p', 'Responde únicamente con la palabra: ok', '--output-format', 'json', '--disallowedTools', '*'],
+        ['-p', 'Responde únicamente con la palabra: ok', '--output-format', 'json', '--disallowedTools', '*', ...LEAN_ARGS],
         tmpDir,
         25_000,
       );
@@ -295,7 +313,7 @@ export class ClaudeCliProvider implements ContentProvider {
       // objeto); sin schema, ninguna herramienta, como siempre.
       const toolArgs = jsonSchema ? ['--tools', 'StructuredOutput', '--json-schema', JSON.stringify(jsonSchema)] : ['--disallowedTools', '*'];
       const stdout = await this.runClaudeCommand(
-        ['-p', userPrompt, '--output-format', 'json', '--system-prompt', systemPrompt, ...toolArgs],
+        ['-p', userPrompt, '--output-format', 'json', '--system-prompt', systemPrompt, ...toolArgs, ...LEAN_ARGS],
         tmpDir,
       );
 
