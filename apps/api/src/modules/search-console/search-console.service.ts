@@ -10,6 +10,8 @@ export type ScSite = 'la-mira' | 'planazo';
 // Dominio de cada sitio — la propiedad de Search Console se detecta sola
 // entre las que la cuenta de servicio puede ver (de dominio o de prefijo).
 const SITE_DOMAINS: Record<ScSite, string> = { 'la-mira': 'lamira.mx', planazo: 'planazo.com.mx' };
+// Planazo publica su sitemap bajo www (ver su robots.txt).
+const SITEMAP_URLS: Record<ScSite, string> = { 'la-mira': 'https://lamira.mx/sitemap.xml', planazo: 'https://www.planazo.com.mx/sitemap.xml' };
 
 const WEBMASTERS = 'https://www.googleapis.com/webmasters/v3';
 const INSPECTION = 'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect';
@@ -121,7 +123,8 @@ export class SearchConsoleService {
     let tokens: GoogleTokenProvider | null = null;
     try {
       const account = parseServiceAccount(config.get<string>('GOOGLE_SERVICE_ACCOUNT_JSON'));
-      if (account) tokens = new GoogleTokenProvider(account, ['https://www.googleapis.com/auth/webmasters.readonly']);
+      // Alcance completo (no readonly): hace falta para reenviar sitemaps. La cuenta ya es siteFullUser.
+      if (account) tokens = new GoogleTokenProvider(account, ['https://www.googleapis.com/auth/webmasters']);
     } catch (err) {
       this.configError = err instanceof Error ? err.message : 'GOOGLE_SERVICE_ACCOUNT_JSON inválido.';
       this.logger.warn(this.configError);
@@ -251,6 +254,21 @@ export class SearchConsoleService {
     };
     this.summaryCache.set(key, { at: Date.now(), value });
     return value;
+  }
+
+  /**
+   * Envía (o reenvía) el sitemap del sitio a Search Console. Google no ofrece
+   * API para "solicitar indexación" de páginas sueltas: eso solo se hace a mano
+   * en la pantalla de Inspección de URL.
+   */
+  async submitSitemap(site: ScSite): Promise<{ sitemap: string }> {
+    const siteUrl = await this.requireProperty(site);
+    const sitemap = SITEMAP_URLS[site];
+    await this.google<Record<string, never>>(
+      `${WEBMASTERS}/sites/${encodeURIComponent(siteUrl)}/sitemaps/${encodeURIComponent(sitemap)}`,
+      { method: 'PUT' },
+    );
+    return { sitemap };
   }
 
   async inspect(site: ScSite, url: string, fresh = false): Promise<ScInspection> {

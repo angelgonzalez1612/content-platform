@@ -32,6 +32,13 @@ export class SearchConsoleController {
     return this.searchConsole.health(!!dto.refresh);
   }
 
+  /** Reenvía el sitemap del sitio a Search Console. */
+  @Post('sitemap')
+  submitSitemap(@Body() body: unknown) {
+    const dto = z.object({ site: siteSchema }).parse(body);
+    return this.searchConsole.submitSitemap(dto.site);
+  }
+
   /** Estado de indexación de una URL (usa cuota: 2,000 al día por propiedad). */
   @Post('inspect')
   inspect(@Body() body: unknown) {
