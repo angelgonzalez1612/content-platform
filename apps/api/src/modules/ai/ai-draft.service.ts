@@ -30,7 +30,7 @@ import {
 } from './checks.service';
 import { buildFieldSchemaZod, factKeys } from './field-schema-builder';
 import { CONTENT_TYPES, getContentTypeConfig } from './content-types';
-import { WRITING_RULES, countWords, proseText } from './writing-rules';
+import { CONTEXT_ANGLE_PROMPT, WRITING_RULES, countWords, proseText } from './writing-rules';
 import { ProviderQuotaExceededError } from './provider-health';
 import {
   DraftRequestDto,
@@ -336,7 +336,14 @@ export class AiDraftService {
     return { site, contentType, categoryId };
   }
 
-  async draft(dto: DraftRequestDto): Promise<DraftResult> {
+  async draft(rawDto: DraftRequestDto): Promise<DraftResult> {
+    // Ángulo "contexto": la liga oficial viaja como una segunda fuente en
+    // `hints`, que scrapeSourceFromHints ya sabe leer (varias URLs).
+    const contextAngle = rawDto.angle === 'contexto';
+    const dto: DraftRequestDto =
+      contextAngle && rawDto.officialUrl
+        ? { ...rawDto, hints: [rawDto.hints, `— Fuente oficial (${rawDto.officialUrl})`].filter(Boolean).join('\n') }
+        : rawDto;
     // Fase 2 del plan de rediseño del pipeline (content-radar → Centro IA):
     // en vez de que la IA solo vea el titular citado en `hints`, se lee el
     // artículo completo de esa fuente — más material real, tanto para
@@ -402,6 +409,7 @@ export class AiDraftService {
       scrapedArticle
         ? `\nMaterial de referencia — artículo completo de la fuente citada, leído en vivo. SOLO para informarte de los hechos: no lo copies, no lo parafrasees de cerca, no repitas su estructura. Redacta tu propia nota, con tus propias palabras:\n"""\n${scrapedArticle.text}\n"""`
         : '',
+      contextAngle ? `\n${CONTEXT_ANGLE_PROMPT}` : '',
       '',
       hasOwnTitle
         ? 'Escribe tu propio "title" (encabezado editorial) — atractivo, distinto del tema/semilla de arriba, nunca una copia tal cual de un titular ajeno.'

@@ -81,6 +81,17 @@ export function assessDraftQuality(draft: Record<string, unknown>): DraftQuality
   return { ok: problems.length === 0, words, fillers, reason: problems.length ? `No cumplió las reglas de redacción: ${problems.join(' y ')}.` : undefined };
 }
 
+/**
+ * Ángulo "nota con contexto" (opcional, 2026-10-27): la noticia es el punto de
+ * partida, no el contenido. Se agrega al prompt del usuario, no sustituye las
+ * reglas de arriba.
+ */
+export const CONTEXT_ANGLE_PROMPT = `Ángulo "nota con contexto" (obligatorio en esta pieza):
+- Parte de la noticia como punto de partida, pero la pieza debe aportar algo que el medio original no tiene. No resumas ni reordenes su nota.
+- Estructura el cuerpo en al menos 4 secciones con subtítulo: (1) qué pasó, en pocas líneas; (2) contexto y antecedentes; (3) "Qué significa para quien vive en la CDMX": a quién afecta, en qué alcaldías o zonas, desde cuándo; (4) qué hacer o qué sigue: pasos, fechas, trámites o lugares concretos.
+- Si se incluye una fuente oficial entre el material de referencia, apóyate en ella para cifras, fechas, requisitos y nombres, y cítala por su nombre (por ejemplo "según la Gaceta Oficial de la CDMX"). Los datos que solo estén en la nota periodística atribúyelos al medio.
+- Apunta a ${WRITING_RULES.targetWords + 100} palabras o más. No inventes cifras, fechas ni declaraciones; si un dato no está en el material, no lo incluyas.`;
+
 /** Se agrega al final del prompt de sistema de todos los tipos. */
 export const WRITING_RULES_PROMPT = `Reglas de extensión y calidad (obligatorias — una pieza que no las cumpla se descarta):
 - El texto completo (bajada o descripción + cuerpo) debe tener al menos ${WRITING_RULES.minWords} palabras; apunta a ${WRITING_RULES.targetWords} o más cuando la información lo permita.

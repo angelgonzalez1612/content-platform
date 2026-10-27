@@ -16,6 +16,14 @@ export const draftRequestSchema = z.object({
   name: z.string().min(1),
   hints: z.string().optional(),
   provider: z.enum(AI_PROVIDER_IDS).default('openai'),
+  // 'standard' (o sin mandar): el flujo de siempre. 'contexto': nota explicativa que
+  // parte de la noticia pero la completa con una fuente oficial y secciones de
+  // utilidad (ver CONTEXT_ANGLE_PROMPT) — pensada para que la pieza aporte algo
+  // que el medio original no tiene.
+  angle: z.enum(['standard', 'contexto']).optional(),
+  // Liga oficial (gob.cdmx.mx, Gaceta Oficial, Metro…) que se lee junto con la
+  // fuente de la nota; solo se usa con angle 'contexto'.
+  officialUrl: z.string().url().optional(),
 });
 
 export type DraftRequestDto = z.infer<typeof draftRequestSchema>;

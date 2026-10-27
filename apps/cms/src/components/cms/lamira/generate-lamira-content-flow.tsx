@@ -145,6 +145,10 @@ export function GenerateLamiraContentFlow({
   const [sourceUrl, setSourceUrl] = useState("");
   const [scrapedSiteName, setScrapedSiteName] = useState<string | null>(null);
   const [scraping, setScraping] = useState(false);
+  // "Nota con contexto" (opcional): parte de la noticia pero la completa con una
+  // fuente oficial y secciones de utilidad — ver CONTEXT_ANGLE_PROMPT en la API.
+  const [contextAngle, setContextAngle] = useState(false);
+  const [officialUrl, setOfficialUrl] = useState("");
   // `null` = todavía no se toca el selector — evita mandar "openai" real si
   // el editor le da a generar antes de que useOpenAiAvailable() confirme que
   // no hay key (mismo bug/arreglo que PublishFlow, ver ahí el porqué).
@@ -217,6 +221,7 @@ export function GenerateLamiraContentFlow({
 
   const category = categories.find((c) => c.id === categoryId) ?? null;
   const isRichContent = type === "noticia" || type === "guia" || type === "reportaje";
+  const canUseContextAngle = type === "noticia" || type === "reportaje";
 
   // En modo "liga" se arma el mismo formato que ya usa content-radar
   // ("— FUENTE (url)") para que el backend lo reconozca igual (URL para
@@ -265,7 +270,14 @@ export function GenerateLamiraContentFlow({
         // categoryId se omite a propósito: sin ella, el backend clasifica sola
         // la categoría (ver AiDraftService.classifyCategory) a partir del tema
         // + la fuente completa — es lo que llega en data.categoryId abajo.
-        body: JSON.stringify({ site: "la-mira", contentType: type, name, hints: effectiveHints || undefined, provider: effectiveProvider }),
+        body: JSON.stringify({
+          site: "la-mira",
+          contentType: type,
+          name,
+          hints: effectiveHints || undefined,
+          provider: effectiveProvider,
+          ...(contextAngle && canUseContextAngle ? { angle: "contexto", officialUrl: officialUrl.trim() || undefined } : {}),
+        }),
       });
 
       if (!res.ok) {
@@ -488,6 +500,43 @@ export function GenerateLamiraContentFlow({
             />
             <p className="text-[11.5px] text-ink-faint">La categoría la elige la IA a partir del tema — la revisas y puedes cambiarla después de generar.</p>
           </div>
+
+          {canUseContextAngle && (
+            <div className="flex flex-col gap-3 rounded-[12px] border border-border bg-card p-4">
+              <label className="flex items-start gap-3 text-[13px] text-ink">
+                <input
+                  type="checkbox"
+                  checked={contextAngle}
+                  onChange={(e) => setContextAngle(e.target.checked)}
+                  disabled={step === "generating"}
+                  className="mt-0.5"
+                />
+                <span>
+                  <span className="font-semibold">Nota con contexto</span>
+                  <span className="block text-[11.5px] text-ink-faint">
+                    Parte de la noticia, pero la completa con qué pasó, antecedentes, qué significa para quien vive en la CDMX y qué hacer. Más extensa y con más valor propio que una reescritura.
+                  </span>
+                </span>
+              </label>
+              {contextAngle && (
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="lc-official" className={labelClass}>
+                    Fuente oficial (opcional, recomendado)
+                  </label>
+                  <input
+                    id="lc-official"
+                    type="url"
+                    value={officialUrl}
+                    onChange={(e) => setOfficialUrl(e.target.value)}
+                    placeholder="https://www.gob.mx/... · Gaceta Oficial · Metro · SSC"
+                    className={fieldClass}
+                    disabled={step === "generating"}
+                  />
+                  <p className="text-[11.5px] text-ink-faint">Se lee junto con la nota para sacar cifras, fechas y requisitos del documento oficial.</p>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex flex-col gap-2">
             <span className={labelClass}>Proveedor de IA</span>
